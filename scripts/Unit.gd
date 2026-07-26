@@ -58,14 +58,19 @@ const DIR_NAMES: Array[String] = [
 	"west", "north-west", "north", "north-east",
 ]
 
-# 9-frame walk cycles per direction, loaded once per class. Note the exact
-# folder casing differs between the two sets.
-static var SCOUT_WALK_FRAMES: Array = _load_walk_frames(
+# 9-frame animation cycles per direction, loaded once per class. Note the
+# exact folder casing differs between the two walk sets.
+static var SCOUT_WALK_FRAMES: Array = _load_dir_frames(
 		"res://assets/sprites/Scout/animations/Standing_idle_walk")
-static var GOBLIN_WALK_FRAMES: Array = _load_walk_frames(
+static var GOBLIN_WALK_FRAMES: Array = _load_dir_frames(
 		"res://assets/sprites/Goblin/animations/standing_idle_walk")
+static var SCOUT_IDLE_FRAMES: Array = _load_dir_frames(
+		"res://assets/sprites/Scout/animations/standing_idle")
+static var GOBLIN_IDLE_FRAMES: Array = _load_dir_frames(
+		"res://assets/sprites/Goblin/animations/standing_idle")
 
 const WALK_FPS := 18.0
+const IDLE_FPS := 8.0
 
 # Both sets have their figure's feet ~15px below canvas center; 2x scale puts
 # a ~30px figure at ~60px on screen, sitting on the diamond center.
@@ -94,11 +99,14 @@ var selected := false
 var frames: Array[Texture2D] = SCOUT_FRAMES
 var aim_frames: Array[Texture2D] = SCOUT_AIM_FRAMES
 var walk_frames: Array = SCOUT_WALK_FRAMES
+var idle_frames: Array = SCOUT_IDLE_FRAMES
 var facing_sector := 2  # south
 var aiming := false
 var walking := false
 var walk_time := 0.0
 var walk_frame := 0
+var idle_time := 0.0
+var idle_frame := 0
 
 @onready var sprite: Sprite2D = $Sprite
 
@@ -120,6 +128,7 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		frames = SCOUT_FRAMES
 		aim_frames = SCOUT_AIM_FRAMES
 		walk_frames = SCOUT_WALK_FRAMES
+		idle_frames = SCOUT_IDLE_FRAMES
 		set_facing(Vector2(1, 0.5))   # face the goblin side (south-east)
 	else:
 		max_hp = 2
@@ -129,11 +138,14 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		frames = GOBLIN_FRAMES
 		aim_frames = GOBLIN_AIM_FRAMES
 		walk_frames = GOBLIN_WALK_FRAMES
+		idle_frames = GOBLIN_IDLE_FRAMES
 		set_facing(Vector2(-1, 0.5))  # face the scout side (south-west)
 	hp = max_hp
+	# Desync idle cycles so units don't all breathe in lockstep.
+	idle_time = float((p_cell.x * 7 + p_cell.y * 13) % 9) / IDLE_FPS
 
 
-static func _load_walk_frames(base: String) -> Array:
+static func _load_dir_frames(base: String) -> Array:
 	var result: Array = []
 	for dir_name in DIR_NAMES:
 		var dir_frames: Array[Texture2D] = []
@@ -172,22 +184,34 @@ func stop_walking() -> void:
 
 
 func _process(delta: float) -> void:
-	if not walking:
-		return
-	walk_time += delta
-	var idx := int(walk_time * WALK_FPS)
-	if idx != walk_frame:
-		walk_frame = idx
-		_update_sprite()
+	if walking:
+		walk_time += delta
+		var idx := int(walk_time * WALK_FPS)
+		if idx != walk_frame:
+			walk_frame = idx
+			_update_sprite()
+	elif not aiming:
+		idle_time += delta
+		var idx := int(idle_time * IDLE_FPS)
+		if idx != idle_frame:
+			idle_frame = idx
+			_update_sprite()
 
 
 func _update_sprite() -> void:
+	if aiming:
+		sprite.texture = aim_frames[facing_sector]
+		return
 	if walking:
 		var dir_frames: Array = walk_frames[facing_sector]
 		if not dir_frames.is_empty():
 			sprite.texture = dir_frames[walk_frame % dir_frames.size()]
 			return
-	sprite.texture = (aim_frames if aiming else frames)[facing_sector]
+	var idle_dir: Array = idle_frames[facing_sector]
+	if not idle_dir.is_empty():
+		sprite.texture = idle_dir[idle_frame % idle_dir.size()]
+		return
+	sprite.texture = frames[facing_sector]
 
 
 func is_alive() -> bool:
