@@ -82,7 +82,8 @@ const PIP_GAP := 3.0
 const PIP_Y := -68.0
 const PIP_FULL := Color("58c04a")
 const PIP_EMPTY := Color(0.15, 0.15, 0.15, 0.7)
-const RING_COLOR := Color("ffd94a")
+const RING_COLOR := Color("ffd94a")        # player selection
+const ENEMY_RING_COLOR := Color("ff5a3c")  # AI unit currently acting
 const DONE_TINT := Color(0.55, 0.55, 0.55)
 
 var team := TEAM_SCOUT
@@ -273,8 +274,9 @@ func start_turn() -> void:
 func _draw() -> void:
 	if selected:
 		# Ground ellipse at the unit's feet, matching the isometric 2:1 view.
+		var ring := RING_COLOR if team == TEAM_SCOUT else ENEMY_RING_COLOR
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.5))
-		draw_arc(Vector2.ZERO, 38.0, 0.0, TAU, 48, RING_COLOR, 3.0, true)
+		draw_arc(Vector2.ZERO, 38.0, 0.0, TAU, 48, ring, 3.0, true)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	var total_width := max_hp * PIP_SIZE.x + (max_hp - 1) * PIP_GAP
 	var start_x := -total_width / 2.0

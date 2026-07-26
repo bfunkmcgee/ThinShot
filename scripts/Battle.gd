@@ -295,14 +295,20 @@ func end_player_turn() -> void:
 
 
 func run_enemy_turn() -> void:
-	for goblin in living_units(Unit.TEAM_GOBLIN):
+	var squad := living_units(Unit.TEAM_GOBLIN)
+	var acted := 0
+	for goblin in squad:
 		if not is_instance_valid(goblin) or not goblin.is_alive():
 			continue
 		var scouts := living_units(Unit.TEAM_SCOUT)
 		if scouts.is_empty():
 			return
+		acted += 1
+		var from_cell := goblin.cell
+		goblin.set_selected(true)  # red ring marks the acting goblin
 		var shootable := _shootable_from(goblin.cell, goblin.attack_range, scouts)
 		if not shootable.is_empty():
+			print("[ThinShot]   goblin %d/%d shoots from %s" % [acted, squad.size(), from_cell])
 			await do_attack(goblin, _nearest(goblin.cell, shootable))
 		else:
 			var target := _nearest(goblin.cell, scouts)
@@ -313,8 +319,13 @@ func run_enemy_turn() -> void:
 			if board.in_bounds(dest) and dest != goblin.cell:
 				await do_move(goblin, dest)
 			shootable = _shootable_from(goblin.cell, goblin.attack_range, living_units(Unit.TEAM_SCOUT))
-			if goblin.is_alive() and not shootable.is_empty():
+			var shoots := goblin.is_alive() and not shootable.is_empty()
+			print("[ThinShot]   goblin %d/%d moves %s -> %s%s" % [
+					acted, squad.size(), from_cell, goblin.cell,
+					", shoots" if shoots else ""])
+			if shoots:
 				await do_attack(goblin, _nearest(goblin.cell, shootable))
+		goblin.set_selected(false)
 		if state == State.GAME_OVER:
 			return
 		await get_tree().create_timer(AI_BEAT).timeout
