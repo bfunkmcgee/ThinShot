@@ -34,6 +34,60 @@ text = "DESERT SCOUTS' TURN"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="DangerButton" type="Button" parent="UI"]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -608.0
+offset_top = -70.0
+offset_right = -418.0
+offset_bottom = -22.0
+focus_mode = 0
+toggle_mode = true
+theme_override_font_sizes/font_size = 20
+text = "Danger (D)"
+
+[node name="UnitPanel" type="PanelContainer" parent="UI"]
+visible = false
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -150.0
+offset_right = 300.0
+offset_bottom = -16.0
+
+[node name="Margin" type="MarginContainer" parent="UI/UnitPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="Rows" type="VBoxContainer" parent="UI/UnitPanel/Margin"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="UI/UnitPanel/Margin/Rows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.9, 0.72, 1)
+theme_override_font_sizes/font_size = 19
+text = "Desert Scout"
+
+[node name="HpLabel" type="Label" parent="UI/UnitPanel/Margin/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "HP 3 / 3"
+
+[node name="StatsLabel" type="Label" parent="UI/UnitPanel/Margin/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "Move 4   Range 4   Dmg 1"
+
+[node name="StatusLabel" type="Label" parent="UI/UnitPanel/Margin/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "Ready"
+
 [node name="OverwatchButton" type="Button" parent="UI"]
 anchor_left = 1.0
 anchor_top = 1.0

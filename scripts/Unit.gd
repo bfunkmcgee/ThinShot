@@ -72,6 +72,29 @@ static var GOBLIN_IDLE_FRAMES: Array = _load_dir_frames(
 const WALK_FPS := 18.0
 const IDLE_FPS := 8.0
 
+# Rifle-tip offsets in Unit space per facing sector, measured from the
+# aim-stance PNGs by tools/measure_muzzle.gd (sector order = DIR_NAMES).
+const SCOUT_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(32, -40),   # east
+	Vector2(10, -6),    # south-east
+	Vector2(10, -2),    # south
+	Vector2(-14, -6),   # south-west
+	Vector2(-34, -40),  # west
+	Vector2(-34, -44),  # north-west
+	Vector2(-8, -62),   # north
+	Vector2(30, -44),   # north-east
+]
+const GOBLIN_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(34, -34),   # east
+	Vector2(30, -20),   # south-east
+	Vector2(-18, -2),   # south
+	Vector2(-30, -18),  # south-west
+	Vector2(-32, -34),  # west
+	Vector2(-30, -40),  # north-west
+	Vector2(-6, -60),   # north
+	Vector2(32, -40),   # north-east
+]
+
 # Both sets have their figure's feet ~15px below canvas center; 2x scale puts
 # a ~30px figure at ~60px on screen, sitting on the diamond center.
 const SPRITE_SCALE := Vector2(2, 2)
@@ -171,6 +194,12 @@ func set_facing(screen_dir: Vector2) -> void:
 func set_aiming(value: bool) -> void:
 	aiming = value
 	_update_sprite()
+
+
+## Global position of the raised rifle's tip for the current facing.
+func muzzle_point() -> Vector2:
+	var offsets := SCOUT_MUZZLE_OFFSETS if team == TEAM_SCOUT else GOBLIN_MUZZLE_OFFSETS
+	return to_global(offsets[facing_sector])
 
 
 ## Enter/leave overwatch: rifle stays raised, marker drawn above the pips.

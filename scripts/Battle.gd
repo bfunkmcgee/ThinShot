@@ -38,12 +38,19 @@ var hover_cell := Board.NO_CELL
 var turn_number := 1
 var enemy_turn_running := false
 var player_turn_ready_msec := 0
+var danger_on := false
 
 @onready var board: Board = $Board
 @onready var entities_node: Node2D = $Entities
 @onready var turn_banner: Label = $UI/TurnBanner
 @onready var end_turn_button: Button = $UI/EndTurnButton
 @onready var overwatch_button: Button = $UI/OverwatchButton
+@onready var danger_button: Button = $UI/DangerButton
+@onready var unit_panel: PanelContainer = $UI/UnitPanel
+@onready var panel_name_label: Label = $UI/UnitPanel/Margin/Rows/NameLabel
+@onready var panel_hp_label: Label = $UI/UnitPanel/Margin/Rows/HpLabel
+@onready var panel_stats_label: Label = $UI/UnitPanel/Margin/Rows/StatsLabel
+@onready var panel_status_label: Label = $UI/UnitPanel/Margin/Rows/StatusLabel
 @onready var game_over_panel: ColorRect = $UI/GameOver
 @onready var result_label: Label = $UI/GameOver/ResultLabel
 @onready var restart_button: Button = $UI/GameOver/RestartButton
@@ -69,6 +76,7 @@ func _ready() -> void:
 		_spawn_unit(Unit.TEAM_GOBLIN, spawn)
 	end_turn_button.pressed.connect(end_player_turn)
 	overwatch_button.pressed.connect(_try_overwatch)
+	danger_button.toggled.connect(_on_danger_button_toggled)
 	restart_button.pressed.connect(_on_restart)
 	show_banner("DESERT SCOUTS' TURN")
 	player_turn_ready_msec = Time.get_ticks_msec()
@@ -126,6 +134,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("overwatch"):
 		_try_overwatch()
 		return
+	if event.is_action_pressed("toggle_danger"):
+		_toggle_danger()
+		return
+	if event.is_action_pressed("cycle_unit"):
+		_cycle_unit()
+		return
 	if event.is_action_pressed("cancel"):
 		deselect()
 		return
@@ -164,7 +178,9 @@ func select(unit: Unit) -> void:
 		selected.set_selected(false)
 	selected = unit
 	unit.set_selected(true)
+	Sfx.play("select", 0.0, 0.0)
 	_refresh_highlights()
+	_update_unit_panel()
 
 
 func deselect() -> void:
@@ -172,6 +188,46 @@ func deselect() -> void:
 		selected.set_selected(false)
 		selected = null
 	board.clear_highlights()
+	_update_unit_panel()
+
+
+## Select the next living scout that can still act, wrapping in spawn order.
+func _cycle_unit() -> void:
+	var ready: Array[Unit] = []
+	for scout in living_units(Unit.TEAM_SCOUT):
+		if not scout.acted:
+			ready.append(scout)
+	if ready.is_empty():
+		return
+	select(ready[(ready.find(selected) + 1) % ready.size()])
+
+
+## Bottom-left stat readout: hovered unit wins over the selected one.
+func _update_unit_panel() -> void:
+	var unit := unit_at(hover_cell) if hover_cell != Board.NO_CELL else null
+	if unit == null:
+		unit = selected
+	if unit == null:
+		unit_panel.visible = false
+		return
+	unit_panel.visible = true
+	panel_name_label.text = "Desert Scout" if unit.team == Unit.TEAM_SCOUT \
+			else "Rust Choir Chorister"
+	panel_hp_label.text = "HP %d / %d" % [unit.hp, unit.max_hp]
+	panel_stats_label.text = "Move %d   Range %d   Dmg %d" % [
+			unit.move_range, unit.attack_range, unit.damage]
+	panel_status_label.text = _unit_status(unit)
+	panel_status_label.modulate = Color("ffb84a") if unit.overwatching else Color.WHITE
+
+
+func _unit_status(unit: Unit) -> String:
+	if unit.overwatching:
+		return "OVERWATCH"
+	if unit.acted:
+		return "Done"
+	if unit.moved:
+		return "Moved"
+	return "Ready"
 
 
 ## Put the selected scout on overwatch, consuming its activation.
@@ -182,6 +238,7 @@ func _try_overwatch() -> void:
 	deselect()
 	scout.set_done(true)
 	scout.set_overwatch(true)
+	Sfx.play("overwatch_set", 0.0, 0.0)
 	print("[ThinShot] scout at %s goes on overwatch" % scout.cell)
 
 
@@ -220,6 +277,7 @@ func _update_hover(cell: Vector2i) -> void:
 		elif board.attack_cells.has(cell):
 			aim_from = selected.cell
 	board.set_hover(cell, path, aim_from)
+	_update_unit_panel()
 
 
 # --- Actions (shared by player and AI) ---------------------------------------
@@ -235,12 +293,14 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 	var path := board.reconstruct_path(came_from, dest)
 	unit.start_walking()
 	var from_pos := unit.position
-	for step in path:
+	for step_index in path.size():
+		var step: Vector2i = path[step_index]
 		var step_pos := board.cell_to_global(step)
 		unit.set_facing(step_pos - from_pos)
 		var tween := create_tween()
 		tween.tween_property(unit, "position", step_pos, MOVE_STEP_TIME)
 		await tween.finished
+		Sfx.play("footstep_1" if step_index % 2 == 0 else "footstep_2")
 		unit.cell = step
 		from_pos = step_pos
 		var watchers := _overwatchers_against(unit)
@@ -262,8 +322,11 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 	unit.stop_walking()
 	unit.moved = true
 	state = prev_state
-	if prev_state == State.PLAYER_TURN and selected == unit:
-		_refresh_highlights()
+	if prev_state == State.PLAYER_TURN:
+		_refresh_danger()
+		_update_unit_panel()
+		if selected == unit:
+			_refresh_highlights()
 
 
 func do_attack(attacker: Unit, target: Unit) -> void:
@@ -278,6 +341,9 @@ func do_attack(attacker: Unit, target: Unit) -> void:
 	if state == State.GAME_OVER:
 		return
 	state = prev_state
+	if prev_state == State.PLAYER_TURN:
+		_refresh_danger()
+		_update_unit_panel()
 
 
 ## The shot itself: face, (optionally) raise and hold, fire effects, damage,
@@ -288,20 +354,61 @@ func _resolve_shot(attacker: Unit, target: Unit, with_aim_beat: bool) -> void:
 	if with_aim_beat:
 		attacker.set_aiming(true)
 		await get_tree().create_timer(AIM_TIME).timeout
-	HitFx.spawn(self, attacker.position + Vector2(0, -36) + aim * 16.0, HitFx.Kind.MUZZLE)
+	var muzzle := attacker.muzzle_point()
+	Sfx.play("shot")
+	HitFx.spawn(self, muzzle, HitFx.Kind.MUZZLE)
 	var tracer := Line2D.new()
 	tracer.width = 3.0
 	tracer.default_color = Color(1.0, 0.95, 0.6)
-	tracer.add_point(attacker.position + Vector2(0, -36))
+	tracer.add_point(muzzle)
 	tracer.add_point(target.position + Vector2(0, -36))
 	add_child(tracer)
 	await get_tree().create_timer(TRACER_TIME).timeout
 	tracer.queue_free()
+	Sfx.play("hit_impact")
 	HitFx.spawn(self, target.position + Vector2(0, -36), HitFx.Kind.IMPACT)
 	_screen_shake()
 	target.take_damage(attacker.damage)
 	await get_tree().create_timer(LOWER_TIME).timeout
 	attacker.set_aiming(false)
+
+
+# --- Danger overlay ----------------------------------------------------------
+
+## Every tile some living goblin could shoot next turn: reachable move cells
+## (plus standing still) expanded by attack range with line of sight.
+func _compute_danger_cells() -> Dictionary:
+	var danger := {}
+	for goblin in living_units(Unit.TEAM_GOBLIN):
+		var origins: Array = board.flood_fill(
+				goblin.cell, goblin.move_range, _cell_blocked).keys()
+		origins.append(goblin.cell)
+		var r := goblin.attack_range
+		for origin: Vector2i in origins:
+			for dy in range(-r, r + 1):
+				var w := r - absi(dy)
+				for dx in range(-w, w + 1):
+					var tile := origin + Vector2i(dx, dy)
+					if danger.has(tile) or not board.in_bounds(tile) or board.is_wall(tile):
+						continue
+					if board.has_line_of_sight(origin, tile):
+						danger[tile] = true
+	return danger
+
+
+func _refresh_danger() -> void:
+	board.set_danger(_compute_danger_cells() if danger_on else {})
+
+
+func _toggle_danger() -> void:
+	danger_on = not danger_on
+	danger_button.set_pressed_no_signal(danger_on)
+	_refresh_danger()
+
+
+func _on_danger_button_toggled(pressed: bool) -> void:
+	danger_on = pressed
+	_refresh_danger()
 
 
 ## Living enemies of the mover that are on overwatch with range and LOS
@@ -329,11 +436,14 @@ func end_player_turn() -> void:
 		return
 	enemy_turn_running = true
 	deselect()
+	board.set_danger({})
 	state = State.ENEMY_TURN
 	print("[ThinShot] enemy turn %d begins" % turn_number)
+	Sfx.play("turn_enemy", 0.0, 0.0)
 	show_banner("RUST CHOIR'S TURN")
 	end_turn_button.disabled = true
 	overwatch_button.disabled = true
+	danger_button.disabled = true
 	# Goblins refresh at the start of THEIR turn (expires last turn's
 	# unfired goblin overwatch at the right moment).
 	for goblin in living_units(Unit.TEAM_GOBLIN):
@@ -351,11 +461,14 @@ func end_player_turn() -> void:
 		goblin.set_done(false)
 	turn_number += 1
 	print("[ThinShot] player turn %d begins" % turn_number)
+	Sfx.play("turn_player", 0.0, 0.0)
 	end_turn_button.disabled = false
 	overwatch_button.disabled = false
+	danger_button.disabled = false
 	show_banner("DESERT SCOUTS' TURN")
 	state = State.PLAYER_TURN
 	player_turn_ready_msec = Time.get_ticks_msec()
+	_refresh_danger()
 
 
 func run_enemy_turn() -> void:
@@ -393,6 +506,7 @@ func run_enemy_turn() -> void:
 			elif not moved_now and goblin.is_alive():
 				# Dug in with no shot: cover the approach instead.
 				goblin.set_overwatch(true)
+				Sfx.play("overwatch_set", -4.0, 0.0)
 				print("[ThinShot]   goblin %d/%d holds %s on overwatch" % [
 						acted, squad.size(), goblin.cell])
 		goblin.set_selected(false)
@@ -450,6 +564,7 @@ func _best_ai_dest(goblin: Unit, cells: Array, scouts: Array[Unit], chase_cell: 
 # --- Win / lose --------------------------------------------------------------
 
 func _on_unit_died(_unit: Unit) -> void:
+	Sfx.play("unit_death")
 	check_game_over()
 
 
@@ -457,18 +572,19 @@ func check_game_over() -> bool:
 	if state == State.GAME_OVER:
 		return true
 	if living_units(Unit.TEAM_GOBLIN).is_empty():
-		_show_game_over("DESERT SCOUTS WIN")
+		_show_game_over("DESERT SCOUTS WIN", true)
 		return true
 	if living_units(Unit.TEAM_SCOUT).is_empty():
-		_show_game_over("THE CHOIR SINGS ON")
+		_show_game_over("THE CHOIR SINGS ON", false)
 		return true
 	return false
 
 
-func _show_game_over(text: String) -> void:
+func _show_game_over(text: String, won: bool) -> void:
 	state = State.GAME_OVER
 	result_label.text = text
 	game_over_panel.visible = true
+	Sfx.play("win" if won else "lose", 0.0, 0.0)
 
 
 func _on_restart() -> void:

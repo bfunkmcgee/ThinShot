@@ -57,6 +57,8 @@ const ACCENT_MIN_SPACING := 2  # Chebyshev cells between any two accents
 const GRID_LINE := Color(0.35, 0.27, 0.15, 0.25)
 const MOVE_HL := Color(0.95, 0.85, 0.3, 0.35)
 const ATTACK_HL := Color(0.9, 0.2, 0.15, 0.4)
+const DANGER_FILL := Color(0.85, 0.15, 0.1, 0.13)
+const DANGER_HATCH := Color(0.85, 0.2, 0.12, 0.30)
 const HOVER_OUTLINE := Color(1.0, 0.97, 0.85, 0.9)
 const PATH_DOT := Color(1.0, 0.95, 0.7, 0.9)
 const AIM_LINE := Color(1.0, 0.45, 0.3, 0.85)
@@ -79,6 +81,9 @@ var attack_cells: Array[Vector2i] = []
 var hover_cell := NO_CELL
 var path_preview: Array[Vector2i] = []
 var aim_from := NO_CELL
+# Cells any enemy could shoot next turn (selection-independent; cleared
+# only via set_danger, never by clear_highlights).
+var danger_cells: Dictionary = {}
 
 
 func set_highlights(moves: Dictionary, attacks: Array[Vector2i]) -> void:
@@ -93,6 +98,11 @@ func set_hover(cell: Vector2i, path: Array[Vector2i], p_aim_from: Vector2i) -> v
 	hover_cell = cell
 	path_preview = path
 	aim_from = p_aim_from
+	queue_redraw()
+
+
+func set_danger(cells: Dictionary) -> void:
+	danger_cells = cells
 	queue_redraw()
 
 
@@ -260,6 +270,11 @@ func _draw() -> void:
 			var outline := _diamond(cell)
 			outline.append(outline[0])
 			draw_polyline(outline, GRID_LINE, 1.5, true)
+	for cell: Vector2i in danger_cells:
+		var d := _diamond(cell)
+		draw_colored_polygon(d, DANGER_FILL)
+		for f in [0.25, 0.5, 0.75]:
+			draw_line(d[3].lerp(d[2], f), d[0].lerp(d[1], f), DANGER_HATCH, 1.0, true)
 	for cell: Vector2i in move_cells:
 		draw_colored_polygon(_diamond(cell), MOVE_HL)
 	for cell in attack_cells:

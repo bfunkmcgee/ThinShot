@@ -24,8 +24,12 @@ A 12×8 isometric grid strewn with rocks. You outrange them; they outnumber you.
 - **W** or the **Overwatch** button — put the selected scout on overwatch
   (consumes its attack; it fires automatically at the first goblin that moves
   through its line of sight on the enemy turn)
+- **D** or the **Danger** button — toggle the danger overlay (red-hatched tiles
+  the goblins could shoot next turn)
+- **Tab** — cycle through scouts that can still act
 - **Right-click / Esc** — cancel selection
 - **E** or the **End Turn** button — end your turn
+- A stat panel (bottom-left) shows the hovered or selected unit
 
 ## Rules
 
