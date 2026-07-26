@@ -1,0 +1,8 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Desert boulder obstacle -->
+  <ellipse cx="32" cy="46" rx="24" ry="10" fill="#000000" fill-opacity="0.18"/>
+  <path d="M 10 44 L 14 24 L 26 14 L 44 16 L 55 30 L 53 44 Z" fill="#9a7b52"/>
+  <path d="M 10 44 L 20 40 L 34 42 L 53 44 L 46 50 L 18 50 Z" fill="#7d6140"/>
+  <path d="M 26 14 L 44 16 L 40 28 L 24 30 Z" fill="#b3936a"/>
+  <path d="M 14 24 L 24 30 L 20 40 L 10 44 Z" fill="#8a6c47"/>
+</svg>

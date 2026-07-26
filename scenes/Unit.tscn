@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://cthinshotunit01"]
+
+[ext_resource type="Script" path="res://scripts/Unit.gd" id="1_unit"]
+
+[node name="Unit" type="Node2D"]
+script = ExtResource("1_unit")
+
+[node name="Sprite" type="Sprite2D" parent="."]

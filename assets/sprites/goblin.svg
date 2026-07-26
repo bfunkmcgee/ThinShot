@@ -1,0 +1,33 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Goblin Rust Choir chorister: hunched green goblin, rust gear, slung horn -->
+  <!-- ground shadow -->
+  <ellipse cx="32" cy="40" rx="16" ry="12" fill="#000000" fill-opacity="0.22"/>
+  <!-- rusty horn/trumpet slung across the back: bell lower-left -->
+  <g transform="rotate(38 32 40)">
+    <rect x="29.5" y="26" width="5" height="22" rx="2.5" fill="#8a4a22"/>
+    <circle cx="32" cy="50" r="7" fill="#a35a2a"/>
+    <circle cx="32" cy="50" r="4" fill="#6e3a18"/>
+  </g>
+  <!-- hunched rust-armored back -->
+  <ellipse cx="32" cy="38" rx="15" ry="11" fill="#7d5a30"/>
+  <ellipse cx="32" cy="36" rx="12.5" ry="9" fill="#a35a2a"/>
+  <!-- pauldrons -->
+  <circle cx="19" cy="33" r="6" fill="#7c431e"/>
+  <circle cx="45" cy="33" r="6" fill="#7c431e"/>
+  <!-- clawed hands -->
+  <circle cx="16" cy="41" r="3" fill="#6a9a3a"/>
+  <circle cx="48" cy="41" r="3" fill="#6a9a3a"/>
+  <!-- big pointed ears (key silhouette) -->
+  <path d="M 22 24 L 6 14 L 18 30 Z" fill="#5c8632"/>
+  <path d="M 42 24 L 58 14 L 46 30 Z" fill="#5c8632"/>
+  <path d="M 21 25 L 11 18.5 L 19 28.5 Z" fill="#79a94b"/>
+  <path d="M 43 25 L 53 18.5 L 45 28.5 Z" fill="#79a94b"/>
+  <!-- head, thrust forward (up) for hunched 3/4 view -->
+  <circle cx="32" cy="25" r="10" fill="#6a9a3a"/>
+  <circle cx="32" cy="23.5" r="7.5" fill="#7bab48"/>
+  <!-- yellow eyes glaring forward -->
+  <circle cx="28" cy="19.5" r="2.2" fill="#e8c832"/>
+  <circle cx="36" cy="19.5" r="2.2" fill="#e8c832"/>
+  <circle cx="28" cy="19" r="0.9" fill="#3a3210"/>
+  <circle cx="36" cy="19" r="0.9" fill="#3a3210"/>
+</svg>
