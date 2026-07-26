@@ -150,7 +150,8 @@ func _refresh_highlights() -> void:
 	var attacks: Array[Vector2i] = []
 	if not selected.acted:
 		for enemy in living_units(Unit.TEAM_GOBLIN):
-			if Board.manhattan(selected.cell, enemy.cell) <= selected.attack_range:
+			if Board.manhattan(selected.cell, enemy.cell) <= selected.attack_range \
+					and board.has_line_of_sight(selected.cell, enemy.cell):
 				attacks.append(enemy.cell)
 	board.set_highlights(moves, attacks)
 	if moves.is_empty() and attacks.is_empty():
@@ -227,20 +228,30 @@ func run_enemy_turn() -> void:
 		var scouts := living_units(Unit.TEAM_SCOUT)
 		if scouts.is_empty():
 			return
-		var target := _nearest(goblin.cell, scouts)
-		if Board.manhattan(goblin.cell, target.cell) <= goblin.attack_range:
-			await do_attack(goblin, target)
+		var shootable := _shootable_from(goblin.cell, goblin.attack_range, scouts)
+		if not shootable.is_empty():
+			await do_attack(goblin, _nearest(goblin.cell, shootable))
 		else:
+			var target := _nearest(goblin.cell, scouts)
 			var reach := board.flood_fill(goblin.cell, goblin.move_range, _cell_blocked)
-			var dest := _closest_cell_to(reach.keys(), target.cell)
+			var dest := _best_ai_dest(reach.keys(), goblin.attack_range, scouts, target.cell)
 			if board.in_bounds(dest):
 				await do_move(goblin, dest)
-			if goblin.is_alive() and target.is_alive() \
-					and Board.manhattan(goblin.cell, target.cell) <= goblin.attack_range:
-				await do_attack(goblin, target)
+			shootable = _shootable_from(goblin.cell, goblin.attack_range, living_units(Unit.TEAM_SCOUT))
+			if goblin.is_alive() and not shootable.is_empty():
+				await do_attack(goblin, _nearest(goblin.cell, shootable))
 		if state == State.GAME_OVER:
 			return
 		await get_tree().create_timer(AI_BEAT).timeout
+
+
+func _shootable_from(from_cell: Vector2i, attack_range: int, targets: Array[Unit]) -> Array[Unit]:
+	var result: Array[Unit] = []
+	for unit in targets:
+		if Board.manhattan(from_cell, unit.cell) <= attack_range \
+				and board.has_line_of_sight(from_cell, unit.cell):
+			result.append(unit)
+	return result
 
 
 func _nearest(from_cell: Vector2i, candidates: Array[Unit]) -> Unit:
@@ -251,15 +262,19 @@ func _nearest(from_cell: Vector2i, candidates: Array[Unit]) -> Unit:
 	return best
 
 
-func _closest_cell_to(cells: Array, target_cell: Vector2i) -> Vector2i:
-	var best := target_cell  # sentinel; replaced below if any cell exists
-	var best_dist := 999
+## Best move destination for an AI unit: any cell it could shoot a scout from
+## beats every cell it couldn't, then nearer the chase target breaks ties.
+func _best_ai_dest(cells: Array, attack_range: int, scouts: Array[Unit], chase_cell: Vector2i) -> Vector2i:
+	var best := Vector2i(-1, -1)
+	var best_score := 999999
 	for cell: Vector2i in cells:
-		var dist := Board.manhattan(cell, target_cell)
-		if dist < best_dist:
-			best_dist = dist
+		var score := Board.manhattan(cell, chase_cell)
+		if not _shootable_from(cell, attack_range, scouts).is_empty():
+			score -= 1000
+		if score < best_score:
+			best_score = score
 			best = cell
-	return best if best_dist < 999 else Vector2i(-1, -1)
+	return best
 
 
 # --- Win / lose --------------------------------------------------------------

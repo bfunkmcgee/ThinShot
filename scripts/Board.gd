@@ -79,6 +79,20 @@ static func manhattan(a: Vector2i, b: Vector2i) -> int:
 	return absi(a.x - b.x) + absi(a.y - b.y)
 
 
+## True if a straight shot between the two cell centers crosses no rock tile.
+## Samples the segment in cell space; endpoints themselves are ignored.
+func has_line_of_sight(from: Vector2i, to: Vector2i) -> bool:
+	var a := Vector2(from)
+	var b := Vector2(to)
+	var steps := int(a.distance_to(b) * 4.0) + 1
+	for i in range(1, steps):
+		var p := a.lerp(b, float(i) / float(steps))
+		var cell := Vector2i(roundi(p.x), roundi(p.y))
+		if cell != from and cell != to and is_wall(cell):
+			return false
+	return true
+
+
 ## BFS from start up to max_range steps. Walls and cells where blocked.call(cell)
 ## is true are impassable. Returns {reachable_cell: came_from_cell}, excluding start.
 func flood_fill(start: Vector2i, max_range: int, blocked: Callable) -> Dictionary:
