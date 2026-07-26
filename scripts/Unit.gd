@@ -9,13 +9,37 @@ signal died(unit: Unit)
 const TEAM_SCOUT := 0
 const TEAM_GOBLIN := 1
 
-# Sprites are 64x80 with the ground-contact line at texture y=72; centering
-# means offsetting up 32 px puts the feet exactly on the node position.
-const FOOT_OFFSET := Vector2(0, -32)
+# Directional pixel-art frames, indexed by 45-degree compass sector of the
+# screen-space facing vector: 0=E, 1=SE, 2=S, 3=SW, 4=W, 5=NW, 6=N, 7=NE.
+const SCOUT_FRAMES: Array[Texture2D] = [
+	preload("res://assets/sprites/Scout/east.png"),
+	preload("res://assets/sprites/Scout/south-east.png"),
+	preload("res://assets/sprites/Scout/south.png"),
+	preload("res://assets/sprites/Scout/south-west.png"),
+	preload("res://assets/sprites/Scout/west.png"),
+	preload("res://assets/sprites/Scout/north-west.png"),
+	preload("res://assets/sprites/Scout/north.png"),
+	preload("res://assets/sprites/Scout/north-east.png"),
+]
+const GOBLIN_FRAMES: Array[Texture2D] = [
+	preload("res://assets/sprites/Goblin/east.png"),
+	preload("res://assets/sprites/Goblin/south-east.png"),
+	preload("res://assets/sprites/Goblin/south.png"),
+	preload("res://assets/sprites/Goblin/south-west.png"),
+	preload("res://assets/sprites/Goblin/west.png"),
+	preload("res://assets/sprites/Goblin/north-west.png"),
+	preload("res://assets/sprites/Goblin/north.png"),
+	preload("res://assets/sprites/Goblin/north-east.png"),
+]
+
+# Both sets have their figure's feet ~15px below canvas center; 2x scale puts
+# a ~30px figure at ~60px on screen, sitting on the diamond center.
+const SPRITE_SCALE := Vector2(2, 2)
+const SPRITE_OFFSET := Vector2(0, -15)
 
 const PIP_SIZE := Vector2(8, 5)
 const PIP_GAP := 3.0
-const PIP_Y := -80.0
+const PIP_Y := -68.0
 const PIP_FULL := Color("58c04a")
 const PIP_EMPTY := Color(0.15, 0.15, 0.15, 0.7)
 const RING_COLOR := Color("ffd94a")
@@ -32,15 +56,18 @@ var cell := Vector2i.ZERO
 var moved := false
 var acted := false
 var selected := false
+var frames: Array[Texture2D] = SCOUT_FRAMES
 
 @onready var sprite: Sprite2D = $Sprite
 
 
 func _ready() -> void:
-	sprite.offset = FOOT_OFFSET
+	sprite.scale = SPRITE_SCALE
+	sprite.offset = SPRITE_OFFSET
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
 
-func setup(p_team: int, p_cell: Vector2i, texture: Texture2D) -> void:
+func setup(p_team: int, p_cell: Vector2i) -> void:
 	team = p_team
 	cell = p_cell
 	if team == TEAM_SCOUT:
@@ -48,13 +75,24 @@ func setup(p_team: int, p_cell: Vector2i, texture: Texture2D) -> void:
 		move_range = 4
 		attack_range = 4
 		damage = 1
+		frames = SCOUT_FRAMES
+		set_facing(Vector2(1, 0.5))   # face the goblin side (south-east)
 	else:
 		max_hp = 2
 		move_range = 3
 		attack_range = 3
 		damage = 1
+		frames = GOBLIN_FRAMES
+		set_facing(Vector2(-1, 0.5))  # face the scout side (south-west)
 	hp = max_hp
-	sprite.texture = texture
+
+
+## Swap to the frame matching a screen-space facing direction.
+func set_facing(screen_dir: Vector2) -> void:
+	if screen_dir.length_squared() < 0.01:
+		return
+	var sector := wrapi(roundi(screen_dir.angle() / (TAU / 8.0)), 0, 8)
+	sprite.texture = frames[sector]
 
 
 func is_alive() -> bool:
@@ -86,7 +124,7 @@ func _spawn_damage_number(amount: int) -> void:
 	label.add_theme_constant_override("outline_size", 6)
 	label.z_index = 20
 	get_parent().add_child(label)
-	label.global_position = global_position + Vector2(-12.0, -104.0)
+	label.global_position = global_position + Vector2(-12.0, -84.0)
 	var tween := label.create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(label, "position:y", label.position.y - 40.0, 0.6)

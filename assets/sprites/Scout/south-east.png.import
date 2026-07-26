@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ds0bvtmii5tmi"
-path="res://.godot/imported/scout.svg-68234db7fc2a86a4e0b46551b2f072da.ctex"
+uid="uid://cr5grrn15esv"
+path="res://.godot/imported/south-east.png-fc839d71acd51dd820bab6e7b2df1b04.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/scout.svg"
-dest_files=["res://.godot/imported/scout.svg-68234db7fc2a86a4e0b46551b2f072da.ctex"]
+source_file="res://assets/sprites/Scout/south-east.png"
+dest_files=["res://.godot/imported/south-east.png-fc839d71acd51dd820bab6e7b2df1b04.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

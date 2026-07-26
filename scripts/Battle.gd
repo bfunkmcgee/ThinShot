@@ -5,9 +5,10 @@ extends Node2D
 enum State { PLAYER_TURN, ANIMATING, ENEMY_TURN, GAME_OVER }
 
 const UNIT_SCENE := preload("res://scenes/Unit.tscn")
-const SCOUT_TEXTURE := preload("res://assets/sprites/scout.svg")
-const GOBLIN_TEXTURE := preload("res://assets/sprites/goblin.svg")
 const ROCK_TEXTURE := preload("res://assets/sprites/rock.svg")
+
+# rock.svg is 64x80 with its ground line at y=72.
+const ROCK_OFFSET := Vector2(0, -32)
 
 const SCOUT_SPAWNS: Array[Vector2i] = [
 	Vector2i(1, 2), Vector2i(1, 4), Vector2i(3, 3),
@@ -41,13 +42,13 @@ func _ready() -> void:
 			if board.is_wall(cell):
 				var rock := Sprite2D.new()
 				rock.texture = ROCK_TEXTURE
-				rock.offset = Unit.FOOT_OFFSET
+				rock.offset = ROCK_OFFSET
 				rock.position = board.cell_to_global(cell)
 				entities_node.add_child(rock)
 	for spawn in SCOUT_SPAWNS:
-		_spawn_unit(Unit.TEAM_SCOUT, spawn, SCOUT_TEXTURE)
+		_spawn_unit(Unit.TEAM_SCOUT, spawn)
 	for spawn in GOBLIN_SPAWNS:
-		_spawn_unit(Unit.TEAM_GOBLIN, spawn, GOBLIN_TEXTURE)
+		_spawn_unit(Unit.TEAM_GOBLIN, spawn)
 	end_turn_button.pressed.connect(end_player_turn)
 	restart_button.pressed.connect(_on_restart)
 	show_banner("DESERT SCOUTS' TURN")
@@ -60,10 +61,10 @@ func _validate_spawns() -> void:
 			assert(false, "Bad spawn cell: %s" % spawn)
 
 
-func _spawn_unit(team: int, spawn_cell: Vector2i, texture: Texture2D) -> void:
+func _spawn_unit(team: int, spawn_cell: Vector2i) -> void:
 	var unit: Unit = UNIT_SCENE.instantiate()
 	entities_node.add_child(unit)
-	unit.setup(team, spawn_cell, texture)
+	unit.setup(team, spawn_cell)
 	unit.position = board.cell_to_global(spawn_cell)
 	unit.died.connect(_on_unit_died)
 
@@ -199,8 +200,12 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 	var path := board.reconstruct_path(came_from, dest)
 	unit.cell = dest
 	var tween := create_tween()
+	var from_pos := unit.position
 	for step in path:
-		tween.tween_property(unit, "position", board.cell_to_global(step), MOVE_STEP_TIME)
+		var step_pos := board.cell_to_global(step)
+		tween.tween_callback(unit.set_facing.bind(step_pos - from_pos))
+		tween.tween_property(unit, "position", step_pos, MOVE_STEP_TIME)
+		from_pos = step_pos
 	await tween.finished
 	unit.moved = true
 	state = prev_state
@@ -213,6 +218,7 @@ func do_attack(attacker: Unit, target: Unit) -> void:
 	state = State.ANIMATING
 	board.clear_highlights()
 	var aim := (target.position - attacker.position).normalized()
+	attacker.set_facing(aim)
 	HitFx.spawn(self, attacker.position + Vector2(0, -36) + aim * 16.0, HitFx.Kind.MUZZLE)
 	var tracer := Line2D.new()
 	tracer.width = 3.0

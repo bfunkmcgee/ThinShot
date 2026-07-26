@@ -60,8 +60,12 @@ scripts/
   Board.gd        # grid: iso math, BFS pathfinding, LOS, tile/highlight drawing
   Unit.gd         # combatant: stats, damage, HP pips, damage numbers
   HitFx.gd        # one-shot code-drawn muzzle flash / impact ring
-assets/sprites/   # hand-authored SVG placeholders (scout, goblin, rock)
+assets/sprites/
+  Scout/          # 8-direction pixel-art frames (east.png .. north-west.png)
+  Goblin/         # 8-direction pixel-art frames
+  rock.svg        # hand-authored SVG placeholder
 ```
 
-All art is hand-rolled SVG and all UI/effects are code-drawn — intentionally
-placeholder, meant to be replaced as the game grows.
+Units use 8-direction pixel-art sprites and face along their movement path and
+toward their targets. The rock, board, UI, and effects are code-drawn or SVG
+placeholders.

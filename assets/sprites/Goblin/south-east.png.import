@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://g2sppe03wykb"
-path="res://.godot/imported/goblin.svg-d44430417a00f14a66bf20d7c3008963.ctex"
+uid="uid://dqr2ois5ag1d7"
+path="res://.godot/imported/south-east.png-76f649ec5ddf3c4a52c197326909a24e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/goblin.svg"
-dest_files=["res://.godot/imported/goblin.svg-d44430417a00f14a66bf20d7c3008963.ctex"]
+source_file="res://assets/sprites/Goblin/south-east.png"
+dest_files=["res://.godot/imported/south-east.png-76f649ec5ddf3c4a52c197326909a24e.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false
