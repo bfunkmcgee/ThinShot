@@ -61,11 +61,11 @@ scripts/
   Unit.gd         # combatant: stats, damage, HP pips, damage numbers
   HitFx.gd        # one-shot code-drawn muzzle flash / impact ring
 assets/sprites/
-  Scout/          # 8-direction pixel-art frames (east.png .. north-west.png)
-  Goblin/         # 8-direction pixel-art frames
-  rock.svg        # hand-authored SVG placeholder
+  Scout/          # 8-direction idle frames + aim stance + 9-frame walk cycles
+  Goblin/         # same set for the goblins
+  Environment/    # desert rocks (3 variants)
 ```
 
-Units use 8-direction pixel-art sprites and face along their movement path and
-toward their targets. The rock, board, UI, and effects are code-drawn or SVG
-placeholders.
+All sprites are pixel art generated in Pixel Lab: units have 8-direction idle
+and ready-to-fire stances plus walk cycles, and face along their movement path
+and toward their targets. The board, UI, and combat effects are code-drawn.

@@ -52,6 +52,21 @@ const GOBLIN_AIM_FRAMES: Array[Texture2D] = [
 	preload("res://assets/sprites/Goblin/Standing_Ready_to_fire_stance/rotations/north-east.png"),
 ]
 
+# Compass folder names in the same sector order as the frame arrays above.
+const DIR_NAMES: Array[String] = [
+	"east", "south-east", "south", "south-west",
+	"west", "north-west", "north", "north-east",
+]
+
+# 9-frame walk cycles per direction, loaded once per class. Note the exact
+# folder casing differs between the two sets.
+static var SCOUT_WALK_FRAMES: Array = _load_walk_frames(
+		"res://assets/sprites/Scout/animations/Standing_idle_walk")
+static var GOBLIN_WALK_FRAMES: Array = _load_walk_frames(
+		"res://assets/sprites/Goblin/animations/standing_idle_walk")
+
+const WALK_FPS := 18.0
+
 # Both sets have their figure's feet ~15px below canvas center; 2x scale puts
 # a ~30px figure at ~60px on screen, sitting on the diamond center.
 const SPRITE_SCALE := Vector2(2, 2)
@@ -78,8 +93,12 @@ var acted := false
 var selected := false
 var frames: Array[Texture2D] = SCOUT_FRAMES
 var aim_frames: Array[Texture2D] = SCOUT_AIM_FRAMES
+var walk_frames: Array = SCOUT_WALK_FRAMES
 var facing_sector := 2  # south
 var aiming := false
+var walking := false
+var walk_time := 0.0
+var walk_frame := 0
 
 @onready var sprite: Sprite2D = $Sprite
 
@@ -100,6 +119,7 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		damage = 1
 		frames = SCOUT_FRAMES
 		aim_frames = SCOUT_AIM_FRAMES
+		walk_frames = SCOUT_WALK_FRAMES
 		set_facing(Vector2(1, 0.5))   # face the goblin side (south-east)
 	else:
 		max_hp = 2
@@ -108,8 +128,21 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		damage = 1
 		frames = GOBLIN_FRAMES
 		aim_frames = GOBLIN_AIM_FRAMES
+		walk_frames = GOBLIN_WALK_FRAMES
 		set_facing(Vector2(-1, 0.5))  # face the scout side (south-west)
 	hp = max_hp
+
+
+static func _load_walk_frames(base: String) -> Array:
+	var result: Array = []
+	for dir_name in DIR_NAMES:
+		var dir_frames: Array[Texture2D] = []
+		var i := 0
+		while ResourceLoader.exists("%s/%s/frame_%03d.png" % [base, dir_name, i]):
+			dir_frames.append(load("%s/%s/frame_%03d.png" % [base, dir_name, i]))
+			i += 1
+		result.append(dir_frames)
+	return result
 
 
 ## Turn toward a screen-space direction, keeping the current stance.
@@ -126,7 +159,34 @@ func set_aiming(value: bool) -> void:
 	_update_sprite()
 
 
+func start_walking() -> void:
+	walking = true
+	walk_time = 0.0
+	walk_frame = 0
+	_update_sprite()
+
+
+func stop_walking() -> void:
+	walking = false
+	_update_sprite()
+
+
+func _process(delta: float) -> void:
+	if not walking:
+		return
+	walk_time += delta
+	var idx := int(walk_time * WALK_FPS)
+	if idx != walk_frame:
+		walk_frame = idx
+		_update_sprite()
+
+
 func _update_sprite() -> void:
+	if walking:
+		var dir_frames: Array = walk_frames[facing_sector]
+		if not dir_frames.is_empty():
+			sprite.texture = dir_frames[walk_frame % dir_frames.size()]
+			return
 	sprite.texture = (aim_frames if aiming else frames)[facing_sector]
 
 

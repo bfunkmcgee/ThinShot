@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cq5fo7gvod8fo"
-path="res://.godot/imported/rock.svg-3b2e41e052967f59021a302be65fd01f.ctex"
+uid="uid://gyk2u2ghxbht"
+path="res://.godot/imported/Rock_1.png-386ff12fd7ac5bb2054234ffae1b7854.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/rock.svg"
-dest_files=["res://.godot/imported/rock.svg-3b2e41e052967f59021a302be65fd01f.ctex"]
+source_file="res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_1.png"
+dest_files=["res://.godot/imported/Rock_1.png-386ff12fd7ac5bb2054234ffae1b7854.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

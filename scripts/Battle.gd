@@ -5,10 +5,15 @@ extends Node2D
 enum State { PLAYER_TURN, ANIMATING, ENEMY_TURN, GAME_OVER }
 
 const UNIT_SCENE := preload("res://scenes/Unit.tscn")
-const ROCK_TEXTURE := preload("res://assets/sprites/rock.svg")
+const ROCK_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_1.png"),
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_2.png"),
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_3.png"),
+]
 
-# rock.svg is 64x80 with its ground line at y=72.
-const ROCK_OFFSET := Vector2(0, -32)
+# Rocks are 48x48 with their base ~19px below canvas center; drawn at 2x.
+const ROCK_OFFSET := Vector2(0, -18)
+const ROCK_SCALE := Vector2(2, 2)
 
 const SCOUT_SPAWNS: Array[Vector2i] = [
 	Vector2i(1, 2), Vector2i(1, 4), Vector2i(3, 3),
@@ -17,7 +22,7 @@ const GOBLIN_SPAWNS: Array[Vector2i] = [
 	Vector2i(10, 1), Vector2i(10, 3), Vector2i(10, 5), Vector2i(10, 7),
 ]
 
-const MOVE_STEP_TIME := 0.12
+const MOVE_STEP_TIME := 0.16
 const TRACER_TIME := 0.09
 const AI_BEAT := 0.25
 const AIM_TIME := 0.18  # rifle raised before the shot
@@ -43,8 +48,11 @@ func _ready() -> void:
 			var cell := Vector2i(x, y)
 			if board.is_wall(cell):
 				var rock := Sprite2D.new()
-				rock.texture = ROCK_TEXTURE
+				# Deterministic variant per cell so the layout is stable.
+				rock.texture = ROCK_TEXTURES[(cell.x * 7 + cell.y * 13) % ROCK_TEXTURES.size()]
 				rock.offset = ROCK_OFFSET
+				rock.scale = ROCK_SCALE
+				rock.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 				rock.position = board.cell_to_global(cell)
 				entities_node.add_child(rock)
 	for spawn in SCOUT_SPAWNS:
@@ -201,6 +209,7 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 		return
 	var path := board.reconstruct_path(came_from, dest)
 	unit.cell = dest
+	unit.start_walking()
 	var tween := create_tween()
 	var from_pos := unit.position
 	for step in path:
@@ -209,6 +218,7 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 		tween.tween_property(unit, "position", step_pos, MOVE_STEP_TIME)
 		from_pos = step_pos
 	await tween.finished
+	unit.stop_walking()
 	unit.moved = true
 	state = prev_state
 	if prev_state == State.PLAYER_TURN and selected == unit:
