@@ -27,6 +27,12 @@ const ROCK_TINT := Color("b89e6d")
 const GRID_LINE := Color(0.35, 0.27, 0.15, 0.25)
 const MOVE_HL := Color(0.95, 0.85, 0.3, 0.35)
 const ATTACK_HL := Color(0.9, 0.2, 0.15, 0.4)
+const HOVER_OUTLINE := Color(1.0, 0.97, 0.85, 0.9)
+const PATH_DOT := Color(1.0, 0.95, 0.7, 0.9)
+const AIM_LINE := Color(1.0, 0.45, 0.3, 0.85)
+const ATTACK_HOVER_HL := Color(1.0, 0.35, 0.25, 0.55)
+
+const NO_CELL := Vector2i(-1, -1)
 
 const DIRS: Array[Vector2i] = [
 	Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
@@ -36,6 +42,10 @@ const DIRS: Array[Vector2i] = [
 var move_cells: Dictionary = {}
 # Cells containing enemies the selected unit can shoot.
 var attack_cells: Array[Vector2i] = []
+# Hover feedback state, pushed in by Battle.
+var hover_cell := NO_CELL
+var path_preview: Array[Vector2i] = []
+var aim_from := NO_CELL
 
 
 func set_highlights(moves: Dictionary, attacks: Array[Vector2i]) -> void:
@@ -44,7 +54,19 @@ func set_highlights(moves: Dictionary, attacks: Array[Vector2i]) -> void:
 	queue_redraw()
 
 
+func set_hover(cell: Vector2i, path: Array[Vector2i], p_aim_from: Vector2i) -> void:
+	if cell == hover_cell and path == path_preview and p_aim_from == aim_from:
+		return
+	hover_cell = cell
+	path_preview = path
+	aim_from = p_aim_from
+	queue_redraw()
+
+
 func clear_highlights() -> void:
+	hover_cell = NO_CELL
+	path_preview = []
+	aim_from = NO_CELL
 	set_highlights({}, [])
 
 
@@ -151,3 +173,20 @@ func _draw() -> void:
 		draw_colored_polygon(_diamond(cell), MOVE_HL)
 	for cell in attack_cells:
 		draw_colored_polygon(_diamond(cell), ATTACK_HL)
+	if hover_cell != NO_CELL:
+		if attack_cells.has(hover_cell):
+			draw_colored_polygon(_diamond(hover_cell), ATTACK_HOVER_HL)
+		var outline := _diamond(hover_cell)
+		outline.append(outline[0])
+		draw_polyline(outline, HOVER_OUTLINE, 2.5, true)
+	if not path_preview.is_empty():
+		var centers := PackedVector2Array()
+		for cell in path_preview:
+			centers.append(cell_to_local(cell))
+		if centers.size() >= 2:
+			draw_polyline(centers, PATH_DOT, 2.0, true)
+		for i in centers.size():
+			draw_circle(centers[i], 8.0 if i == centers.size() - 1 else 5.0, PATH_DOT)
+	if aim_from != NO_CELL and hover_cell != NO_CELL:
+		draw_dashed_line(cell_to_local(aim_from), cell_to_local(hover_cell),
+				AIM_LINE, 2.0, 10.0)

@@ -9,6 +9,10 @@ signal died(unit: Unit)
 const TEAM_SCOUT := 0
 const TEAM_GOBLIN := 1
 
+# Sprites are 64x80 with the ground-contact line at texture y=72; centering
+# means offsetting up 32 px puts the feet exactly on the node position.
+const FOOT_OFFSET := Vector2(0, -32)
+
 const PIP_SIZE := Vector2(8, 5)
 const PIP_GAP := 3.0
 const PIP_Y := -80.0
@@ -32,6 +36,10 @@ var selected := false
 @onready var sprite: Sprite2D = $Sprite
 
 
+func _ready() -> void:
+	sprite.offset = FOOT_OFFSET
+
+
 func setup(p_team: int, p_cell: Vector2i, texture: Texture2D) -> void:
 	team = p_team
 	cell = p_cell
@@ -39,10 +47,12 @@ func setup(p_team: int, p_cell: Vector2i, texture: Texture2D) -> void:
 		max_hp = 3
 		move_range = 4
 		attack_range = 4
+		damage = 1
 	else:
 		max_hp = 2
 		move_range = 3
 		attack_range = 3
+		damage = 1
 	hp = max_hp
 	sprite.texture = texture
 
@@ -52,6 +62,7 @@ func is_alive() -> bool:
 
 
 func take_damage(amount: int) -> void:
+	_spawn_damage_number(amount)
 	hp = maxi(hp - amount, 0)
 	queue_redraw()
 	var tween := create_tween()
@@ -61,6 +72,26 @@ func take_damage(amount: int) -> void:
 		died.emit(self)
 		tween.tween_property(self, "modulate:a", 0.0, 0.3)
 		tween.tween_callback(queue_free)
+
+
+## Floating "-N" label. Parented to this unit's parent (not the unit itself)
+## so it outlives a killed unit; its tween is owned by the label for the same
+## reason. z_index lifts it clear of the y-sorted entities.
+func _spawn_damage_number(amount: int) -> void:
+	var label := Label.new()
+	label.text = "-%d" % amount
+	label.add_theme_font_size_override("font_size", 24)
+	label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.3))
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	label.add_theme_constant_override("outline_size", 6)
+	label.z_index = 20
+	get_parent().add_child(label)
+	label.global_position = global_position + Vector2(-12.0, -104.0)
+	var tween := label.create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 40.0, 0.6)
+	tween.tween_property(label, "modulate:a", 0.0, 0.6).set_ease(Tween.EASE_IN)
+	tween.chain().tween_callback(label.queue_free)
 
 
 func set_selected(value: bool) -> void:

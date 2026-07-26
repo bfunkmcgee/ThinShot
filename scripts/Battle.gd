@@ -9,15 +9,11 @@ const SCOUT_TEXTURE := preload("res://assets/sprites/scout.svg")
 const GOBLIN_TEXTURE := preload("res://assets/sprites/goblin.svg")
 const ROCK_TEXTURE := preload("res://assets/sprites/rock.svg")
 
-# Sprites are 64x80 with the ground-contact line at texture y=72;
-# this offset puts their feet on the node position (the diamond center).
-const SPRITE_FOOT_OFFSET := Vector2(0, -32)
-
 const SCOUT_SPAWNS: Array[Vector2i] = [
-	Vector2i(1, 2), Vector2i(1, 4), Vector2i(2, 3),
+	Vector2i(1, 2), Vector2i(1, 4), Vector2i(3, 3),
 ]
 const GOBLIN_SPAWNS: Array[Vector2i] = [
-	Vector2i(10, 1), Vector2i(10, 3), Vector2i(10, 5), Vector2i(9, 6),
+	Vector2i(10, 1), Vector2i(10, 3), Vector2i(10, 5), Vector2i(10, 7),
 ]
 
 const MOVE_STEP_TIME := 0.12
@@ -26,6 +22,7 @@ const AI_BEAT := 0.25
 
 var state := State.PLAYER_TURN
 var selected: Unit = null
+var hover_cell := Board.NO_CELL
 
 @onready var board: Board = $Board
 @onready var entities_node: Node2D = $Entities
@@ -37,13 +34,14 @@ var selected: Unit = null
 
 
 func _ready() -> void:
+	_validate_spawns()
 	for y in Board.SIZE.y:
 		for x in Board.SIZE.x:
 			var cell := Vector2i(x, y)
 			if board.is_wall(cell):
 				var rock := Sprite2D.new()
 				rock.texture = ROCK_TEXTURE
-				rock.offset = SPRITE_FOOT_OFFSET
+				rock.offset = Unit.FOOT_OFFSET
 				rock.position = board.cell_to_global(cell)
 				entities_node.add_child(rock)
 	for spawn in SCOUT_SPAWNS:
@@ -55,11 +53,19 @@ func _ready() -> void:
 	show_banner("DESERT SCOUTS' TURN")
 
 
+func _validate_spawns() -> void:
+	for spawn: Vector2i in SCOUT_SPAWNS + GOBLIN_SPAWNS:
+		if not board.in_bounds(spawn) or board.is_wall(spawn):
+			push_error("Bad spawn cell (wall or out of bounds): %s" % spawn)
+			assert(false, "Bad spawn cell: %s" % spawn)
+
+
 func _spawn_unit(team: int, spawn_cell: Vector2i, texture: Texture2D) -> void:
 	var unit: Unit = UNIT_SCENE.instantiate()
 	entities_node.add_child(unit)
 	unit.setup(team, spawn_cell, texture)
 	unit.position = board.cell_to_global(spawn_cell)
+	unit.died.connect(_on_unit_died)
 
 
 func living_units(team: int) -> Array[Unit]:
@@ -88,6 +94,9 @@ func _cell_blocked(cell: Vector2i) -> bool:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if state != State.PLAYER_TURN:
+		return
+	if event is InputEventMouseMotion:
+		_update_hover(board.global_to_cell(get_global_mouse_position()))
 		return
 	if event.is_action_pressed("end_turn"):
 		end_player_turn()
@@ -157,6 +166,24 @@ func _refresh_highlights() -> void:
 	if moves.is_empty() and attacks.is_empty():
 		selected.set_done(true)
 		deselect()
+		return
+	_update_hover(board.global_to_cell(get_global_mouse_position()))
+
+
+## Derives hover feedback (tile outline, path preview, aim line) from the
+## current selection and pushes it to the Board for rendering.
+func _update_hover(cell: Vector2i) -> void:
+	if not board.in_bounds(cell):
+		cell = Board.NO_CELL
+	hover_cell = cell
+	var path: Array[Vector2i] = []
+	var aim_from := Board.NO_CELL
+	if selected != null and cell != Board.NO_CELL:
+		if board.move_cells.has(cell):
+			path = board.reconstruct_path(board.move_cells, cell)
+		elif board.attack_cells.has(cell):
+			aim_from = selected.cell
+	board.set_hover(cell, path, aim_from)
 
 
 # --- Actions (shared by player and AI) ---------------------------------------
@@ -185,6 +212,8 @@ func do_attack(attacker: Unit, target: Unit) -> void:
 	var prev_state := state
 	state = State.ANIMATING
 	board.clear_highlights()
+	var aim := (target.position - attacker.position).normalized()
+	HitFx.spawn(self, attacker.position + Vector2(0, -36) + aim * 16.0, HitFx.Kind.MUZZLE)
 	var tracer := Line2D.new()
 	tracer.width = 3.0
 	tracer.default_color = Color(1.0, 0.95, 0.6)
@@ -193,11 +222,14 @@ func do_attack(attacker: Unit, target: Unit) -> void:
 	add_child(tracer)
 	await get_tree().create_timer(TRACER_TIME).timeout
 	tracer.queue_free()
+	HitFx.spawn(self, target.position + Vector2(0, -36), HitFx.Kind.IMPACT)
+	_screen_shake()
 	target.take_damage(attacker.damage)
 	attacker.set_done(true)
 	if attacker == selected:
 		deselect()
-	if check_game_over():
+	# A death inside take_damage triggers _on_unit_died -> check_game_over.
+	if state == State.GAME_OVER:
 		return
 	state = prev_state
 
@@ -234,8 +266,10 @@ func run_enemy_turn() -> void:
 		else:
 			var target := _nearest(goblin.cell, scouts)
 			var reach := board.flood_fill(goblin.cell, goblin.move_range, _cell_blocked)
-			var dest := _best_ai_dest(reach.keys(), goblin.attack_range, scouts, target.cell)
-			if board.in_bounds(dest):
+			var candidates: Array = reach.keys()
+			candidates.append(goblin.cell)  # staying put is a valid choice
+			var dest := _best_ai_dest(goblin, candidates, scouts, target.cell)
+			if board.in_bounds(dest) and dest != goblin.cell:
 				await do_move(goblin, dest)
 			shootable = _shootable_from(goblin.cell, goblin.attack_range, living_units(Unit.TEAM_SCOUT))
 			if goblin.is_alive() and not shootable.is_empty():
@@ -262,14 +296,28 @@ func _nearest(from_cell: Vector2i, candidates: Array[Unit]) -> Unit:
 	return best
 
 
-## Best move destination for an AI unit: any cell it could shoot a scout from
-## beats every cell it couldn't, then nearer the chase target breaks ties.
-func _best_ai_dest(cells: Array, attack_range: int, scouts: Array[Unit], chase_cell: Vector2i) -> Vector2i:
+## Number of living scouts with range and line of sight on this cell.
+func _threat_at(cell: Vector2i, scouts: Array[Unit]) -> int:
+	var count := 0
+	for scout in scouts:
+		if Board.manhattan(cell, scout.cell) <= scout.attack_range \
+				and board.has_line_of_sight(scout.cell, cell):
+			count += 1
+	return count
+
+
+## Best move destination for an AI unit. A cell it can shoot a scout from
+## beats every cell it can't; exposure to scout fire costs a little when
+## healthy and a lot when wounded (so 1 HP goblins with no shot retreat to
+## cover); nearer the chase target breaks remaining ties.
+func _best_ai_dest(goblin: Unit, cells: Array, scouts: Array[Unit], chase_cell: Vector2i) -> Vector2i:
+	var threat_weight := 50 if goblin.hp <= 1 else 3
 	var best := Vector2i(-1, -1)
 	var best_score := 999999
 	for cell: Vector2i in cells:
 		var score := Board.manhattan(cell, chase_cell)
-		if not _shootable_from(cell, attack_range, scouts).is_empty():
+		score += threat_weight * _threat_at(cell, scouts)
+		if not _shootable_from(cell, goblin.attack_range, scouts).is_empty():
 			score -= 1000
 		if score < best_score:
 			best_score = score
@@ -279,7 +327,13 @@ func _best_ai_dest(cells: Array, attack_range: int, scouts: Array[Unit], chase_c
 
 # --- Win / lose --------------------------------------------------------------
 
+func _on_unit_died(_unit: Unit) -> void:
+	check_game_over()
+
+
 func check_game_over() -> bool:
+	if state == State.GAME_OVER:
+		return true
 	if living_units(Unit.TEAM_GOBLIN).is_empty():
 		_show_game_over("DESERT SCOUTS WIN")
 		return true
@@ -299,8 +353,24 @@ func _on_restart() -> void:
 	get_tree().reload_current_scene()
 
 
+# Fixed offsets keep the shake deterministic and always settle back to zero.
+const SHAKE_OFFSETS: Array[Vector2] = [
+	Vector2(4, -2), Vector2(-4, 2), Vector2(3, 1), Vector2(-2, -1), Vector2.ZERO,
+]
+
+
+func _screen_shake() -> void:
+	var tween := create_tween()
+	for off in SHAKE_OFFSETS:
+		tween.tween_property(self, "position", off, 0.03)
+
+
 func show_banner(text: String) -> void:
 	turn_banner.text = text
 	turn_banner.modulate.a = 0.0
+	turn_banner.pivot_offset = turn_banner.size / 2.0
+	turn_banner.scale = Vector2(1.25, 1.25)
 	var tween := create_tween()
 	tween.tween_property(turn_banner, "modulate:a", 1.0, 0.2)
+	tween.parallel().tween_property(turn_banner, "scale", Vector2.ONE, 0.25) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

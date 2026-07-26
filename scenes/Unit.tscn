@@ -6,4 +6,3 @@
 script = ExtResource("1_unit")
 
 [node name="Sprite" type="Sprite2D" parent="."]
-offset = Vector2(0, -32)
