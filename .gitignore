@@ -1,0 +1,26 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Godot-specific import/cache leftovers (Godot 3 style, harmless to keep)
+.import/
+
+# Exported builds
+/build/
+/export/
+*.exe
+*.pck
+*.zip
+*.dmg
+*.apk
+*.aab
+
+# Mono/.NET (only relevant if you switch to the C# build)
+.mono/
+data_*/
+*.csproj.user
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
