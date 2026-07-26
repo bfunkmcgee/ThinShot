@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://cthinshotunit01"]
+[gd_scene format=3 uid="uid://3ra1etnhfjsi"]
 
 [ext_resource type="Script" path="res://scripts/Unit.gd" id="1_unit"]
 
@@ -6,3 +6,4 @@
 script = ExtResource("1_unit")
 
 [node name="Sprite" type="Sprite2D" parent="."]
+offset = Vector2(0, -32)

@@ -11,7 +11,7 @@ const TEAM_GOBLIN := 1
 
 const PIP_SIZE := Vector2(8, 5)
 const PIP_GAP := 3.0
-const PIP_Y := -34.0
+const PIP_Y := -80.0
 const PIP_FULL := Color("58c04a")
 const PIP_EMPTY := Color(0.15, 0.15, 0.15, 0.7)
 const RING_COLOR := Color("ffd94a")
@@ -84,7 +84,10 @@ func start_turn() -> void:
 
 func _draw() -> void:
 	if selected:
-		draw_arc(Vector2.ZERO, 28.0, 0.0, TAU, 40, RING_COLOR, 2.5, true)
+		# Ground ellipse at the unit's feet, matching the isometric 2:1 view.
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.5))
+		draw_arc(Vector2.ZERO, 38.0, 0.0, TAU, 48, RING_COLOR, 3.0, true)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	var total_width := max_hp * PIP_SIZE.x + (max_hp - 1) * PIP_GAP
 	var start_x := -total_width / 2.0
 	for i in max_hp:

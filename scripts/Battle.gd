@@ -7,6 +7,11 @@ enum State { PLAYER_TURN, ANIMATING, ENEMY_TURN, GAME_OVER }
 const UNIT_SCENE := preload("res://scenes/Unit.tscn")
 const SCOUT_TEXTURE := preload("res://assets/sprites/scout.svg")
 const GOBLIN_TEXTURE := preload("res://assets/sprites/goblin.svg")
+const ROCK_TEXTURE := preload("res://assets/sprites/rock.svg")
+
+# Sprites are 64x80 with the ground-contact line at texture y=72;
+# this offset puts their feet on the node position (the diamond center).
+const SPRITE_FOOT_OFFSET := Vector2(0, -32)
 
 const SCOUT_SPAWNS: Array[Vector2i] = [
 	Vector2i(1, 2), Vector2i(1, 4), Vector2i(2, 3),
@@ -23,7 +28,7 @@ var state := State.PLAYER_TURN
 var selected: Unit = null
 
 @onready var board: Board = $Board
-@onready var units_node: Node2D = $Units
+@onready var entities_node: Node2D = $Entities
 @onready var turn_banner: Label = $UI/TurnBanner
 @onready var end_turn_button: Button = $UI/EndTurnButton
 @onready var game_over_panel: ColorRect = $UI/GameOver
@@ -32,6 +37,15 @@ var selected: Unit = null
 
 
 func _ready() -> void:
+	for y in Board.SIZE.y:
+		for x in Board.SIZE.x:
+			var cell := Vector2i(x, y)
+			if board.is_wall(cell):
+				var rock := Sprite2D.new()
+				rock.texture = ROCK_TEXTURE
+				rock.offset = SPRITE_FOOT_OFFSET
+				rock.position = board.cell_to_global(cell)
+				entities_node.add_child(rock)
 	for spawn in SCOUT_SPAWNS:
 		_spawn_unit(Unit.TEAM_SCOUT, spawn, SCOUT_TEXTURE)
 	for spawn in GOBLIN_SPAWNS:
@@ -43,14 +57,14 @@ func _ready() -> void:
 
 func _spawn_unit(team: int, spawn_cell: Vector2i, texture: Texture2D) -> void:
 	var unit: Unit = UNIT_SCENE.instantiate()
-	units_node.add_child(unit)
+	entities_node.add_child(unit)
 	unit.setup(team, spawn_cell, texture)
 	unit.position = board.cell_to_global(spawn_cell)
 
 
 func living_units(team: int) -> Array[Unit]:
 	var result: Array[Unit] = []
-	for child in units_node.get_children():
+	for child in entities_node.get_children():
 		var unit := child as Unit
 		if unit != null and unit.is_alive():
 			if unit.team == team:
@@ -59,7 +73,7 @@ func living_units(team: int) -> Array[Unit]:
 
 
 func unit_at(cell: Vector2i) -> Unit:
-	for child in units_node.get_children():
+	for child in entities_node.get_children():
 		var unit := child as Unit
 		if unit != null and unit.is_alive() and unit.cell == cell:
 			return unit
@@ -173,8 +187,8 @@ func do_attack(attacker: Unit, target: Unit) -> void:
 	var tracer := Line2D.new()
 	tracer.width = 3.0
 	tracer.default_color = Color(1.0, 0.95, 0.6)
-	tracer.add_point(attacker.position)
-	tracer.add_point(target.position)
+	tracer.add_point(attacker.position + Vector2(0, -36))
+	tracer.add_point(target.position + Vector2(0, -36))
 	add_child(tracer)
 	await get_tree().create_timer(TRACER_TIME).timeout
 	tracer.queue_free()

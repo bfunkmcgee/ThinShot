@@ -1,33 +1,37 @@
-<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-  <!-- Goblin Rust Choir chorister: hunched green goblin, rust gear, slung horn -->
-  <!-- ground shadow -->
-  <ellipse cx="32" cy="40" rx="16" ry="12" fill="#000000" fill-opacity="0.22"/>
-  <!-- rusty horn/trumpet slung across the back: bell lower-left -->
-  <g transform="rotate(38 32 40)">
-    <rect x="29.5" y="26" width="5" height="22" rx="2.5" fill="#8a4a22"/>
-    <circle cx="32" cy="50" r="7" fill="#a35a2a"/>
-    <circle cx="32" cy="50" r="4" fill="#6e3a18"/>
+<svg width="64" height="80" viewBox="0 0 64 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Goblin Rust Choir chorister, isometric 3/4 hunched view, facing left. Ground line y=72. -->
+  <ellipse cx="32" cy="72" rx="19" ry="8" fill="#000000" fill-opacity="0.25"/>
+  <!-- bowed legs -->
+  <rect x="23" y="57" width="6" height="13" rx="2.5" fill="#5c8632"/>
+  <rect x="35" y="57" width="6" height="13" rx="2.5" fill="#527a2c"/>
+  <!-- bare feet -->
+  <rect x="19" y="66" width="10" height="6" rx="3" fill="#6a9a3a"/>
+  <rect x="35" y="66" width="10" height="6" rx="3" fill="#6a9a3a"/>
+  <!-- rusty horn/trumpet slung on the back, bell up-right -->
+  <g transform="rotate(24 44 34)">
+    <rect x="41.5" y="18" width="5" height="26" rx="2.5" fill="#8a4a22"/>
+    <circle cx="44" cy="16" r="7" fill="#a35a2a"/>
+    <circle cx="44" cy="16" r="4" fill="#6e3a18"/>
   </g>
-  <!-- hunched rust-armored back -->
-  <ellipse cx="32" cy="38" rx="15" ry="11" fill="#7d5a30"/>
-  <ellipse cx="32" cy="36" rx="12.5" ry="9" fill="#a35a2a"/>
-  <!-- pauldrons -->
-  <circle cx="19" cy="33" r="6" fill="#7c431e"/>
-  <circle cx="45" cy="33" r="6" fill="#7c431e"/>
-  <!-- clawed hands -->
-  <circle cx="16" cy="41" r="3" fill="#6a9a3a"/>
-  <circle cx="48" cy="41" r="3" fill="#6a9a3a"/>
-  <!-- big pointed ears (key silhouette) -->
-  <path d="M 22 24 L 6 14 L 18 30 Z" fill="#5c8632"/>
-  <path d="M 42 24 L 58 14 L 46 30 Z" fill="#5c8632"/>
-  <path d="M 21 25 L 11 18.5 L 19 28.5 Z" fill="#79a94b"/>
-  <path d="M 43 25 L 53 18.5 L 45 28.5 Z" fill="#79a94b"/>
-  <!-- head, thrust forward (up) for hunched 3/4 view -->
-  <circle cx="32" cy="25" r="10" fill="#6a9a3a"/>
-  <circle cx="32" cy="23.5" r="7.5" fill="#7bab48"/>
-  <!-- yellow eyes glaring forward -->
-  <circle cx="28" cy="19.5" r="2.2" fill="#e8c832"/>
-  <circle cx="36" cy="19.5" r="2.2" fill="#e8c832"/>
-  <circle cx="28" cy="19" r="0.9" fill="#3a3210"/>
-  <circle cx="36" cy="19" r="0.9" fill="#3a3210"/>
+  <!-- hunched rust-armored torso -->
+  <ellipse cx="33" cy="45" rx="16" ry="14" fill="#a35a2a"/>
+  <ellipse cx="38" cy="41" rx="11" ry="9" fill="#7c431e"/>
+  <!-- hanging arms with claws -->
+  <rect x="15" y="42" width="6" height="16" rx="3" fill="#5c8632"/>
+  <rect x="44" y="44" width="6" height="15" rx="3" fill="#527a2c"/>
+  <circle cx="18" cy="60" r="3.6" fill="#79a94b"/>
+  <circle cx="47" cy="61" r="3.6" fill="#79a94b"/>
+  <!-- big pointed ears -->
+  <path d="M 20 20 L 3 8 L 17 28 Z" fill="#5c8632"/>
+  <path d="M 33 16 L 50 2 L 38 24 Z" fill="#5c8632"/>
+  <path d="M 19.5 21 L 9 13.5 L 17 26 Z" fill="#79a94b"/>
+  <path d="M 33.5 17 L 44 8 L 37 22 Z" fill="#79a94b"/>
+  <!-- head thrust forward-left, hunched -->
+  <circle cx="27" cy="24" r="10.5" fill="#6a9a3a"/>
+  <circle cx="24.5" cy="26" r="7.5" fill="#7bab48"/>
+  <!-- glaring yellow eyes, looking left -->
+  <circle cx="20.5" cy="25" r="2.3" fill="#e8c832"/>
+  <circle cx="28" cy="27" r="2.3" fill="#e8c832"/>
+  <circle cx="19.8" cy="25.5" r="1.0" fill="#3a3210"/>
+  <circle cx="27.3" cy="27.5" r="1.0" fill="#3a3210"/>
 </svg>
