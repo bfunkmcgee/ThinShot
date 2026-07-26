@@ -28,9 +28,16 @@ const AI_BEAT := 0.25
 const AIM_TIME := 0.18  # rifle raised before the shot
 const LOWER_TIME := 0.12  # rifle held after the shot
 
+# Ignore end-turn requests this soon after control returns to the player -
+# they are almost always leftover E-mashing/clicking from the enemy turn.
+const END_TURN_GRACE_MS := 350
+
 var state := State.PLAYER_TURN
 var selected: Unit = null
 var hover_cell := Board.NO_CELL
+var turn_number := 1
+var enemy_turn_running := false
+var player_turn_ready_msec := 0
 
 @onready var board: Board = $Board
 @onready var entities_node: Node2D = $Entities
@@ -62,6 +69,8 @@ func _ready() -> void:
 	end_turn_button.pressed.connect(end_player_turn)
 	restart_button.pressed.connect(_on_restart)
 	show_banner("DESERT SCOUTS' TURN")
+	player_turn_ready_msec = Time.get_ticks_msec()
+	print("[ThinShot] player turn 1 begins")
 
 
 func _validate_spawns() -> void:
@@ -259,22 +268,30 @@ func do_attack(attacker: Unit, target: Unit) -> void:
 # --- Turn flow ---------------------------------------------------------------
 
 func end_player_turn() -> void:
-	if state != State.PLAYER_TURN:
+	if state != State.PLAYER_TURN or enemy_turn_running:
 		return
+	if Time.get_ticks_msec() - player_turn_ready_msec < END_TURN_GRACE_MS:
+		return
+	enemy_turn_running = true
 	deselect()
 	state = State.ENEMY_TURN
+	print("[ThinShot] enemy turn %d begins" % turn_number)
 	show_banner("RUST CHOIR'S TURN")
 	end_turn_button.disabled = true
 	await run_enemy_turn()
+	enemy_turn_running = false
 	if state == State.GAME_OVER:
 		return
 	# Reset both teams: scouts for the new player turn, goblins so they don't
 	# sit dimmed through it looking like they already acted.
 	for unit in living_units(Unit.TEAM_SCOUT) + living_units(Unit.TEAM_GOBLIN):
 		unit.start_turn()
+	turn_number += 1
+	print("[ThinShot] player turn %d begins" % turn_number)
 	end_turn_button.disabled = false
 	show_banner("DESERT SCOUTS' TURN")
 	state = State.PLAYER_TURN
+	player_turn_ready_msec = Time.get_ticks_msec()
 
 
 func run_enemy_turn() -> void:
