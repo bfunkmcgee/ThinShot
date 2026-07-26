@@ -103,6 +103,7 @@ var walk_frames: Array = SCOUT_WALK_FRAMES
 var idle_frames: Array = SCOUT_IDLE_FRAMES
 var facing_sector := 2  # south
 var aiming := false
+var overwatching := false
 var walking := false
 var walk_time := 0.0
 var walk_frame := 0
@@ -170,6 +171,13 @@ func set_facing(screen_dir: Vector2) -> void:
 func set_aiming(value: bool) -> void:
 	aiming = value
 	_update_sprite()
+
+
+## Enter/leave overwatch: rifle stays raised, marker drawn above the pips.
+func set_overwatch(value: bool) -> void:
+	overwatching = value
+	set_aiming(value)
+	queue_redraw()
 
 
 func start_walking() -> void:
@@ -268,6 +276,8 @@ func start_turn() -> void:
 	moved = false
 	acted = false
 	modulate = Color.WHITE
+	if overwatching:
+		set_overwatch(false)  # unfired overwatch expires
 	queue_redraw()
 
 
@@ -284,3 +294,9 @@ func _draw() -> void:
 		var rect := Rect2(Vector2(start_x + i * (PIP_SIZE.x + PIP_GAP), PIP_Y), PIP_SIZE)
 		draw_rect(rect, PIP_FULL if i < hp else PIP_EMPTY)
 		draw_rect(rect, Color(0, 0, 0, 0.5), false, 1.0)
+	if overwatching:
+		# Small amber diamond above the pips: "this unit is watching".
+		var m := Vector2(0, PIP_Y - 9.0)
+		draw_colored_polygon(PackedVector2Array([
+			m + Vector2(0, -5), m + Vector2(5, 0), m + Vector2(0, 5), m + Vector2(-5, 0),
+		]), Color("ffb84a"))

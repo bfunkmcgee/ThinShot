@@ -21,6 +21,9 @@ A 12×8 isometric grid strewn with rocks. You outrange them; they outnumber you.
 - **Left-click** — select a scout / move to a yellow-highlighted tile / shoot a
   red-highlighted enemy
 - **Hover** — tile outline, movement path preview, dashed aim line on targets
+- **W** or the **Overwatch** button — put the selected scout on overwatch
+  (consumes its attack; it fires automatically at the first goblin that moves
+  through its line of sight on the enemy turn)
 - **Right-click / Esc** — cancel selection
 - **E** or the **End Turn** button — end your turn
 
@@ -30,8 +33,13 @@ A 12×8 isometric grid strewn with rocks. You outrange them; they outnumber you.
   activation (you can move-then-shoot, but not shoot-then-move).
 - **Rocks block movement *and* line of sight** — no shooting through cover, for
   either side.
+- **Overwatch** works for both sides: an overwatching unit stands with rifle
+  raised (amber marker above its HP) and takes one free reaction shot at the
+  first enemy that moves through its range and line of sight. Unfired
+  overwatch expires at the owner's next turn.
 - Goblins chase, seek firing positions, avoid open ground lightly, and retreat
-  to cover when wounded with no shot available.
+  to cover when wounded with no shot available; a goblin that holds position
+  with no shot goes on overwatch to cover its lane.
 - Win by destroying all goblins; lose if all scouts fall. Restart from the
   result screen.
 

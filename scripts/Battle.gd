@@ -43,6 +43,7 @@ var player_turn_ready_msec := 0
 @onready var entities_node: Node2D = $Entities
 @onready var turn_banner: Label = $UI/TurnBanner
 @onready var end_turn_button: Button = $UI/EndTurnButton
+@onready var overwatch_button: Button = $UI/OverwatchButton
 @onready var game_over_panel: ColorRect = $UI/GameOver
 @onready var result_label: Label = $UI/GameOver/ResultLabel
 @onready var restart_button: Button = $UI/GameOver/RestartButton
@@ -67,6 +68,7 @@ func _ready() -> void:
 	for spawn in GOBLIN_SPAWNS:
 		_spawn_unit(Unit.TEAM_GOBLIN, spawn)
 	end_turn_button.pressed.connect(end_player_turn)
+	overwatch_button.pressed.connect(_try_overwatch)
 	restart_button.pressed.connect(_on_restart)
 	show_banner("DESERT SCOUTS' TURN")
 	player_turn_ready_msec = Time.get_ticks_msec()
@@ -121,6 +123,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("end_turn"):
 		end_player_turn()
 		return
+	if event.is_action_pressed("overwatch"):
+		_try_overwatch()
+		return
 	if event.is_action_pressed("cancel"):
 		deselect()
 		return
@@ -167,6 +172,17 @@ func deselect() -> void:
 		selected.set_selected(false)
 		selected = null
 	board.clear_highlights()
+
+
+## Put the selected scout on overwatch, consuming its activation.
+func _try_overwatch() -> void:
+	if state != State.PLAYER_TURN or selected == null or selected.acted:
+		return
+	var scout := selected
+	deselect()
+	scout.set_done(true)
+	scout.set_overwatch(true)
+	print("[ThinShot] scout at %s goes on overwatch" % scout.cell)
 
 
 func _refresh_highlights() -> void:
@@ -217,16 +233,32 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 		state = prev_state
 		return
 	var path := board.reconstruct_path(came_from, dest)
-	unit.cell = dest
 	unit.start_walking()
-	var tween := create_tween()
 	var from_pos := unit.position
 	for step in path:
 		var step_pos := board.cell_to_global(step)
-		tween.tween_callback(unit.set_facing.bind(step_pos - from_pos))
+		unit.set_facing(step_pos - from_pos)
+		var tween := create_tween()
 		tween.tween_property(unit, "position", step_pos, MOVE_STEP_TIME)
+		await tween.finished
+		unit.cell = step
 		from_pos = step_pos
-	await tween.finished
+		var watchers := _overwatchers_against(unit)
+		if not watchers.is_empty():
+			unit.stop_walking()
+			for watcher in watchers:
+				if not unit.is_alive():
+					break
+				watcher.set_overwatch(false)  # consumed, even if the shot kills
+				print("[ThinShot]   overwatch! %s fires at %s" % [watcher.cell, unit.cell])
+				await _resolve_shot(watcher, unit, false)
+			if not unit.is_alive() or state == State.GAME_OVER:
+				if selected == unit:
+					deselect()
+				if state != State.GAME_OVER:
+					state = prev_state
+				return
+			unit.start_walking()
 	unit.stop_walking()
 	unit.moved = true
 	state = prev_state
@@ -238,10 +270,24 @@ func do_attack(attacker: Unit, target: Unit) -> void:
 	var prev_state := state
 	state = State.ANIMATING
 	board.clear_highlights()
+	await _resolve_shot(attacker, target, true)
+	attacker.set_done(true)
+	if attacker == selected:
+		deselect()
+	# A death inside take_damage triggers _on_unit_died -> check_game_over.
+	if state == State.GAME_OVER:
+		return
+	state = prev_state
+
+
+## The shot itself: face, (optionally) raise and hold, fire effects, damage,
+## lower. Reaction shots skip the aim beat - the rifle is already up.
+func _resolve_shot(attacker: Unit, target: Unit, with_aim_beat: bool) -> void:
 	var aim := (target.position - attacker.position).normalized()
 	attacker.set_facing(aim)
-	attacker.set_aiming(true)
-	await get_tree().create_timer(AIM_TIME).timeout
+	if with_aim_beat:
+		attacker.set_aiming(true)
+		await get_tree().create_timer(AIM_TIME).timeout
 	HitFx.spawn(self, attacker.position + Vector2(0, -36) + aim * 16.0, HitFx.Kind.MUZZLE)
 	var tracer := Line2D.new()
 	tracer.width = 3.0
@@ -256,13 +302,22 @@ func do_attack(attacker: Unit, target: Unit) -> void:
 	target.take_damage(attacker.damage)
 	await get_tree().create_timer(LOWER_TIME).timeout
 	attacker.set_aiming(false)
-	attacker.set_done(true)
-	if attacker == selected:
-		deselect()
-	# A death inside take_damage triggers _on_unit_died -> check_game_over.
-	if state == State.GAME_OVER:
-		return
-	state = prev_state
+
+
+## Living enemies of the mover that are on overwatch with range and LOS
+## on the mover's current cell.
+func _overwatchers_against(mover: Unit) -> Array[Unit]:
+	var result: Array[Unit] = []
+	for child in entities_node.get_children():
+		var watcher := child as Unit
+		if watcher == null or not watcher.is_alive() or not watcher.overwatching:
+			continue
+		if watcher.team == mover.team:
+			continue
+		if Board.manhattan(watcher.cell, mover.cell) <= watcher.attack_range \
+				and board.has_line_of_sight(watcher.cell, mover.cell):
+			result.append(watcher)
+	return result
 
 
 # --- Turn flow ---------------------------------------------------------------
@@ -278,17 +333,26 @@ func end_player_turn() -> void:
 	print("[ThinShot] enemy turn %d begins" % turn_number)
 	show_banner("RUST CHOIR'S TURN")
 	end_turn_button.disabled = true
+	overwatch_button.disabled = true
+	# Goblins refresh at the start of THEIR turn (expires last turn's
+	# unfired goblin overwatch at the right moment).
+	for goblin in living_units(Unit.TEAM_GOBLIN):
+		goblin.start_turn()
 	await run_enemy_turn()
 	enemy_turn_running = false
 	if state == State.GAME_OVER:
 		return
-	# Reset both teams: scouts for the new player turn, goblins so they don't
-	# sit dimmed through it looking like they already acted.
-	for unit in living_units(Unit.TEAM_SCOUT) + living_units(Unit.TEAM_GOBLIN):
+	# Scouts refresh for the new player turn (expiring unfired overwatch);
+	# goblins just undim so they don't look pre-acted - but keep any
+	# overwatch stance they set up, since it stays armed through this turn.
+	for unit in living_units(Unit.TEAM_SCOUT):
 		unit.start_turn()
+	for goblin in living_units(Unit.TEAM_GOBLIN):
+		goblin.set_done(false)
 	turn_number += 1
 	print("[ThinShot] player turn %d begins" % turn_number)
 	end_turn_button.disabled = false
+	overwatch_button.disabled = false
 	show_banner("DESERT SCOUTS' TURN")
 	state = State.PLAYER_TURN
 	player_turn_ready_msec = Time.get_ticks_msec()
@@ -316,7 +380,8 @@ func run_enemy_turn() -> void:
 			var candidates: Array = reach.keys()
 			candidates.append(goblin.cell)  # staying put is a valid choice
 			var dest := _best_ai_dest(goblin, candidates, scouts, target.cell)
-			if board.in_bounds(dest) and dest != goblin.cell:
+			var moved_now := board.in_bounds(dest) and dest != goblin.cell
+			if moved_now:
 				await do_move(goblin, dest)
 			shootable = _shootable_from(goblin.cell, goblin.attack_range, living_units(Unit.TEAM_SCOUT))
 			var shoots := goblin.is_alive() and not shootable.is_empty()
@@ -325,6 +390,11 @@ func run_enemy_turn() -> void:
 					", shoots" if shoots else ""])
 			if shoots:
 				await do_attack(goblin, _nearest(goblin.cell, shootable))
+			elif not moved_now and goblin.is_alive():
+				# Dug in with no shot: cover the approach instead.
+				goblin.set_overwatch(true)
+				print("[ThinShot]   goblin %d/%d holds %s on overwatch" % [
+						acted, squad.size(), goblin.cell])
 		goblin.set_selected(false)
 		if state == State.GAME_OVER:
 			return
