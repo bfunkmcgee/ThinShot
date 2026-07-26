@@ -258,7 +258,9 @@ func end_player_turn() -> void:
 	await run_enemy_turn()
 	if state == State.GAME_OVER:
 		return
-	for unit in living_units(Unit.TEAM_SCOUT):
+	# Reset both teams: scouts for the new player turn, goblins so they don't
+	# sit dimmed through it looking like they already acted.
+	for unit in living_units(Unit.TEAM_SCOUT) + living_units(Unit.TEAM_GOBLIN):
 		unit.start_turn()
 	end_turn_button.disabled = false
 	show_banner("DESERT SCOUTS' TURN")
