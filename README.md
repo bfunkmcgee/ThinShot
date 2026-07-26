@@ -64,6 +64,7 @@ assets/sprites/
   Scout/          # 8-direction idle frames + aim stance + 9-frame walk cycles
   Goblin/         # same set for the goblins
   Environment/    # desert rocks (3 variants)
+assets/Tiles/     # desert floor tileset (10 x 128x60 diamond variants)
 ```
 
 All sprites are pixel art generated in Pixel Lab: units have 8-direction idle

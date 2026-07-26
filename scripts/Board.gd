@@ -5,8 +5,8 @@ extends Node2D
 ## reachability. Cells are abstract Vector2i; only this script knows the
 ## 2:1 diamond projection. Highlight state is pushed in by Battle.gd.
 
-const TILE_W := 96
-const TILE_H := 48
+const TILE_W := 128
+const TILE_H := 60
 const SIZE := Vector2i(12, 8)
 
 # '#' = impassable rock, '.' = sand.
@@ -21,9 +21,34 @@ const MAP: Array[String] = [
 	"............",
 ]
 
-const SAND_A := Color("d8c08c")
-const SAND_B := Color("cdb37e")
-const ROCK_TINT := Color("b89e6d")
+const FLOOR_SHEET := preload(
+		"res://assets/Tiles/Environments/Desert/Cracked_Desert_floor.png")
+
+# Measured source regions in the floor sheet: 128x60 diamond faces on a
+# 129px stride, rows at y 34/163/292. The plant tile (index 6) is 6px
+# taller; its extra height hangs above the diamond when drawn.
+const TILE_REGIONS: Array[Rect2] = [
+	Rect2(0, 34, 128, 60),    # 0 cracked plain
+	Rect2(129, 34, 128, 60),  # 1 cracked plain
+	Rect2(258, 34, 128, 60),  # 2 fine cracks
+	Rect2(387, 34, 128, 60),  # 3 dense cracks
+	Rect2(0, 163, 128, 60),   # 4 crater (accent)
+	Rect2(129, 163, 128, 60), # 5 mottled
+	Rect2(258, 157, 128, 66), # 6 plant tuft (accent, taller)
+	Rect2(387, 163, 128, 60), # 7 log debris (accent)
+	Rect2(0, 292, 128, 60),   # 8 sandy waves
+	Rect2(129, 292, 128, 60), # 9 sandy cracks
+]
+
+# Weighted variant pool: plain floors dominate, accents stay rare.
+const TILE_POOL: Array[int] = [
+	0, 1, 2, 3, 8, 9,
+	0, 1, 2, 3, 8, 9,
+	0, 1, 2, 3, 8, 9,
+	5, 5, 5,
+	4, 6, 7,
+]
+
 const GRID_LINE := Color(0.35, 0.27, 0.15, 0.25)
 const MOVE_HL := Color(0.95, 0.85, 0.3, 0.35)
 const ATTACK_HL := Color(0.9, 0.2, 0.15, 0.4)
@@ -157,17 +182,23 @@ func _diamond(cell: Vector2i) -> PackedVector2Array:
 	])
 
 
+func _tile_variant(cell: Vector2i) -> int:
+	return TILE_POOL[absi(cell.x * 92821 + cell.y * 31337) % TILE_POOL.size()]
+
+
 func _draw() -> void:
 	for y in SIZE.y:
 		for x in SIZE.x:
 			var cell := Vector2i(x, y)
-			var color := SAND_A if (x + y) % 2 == 0 else SAND_B
-			if is_wall(cell):
-				color = ROCK_TINT
-			var points := _diamond(cell)
-			draw_colored_polygon(points, color)
-			var outline := points
-			outline.append(points[0])
+			var region := TILE_REGIONS[_tile_variant(cell)]
+			var c := cell_to_local(cell)
+			var dest := Rect2(
+				c.x - TILE_W / 2.0,
+				c.y - TILE_H / 2.0 - (region.size.y - TILE_H),
+				region.size.x, region.size.y)
+			draw_texture_rect_region(FLOOR_SHEET, dest, region)
+			var outline := _diamond(cell)
+			outline.append(outline[0])
 			draw_polyline(outline, GRID_LINE, 1.5, true)
 	for cell: Vector2i in move_cells:
 		draw_colored_polygon(_diamond(cell), MOVE_HL)
