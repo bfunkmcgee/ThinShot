@@ -31,6 +31,26 @@ const GOBLIN_FRAMES: Array[Texture2D] = [
 	preload("res://assets/sprites/Goblin/north.png"),
 	preload("res://assets/sprites/Goblin/north-east.png"),
 ]
+const SCOUT_AIM_FRAMES: Array[Texture2D] = [
+	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/east.png"),
+	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/south-east.png"),
+	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/south.png"),
+	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/south-west.png"),
+	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/west.png"),
+	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/north-west.png"),
+	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/north.png"),
+	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/north-east.png"),
+]
+const GOBLIN_AIM_FRAMES: Array[Texture2D] = [
+	preload("res://assets/sprites/Goblin/Standing_Ready_to_fire_stance/rotations/east.png"),
+	preload("res://assets/sprites/Goblin/Standing_Ready_to_fire_stance/rotations/south-east.png"),
+	preload("res://assets/sprites/Goblin/Standing_Ready_to_fire_stance/rotations/south.png"),
+	preload("res://assets/sprites/Goblin/Standing_Ready_to_fire_stance/rotations/south-west.png"),
+	preload("res://assets/sprites/Goblin/Standing_Ready_to_fire_stance/rotations/west.png"),
+	preload("res://assets/sprites/Goblin/Standing_Ready_to_fire_stance/rotations/north-west.png"),
+	preload("res://assets/sprites/Goblin/Standing_Ready_to_fire_stance/rotations/north.png"),
+	preload("res://assets/sprites/Goblin/Standing_Ready_to_fire_stance/rotations/north-east.png"),
+]
 
 # Both sets have their figure's feet ~15px below canvas center; 2x scale puts
 # a ~30px figure at ~60px on screen, sitting on the diamond center.
@@ -57,6 +77,9 @@ var moved := false
 var acted := false
 var selected := false
 var frames: Array[Texture2D] = SCOUT_FRAMES
+var aim_frames: Array[Texture2D] = SCOUT_AIM_FRAMES
+var facing_sector := 2  # south
+var aiming := false
 
 @onready var sprite: Sprite2D = $Sprite
 
@@ -76,6 +99,7 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		attack_range = 4
 		damage = 1
 		frames = SCOUT_FRAMES
+		aim_frames = SCOUT_AIM_FRAMES
 		set_facing(Vector2(1, 0.5))   # face the goblin side (south-east)
 	else:
 		max_hp = 2
@@ -83,16 +107,27 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		attack_range = 3
 		damage = 1
 		frames = GOBLIN_FRAMES
+		aim_frames = GOBLIN_AIM_FRAMES
 		set_facing(Vector2(-1, 0.5))  # face the scout side (south-west)
 	hp = max_hp
 
 
-## Swap to the frame matching a screen-space facing direction.
+## Turn toward a screen-space direction, keeping the current stance.
 func set_facing(screen_dir: Vector2) -> void:
 	if screen_dir.length_squared() < 0.01:
 		return
-	var sector := wrapi(roundi(screen_dir.angle() / (TAU / 8.0)), 0, 8)
-	sprite.texture = frames[sector]
+	facing_sector = wrapi(roundi(screen_dir.angle() / (TAU / 8.0)), 0, 8)
+	_update_sprite()
+
+
+## Raise (true) or lower (false) the rifle.
+func set_aiming(value: bool) -> void:
+	aiming = value
+	_update_sprite()
+
+
+func _update_sprite() -> void:
+	sprite.texture = (aim_frames if aiming else frames)[facing_sector]
 
 
 func is_alive() -> bool:

@@ -20,6 +20,8 @@ const GOBLIN_SPAWNS: Array[Vector2i] = [
 const MOVE_STEP_TIME := 0.12
 const TRACER_TIME := 0.09
 const AI_BEAT := 0.25
+const AIM_TIME := 0.18  # rifle raised before the shot
+const LOWER_TIME := 0.12  # rifle held after the shot
 
 var state := State.PLAYER_TURN
 var selected: Unit = null
@@ -219,6 +221,8 @@ func do_attack(attacker: Unit, target: Unit) -> void:
 	board.clear_highlights()
 	var aim := (target.position - attacker.position).normalized()
 	attacker.set_facing(aim)
+	attacker.set_aiming(true)
+	await get_tree().create_timer(AIM_TIME).timeout
 	HitFx.spawn(self, attacker.position + Vector2(0, -36) + aim * 16.0, HitFx.Kind.MUZZLE)
 	var tracer := Line2D.new()
 	tracer.width = 3.0
@@ -231,6 +235,8 @@ func do_attack(attacker: Unit, target: Unit) -> void:
 	HitFx.spawn(self, target.position + Vector2(0, -36), HitFx.Kind.IMPACT)
 	_screen_shake()
 	target.take_damage(attacker.damage)
+	await get_tree().create_timer(LOWER_TIME).timeout
+	attacker.set_aiming(false)
 	attacker.set_done(true)
 	if attacker == selected:
 		deselect()
