@@ -40,14 +40,19 @@ const TILE_REGIONS: Array[Rect2] = [
 	Rect2(129, 292, 128, 60), # 9 sandy cracks
 ]
 
-# Weighted variant pool: plain floors dominate, accents stay rare.
-const TILE_POOL: Array[int] = [
-	0, 1, 2, 3, 8, 9,
-	0, 1, 2, 3, 8, 9,
-	0, 1, 2, 3, 8, 9,
-	5, 5, 5,
-	4, 6, 7,
+# Tile families by terrain zone (indices into TILE_REGIONS), carved out of
+# the map by smooth noise so neighboring cells read as one terrain patch.
+const ZONE_FAMILIES: Array = [
+	[8, 9],     # 0: sandy wash
+	[0, 1, 2],  # 1: lightly cracked hardpan
+	[3, 5],     # 2: heavily cracked / mottled hardpan
 ]
+# One themed accent per zone: plants grow in sand, debris lies among the
+# light cracks, craters pock the heavy hardpan.
+const ZONE_ACCENTS: Array[int] = [6, 7, 4]
+
+const ACCENT_CHANCE := 0.07
+const ACCENT_MIN_SPACING := 2  # Chebyshev cells between any two accents
 
 const GRID_LINE := Color(0.35, 0.27, 0.15, 0.25)
 const MOVE_HL := Color(0.95, 0.85, 0.3, 0.35)
@@ -62,6 +67,9 @@ const NO_CELL := Vector2i(-1, -1)
 const DIRS: Array[Vector2i] = [
 	Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
 ]
+
+# Per-cell render info ({region, flip, shade}) built once in _ready.
+var tile_cache: Array = []
 
 # cell -> came_from cell, for cells the selected unit can move to.
 var move_cells: Dictionary = {}
@@ -182,21 +190,73 @@ func _diamond(cell: Vector2i) -> PackedVector2Array:
 	])
 
 
-func _tile_variant(cell: Vector2i) -> int:
-	return TILE_POOL[absi(cell.x * 92821 + cell.y * 31337) % TILE_POOL.size()]
+func _ready() -> void:
+	_build_tile_cache()
+
+
+## Deterministic per-cell pseudo-random in [0, 1); salt separates streams.
+static func _hash01(cell: Vector2i, salt: int) -> float:
+	return float(absi(cell.x * 92821 + cell.y * 31337 + salt * 53987) % 997) / 997.0
+
+
+## Precompute each cell's tile region, mirror flag, and shade tint.
+## Everything is seeded/hashed, so the map is identical every run.
+func _build_tile_cache() -> void:
+	var zone_noise := FastNoiseLite.new()
+	zone_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	zone_noise.seed = 7
+	zone_noise.frequency = 0.17
+	var shade_noise := FastNoiseLite.new()
+	shade_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	shade_noise.seed = 13
+	shade_noise.frequency = 0.09
+
+	var accent_cells: Array[Vector2i] = []
+	tile_cache = []
+	for y in SIZE.y:
+		var row: Array = []
+		for x in SIZE.x:
+			var cell := Vector2i(x, y)
+			var n := zone_noise.get_noise_2d(cell.x, cell.y)
+			var zone := 0 if n < -0.12 else (1 if n < 0.22 else 2)
+			var family: Array = ZONE_FAMILIES[zone]
+			var variant: int = family[int(_hash01(cell, 1) * family.size()) % family.size()]
+			if not is_wall(cell) and _hash01(cell, 2) < ACCENT_CHANCE:
+				var clear := true
+				for placed in accent_cells:
+					if maxi(absi(placed.x - x), absi(placed.y - y)) <= ACCENT_MIN_SPACING:
+						clear = false
+						break
+				if clear:
+					variant = ZONE_ACCENTS[zone]
+					accent_cells.append(cell)
+			# Subtle brightness patches (0.94..1.0) fake large-scale lighting.
+			var shade := 0.94 + 0.06 * (shade_noise.get_noise_2d(cell.x, cell.y) * 0.5 + 0.5)
+			row.append({
+				"region": TILE_REGIONS[variant],
+				"flip": _hash01(cell, 3) < 0.5,
+				"shade": Color(shade, shade, shade),
+			})
+		tile_cache.append(row)
 
 
 func _draw() -> void:
 	for y in SIZE.y:
 		for x in SIZE.x:
 			var cell := Vector2i(x, y)
-			var region := TILE_REGIONS[_tile_variant(cell)]
+			var info: Dictionary = tile_cache[y][x]
+			var region: Rect2 = info.region
 			var c := cell_to_local(cell)
 			var dest := Rect2(
 				c.x - TILE_W / 2.0,
 				c.y - TILE_H / 2.0 - (region.size.y - TILE_H),
 				region.size.x, region.size.y)
-			draw_texture_rect_region(FLOOR_SHEET, dest, region)
+			if info.flip:
+				# Mirror around the tile's vertical center line.
+				draw_set_transform(Vector2(2.0 * c.x, 0.0), 0.0, Vector2(-1, 1))
+			draw_texture_rect_region(FLOOR_SHEET, dest, region, info.shade)
+			if info.flip:
+				draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 			var outline := _diamond(cell)
 			outline.append(outline[0])
 			draw_polyline(outline, GRID_LINE, 1.5, true)
