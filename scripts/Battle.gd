@@ -10,17 +10,63 @@ const ROCK_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_2.png"),
 	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_3.png"),
 ]
+const JUNK_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage_1.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage_2.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage_3.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage_4.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage_5.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage_6.png"),
+]
+const PLANT_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_1.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_2.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_3.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_4.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_5.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_6.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_7.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_8.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_9.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_10.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_11.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_12.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_13.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_14.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_15.png"),
+]
+const WALL_TEX_X_RUN := preload(
+		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/south-east.png")
+const WALL_TEX_Y_RUN := preload(
+		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/south-west.png")
+const WALL_TEX_JUNCTION := preload(
+		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/north.png")
+const WALL_TEX_CAP := preload(
+		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/east.png")
+const STRUCTURE_TEXTURES := {
+	"hut_1": preload("res://assets/sprites/Environment/Desert/Structures/desert_hut/Desert_hut.png"),
+	"hut_2": preload("res://assets/sprites/Environment/Desert/Structures/desert_hut/Desert_hut_1.png"),
+	"tent": preload("res://assets/sprites/Environment/Desert/Structures/desert_hut/Desert_hut_2.png"),
+	"fortress": preload("res://assets/sprites/Environment/Desert/Structures/Desert_military_building/rotations/unknown.png"),
+}
 
-# Rocks are 48x48 with their base ~19px below canvas center; drawn at 2x.
+# Ground anchors measured from opaque bounds (texture px, pre-2x-scale).
+# Props center their painted ground footprint on the cell center; walls sink
+# toward the tile's front edge; structures align base to footprint front vertex.
 const ROCK_OFFSET := Vector2(0, -18)
+const JUNK_OFFSET := Vector2(0, -20)
+const PLANT_OFFSET := Vector2(0, -17)
+const WALL_OFFSETS := {
+	"x_run": Vector2(0, -15), "y_run": Vector2(0, -15),
+	"junction": Vector2(0, -9), "cap": Vector2(0, -11),
+}
+const STRUCTURE_OFFSETS := {
+	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33),
+	"tent": Vector2(0, -33), "fortress": Vector2(0, -55),
+}
 const ROCK_SCALE := Vector2(2, 2)
-
-const SCOUT_SPAWNS: Array[Vector2i] = [
-	Vector2i(1, 2), Vector2i(1, 4), Vector2i(3, 3),
-]
-const GOBLIN_SPAWNS: Array[Vector2i] = [
-	Vector2i(10, 1), Vector2i(10, 3), Vector2i(10, 5), Vector2i(10, 7),
-]
 
 const MOVE_STEP_TIME := 0.16
 const TRACER_TIME := 0.09
@@ -38,6 +84,8 @@ var turn_number := 1
 var enemy_turn_running := false
 var player_turn_ready_msec := 0
 var danger_on := false
+var level: Dictionary = {}
+var last_result_won := false
 
 @onready var board: Board = $Board
 @onready var entities_node: Node2D = $Entities
@@ -53,40 +101,123 @@ var danger_on := false
 @onready var game_over_panel: ColorRect = $UI/GameOver
 @onready var result_label: Label = $UI/GameOver/ResultLabel
 @onready var restart_button: Button = $UI/GameOver/RestartButton
+@onready var level_1_button: Button = $UI/GameOver/Level1Button
+@onready var level_2_button: Button = $UI/GameOver/Level2Button
+@onready var level_3_button: Button = $UI/GameOver/Level3Button
 
 
 func _ready() -> void:
+	if OS.is_debug_build():
+		Levels.validate_all()
+	level = Game.data()
+	board.set_level(level)
 	_validate_spawns()
-	for y in Board.SIZE.y:
-		for x in Board.SIZE.x:
-			var cell := Vector2i(x, y)
-			if board.is_wall(cell):
-				var rock := Sprite2D.new()
-				# Deterministic variant per cell so the layout is stable.
-				rock.texture = ROCK_TEXTURES[(cell.x * 7 + cell.y * 13) % ROCK_TEXTURES.size()]
-				rock.offset = ROCK_OFFSET
-				rock.scale = ROCK_SCALE
-				rock.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-				rock.position = board.cell_to_global(cell)
-				entities_node.add_child(rock)
-	for spawn in SCOUT_SPAWNS:
+	_spawn_props()
+	for s: Dictionary in level.structures:
+		_spawn_structure(s)
+	for spawn: Vector2i in level.scout_spawns:
 		_spawn_unit(Unit.TEAM_SCOUT, spawn)
-	for spawn in GOBLIN_SPAWNS:
+	for spawn: Vector2i in level.goblin_spawns:
 		_spawn_unit(Unit.TEAM_GOBLIN, spawn)
 	end_turn_button.pressed.connect(end_player_turn)
 	overwatch_button.pressed.connect(_try_overwatch)
 	danger_button.toggled.connect(_on_danger_button_toggled)
 	restart_button.pressed.connect(_on_restart)
-	show_banner("DESERT SCOUTS' TURN")
+	level_1_button.pressed.connect(_go_to_level.bind(0))
+	level_2_button.pressed.connect(_go_to_level.bind(1))
+	level_3_button.pressed.connect(_go_to_level.bind(2))
+	show_banner("LEVEL %d - %s" % [Game.current_level + 1, level.name])
 	player_turn_ready_msec = Time.get_ticks_msec()
-	print("[ThinShot] player turn 1 begins")
+	print("[ThinShot] level %d '%s', player turn 1 begins" % [
+			Game.current_level + 1, level.name])
+	await get_tree().create_timer(1.1).timeout
+	if state == State.PLAYER_TURN:
+		show_banner("DESERT SCOUTS' TURN")
 
 
 func _validate_spawns() -> void:
-	for spawn: Vector2i in SCOUT_SPAWNS + GOBLIN_SPAWNS:
-		if not board.in_bounds(spawn) or board.is_wall(spawn):
-			push_error("Bad spawn cell (wall or out of bounds): %s" % spawn)
+	for spawn: Vector2i in level.scout_spawns + level.goblin_spawns:
+		if not board.in_bounds(spawn) or not board.is_walkable(spawn):
+			push_error("Bad spawn cell (blocked or out of bounds): %s" % spawn)
 			assert(false, "Bad spawn cell: %s" % spawn)
+
+
+func _spawn_props() -> void:
+	for y in Board.SIZE.y:
+		for x in Board.SIZE.x:
+			var cell := Vector2i(x, y)
+			# Deterministic variant per cell so layouts are stable.
+			match board.map_char(cell):
+				"#":
+					_spawn_prop(ROCK_TEXTURES[(x * 7 + y * 13) % ROCK_TEXTURES.size()],
+							ROCK_OFFSET, cell)
+				"j":
+					_spawn_prop(JUNK_TEXTURES[(x * 11 + y * 17) % JUNK_TEXTURES.size()],
+							JUNK_OFFSET, cell)
+				"p":
+					_spawn_prop(PLANT_TEXTURES[(x * 5 + y * 23) % PLANT_TEXTURES.size()],
+							PLANT_OFFSET, cell)
+				"W":
+					var kind := _wall_kind(cell)
+					_spawn_prop(_wall_texture_for(kind), WALL_OFFSETS[kind], cell)
+
+
+func _spawn_prop(texture: Texture2D, offset: Vector2, cell: Vector2i) -> void:
+	var prop := Sprite2D.new()
+	prop.texture = texture
+	prop.offset = offset
+	prop.scale = ROCK_SCALE
+	prop.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	prop.position = board.cell_to_global(cell)
+	entities_node.add_child(prop)
+
+
+func _wall_connects(cell: Vector2i) -> bool:
+	return board.map_char(cell) == "W" or board.is_structure(cell)
+
+
+## Wall runs along grid x read on the screen NW-SE diagonal; runs along
+## grid y read NE-SW. Junctions use the flat face, lone cells the end cap.
+func _wall_kind(cell: Vector2i) -> String:
+	var has_x := _wall_connects(cell + Vector2i(1, 0)) or _wall_connects(cell + Vector2i(-1, 0))
+	var has_y := _wall_connects(cell + Vector2i(0, 1)) or _wall_connects(cell + Vector2i(0, -1))
+	if has_x and has_y:
+		return "junction"
+	if has_x:
+		return "x_run"
+	if has_y:
+		return "y_run"
+	return "cap"
+
+
+func _wall_texture_for(kind: String) -> Texture2D:
+	match kind:
+		"x_run":
+			return WALL_TEX_X_RUN
+		"y_run":
+			return WALL_TEX_Y_RUN
+		"junction":
+			return WALL_TEX_JUNCTION
+	return WALL_TEX_CAP
+
+
+## Multi-tile set-piece: a y-sort root at the footprint's front cell so units
+## on nearer rows draw in front, with the sprite centered on the footprint.
+func _spawn_structure(s: Dictionary) -> void:
+	var anchor: Vector2i = s.anchor
+	var struct_size: Vector2i = s.size
+	var front: Vector2i = anchor + struct_size - Vector2i.ONE
+	var root := Node2D.new()
+	root.position = board.cell_to_global(front)
+	var spr := Sprite2D.new()
+	spr.texture = STRUCTURE_TEXTURES[s.kind]
+	spr.scale = Vector2(2, 2)
+	spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	spr.offset = STRUCTURE_OFFSETS[s.kind]
+	spr.position = (board.cell_to_global(anchor) + board.cell_to_global(front)) / 2.0 \
+			- root.position
+	root.add_child(spr)
+	entities_node.add_child(root)
 
 
 func _spawn_unit(team: int, spawn_cell: Vector2i) -> void:
@@ -139,6 +270,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("cycle_unit"):
 		_cycle_unit()
 		return
+	for i in 3:
+		if event.is_action_pressed("level_%d" % (i + 1)):
+			_go_to_level(i)
+			return
 	if event.is_action_pressed("cancel"):
 		deselect()
 		return
@@ -270,12 +405,14 @@ func _update_hover(cell: Vector2i) -> void:
 	hover_cell = cell
 	var path: Array[Vector2i] = []
 	var aim_from := Board.NO_CELL
+	var aim_covered := false
 	if selected != null and cell != Board.NO_CELL:
 		if board.move_cells.has(cell):
 			path = board.reconstruct_path(board.move_cells, cell)
 		elif board.attack_cells.has(cell):
 			aim_from = selected.cell
-	board.set_hover(cell, path, aim_from)
+			aim_covered = board.shot_through_cover(selected.cell, cell)
+	board.set_hover(cell, path, aim_from, aim_covered)
 	_update_unit_panel()
 
 
@@ -367,7 +504,12 @@ func _resolve_shot(attacker: Unit, target: Unit, with_aim_beat: bool) -> void:
 	Sfx.play("hit_impact")
 	HitFx.spawn(self, target.position + Vector2(0, -36), HitFx.Kind.IMPACT)
 	_screen_shake()
-	target.take_damage(attacker.damage)
+	var dmg := attacker.damage
+	if board.shot_through_cover(attacker.cell, target.cell):
+		dmg >>= 1
+		print("[ThinShot]   shot %s -> %s clips cover: %d dmg" % [
+				attacker.cell, target.cell, dmg])
+	target.take_damage(dmg)
 	await get_tree().create_timer(LOWER_TIME).timeout
 	attacker.lower_rifle()
 
@@ -388,7 +530,8 @@ func _compute_danger_cells() -> Dictionary:
 				var w := r - absi(dy)
 				for dx in range(-w, w + 1):
 					var tile := origin + Vector2i(dx, dy)
-					if danger.has(tile) or not board.in_bounds(tile) or board.is_wall(tile):
+					if danger.has(tile) or not board.in_bounds(tile) \
+							or not board.is_walkable(tile):
 						continue
 					if board.has_line_of_sight(origin, tile):
 						danger[tile] = true
@@ -546,14 +689,18 @@ func _threat_at(cell: Vector2i, scouts: Array[Unit]) -> int:
 ## healthy and a lot when wounded (so 1 HP goblins with no shot retreat to
 ## cover); nearer the chase target breaks remaining ties.
 func _best_ai_dest(goblin: Unit, cells: Array, scouts: Array[Unit], chase_cell: Vector2i) -> Vector2i:
-	var threat_weight := 50 if goblin.hp <= 1 else 3
+	var threat_weight := 50 if goblin.hp <= 2 else 3
 	var best := Vector2i(-1, -1)
 	var best_score := 999999
 	for cell: Vector2i in cells:
 		var score := Board.manhattan(cell, chase_cell)
 		score += threat_weight * _threat_at(cell, scouts)
-		if not _shootable_from(cell, goblin.attack_range, scouts).is_empty():
+		var shots := _shootable_from(cell, goblin.attack_range, scouts)
+		if not shots.is_empty():
 			score -= 1000
+			# A clean firing position beats one that only has covered shots.
+			if board.shot_through_cover(cell, _nearest(cell, shots).cell):
+				score += 400
 		if score < best_score:
 			best_score = score
 			best = cell
@@ -581,12 +728,28 @@ func check_game_over() -> bool:
 
 func _show_game_over(text: String, won: bool) -> void:
 	state = State.GAME_OVER
+	last_result_won = won
+	if won and Game.is_last_level():
+		text = "CAMPAIGN COMPLETE - THE WASTES FALL SILENT"
 	result_label.text = text
+	if not won:
+		restart_button.text = "Retry"
+	elif Game.is_last_level():
+		restart_button.text = "Play Again"
+	else:
+		restart_button.text = "Next Level"
 	game_over_panel.visible = true
 	Sfx.play("win" if won else "lose", 0.0, 0.0)
 
 
 func _on_restart() -> void:
+	if last_result_won:
+		Game.select_level(0 if Game.is_last_level() else Game.current_level + 1)
+	get_tree().reload_current_scene()
+
+
+func _go_to_level(index: int) -> void:
+	Game.select_level(index)
 	get_tree().reload_current_scene()
 
 

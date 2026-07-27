@@ -9,12 +9,14 @@ placeholder art). One desert skirmish: the **Desert Scouts** against the
 | | Desert Scouts (you) | Rust Choir goblins (AI) |
 |---|---|---|
 | Units | 3 | 4 |
-| HP | 3 | 2 |
+| HP | 6 | 4 |
 | Move | 4 tiles | 3 tiles |
 | Attack range | 4 | 3 |
-| Damage | 1 | 1 |
+| Damage | 2 (1 through cover) | 2 (1 through cover) |
 
-A 12×8 isometric grid strewn with rocks. You outrange them; they outnumber you.
+A three-level desert campaign on 12×8 isometric maps: **Dry Wash** (open
+skirmish), **The Scrapline** (the Choir's junkyard), and **Outpost 7** (fortress
+assault). You outrange them; they outnumber you.
 
 ## Controls
 
@@ -29,14 +31,17 @@ A 12×8 isometric grid strewn with rocks. You outrange them; they outnumber you.
 - **Tab** — cycle through scouts that can still act
 - **Right-click / Esc** — cancel selection
 - **E** or the **End Turn** button — end your turn
+- **1 / 2 / 3** — jump to a level (also buttons on the result screen)
 - A stat panel (bottom-left) shows the hovered or selected unit
 
 ## Rules
 
 - Each unit may **move once and shoot once** per turn; shooting ends its
   activation (you can move-then-shoot, but not shoot-then-move).
-- **Rocks block movement *and* line of sight** — no shooting through cover, for
-  either side.
+- **Rocks, brick walls, and buildings block movement *and* line of sight.**
+- **Rusted junk is partial cover**: you can't stand on it, but shots pass over
+  it at **half damage** (the aim line turns amber). Cacti are decoration.
+- Winning advances to the next level; losing retries the current one.
 - **Overwatch** works for both sides: an overwatching unit stands with rifle
   raised (amber marker above its HP) and takes one free reaction shot at the
   first enemy that moves through its range and line of sight. Unfired

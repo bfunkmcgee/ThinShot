@@ -9,17 +9,12 @@ const TILE_W := 128
 const TILE_H := 60
 const SIZE := Vector2i(12, 8)
 
-# '#' = impassable rock, '.' = sand.
-const MAP: Array[String] = [
-	"............",
-	"..#......#..",
-	".....##.....",
-	"..#...#..#..",
-	"..#..#...#..",
-	".....##.....",
-	"..#......#..",
-	"............",
-]
+## What a cell means for movement and shooting.
+enum CellKind {
+	OPEN,   # walkable, no LOS effect ('.', 'p')
+	BLOCK,  # impassable, blocks LOS ('#', 'W', structure footprints)
+	COVER,  # impassable, LOS passes at half damage ('j')
+}
 
 const FLOOR_SHEET := preload(
 		"res://assets/Tiles/Environments/Desert/Cracked_Desert_floor.png")
@@ -63,6 +58,9 @@ const HOVER_OUTLINE := Color(1.0, 0.97, 0.85, 0.9)
 const PATH_DOT := Color(1.0, 0.95, 0.7, 0.9)
 const AIM_LINE := Color(1.0, 0.45, 0.3, 0.85)
 const ATTACK_HOVER_HL := Color(1.0, 0.35, 0.25, 0.55)
+# Amber variants signal a shot that clips junk cover (half damage).
+const AIM_LINE_COVER := Color(1.0, 0.82, 0.25, 0.85)
+const ATTACK_HOVER_COVER_HL := Color(1.0, 0.65, 0.2, 0.5)
 
 const NO_CELL := Vector2i(-1, -1)
 
@@ -70,7 +68,12 @@ const DIRS: Array[Vector2i] = [
 	Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
 ]
 
-# Per-cell render info ({region, flip, shade}) built once in _ready.
+# Level state, loaded by set_level().
+var map_rows: Array = []
+var _kind: Array = []                     # SIZE.y rows of Array[int] CellKind
+var _structure_cells: Dictionary = {}     # Vector2i -> true
+
+# Per-cell render info ({region, flip, shade}) built by set_level.
 var tile_cache: Array = []
 
 # cell -> came_from cell, for cells the selected unit can move to.
@@ -81,6 +84,7 @@ var attack_cells: Array[Vector2i] = []
 var hover_cell := NO_CELL
 var path_preview: Array[Vector2i] = []
 var aim_from := NO_CELL
+var aim_covered := false
 # Cells any enemy could shoot next turn (selection-independent; cleared
 # only via set_danger, never by clear_highlights).
 var danger_cells: Dictionary = {}
@@ -92,12 +96,15 @@ func set_highlights(moves: Dictionary, attacks: Array[Vector2i]) -> void:
 	queue_redraw()
 
 
-func set_hover(cell: Vector2i, path: Array[Vector2i], p_aim_from: Vector2i) -> void:
-	if cell == hover_cell and path == path_preview and p_aim_from == aim_from:
+func set_hover(cell: Vector2i, path: Array[Vector2i], p_aim_from: Vector2i,
+		p_aim_covered := false) -> void:
+	if cell == hover_cell and path == path_preview and p_aim_from == aim_from \
+			and p_aim_covered == aim_covered:
 		return
 	hover_cell = cell
 	path_preview = path
 	aim_from = p_aim_from
+	aim_covered = p_aim_covered
 	queue_redraw()
 
 
@@ -110,7 +117,37 @@ func clear_highlights() -> void:
 	hover_cell = NO_CELL
 	path_preview = []
 	aim_from = NO_CELL
+	aim_covered = false
 	set_highlights({}, [])
+
+
+## Load a level definition: cell kinds from the map chars plus structure
+## footprints, then rebuild the floor with the level's noise character.
+func set_level(data: Dictionary) -> void:
+	map_rows = data.map
+	_structure_cells = {}
+	for s: Dictionary in data.structures:
+		var anchor: Vector2i = s.anchor
+		var struct_size: Vector2i = s.size
+		for dy in struct_size.y:
+			for dx in struct_size.x:
+				_structure_cells[anchor + Vector2i(dx, dy)] = true
+	_kind = []
+	for y in SIZE.y:
+		var row: Array[int] = []
+		for x in SIZE.x:
+			var cell := Vector2i(x, y)
+			var ch: String = map_rows[y][x]
+			if ch == "#" or ch == "W" or _structure_cells.has(cell):
+				row.append(CellKind.BLOCK)
+			elif ch == "j":
+				row.append(CellKind.COVER)
+			else:
+				row.append(CellKind.OPEN)
+		_kind.append(row)
+	var thresholds: Array = data.get("zone_thresholds", [-0.12, 0.22])
+	_build_tile_cache(data.get("zone_seed", 7), data.get("shade_seed", 13), thresholds)
+	queue_redraw()
 
 
 ## Diamond center of a cell, in Board-local pixels (2:1 isometric projection).
@@ -136,15 +173,32 @@ func in_bounds(cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.x < SIZE.x and cell.y >= 0 and cell.y < SIZE.y
 
 
-func is_wall(cell: Vector2i) -> bool:
-	return MAP[cell.y][cell.x] == "#"
+func cell_kind(cell: Vector2i) -> CellKind:
+	return _kind[cell.y][cell.x]
+
+
+func is_blocker(cell: Vector2i) -> bool:
+	return cell_kind(cell) == CellKind.BLOCK
+
+
+func is_walkable(cell: Vector2i) -> bool:
+	return cell_kind(cell) == CellKind.OPEN
+
+
+func map_char(cell: Vector2i) -> String:
+	return map_rows[cell.y][cell.x] if in_bounds(cell) else ""
+
+
+func is_structure(cell: Vector2i) -> bool:
+	return _structure_cells.has(cell)
 
 
 static func manhattan(a: Vector2i, b: Vector2i) -> int:
 	return absi(a.x - b.x) + absi(a.y - b.y)
 
 
-## True if a straight shot between the two cell centers crosses no rock tile.
+## True if a straight shot between the two cell centers crosses no full
+## blocker. Junk (COVER) does not stop sight - it attenuates damage instead.
 ## Samples the segment in cell space; endpoints themselves are ignored.
 func has_line_of_sight(from: Vector2i, to: Vector2i) -> bool:
 	var a := Vector2(from)
@@ -153,9 +207,23 @@ func has_line_of_sight(from: Vector2i, to: Vector2i) -> bool:
 	for i in range(1, steps):
 		var p := a.lerp(b, float(i) / float(steps))
 		var cell := Vector2i(roundi(p.x), roundi(p.y))
-		if cell != from and cell != to and is_wall(cell):
+		if cell != from and cell != to and is_blocker(cell):
 			return false
 	return true
+
+
+## True if the straight shot crosses at least one junk (COVER) cell.
+## Same sampling as has_line_of_sight so the two always agree.
+func shot_through_cover(from: Vector2i, to: Vector2i) -> bool:
+	var a := Vector2(from)
+	var b := Vector2(to)
+	var steps := int(a.distance_to(b) * 4.0) + 1
+	for i in range(1, steps):
+		var p := a.lerp(b, float(i) / float(steps))
+		var cell := Vector2i(roundi(p.x), roundi(p.y))
+		if cell != from and cell != to and cell_kind(cell) == CellKind.COVER:
+			return true
+	return false
 
 
 ## BFS from start up to max_range steps. Walls and cells where blocked.call(cell)
@@ -172,7 +240,7 @@ func flood_fill(start: Vector2i, max_range: int, blocked: Callable) -> Dictionar
 			var nxt := cur + dir
 			if not in_bounds(nxt) or came_from.has(nxt):
 				continue
-			if is_wall(nxt) or blocked.call(nxt):
+			if not is_walkable(nxt) or blocked.call(nxt):
 				continue
 			came_from[nxt] = cur
 			dist[nxt] = dist[cur] + 1
@@ -200,25 +268,21 @@ func _diamond(cell: Vector2i) -> PackedVector2Array:
 	])
 
 
-func _ready() -> void:
-	_build_tile_cache()
-
-
 ## Deterministic per-cell pseudo-random in [0, 1); salt separates streams.
 static func _hash01(cell: Vector2i, salt: int) -> float:
 	return float(absi(cell.x * 92821 + cell.y * 31337 + salt * 53987) % 997) / 997.0
 
 
 ## Precompute each cell's tile region, mirror flag, and shade tint.
-## Everything is seeded/hashed, so the map is identical every run.
-func _build_tile_cache() -> void:
+## Everything is seeded/hashed, so a level's floor is identical every run.
+func _build_tile_cache(zone_seed: int, shade_seed: int, thresholds: Array) -> void:
 	var zone_noise := FastNoiseLite.new()
 	zone_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
-	zone_noise.seed = 7
+	zone_noise.seed = zone_seed
 	zone_noise.frequency = 0.17
 	var shade_noise := FastNoiseLite.new()
 	shade_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
-	shade_noise.seed = 13
+	shade_noise.seed = shade_seed
 	shade_noise.frequency = 0.09
 
 	var accent_cells: Array[Vector2i] = []
@@ -228,10 +292,11 @@ func _build_tile_cache() -> void:
 		for x in SIZE.x:
 			var cell := Vector2i(x, y)
 			var n := zone_noise.get_noise_2d(cell.x, cell.y)
-			var zone := 0 if n < -0.12 else (1 if n < 0.22 else 2)
+			var zone: int = 0 if n < thresholds[0] else (1 if n < thresholds[1] else 2)
 			var family: Array = ZONE_FAMILIES[zone]
 			var variant: int = family[int(_hash01(cell, 1) * family.size()) % family.size()]
-			if not is_wall(cell) and _hash01(cell, 2) < ACCENT_CHANCE:
+			if map_char(cell) == "." and not is_structure(cell) \
+					and _hash01(cell, 2) < ACCENT_CHANCE:
 				var clear := true
 				for placed in accent_cells:
 					if maxi(absi(placed.x - x), absi(placed.y - y)) <= ACCENT_MIN_SPACING:
@@ -251,6 +316,8 @@ func _build_tile_cache() -> void:
 
 
 func _draw() -> void:
+	if tile_cache.is_empty():
+		return
 	for y in SIZE.y:
 		for x in SIZE.x:
 			var cell := Vector2i(x, y)
@@ -281,7 +348,8 @@ func _draw() -> void:
 		draw_colored_polygon(_diamond(cell), ATTACK_HL)
 	if hover_cell != NO_CELL:
 		if attack_cells.has(hover_cell):
-			draw_colored_polygon(_diamond(hover_cell), ATTACK_HOVER_HL)
+			draw_colored_polygon(_diamond(hover_cell),
+					ATTACK_HOVER_COVER_HL if aim_covered else ATTACK_HOVER_HL)
 		var outline := _diamond(hover_cell)
 		outline.append(outline[0])
 		draw_polyline(outline, HOVER_OUTLINE, 2.5, true)
@@ -295,4 +363,4 @@ func _draw() -> void:
 			draw_circle(centers[i], 8.0 if i == centers.size() - 1 else 5.0, PATH_DOT)
 	if aim_from != NO_CELL and hover_cell != NO_CELL:
 		draw_dashed_line(cell_to_local(aim_from), cell_to_local(hover_cell),
-				AIM_LINE, 2.0, 10.0)
+				AIM_LINE_COVER if aim_covered else AIM_LINE, 2.0, 10.0)

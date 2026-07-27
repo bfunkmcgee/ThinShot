@@ -168,10 +168,11 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 	team = p_team
 	cell = p_cell
 	if team == TEAM_SCOUT:
-		max_hp = 3
+		# Damage granularity is 2 so junk cover can halve it to 1.
+		max_hp = 6
 		move_range = 4
 		attack_range = 4
-		damage = 1
+		damage = 2
 		frames = SCOUT_FRAMES
 		aim_frames = SCOUT_AIM_FRAMES
 		walk_frames = SCOUT_WALK_FRAMES
@@ -182,10 +183,10 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		dead_frames = SCOUT_DEAD_FRAMES
 		set_facing(Vector2(1, 0.5))   # face the goblin side (south-east)
 	else:
-		max_hp = 2
+		max_hp = 4
 		move_range = 3
 		attack_range = 3
-		damage = 1
+		damage = 2
 		frames = GOBLIN_FRAMES
 		aim_frames = GOBLIN_AIM_FRAMES
 		walk_frames = GOBLIN_WALK_FRAMES
