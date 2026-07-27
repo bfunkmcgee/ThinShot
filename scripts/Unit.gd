@@ -131,6 +131,13 @@ const PIP_GAP := 2.0
 const PIP_Y := -68.0
 const PIP_FULL := Color("58c04a")
 const PIP_EMPTY := Color(0.15, 0.15, 0.15, 0.7)
+# Ammo pips sit just under the HP row. Only units with a magazine draw them.
+const AMMO_SIZE := Vector2(4, 4)
+const AMMO_GAP := 3.0
+const AMMO_Y := PIP_Y + 8.0
+const AMMO_FULL := Color("c9a227")
+const AMMO_EMPTY := Color(0.18, 0.14, 0.06, 0.7)
+const AMMO_OUT := Color("ff5a3c")
 const RING_COLOR := Color("ffd94a")        # player selection
 const ENEMY_RING_COLOR := Color("ff5a3c")  # AI unit currently acting
 const DONE_TINT := Color(0.55, 0.55, 0.55)
@@ -155,6 +162,8 @@ var max_hp := 3
 var move_range := 4
 var attack_range := 4
 var damage := 1
+var mag_size := 0  # 0 means unlimited ammo (goblins)
+var ammo := 0
 
 var hp := 3
 var cell := Vector2i.ZERO
@@ -176,7 +185,13 @@ var overwatching := false
 var anim := Anim.IDLE
 var anim_time := 0.0
 var anim_frame := 0
+var acting := false
+var marker_y := 0.0:
+	set(value):
+		marker_y = value
+		queue_redraw()
 var _body_tween: Tween = null
+var _marker_tween: Tween = null
 
 @onready var sprite: Sprite2D = $Sprite
 
@@ -196,6 +211,7 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		move_range = 5
 		attack_range = 4
 		damage = 2
+		mag_size = 3
 		frames = SCOUT_FRAMES
 		aim_frames = SCOUT_AIM_FRAMES
 		walk_frames = SCOUT_WALK_FRAMES
@@ -220,6 +236,7 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		dead_frames = GOBLIN_DEAD_FRAMES
 		set_facing(Vector2(-1, 0.5))  # face the scout side (south-west)
 	hp = max_hp
+	ammo = mag_size
 	# Desync idle cycles so units don't all breathe in lockstep.
 	anim_time = float((p_cell.x * 7 + p_cell.y * 13) % 9) / IDLE_FPS
 
@@ -394,6 +411,21 @@ func is_alive() -> bool:
 	return hp > 0
 
 
+func has_ammo(rounds := 1) -> bool:
+	return mag_size == 0 or ammo >= rounds
+
+
+func spend_ammo() -> void:
+	if mag_size > 0:
+		ammo = maxi(ammo - 1, 0)
+		queue_redraw()
+
+
+func reload() -> void:
+	ammo = mag_size
+	queue_redraw()
+
+
 ## Kick the sprite backward off a shot and settle it. sprite.position is
 ## otherwise unused (SPRITE_OFFSET lives in sprite.offset), so body motion
 ## has its own channel and never fights the animation frames.
@@ -503,6 +535,21 @@ func set_selected(value: bool) -> void:
 	queue_redraw()
 
 
+## Marks the AI unit currently taking its action with a chevron that drops
+## in from above, so the player can follow a five-goblin turn.
+func set_acting(value: bool) -> void:
+	acting = value
+	if _marker_tween != null and _marker_tween.is_valid():
+		_marker_tween.kill()
+	if not value:
+		queue_redraw()
+		return
+	marker_y = 18.0
+	_marker_tween = create_tween()
+	_marker_tween.tween_property(self, "marker_y", 0.0, 0.22) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
 func set_done(value: bool) -> void:
 	moved = value
 	acted = value
@@ -540,9 +587,25 @@ func _draw() -> void:
 		var rect := Rect2(Vector2(start_x + i * (PIP_SIZE.x + PIP_GAP), PIP_Y), PIP_SIZE)
 		draw_rect(rect, PIP_FULL if i < hp else PIP_EMPTY)
 		draw_rect(rect, Color(0, 0, 0, 0.5), false, 1.0)
+	if mag_size > 0:
+		var ammo_width := mag_size * AMMO_SIZE.x + (mag_size - 1) * AMMO_GAP
+		var ammo_x := -ammo_width / 2.0
+		for i in mag_size:
+			var slot := Rect2(Vector2(ammo_x + i * (AMMO_SIZE.x + AMMO_GAP), AMMO_Y), AMMO_SIZE)
+			if i < ammo:
+				draw_rect(slot, AMMO_FULL)
+			else:
+				draw_rect(slot, AMMO_OUT if ammo == 0 else AMMO_EMPTY)
 	if overwatching:
 		# Small amber diamond above the pips: "this unit is watching".
 		var m := Vector2(0, PIP_Y - 9.0)
 		draw_colored_polygon(PackedVector2Array([
 			m + Vector2(0, -5), m + Vector2(5, 0), m + Vector2(0, 5), m + Vector2(-5, 0),
 		]), Color("ffb84a"))
+	if acting:
+		# Drop-in chevron marking the AI unit taking its action. Lives in
+		# empty air above the unit, so it never obscures the board.
+		var c := Vector2(0, PIP_Y - 26.0 - marker_y)
+		draw_colored_polygon(PackedVector2Array([
+			c + Vector2(0, 9), c + Vector2(-9, -6), c + Vector2(9, -6),
+		]), ENEMY_RING_COLOR)

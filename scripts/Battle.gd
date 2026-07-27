@@ -72,7 +72,8 @@ const ROCK_SCALE := Vector2(2, 2)
 
 const MOVE_STEP_TIME := 0.16
 const TRACER_TIME := 0.09
-const AI_BEAT := 0.25
+const AI_BEAT := 0.12
+const ACT_LEAD_IN := 0.15  # pause after marking a goblin, before it acts
 const LOWER_TIME := 0.12  # rifle held after the shot before lowering
 const BURST_GAP := 0.13  # pause between the two rounds of a burst
 
@@ -108,6 +109,7 @@ var fx_glow: Fx = null
 @onready var end_turn_button: Button = $UI/EndTurnButton
 @onready var overwatch_button: Button = $UI/OverwatchButton
 @onready var burst_button: Button = $UI/BurstButton
+@onready var reload_button: Button = $UI/ReloadButton
 @onready var danger_button: Button = $UI/DangerButton
 @onready var unit_panel: PanelContainer = $UI/UnitPanel
 @onready var panel_name_label: Label = $UI/UnitPanel/Margin/Rows/NameLabel
@@ -140,6 +142,7 @@ func _ready() -> void:
 	end_turn_button.pressed.connect(end_player_turn)
 	overwatch_button.pressed.connect(_try_overwatch)
 	burst_button.toggled.connect(_on_burst_button_toggled)
+	reload_button.pressed.connect(_try_reload)
 	danger_button.toggled.connect(_on_danger_button_toggled)
 	restart_button.pressed.connect(_on_restart)
 	# Hotkeys/buttons cover the first 3 levels; extend the level_N input
@@ -337,6 +340,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("burst"):
 		_toggle_burst()
 		return
+	if event.is_action_pressed("reload"):
+		_try_reload()
+		return
 	if event.is_action_pressed("toggle_danger"):
 		_toggle_danger()
 		return
@@ -381,7 +387,7 @@ func _handle_click(cell: Vector2i) -> void:
 			if burst_armed:
 				_set_burst_armed(false)
 				do_burst(selected, clicked)
-			else:
+			elif selected.has_ammo():
 				do_attack(selected, clicked)
 			return
 		if board.move_cells.has(cell):
@@ -421,7 +427,8 @@ func _toggle_burst() -> void:
 		return
 	if state != State.PLAYER_TURN or selected == null:
 		return
-	if selected.team != Unit.TEAM_SCOUT or selected.moved or selected.acted:
+	if selected.team != Unit.TEAM_SCOUT or selected.moved or selected.acted \
+			or not selected.has_ammo(2):
 		return
 	_set_burst_armed(true)
 	Sfx.play("select", -3.0, 0.0)
@@ -468,8 +475,9 @@ func _update_unit_panel() -> void:
 	panel_name_label.text = "Desert Scout" if unit.team == Unit.TEAM_SCOUT \
 			else "Rust Choir Chorister"
 	panel_hp_label.text = "HP %d / %d" % [unit.hp, unit.max_hp]
-	panel_stats_label.text = "Move %d   Range %d   Dmg %d" % [
-			unit.move_range, unit.attack_range, unit.damage]
+	panel_stats_label.text = "Move %d   Range %d   Dmg %d%s" % [
+			unit.move_range, unit.attack_range, unit.damage,
+			"   Ammo %d/%d" % [unit.ammo, unit.mag_size] if unit.mag_size > 0 else ""]
 	if aiming_overwatch and unit == selected:
 		panel_status_label.text = "AIMING ARC"
 		panel_status_label.modulate = Color("ffb84a")
@@ -495,6 +503,10 @@ func _update_unit_panel() -> void:
 		panel_status_label.text = "BURST ARMED"
 		panel_status_label.modulate = Color("ff7a2a")
 		return
+	if unit.mag_size > 0 and unit.ammo == 0:
+		panel_status_label.text = "OUT OF AMMO - RELOAD (R)"
+		panel_status_label.modulate = Color("ff5a3c")
+		return
 	panel_status_label.text = _unit_status(unit)
 	panel_status_label.modulate = Color("ffb84a") if unit.overwatching else Color.WHITE
 
@@ -509,13 +521,32 @@ func _unit_status(unit: Unit) -> String:
 	return "Ready"
 
 
+## Refill the selected scout's magazine. Costs the move, not the shot, so a
+## dry scout can reload and still fire once - running out costs mobility,
+## never a whole turn.
+func _try_reload() -> void:
+	if state != State.PLAYER_TURN or selected == null:
+		return
+	if selected.mag_size == 0 or selected.moved or selected.acted \
+			or selected.ammo == selected.mag_size:
+		return
+	selected.reload()
+	selected.moved = true
+	_set_burst_armed(false)
+	Sfx.play("reload")
+	print("[ThinShot] scout at %s reloads" % selected.cell)
+	_refresh_highlights()
+	_update_unit_panel()
+
+
 ## Enter overwatch-aiming: the player picks which way the scout watches.
 ## Clicking a cell commits the arc; cancel/right-click backs out.
 func _try_overwatch() -> void:
 	if aiming_overwatch:
 		_cancel_overwatch_aim()
 		return
-	if state != State.PLAYER_TURN or selected == null or selected.acted:
+	if state != State.PLAYER_TURN or selected == null or selected.acted \
+			or not selected.has_ammo():
 		return
 	aiming_overwatch = true
 	_set_burst_armed(false)
@@ -586,7 +617,7 @@ func _refresh_highlights() -> void:
 	if not selected.moved:
 		moves = board.flood_fill(selected.cell, selected.move_range, _cell_blocked)
 	var attacks: Array[Vector2i] = []
-	if not selected.acted:
+	if not selected.acted and selected.has_ammo():
 		for enemy in living_units(Unit.TEAM_GOBLIN):
 			if Board.manhattan(selected.cell, enemy.cell) <= selected.attack_range \
 					and board.has_line_of_sight(selected.cell, enemy.cell):
@@ -724,6 +755,7 @@ func _fire_round(attacker: Unit, target: Unit) -> void:
 	var covered_cell := board.cover_cell_between(attacker.cell, target.cell)
 	var flanking := _is_flanking(attacker, target)
 
+	attacker.spend_ammo()
 	attacker.recoil(dir)
 	Sfx.play("shot")
 	HitFx.spawn(fx_glow, muzzle, HitFx.Kind.MUZZLE)
@@ -862,7 +894,7 @@ func _overwatchers_against(mover: Unit) -> Array[Unit]:
 		var watcher := child as Unit
 		if watcher == null or not watcher.is_alive() or not watcher.overwatching:
 			continue
-		if watcher.team == mover.team:
+		if watcher.team == mover.team or not watcher.has_ammo():
 			continue
 		if Board.manhattan(watcher.cell, mover.cell) <= watcher.attack_range \
 				and watcher.covers_sector(Board.sector_from_to(watcher.cell, mover.cell)) \
@@ -888,6 +920,7 @@ func end_player_turn() -> void:
 	end_turn_button.disabled = true
 	overwatch_button.disabled = true
 	burst_button.disabled = true
+	reload_button.disabled = true
 	danger_button.disabled = true
 	# Goblins refresh at the start of THEIR turn (expires last turn's
 	# unfired goblin overwatch at the right moment).
@@ -910,6 +943,7 @@ func end_player_turn() -> void:
 	end_turn_button.disabled = false
 	overwatch_button.disabled = false
 	burst_button.disabled = false
+	reload_button.disabled = false
 	danger_button.disabled = false
 	show_banner("DESERT SCOUTS' TURN")
 	state = State.PLAYER_TURN
@@ -930,7 +964,12 @@ func run_enemy_turn() -> void:
 			return
 		acted += 1
 		var from_cell := goblin.cell
-		goblin.set_selected(true)  # red ring marks the acting goblin
+		# Mark the actor and give the player a beat to find it before it
+		# moves. The beat is taken out of AI_BEAT, so turns stay the same
+		# length - the player's eye just arrives before the motion.
+		goblin.set_selected(true)
+		goblin.set_acting(true)
+		await get_tree().create_timer(ACT_LEAD_IN).timeout
 		var shootable := _shootable_from(goblin.cell, goblin.attack_range, scouts)
 		if not shootable.is_empty():
 			print("[ThinShot]   goblin %d/%d shoots from %s" % [acted, squad.size(), from_cell])
@@ -957,6 +996,7 @@ func run_enemy_turn() -> void:
 				print("[ThinShot]   goblin %d/%d holds %s on overwatch" % [
 						acted, squad.size(), goblin.cell])
 		goblin.set_selected(false)
+		goblin.set_acting(false)
 		if state == State.GAME_OVER:
 			return
 		await get_tree().create_timer(AI_BEAT).timeout

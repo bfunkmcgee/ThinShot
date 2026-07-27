@@ -28,18 +28,31 @@ text = "DESERT SCOUTS' TURN"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BurstButton" type="Button" parent="UI"]
+[node name="ReloadButton" type="Button" parent="UI"]
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -818.0
 offset_top = -70.0
-offset_right = -628.0
+offset_right = -668.0
+offset_bottom = -22.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 17
+text = "Reload (R)"
+
+[node name="BurstButton" type="Button" parent="UI"]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -658.0
+offset_top = -70.0
+offset_right = -508.0
 offset_bottom = -22.0
 focus_mode = 0
 toggle_mode = true
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 17
 text = "Burst (B)"
 
 [node name="DangerButton" type="Button" parent="UI"]
@@ -47,13 +60,13 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -608.0
+offset_left = -498.0
 offset_top = -70.0
-offset_right = -418.0
+offset_right = -348.0
 offset_bottom = -22.0
 focus_mode = 0
 toggle_mode = true
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 17
 text = "Danger (D)"
 
 [node name="UnitPanel" type="PanelContainer" parent="UI"]
@@ -103,12 +116,12 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -398.0
+offset_left = -338.0
 offset_top = -70.0
-offset_right = -208.0
+offset_right = -188.0
 offset_bottom = -22.0
 focus_mode = 0
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 17
 text = "Overwatch (W)"
 
 [node name="EndTurnButton" type="Button" parent="UI"]
@@ -116,12 +129,12 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -188.0
+offset_left = -178.0
 offset_top = -70.0
 offset_right = -28.0
 offset_bottom = -22.0
 focus_mode = 0
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 17
 text = "End Turn (E)"
 
 [node name="GameOver" type="ColorRect" parent="UI"]

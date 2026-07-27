@@ -30,6 +30,8 @@ Choir has numbers and holds the ground.
 - **B** or the **Burst** button — arm burst fire for a scout that hasn't moved
   (highlights turn orange); click a target to fire a braced two-round burst
   (2×2 damage, each round halved by cover). Moving disarms it.
+- **R** or the **Reload** button — refill a scout's magazine. Costs the move,
+  not the shot, so a dry scout can reload and still fire once.
 - **D** or the **Danger** button — toggle the danger overlay (red-hatched tiles
   the goblins could shoot next turn)
 - **Tab** — cycle through scouts that can still act
@@ -58,6 +60,9 @@ Choir has numbers and holds the ground.
 - **Burst fire** is scout-only: a scout that stays put may spend its attack on
   a two-round burst — enough to drop a full-health goblin in one action, at
   the price of not repositioning.
+- **Scouts carry a 3-round magazine** (brass pips under their HP); goblins have
+  unlimited ammo. A burst costs two rounds, so bursting every chance you get
+  means reloading — and giving up a move — every other turn.
 - Goblins chase, seek firing positions, avoid open ground lightly, and retreat
   to cover when wounded with no shot available; a goblin that holds position
   with no shot goes on overwatch to cover its lane.

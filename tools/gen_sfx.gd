@@ -166,4 +166,19 @@ func _init() -> void:
 		_tone(lose, freq, 0.2, 3.0)
 	_write_wav(OUT_DIR + "/lose.wav", lose)
 
+	# Magazine out, magazine in, bolt released.
+	_lcg = 23
+	var reload := PackedFloat32Array()
+	_noise_burst(reload, 0.05, 12.0, 3000.0)
+	for i in int(0.06 * RATE):
+		reload.append(0.0)
+	_noise_burst(reload, 0.05, 12.0, 2200.0)
+	var thunk := PackedFloat32Array()
+	_tone(thunk, 110.0, 0.10, 7.0)
+	var head := reload.size()
+	reload.resize(head + thunk.size())
+	for i in thunk.size():
+		reload[head + i] = thunk[i] * 0.8
+	_write_wav(OUT_DIR + "/reload.wav", reload)
+
 	quit()
