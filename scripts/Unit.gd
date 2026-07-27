@@ -80,12 +80,32 @@ static var SCOUT_DEATH_FRAMES: Array = _load_dir_frames(
 		"res://assets/sprites/Scout/animations/standing_idle_to_dead")
 static var GOBLIN_DEATH_FRAMES: Array = _load_dir_frames(
 		"res://assets/sprites/Goblin/animations/standing_idle_to_dead")
+static var SCOUT_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		"res://assets/sprites/Scout/animations/standing_idle_alt")
+static var GOBLIN_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		"res://assets/sprites/Goblin/animations/standing_idle_alt")
+static var SCOUT_HURT_FRAMES: Array = _load_dir_frames(
+		"res://assets/sprites/Scout/animations/standing_idle_damage")
+static var GOBLIN_HURT_FRAMES: Array = _load_dir_frames(
+		"res://assets/sprites/Goblin/animations/standing_idle_damage")
+static var SCOUT_RELOAD_FRAMES: Array = _load_dir_frames(
+		"res://assets/sprites/Scout/animations/standing_idle_reload")
+static var GOBLIN_RELOAD_FRAMES: Array = _load_dir_frames(
+		"res://assets/sprites/Goblin/animations/standing_idle_reload")
+
+# Visual-only randomness (which idle variation plays). Never read back into
+# game state, mirroring Sfx and Fx.
+static var _vis_rng := RandomNumberGenerator.new()
 static var SCOUT_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
 		"res://assets/sprites/Scout/dead_stance/rotations")
 static var GOBLIN_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
 		"res://assets/sprites/Goblin/Dead_stance/rotations")
 
-enum Anim { IDLE, WALK, RAISE, AIM_IDLE, LOWER, DIE, DEAD }
+enum Anim { IDLE, IDLE_ALT, WALK, RAISE, AIM_IDLE, LOWER, DIE, DEAD, HURT, RELOAD }
+
+# Chance that a completed idle cycle plays the alternate idle instead of
+# repeating the main one. Kept low so the variation stays a garnish.
+const IDLE_ALT_CHANCE := 0.14
 
 # Front arc half-width in 45-degree sectors: 1 -> 135 degrees of cover.
 # Shots from outside a unit's front arc ignore its cover, and overwatch
@@ -97,6 +117,8 @@ const IDLE_FPS := 8.0
 const AIM_IDLE_FPS := 8.0
 const RAISE_FPS := 36.0
 const DIE_FPS := 14.0
+const HURT_FPS := 18.0
+const RELOAD_FPS := 14.0
 
 # Rifle-tip offsets in Unit space per facing sector, measured from the
 # aim-stance PNGs by tools/measure_muzzle.gd (sector order = DIR_NAMES).
@@ -179,6 +201,9 @@ var raise_frames: Array = SCOUT_RAISE_FRAMES
 var aim_idle_frames: Array = SCOUT_AIM_IDLE_FRAMES
 var death_frames: Array = SCOUT_DEATH_FRAMES
 var dead_frames: Array[Texture2D] = SCOUT_DEAD_FRAMES
+var idle_alt_frames: Array = SCOUT_IDLE_ALT_FRAMES
+var hurt_frames: Array = SCOUT_HURT_FRAMES
+var reload_frames: Array = SCOUT_RELOAD_FRAMES
 var facing_sector := 2  # south
 var arc_half := ARC_HALF_SECTORS
 var arc_preview_sector := -1  # >= 0 while the player is aiming an arc
@@ -186,6 +211,7 @@ var overwatching := false
 var anim := Anim.IDLE
 var anim_time := 0.0
 var anim_frame := 0
+var _anim_return := Anim.IDLE  # where a one-shot animation goes when it ends
 var acting := false
 var marker_y := 0.0:
 	set(value):
@@ -198,6 +224,7 @@ var _marker_tween: Tween = null
 
 
 func _ready() -> void:
+	_vis_rng.randomize()
 	sprite.scale = SPRITE_SCALE
 	sprite.offset = SPRITE_OFFSET
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -222,6 +249,9 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		aim_idle_frames = SCOUT_AIM_IDLE_FRAMES
 		death_frames = SCOUT_DEATH_FRAMES
 		dead_frames = SCOUT_DEAD_FRAMES
+		idle_alt_frames = SCOUT_IDLE_ALT_FRAMES
+		hurt_frames = SCOUT_HURT_FRAMES
+		reload_frames = SCOUT_RELOAD_FRAMES
 		set_facing(Vector2(1, 0.5))   # face the goblin side (south-east)
 	else:
 		max_hp = 4
@@ -237,6 +267,9 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		aim_idle_frames = GOBLIN_AIM_IDLE_FRAMES
 		death_frames = GOBLIN_DEATH_FRAMES
 		dead_frames = GOBLIN_DEAD_FRAMES
+		idle_alt_frames = GOBLIN_IDLE_ALT_FRAMES
+		hurt_frames = GOBLIN_HURT_FRAMES
+		reload_frames = GOBLIN_RELOAD_FRAMES
 		set_facing(Vector2(-1, 0.5))  # face the scout side (south-west)
 	hp = max_hp
 	ammo = mag_size
@@ -314,6 +347,32 @@ func lower_rifle() -> void:
 		_set_anim(Anim.LOWER)
 
 
+## Flinch on taking a hit, then resume whatever stance was interrupted.
+## Skipped mid-stride and mid-fall, where it would fight a longer animation.
+func play_hurt() -> void:
+	if anim == Anim.DIE or anim == Anim.DEAD or anim == Anim.WALK:
+		return
+	if hurt_frames[facing_sector].is_empty():
+		return
+	_anim_return = Anim.AIM_IDLE if _rifle_is_up() else Anim.IDLE
+	_set_anim(Anim.HURT)
+
+
+## Work the bolt and seat a fresh magazine. Awaitable so the caller can hold
+## the turn for its duration.
+func play_reload() -> void:
+	var cycle: Array = reload_frames[facing_sector]
+	if cycle.is_empty() or anim == Anim.DIE or anim == Anim.DEAD:
+		return
+	_anim_return = Anim.AIM_IDLE if _rifle_is_up() else Anim.IDLE
+	_set_anim(Anim.RELOAD)
+	await get_tree().create_timer(float(cycle.size()) / RELOAD_FPS).timeout
+
+
+func _rifle_is_up() -> bool:
+	return overwatching or anim == Anim.AIM_IDLE or anim == Anim.RAISE
+
+
 ## Global position of the raised rifle's tip for the current facing.
 func muzzle_point() -> Vector2:
 	var offsets := SCOUT_MUZZLE_OFFSETS if team == TEAM_SCOUT else GOBLIN_MUZZLE_OFFSETS
@@ -354,6 +413,10 @@ func _process(delta: float) -> void:
 			fps = AIM_IDLE_FPS
 		Anim.DIE:
 			fps = DIE_FPS
+		Anim.HURT:
+			fps = HURT_FPS
+		Anim.RELOAD:
+			fps = RELOAD_FPS
 	anim_time += delta
 	var idx := int(anim_time * fps)
 	if idx == anim_frame:
@@ -369,8 +432,19 @@ func _process(delta: float) -> void:
 				_set_anim(Anim.IDLE)
 			Anim.DIE:
 				_set_anim(Anim.DEAD)
+			Anim.HURT, Anim.RELOAD:
+				_set_anim(_anim_return)  # back to whatever we interrupted
+			Anim.IDLE:
+				# Occasionally break the loop with the alternate idle.
+				if not idle_alt_frames[facing_sector].is_empty() \
+						and _vis_rng.randf() < IDLE_ALT_CHANCE:
+					_set_anim(Anim.IDLE_ALT)
+				else:
+					_set_anim(Anim.IDLE)
+			Anim.IDLE_ALT:
+				_set_anim(Anim.IDLE)
 			_:
-				_update_sprite()  # loops wrap via modulo
+				_set_anim(anim)  # WALK / AIM_IDLE loop from the top
 		return
 	_update_sprite()
 
@@ -385,6 +459,12 @@ func _current_cycle() -> Array:
 			return aim_idle_frames[facing_sector]
 		Anim.DIE:
 			return death_frames[facing_sector]
+		Anim.IDLE_ALT:
+			return idle_alt_frames[facing_sector]
+		Anim.HURT:
+			return hurt_frames[facing_sector]
+		Anim.RELOAD:
+			return reload_frames[facing_sector]
 	return idle_frames[facing_sector]
 
 
@@ -403,8 +483,8 @@ func _update_sprite() -> void:
 	var idx := anim_frame
 	if anim == Anim.LOWER:
 		idx = cycle.size() - 1 - clampi(anim_frame, 0, cycle.size() - 1)
-	elif anim == Anim.DIE:
-		idx = clampi(anim_frame, 0, cycle.size() - 1)
+	elif anim == Anim.DIE or anim == Anim.HURT or anim == Anim.RELOAD:
+		idx = clampi(anim_frame, 0, cycle.size() - 1)  # one-shot, never wraps
 	else:
 		idx = anim_frame % cycle.size()
 	sprite.texture = cycle[idx]
@@ -462,6 +542,8 @@ func take_damage(amount: int, from_dir := Vector2.ZERO) -> void:
 	if lethal:
 		died.emit(self)
 		_die()
+	else:
+		play_hurt()
 
 
 ## Plays the fall animation, then rests in the dead stance. The corpse stays

@@ -585,13 +585,20 @@ func _try_reload() -> void:
 	if selected.mag_size == 0 or selected.moved or selected.acted \
 			or selected.ammo == selected.mag_size:
 		return
-	selected.reload()
-	selected.moved = true
+	var scout := selected
+	var prev_state := state
+	state = State.ANIMATING
+	scout.moved = true  # reloading costs the move, not the shot
 	_set_burst_armed(false)
+	board.clear_highlights()
 	Sfx.play("reload")
-	print("[ThinShot] scout at %s reloads" % selected.cell)
-	_refresh_highlights()
-	_update_unit_panel()
+	print("[ThinShot] scout at %s reloads" % scout.cell)
+	await scout.play_reload()
+	scout.reload()  # magazine seats as the animation lands
+	state = prev_state
+	if state == State.PLAYER_TURN:
+		_refresh_highlights()
+		_update_unit_panel()
 
 
 ## Enter overwatch-aiming: the player picks which way the scout watches.
