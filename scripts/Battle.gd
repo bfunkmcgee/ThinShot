@@ -91,6 +91,15 @@ var burst_armed := false
 var aiming_overwatch := false
 var level: Dictionary = {}
 var last_result_won := false
+var base_camera_pos := Vector2.ZERO
+var base_zoom := Vector2.ONE
+var _cam_lean := Vector2.ZERO
+var _cam_shake := Vector2.ZERO
+var _shake_tween: Tween = null
+var _kick_tween: Tween = null
+var fx_ground: Fx = null
+var fx_air: Fx = null
+var fx_glow: Fx = null
 
 @onready var board: Board = $Board
 @onready var camera: Camera2D = $Camera
@@ -114,10 +123,12 @@ var last_result_won := false
 
 
 func _ready() -> void:
+	Engine.time_scale = 1.0  # a reload mid-hit-stop must never persist
 	Levels.validate_all()  # push_error-based, so it reports in release too
 	level = Game.data()
 	board.set_level(level)
 	_fit_camera()
+	_setup_fx_layers()
 	_validate_spawns()
 	_spawn_props()
 	for s: Dictionary in level.structures:
@@ -171,6 +182,27 @@ func _fit_camera() -> void:
 	var screen_center_y := margin_top + avail.y / 2.0
 	camera.position = board.to_global(center_local) \
 			+ Vector2(0, (view.y / 2.0 - screen_center_y) / fit)
+	# Cached so shake/kick can scale to screen space. Nothing else may write
+	# camera.position or camera.zoom - the full board staying framed is the
+	# contract that keeps the game readable.
+	base_camera_pos = camera.position
+	base_zoom = camera.zoom
+
+
+## Three pooled particle layers: dust under the board's entities, debris
+## above them, and an additive layer for anything that glows.
+func _setup_fx_layers() -> void:
+	fx_ground = Fx.new()
+	add_child(fx_ground)
+	move_child(fx_ground, board.get_index() + 1)
+	fx_air = Fx.new()
+	add_child(fx_air)
+	fx_glow = Fx.new()
+	var glow_material := CanvasItemMaterial.new()
+	glow_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	fx_glow.material = glow_material
+	fx_glow.z_index = 15
+	add_child(fx_glow)
 
 
 func _validate_spawns() -> void:
@@ -619,6 +651,7 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 		tween.tween_property(unit, "position", step_pos, MOVE_STEP_TIME)
 		await tween.finished
 		Sfx.play("footstep_1" if step_index % 2 == 0 else "footstep_2")
+		fx_ground.footstep(step_pos)
 		unit.cell = step
 		from_pos = step_pos
 		var watchers := _overwatchers_against(unit)
@@ -686,34 +719,57 @@ func _resolve_shot(attacker: Unit, target: Unit, with_aim_beat: bool) -> void:
 ## Assumes the attacker is already facing the target with rifle raised.
 func _fire_round(attacker: Unit, target: Unit) -> void:
 	var muzzle := attacker.muzzle_point()
-	Sfx.play("shot")
-	HitFx.spawn(self, muzzle, HitFx.Kind.MUZZLE)
-	var tracer := Line2D.new()
-	tracer.width = 3.0
-	tracer.default_color = Color(1.0, 0.95, 0.6)
-	tracer.add_point(muzzle)
-	tracer.add_point(target.position + Vector2(0, -36))
-	add_child(tracer)
-	await get_tree().create_timer(TRACER_TIME).timeout
-	tracer.queue_free()
-	Sfx.play("hit_impact")
-	HitFx.spawn(self, target.position + Vector2(0, -36), HitFx.Kind.IMPACT)
-	_screen_shake()
+	var chest := target.position + Vector2(0, -36)
+	var dir := (chest - muzzle).normalized()
+	var covered_cell := board.cover_cell_between(attacker.cell, target.cell)
 	var flanking := _is_flanking(attacker, target)
+
+	attacker.recoil(dir)
+	Sfx.play("shot")
+	HitFx.spawn(fx_glow, muzzle, HitFx.Kind.MUZZLE)
+	HitFx.spawn_tracer(fx_glow, muzzle, chest, TRACER_TIME)
+	fx_glow.muzzle(muzzle, dir)
+	fx_ground.footstep(attacker.position, 0.5)  # blast dust at the shooter's feet
+	fx_ground.casing(muzzle, dir)
+	_camera_kick(dir)
+
+	# Sparks off the junk pile the round clips, timed to when it passes.
+	if covered_cell != Board.NO_CELL:
+		var travel := Vector2(target.cell - attacker.cell).length()
+		var f: float = Vector2(covered_cell - attacker.cell).length() / maxf(travel, 0.001)
+		_spark_cover(covered_cell, dir, TRACER_TIME * f)
+
+	await get_tree().create_timer(TRACER_TIME).timeout
+
 	var dmg := attacker.damage
-	if not flanking and board.shot_through_cover(attacker.cell, target.cell):
+	if not flanking and covered_cell != Board.NO_CELL:
 		dmg >>= 1
 		print("[ThinShot]   shot %s -> %s clips cover: %d dmg" % [
 				attacker.cell, target.cell, dmg])
 	elif flanking:
 		print("[ThinShot]   flanking shot %s -> %s: %d dmg" % [
 				attacker.cell, target.cell, dmg])
-	target.take_damage(dmg)
+	var lethal := target.hp - dmg <= 0
+
+	Sfx.play("hit_impact")
+	HitFx.spawn(fx_glow, chest, HitFx.Kind.IMPACT)
+	fx_air.impact(chest, dir, target.team, lethal)
+	_screen_shake(1.6 if lethal else 1.0)
+	target.take_damage(dmg, dir)
 	# A hit from outside the front arc knocks the target off overwatch.
 	if flanking and target.is_alive() and target.overwatching:
 		target.set_overwatch(false)
 		target.lower_rifle()
 	_update_unit_panel()  # keep hovered-unit HP live even during enemy fire
+	await _hit_stop(0.09 if lethal else 0.14, 0.075 if lethal else 0.045)
+
+
+## Fire-and-forget spark on the junk cell the round passes through.
+func _spark_cover(cell: Vector2i, dir: Vector2, delay: float) -> void:
+	if delay > 0.0:
+		await get_tree().create_timer(delay).timeout
+	if is_instance_valid(fx_glow):
+		fx_glow.cover_spark(board.cell_to_global(cell) + Vector2(0, -20), dir)
 
 
 ## Braced two-round burst: only for scouts that have not moved this turn.
@@ -1001,9 +1057,19 @@ func _best_watch_sector(goblin: Unit, scouts: Array[Unit]) -> int:
 
 # --- Win / lose --------------------------------------------------------------
 
-func _on_unit_died(_unit: Unit) -> void:
+func _on_unit_died(unit: Unit) -> void:
 	Sfx.play("unit_death")
+	fx_ground.stain(unit.position)
+	_puff_on_landing(unit)
 	check_game_over()
+
+
+## Dust kicked up when the falling body actually hits the ground, rather
+## than when it starts to fall.
+func _puff_on_landing(unit: Unit) -> void:
+	await get_tree().create_timer(unit.death_landing_time()).timeout
+	if is_instance_valid(fx_ground) and is_instance_valid(unit):
+		fx_ground.death_puff(unit.position)
 
 
 func check_game_over() -> bool:
@@ -1035,12 +1101,14 @@ func _show_game_over(text: String, won: bool) -> void:
 
 
 func _on_restart() -> void:
+	Engine.time_scale = 1.0  # never carry a hit-stop across a reload
 	if last_result_won:
 		Game.select_level(0 if Game.is_last_level() else Game.current_level + 1)
 	get_tree().reload_current_scene()
 
 
 func _go_to_level(index: int) -> void:
+	Engine.time_scale = 1.0
 	Game.select_level(index)
 	get_tree().reload_current_scene()
 
@@ -1051,10 +1119,44 @@ const SHAKE_OFFSETS: Array[Vector2] = [
 ]
 
 
-func _screen_shake() -> void:
-	var tween := create_tween()
+## Camera offset is composited from independent channels so a recoil kick and
+## an impact shake can overlap (a burst fires two shots 0.13s apart) without
+## fighting each other over the same property.
+func _process(_delta: float) -> void:
+	camera.offset = _cam_lean + _cam_shake
+
+
+func _screen_shake(strength := 1.0) -> void:
+	if _shake_tween != null and _shake_tween.is_valid():
+		_shake_tween.kill()
+	var gain := strength / maxf(base_zoom.x, 0.01)
+	_shake_tween = create_tween()
 	for off in SHAKE_OFFSETS:
-		tween.tween_property(camera, "offset", off, 0.03)
+		_shake_tween.tween_property(self, "_cam_shake", off * gain, 0.03)
+
+
+## A snap away from the shot direction that eases back - the camera reacts to
+## where the round went instead of doing the same wiggle every time.
+func _camera_kick(dir: Vector2) -> void:
+	if _kick_tween != null and _kick_tween.is_valid():
+		_kick_tween.kill()
+	_cam_lean = -dir * 5.0 / maxf(base_zoom.x, 0.01)
+	_kick_tween = create_tween()
+	_kick_tween.tween_property(self, "_cam_lean", Vector2.ZERO, 0.16) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+## Brief global slow-motion on impact. The dip is measured in REAL seconds
+## (ignore_time_scale), so its length does not depend on `scale`, and the
+## restore is bound to the Engine singleton rather than this node so a scene
+## reload mid-freeze can never strand the game in slow motion.
+## Every caller must await this - that serialization is what keeps overlapping
+## hit-stops from stacking.
+func _hit_stop(scale: float, real_seconds: float) -> void:
+	Engine.time_scale = scale
+	var timer := get_tree().create_timer(real_seconds, true, false, true)
+	timer.timeout.connect(Engine.set_time_scale.bind(1.0))
+	await timer.timeout
 
 
 func show_banner(text: String) -> void:

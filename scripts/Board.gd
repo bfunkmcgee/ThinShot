@@ -260,9 +260,9 @@ func has_line_of_sight(from: Vector2i, to: Vector2i) -> bool:
 	return true
 
 
-## True if the straight shot crosses at least one junk (COVER) cell.
-## Same sampling as has_line_of_sight so the two always agree.
-func shot_through_cover(from: Vector2i, to: Vector2i) -> bool:
+## The first junk (COVER) cell a straight shot crosses, or NO_CELL. Uses the
+## same sampling as has_line_of_sight so the two can never disagree.
+func cover_cell_between(from: Vector2i, to: Vector2i) -> Vector2i:
 	var a := Vector2(from)
 	var b := Vector2(to)
 	var steps := int(a.distance_to(b) * 4.0) + 1
@@ -270,8 +270,13 @@ func shot_through_cover(from: Vector2i, to: Vector2i) -> bool:
 		var p := a.lerp(b, float(i) / float(steps))
 		var cell := Vector2i(roundi(p.x), roundi(p.y))
 		if cell != from and cell != to and cell_kind(cell) == CellKind.COVER:
-			return true
-	return false
+			return cell
+	return NO_CELL
+
+
+## True if the straight shot crosses at least one junk (COVER) cell.
+func shot_through_cover(from: Vector2i, to: Vector2i) -> bool:
+	return cover_cell_between(from, to) != NO_CELL
 
 
 ## BFS from start up to max_range steps. Walls and cells where blocked.call(cell)

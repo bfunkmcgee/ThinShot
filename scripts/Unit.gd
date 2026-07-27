@@ -176,6 +176,7 @@ var overwatching := false
 var anim := Anim.IDLE
 var anim_time := 0.0
 var anim_frame := 0
+var _body_tween: Tween = null
 
 @onready var sprite: Sprite2D = $Sprite
 
@@ -393,16 +394,37 @@ func is_alive() -> bool:
 	return hp > 0
 
 
-func take_damage(amount: int) -> void:
+## Kick the sprite backward off a shot and settle it. sprite.position is
+## otherwise unused (SPRITE_OFFSET lives in sprite.offset), so body motion
+## has its own channel and never fights the animation frames.
+func recoil(dir: Vector2) -> void:
+	_body_shove(-dir * 4.0, 0.14, Tween.TRANS_QUAD)
+
+
+func _body_shove(offset: Vector2, time: float, trans: Tween.TransitionType) -> void:
+	if _body_tween != null and _body_tween.is_valid():
+		_body_tween.kill()
+	sprite.position = offset
+	_body_tween = create_tween()
+	_body_tween.tween_property(sprite, "position", Vector2.ZERO, time) \
+			.set_trans(trans).set_ease(Tween.EASE_OUT)
+
+
+func take_damage(amount: int, from_dir := Vector2.ZERO) -> void:
 	if hp <= 0:
 		return  # already dead; never double-kill a corpse
 	_spawn_damage_number(amount)
 	hp = maxi(hp - amount, 0)
 	queue_redraw()
-	var tween := create_tween()
-	tween.tween_property(sprite, "modulate", Color(1.6, 0.3, 0.3), 0.08)
-	tween.tween_property(sprite, "modulate", Color.WHITE, 0.15)
-	if hp == 0:
+	var lethal := hp == 0
+	if from_dir != Vector2.ZERO:
+		_body_shove(from_dir * 5.0, 0.18, Tween.TRANS_BACK)
+	var flash := create_tween()
+	flash.tween_property(sprite, "modulate",
+			Color(2.0, 2.0, 2.0) if lethal else Color(1.6, 0.3, 0.3),
+			0.11 if lethal else 0.08)
+	flash.tween_property(sprite, "modulate", Color.WHITE, 0.15)
+	if lethal:
 		died.emit(self)
 		_die()
 
@@ -410,10 +432,17 @@ func take_damage(amount: int) -> void:
 ## Plays the fall animation, then rests in the dead stance. The corpse stays
 ## in the tree for the whole battle; is_alive() == false makes every gameplay
 ## query (occupancy, targeting, turns) ignore it.
+## Seconds until the falling body reaches the ground - used to time the dust.
+func death_landing_time() -> float:
+	return maxi(death_frames[facing_sector].size(), 1) * 0.6 / DIE_FPS
+
+
 func _die() -> void:
 	overwatching = false
 	selected = false
-	modulate = Color(0.9, 0.87, 0.84)
+	arc_preview_sector = -1
+	# Dustier than the living so the eye skips corpses on a busy board.
+	modulate = Color(0.72, 0.68, 0.64)
 	# Nudge up a hair so y-sort keeps living units on this tile in front.
 	position.y -= 0.6
 	_set_anim(Anim.DIE)
