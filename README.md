@@ -44,8 +44,8 @@ A 12×8 isometric grid strewn with rocks. You outrange them; they outnumber you.
 - Goblins chase, seek firing positions, avoid open ground lightly, and retreat
   to cover when wounded with no shot available; a goblin that holds position
   with no shot goes on overwatch to cover its lane.
-- Win by destroying all goblins; lose if all scouts fall. Restart from the
-  result screen.
+- Win by destroying all goblins; lose if all scouts fall — the fallen stay on
+  the battlefield where they dropped. Restart from the result screen.
 
 ## Running it
 

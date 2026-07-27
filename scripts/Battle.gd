@@ -25,8 +25,7 @@ const GOBLIN_SPAWNS: Array[Vector2i] = [
 const MOVE_STEP_TIME := 0.16
 const TRACER_TIME := 0.09
 const AI_BEAT := 0.25
-const AIM_TIME := 0.18  # rifle raised before the shot
-const LOWER_TIME := 0.12  # rifle held after the shot
+const LOWER_TIME := 0.12  # rifle held after the shot before lowering
 
 # Ignore end-turn requests this soon after control returns to the player -
 # they are almost always leftover E-mashing/clicking from the enemy turn.
@@ -346,14 +345,14 @@ func do_attack(attacker: Unit, target: Unit) -> void:
 		_update_unit_panel()
 
 
-## The shot itself: face, (optionally) raise and hold, fire effects, damage,
-## lower. Reaction shots skip the aim beat - the rifle is already up.
+## The shot itself: face, (optionally) raise the rifle via the transition
+## animation, fire effects, damage, lower. Reaction shots skip the raise -
+## the rifle is already up from overwatch.
 func _resolve_shot(attacker: Unit, target: Unit, with_aim_beat: bool) -> void:
 	var aim := (target.position - attacker.position).normalized()
 	attacker.set_facing(aim)
 	if with_aim_beat:
-		attacker.set_aiming(true)
-		await get_tree().create_timer(AIM_TIME).timeout
+		await attacker.raise_rifle()
 	var muzzle := attacker.muzzle_point()
 	Sfx.play("shot")
 	HitFx.spawn(self, muzzle, HitFx.Kind.MUZZLE)
@@ -370,7 +369,7 @@ func _resolve_shot(attacker: Unit, target: Unit, with_aim_beat: bool) -> void:
 	_screen_shake()
 	target.take_damage(attacker.damage)
 	await get_tree().create_timer(LOWER_TIME).timeout
-	attacker.set_aiming(false)
+	attacker.lower_rifle()
 
 
 # --- Danger overlay ----------------------------------------------------------

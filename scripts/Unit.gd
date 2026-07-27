@@ -68,9 +68,30 @@ static var SCOUT_IDLE_FRAMES: Array = _load_dir_frames(
 		"res://assets/sprites/Scout/animations/standing_idle")
 static var GOBLIN_IDLE_FRAMES: Array = _load_dir_frames(
 		"res://assets/sprites/Goblin/animations/standing_idle")
+static var SCOUT_RAISE_FRAMES: Array = _load_dir_frames(
+		"res://assets/sprites/Scout/animations/standing_idle_to_ready_to_fire")
+static var GOBLIN_RAISE_FRAMES: Array = _load_dir_frames(
+		"res://assets/sprites/Goblin/animations/standing_idle_to_Standing_Ready_to_fire")
+static var SCOUT_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		"res://assets/sprites/Scout/Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle")
+static var GOBLIN_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		"res://assets/sprites/Goblin/Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle")
+static var SCOUT_DEATH_FRAMES: Array = _load_dir_frames(
+		"res://assets/sprites/Scout/animations/standing_idle_to_dead")
+static var GOBLIN_DEATH_FRAMES: Array = _load_dir_frames(
+		"res://assets/sprites/Goblin/animations/standing_idle_to_dead")
+static var SCOUT_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		"res://assets/sprites/Scout/dead_stance/rotations")
+static var GOBLIN_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		"res://assets/sprites/Goblin/Dead_stance/rotations")
+
+enum Anim { IDLE, WALK, RAISE, AIM_IDLE, LOWER, DIE, DEAD }
 
 const WALK_FPS := 18.0
 const IDLE_FPS := 8.0
+const AIM_IDLE_FPS := 8.0
+const RAISE_FPS := 36.0
+const DIE_FPS := 14.0
 
 # Rifle-tip offsets in Unit space per facing sector, measured from the
 # aim-stance PNGs by tools/measure_muzzle.gd (sector order = DIR_NAMES).
@@ -124,14 +145,15 @@ var frames: Array[Texture2D] = SCOUT_FRAMES
 var aim_frames: Array[Texture2D] = SCOUT_AIM_FRAMES
 var walk_frames: Array = SCOUT_WALK_FRAMES
 var idle_frames: Array = SCOUT_IDLE_FRAMES
+var raise_frames: Array = SCOUT_RAISE_FRAMES
+var aim_idle_frames: Array = SCOUT_AIM_IDLE_FRAMES
+var death_frames: Array = SCOUT_DEATH_FRAMES
+var dead_frames: Array[Texture2D] = SCOUT_DEAD_FRAMES
 var facing_sector := 2  # south
-var aiming := false
 var overwatching := false
-var walking := false
-var walk_time := 0.0
-var walk_frame := 0
-var idle_time := 0.0
-var idle_frame := 0
+var anim := Anim.IDLE
+var anim_time := 0.0
+var anim_frame := 0
 
 @onready var sprite: Sprite2D = $Sprite
 
@@ -154,6 +176,10 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		aim_frames = SCOUT_AIM_FRAMES
 		walk_frames = SCOUT_WALK_FRAMES
 		idle_frames = SCOUT_IDLE_FRAMES
+		raise_frames = SCOUT_RAISE_FRAMES
+		aim_idle_frames = SCOUT_AIM_IDLE_FRAMES
+		death_frames = SCOUT_DEATH_FRAMES
+		dead_frames = SCOUT_DEAD_FRAMES
 		set_facing(Vector2(1, 0.5))   # face the goblin side (south-east)
 	else:
 		max_hp = 2
@@ -164,10 +190,14 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		aim_frames = GOBLIN_AIM_FRAMES
 		walk_frames = GOBLIN_WALK_FRAMES
 		idle_frames = GOBLIN_IDLE_FRAMES
+		raise_frames = GOBLIN_RAISE_FRAMES
+		aim_idle_frames = GOBLIN_AIM_IDLE_FRAMES
+		death_frames = GOBLIN_DEATH_FRAMES
+		dead_frames = GOBLIN_DEAD_FRAMES
 		set_facing(Vector2(-1, 0.5))  # face the scout side (south-west)
 	hp = max_hp
 	# Desync idle cycles so units don't all breathe in lockstep.
-	idle_time = float((p_cell.x * 7 + p_cell.y * 13) % 9) / IDLE_FPS
+	anim_time = float((p_cell.x * 7 + p_cell.y * 13) % 9) / IDLE_FPS
 
 
 static func _load_dir_frames(base: String) -> Array:
@@ -182,6 +212,15 @@ static func _load_dir_frames(base: String) -> Array:
 	return result
 
 
+## Loads a rotations/ folder of single per-direction PNGs (east.png, ...).
+static func _load_rotation_frames(base: String) -> Array[Texture2D]:
+	var result: Array[Texture2D] = []
+	for dir_name in DIR_NAMES:
+		var path := "%s/%s.png" % [base, dir_name]
+		result.append(load(path) if ResourceLoader.exists(path) else null)
+	return result
+
+
 ## Turn toward a screen-space direction, keeping the current stance.
 func set_facing(screen_dir: Vector2) -> void:
 	if screen_dir.length_squared() < 0.01:
@@ -190,10 +229,28 @@ func set_facing(screen_dir: Vector2) -> void:
 	_update_sprite()
 
 
-## Raise (true) or lower (false) the rifle.
-func set_aiming(value: bool) -> void:
-	aiming = value
+func _set_anim(value: Anim) -> void:
+	anim = value
+	anim_time = 0.0
+	anim_frame = 0
 	_update_sprite()
+
+
+## Plays the idle-to-aim transition and holds in the aimed idle loop.
+## Awaitable; returns immediately if the rifle is already up.
+func raise_rifle() -> void:
+	if anim == Anim.AIM_IDLE or anim == Anim.DIE or anim == Anim.DEAD:
+		return
+	if anim != Anim.RAISE:
+		_set_anim(Anim.RAISE)
+	var n: int = maxi(raise_frames[facing_sector].size(), 1)
+	await get_tree().create_timer(float(n) / RAISE_FPS).timeout
+
+
+## Plays the aim transition in reverse back to idle.
+func lower_rifle() -> void:
+	if anim == Anim.AIM_IDLE or anim == Anim.RAISE:
+		_set_anim(Anim.LOWER)
 
 
 ## Global position of the raised rifle's tip for the current facing.
@@ -202,54 +259,94 @@ func muzzle_point() -> Vector2:
 	return to_global(offsets[facing_sector])
 
 
-## Enter/leave overwatch: rifle stays raised, marker drawn above the pips.
+## Enter/leave overwatch: rifle raises and stays up, marker above the pips.
+## Leaving overwatch does NOT lower the rifle - the shot flow or turn expiry
+## handles that explicitly.
 func set_overwatch(value: bool) -> void:
 	overwatching = value
-	set_aiming(value)
+	if value and anim != Anim.RAISE and anim != Anim.AIM_IDLE:
+		_set_anim(Anim.RAISE)
 	queue_redraw()
 
 
 func start_walking() -> void:
-	walking = true
-	walk_time = 0.0
-	walk_frame = 0
-	_update_sprite()
+	if anim == Anim.DIE or anim == Anim.DEAD:
+		return
+	_set_anim(Anim.WALK)
 
 
 func stop_walking() -> void:
-	walking = false
-	_update_sprite()
+	if anim == Anim.WALK:
+		_set_anim(Anim.IDLE)
 
 
 func _process(delta: float) -> void:
-	if walking:
-		walk_time += delta
-		var idx := int(walk_time * WALK_FPS)
-		if idx != walk_frame:
-			walk_frame = idx
-			_update_sprite()
-	elif not aiming:
-		idle_time += delta
-		var idx := int(idle_time * IDLE_FPS)
-		if idx != idle_frame:
-			idle_frame = idx
-			_update_sprite()
+	if anim == Anim.DEAD:
+		return
+	var fps := IDLE_FPS
+	match anim:
+		Anim.WALK:
+			fps = WALK_FPS
+		Anim.RAISE, Anim.LOWER:
+			fps = RAISE_FPS
+		Anim.AIM_IDLE:
+			fps = AIM_IDLE_FPS
+		Anim.DIE:
+			fps = DIE_FPS
+	anim_time += delta
+	var idx := int(anim_time * fps)
+	if idx == anim_frame:
+		return
+	anim_frame = idx
+	var cycle: Array = _current_cycle()
+	var length: int = maxi(cycle.size(), 1)
+	if anim_frame >= length:
+		match anim:
+			Anim.RAISE:
+				_set_anim(Anim.AIM_IDLE)
+			Anim.LOWER:
+				_set_anim(Anim.IDLE)
+			Anim.DIE:
+				_set_anim(Anim.DEAD)
+			_:
+				_update_sprite()  # loops wrap via modulo
+		return
+	_update_sprite()
+
+
+func _current_cycle() -> Array:
+	match anim:
+		Anim.WALK:
+			return walk_frames[facing_sector]
+		Anim.RAISE, Anim.LOWER:
+			return raise_frames[facing_sector]
+		Anim.AIM_IDLE:
+			return aim_idle_frames[facing_sector]
+		Anim.DIE:
+			return death_frames[facing_sector]
+	return idle_frames[facing_sector]
 
 
 func _update_sprite() -> void:
-	if aiming:
-		sprite.texture = aim_frames[facing_sector]
+	if anim == Anim.DEAD:
+		var corpse := dead_frames[facing_sector]
+		if corpse != null:
+			sprite.texture = corpse
 		return
-	if walking:
-		var dir_frames: Array = walk_frames[facing_sector]
-		if not dir_frames.is_empty():
-			sprite.texture = dir_frames[walk_frame % dir_frames.size()]
-			return
-	var idle_dir: Array = idle_frames[facing_sector]
-	if not idle_dir.is_empty():
-		sprite.texture = idle_dir[idle_frame % idle_dir.size()]
+	var cycle: Array = _current_cycle()
+	if cycle.is_empty():
+		# Fallback to static poses if a frame set is missing.
+		var wants_aim := anim == Anim.RAISE or anim == Anim.AIM_IDLE or anim == Anim.LOWER
+		sprite.texture = (aim_frames if wants_aim else frames)[facing_sector]
 		return
-	sprite.texture = frames[facing_sector]
+	var idx := anim_frame
+	if anim == Anim.LOWER:
+		idx = cycle.size() - 1 - clampi(anim_frame, 0, cycle.size() - 1)
+	elif anim == Anim.DIE:
+		idx = clampi(anim_frame, 0, cycle.size() - 1)
+	else:
+		idx = anim_frame % cycle.size()
+	sprite.texture = cycle[idx]
 
 
 func is_alive() -> bool:
@@ -265,8 +362,20 @@ func take_damage(amount: int) -> void:
 	tween.tween_property(sprite, "modulate", Color.WHITE, 0.15)
 	if hp == 0:
 		died.emit(self)
-		tween.tween_property(self, "modulate:a", 0.0, 0.3)
-		tween.tween_callback(queue_free)
+		_die()
+
+
+## Plays the fall animation, then rests in the dead stance. The corpse stays
+## in the tree for the whole battle; is_alive() == false makes every gameplay
+## query (occupancy, targeting, turns) ignore it.
+func _die() -> void:
+	overwatching = false
+	selected = false
+	modulate = Color(0.9, 0.87, 0.84)
+	# Nudge up a hair so y-sort keeps living units on this tile in front.
+	position.y -= 0.6
+	_set_anim(Anim.DIE)
+	queue_redraw()
 
 
 ## Floating "-N" label. Parented to this unit's parent (not the unit itself)
@@ -306,11 +415,14 @@ func start_turn() -> void:
 	acted = false
 	modulate = Color.WHITE
 	if overwatching:
-		set_overwatch(false)  # unfired overwatch expires
+		set_overwatch(false)  # unfired overwatch expires...
+		lower_rifle()         # ...and the rifle comes down
 	queue_redraw()
 
 
 func _draw() -> void:
+	if hp <= 0:
+		return  # corpses carry no pips, rings, or markers
 	if selected:
 		# Ground ellipse at the unit's feet, matching the isometric 2:1 view.
 		var ring := RING_COLOR if team == TEAM_SCOUT else ENEMY_RING_COLOR
