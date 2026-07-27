@@ -51,12 +51,14 @@ const WALL_TEX_JUNCTION := preload(
 		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/north.png")
 const WALL_TEX_CAP := preload(
 		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/east.png")
-const STRUCTURE_TEXTURES := {
-	"hut_1": preload("res://assets/sprites/Environment/Desert/Structures/desert_hut/Desert_hut.png"),
-	"hut_2": preload("res://assets/sprites/Environment/Desert/Structures/desert_hut/Desert_hut_1.png"),
-	"tent": preload("res://assets/sprites/Environment/Desert/Structures/desert_hut/Desert_hut_2.png"),
-	"fortress": preload("res://assets/sprites/Environment/Desert/Structures/Desert_military_building/rotations/unknown.png"),
+const STRUCTURE_ROOT := "res://assets/sprites/Environment/Desert/Structures"
+const STRUCTURE_DIRS := {
+	"hut_1": STRUCTURE_ROOT + "/desert_hut/Desert_hut",
+	"hut_2": STRUCTURE_ROOT + "/desert_hut/Desert_hut_1",
+	"tent": STRUCTURE_ROOT + "/desert_hut/Desert_hut_2",
+	"fortress": STRUCTURE_ROOT + "/Desert_military_building",
 }
+const STRUCTURE_FPS := 7.0  # gentle breeze loops
 
 # Ground anchors measured from opaque bounds (texture px, pre-2x-scale).
 # Props center their painted ground footprint on the cell center; walls sink
@@ -108,6 +110,8 @@ var _shake_tween: Tween = null
 var _kick_tween: Tween = null
 var _rng := RandomNumberGenerator.new()
 var _swaying: Array = []
+var _animated_props: Array = []
+var structure_frames: Dictionary = {}
 var fx_ground: Fx = null
 var fx_air: Fx = null
 var fx_glow: Fx = null
@@ -144,6 +148,7 @@ func _ready() -> void:
 	_fit_camera()
 	_setup_fx_layers()
 	_validate_spawns()
+	_load_structure_art()
 	_spawn_props()
 	for s: Dictionary in level.structures:
 		_spawn_structure(s)
@@ -309,16 +314,49 @@ func _wall_texture_for(kind: String) -> Texture2D:
 	return WALL_TEX_CAP
 
 
+## Structure art lives at <dir>/rotations/unknown.png, with an optional
+## breeze loop beside it at <dir>/animations/<name>/unknown/frame_NNN.png.
+## The animation folder is named after the prompt that generated it, so we
+## scan for whatever is there instead of hardcoding the name.
+static func _load_structure_frames(dir: String) -> Array[Texture2D]:
+	var frames: Array[Texture2D] = []
+	var anim_root := dir + "/animations"
+	var da := DirAccess.open(anim_root)
+	if da != null:
+		for sub in da.get_directories():
+			var base := "%s/%s/unknown" % [anim_root, sub]
+			var i := 0
+			while ResourceLoader.exists("%s/frame_%03d.png" % [base, i]):
+				frames.append(load("%s/frame_%03d.png" % [base, i]))
+				i += 1
+			if not frames.is_empty():
+				break
+	if frames.is_empty():
+		var still := dir + "/rotations/unknown.png"
+		if ResourceLoader.exists(still):
+			frames.append(load(still))
+	return frames
+
+
+func _load_structure_art() -> void:
+	for kind: String in STRUCTURE_DIRS:
+		structure_frames[kind] = _load_structure_frames(STRUCTURE_DIRS[kind])
+
+
 ## Multi-tile set-piece: a y-sort root at the footprint's front cell so units
 ## on nearer rows draw in front, with the sprite centered on the footprint.
 func _spawn_structure(s: Dictionary) -> void:
 	var anchor: Vector2i = s.anchor
 	var struct_size: Vector2i = s.size
 	var front: Vector2i = anchor + struct_size - Vector2i.ONE
+	var frames: Array = structure_frames.get(s.kind, [])
+	if frames.is_empty():
+		push_error("No art found for structure kind '%s'" % s.kind)
+		return
 	var root := Node2D.new()
 	root.position = board.cell_to_global(front)
 	var spr := Sprite2D.new()
-	spr.texture = STRUCTURE_TEXTURES[s.kind]
+	spr.texture = frames[0]
 	spr.scale = Vector2(2, 2)
 	spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	spr.offset = STRUCTURE_OFFSETS[s.kind]
@@ -326,6 +364,14 @@ func _spawn_structure(s: Dictionary) -> void:
 			- root.position
 	root.add_child(spr)
 	entities_node.add_child(root)
+	if frames.size() > 1:
+		# Phase from the anchor cell so no two structures breathe in step.
+		_animated_props.append({
+			"sprite": spr,
+			"frames": frames,
+			"phase": float((anchor.x * 5 + anchor.y * 11) % 9) / STRUCTURE_FPS,
+			"frame": -1,
+		})
 
 
 func _spawn_unit(team: int, spawn_cell: Vector2i) -> void:
@@ -1310,6 +1356,18 @@ const SHAKE_OFFSETS: Array[Vector2] = [
 func _process(_delta: float) -> void:
 	camera.offset = _cam_lean + _cam_shake
 	_sway_plants()
+	_animate_structures()
+
+
+## Advance the huts' and outpost's breeze loops.
+func _animate_structures() -> void:
+	var t := Time.get_ticks_msec() / 1000.0
+	for entry: Dictionary in _animated_props:
+		var frames: Array = entry.frames
+		var idx: int = int((t + entry.phase) * STRUCTURE_FPS) % frames.size()
+		if idx != entry.frame:
+			entry.frame = idx
+			entry.sprite.texture = frames[idx]
 
 
 ## Cacti lean in the wind. The offset snaps to whole sprite texels (the props

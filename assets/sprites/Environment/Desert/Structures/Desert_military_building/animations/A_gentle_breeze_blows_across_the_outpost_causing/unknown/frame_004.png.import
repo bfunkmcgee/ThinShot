@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://krqhmn4p2cj3"
-path="res://.godot/imported/Desert_hut.png-601d55bf8e53f2bd9960799e0fa15037.ctex"
+uid="uid://dqdebnkb1pr6x"
+path="res://.godot/imported/frame_004.png-cb842873a1cd71c69d8c3b986bda367a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/Environment/Desert/Structures/desert_hut/Desert_hut.png"
-dest_files=["res://.godot/imported/Desert_hut.png-601d55bf8e53f2bd9960799e0fa15037.ctex"]
+source_file="res://assets/sprites/Environment/Desert/Structures/Desert_military_building/animations/A_gentle_breeze_blows_across_the_outpost_causing/unknown/frame_004.png"
+dest_files=["res://.godot/imported/frame_004.png-cb842873a1cd71c69d8c3b986bda367a.ctex"]
 
 [params]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cgi3gofy07wnl"
-path="res://.godot/imported/Desert_hut_2.png-2d4eb8ca8179201f0f2d266af10c4a01.ctex"
+uid="uid://c2fqidp7w3tyc"
+path="res://.godot/imported/unknown.png-e3e1d350f6aa1b9c0492ea81d4514a05.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/Environment/Desert/Structures/desert_hut/Desert_hut_2.png"
-dest_files=["res://.godot/imported/Desert_hut_2.png-2d4eb8ca8179201f0f2d266af10c4a01.ctex"]
+source_file="res://assets/sprites/Environment/Desert/Structures/desert_hut/Desert_hut_2/rotations/unknown.png"
+dest_files=["res://.godot/imported/unknown.png-e3e1d350f6aa1b9c0492ea81d4514a05.ctex"]
 
 [params]
 
