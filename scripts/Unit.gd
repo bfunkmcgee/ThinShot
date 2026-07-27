@@ -245,7 +245,9 @@ func raise_rifle() -> void:
 	if anim != Anim.RAISE:
 		_set_anim(Anim.RAISE)
 	var n: int = maxi(raise_frames[facing_sector].size(), 1)
-	await get_tree().create_timer(float(n) / RAISE_FPS).timeout
+	# One extra frame of padding so the shot never fires before _process
+	# has visually reached the aimed pose (frame quantization race).
+	await get_tree().create_timer(float(n) / RAISE_FPS + 0.03).timeout
 
 
 ## Plays the aim transition in reverse back to idle.
@@ -355,6 +357,8 @@ func is_alive() -> bool:
 
 
 func take_damage(amount: int) -> void:
+	if hp <= 0:
+		return  # already dead; never double-kill a corpse
 	_spawn_damage_number(amount)
 	hp = maxi(hp - amount, 0)
 	queue_redraw()

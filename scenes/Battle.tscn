@@ -50,9 +50,11 @@ offset_left = 16.0
 offset_top = -150.0
 offset_right = 300.0
 offset_bottom = -16.0
+mouse_filter = 2
 
 [node name="Margin" type="MarginContainer" parent="UI/UnitPanel"]
 layout_mode = 2
+mouse_filter = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 12

@@ -103,11 +103,19 @@ const LEVELS: Array[Dictionary] = [
 const LEGAL_CHARS := ".#Wjp"
 
 
-## Asserts every level is well-formed. Cheap; run on debug boots so one
-## headless run validates the whole campaign.
+## Validates every level. push_error-based so it also reports in release
+## builds (asserts are stripped there); debug builds additionally hard-stop.
 static func validate_all() -> void:
+	var ok := true
 	for i in LEVELS.size():
-		_validate(i)
+		ok = _validate(i) and ok
+	assert(ok, "Level data invalid - see errors above")
+
+
+static func _check(cond: bool, msg: String) -> bool:
+	if not cond:
+		push_error("[Levels] " + msg)
+	return cond
 
 
 static func _footprint_cells(data: Dictionary) -> Dictionary:
@@ -121,15 +129,19 @@ static func _footprint_cells(data: Dictionary) -> Dictionary:
 	return cells
 
 
-static func _validate(index: int) -> void:
+static func _validate(index: int) -> bool:
 	var data: Dictionary = LEVELS[index]
 	var label: String = "Level %d '%s'" % [index + 1, data.name]
 	var grid: Vector2i = data.size
-	assert(data.map.size() == grid.y, "%s: map must have %d rows" % [label, grid.y])
+	var ok := _check(data.map.size() == grid.y, "%s: map must have %d rows" % [label, grid.y])
+	if not ok:
+		return false  # row checks below would misindex
 	for row: String in data.map:
-		assert(row.length() == grid.x, "%s: row '%s' wrong length" % [label, row])
+		ok = _check(row.length() == grid.x, "%s: row '%s' wrong length" % [label, row]) and ok
 		for ch in row:
-			assert(LEGAL_CHARS.contains(ch), "%s: illegal char '%s'" % [label, ch])
+			ok = _check(LEGAL_CHARS.contains(ch), "%s: illegal char '%s'" % [label, ch]) and ok
+	if not ok:
+		return false
 	var footprints := _footprint_cells(data)
 	var seen_footprint := {}
 	for s: Dictionary in data.structures:
@@ -138,10 +150,10 @@ static func _validate(index: int) -> void:
 		for dy in struct_size.y:
 			for dx in struct_size.x:
 				var cell: Vector2i = anchor + Vector2i(dx, dy)
-				assert(cell.x >= 0 and cell.x < grid.x and cell.y >= 0 and cell.y < grid.y,
-						"%s: structure %s out of bounds at %s" % [label, s.kind, cell])
-				assert(not seen_footprint.has(cell),
-						"%s: overlapping structures at %s" % [label, cell])
+				ok = _check(cell.x >= 0 and cell.x < grid.x and cell.y >= 0 and cell.y < grid.y,
+						"%s: structure %s out of bounds at %s" % [label, s.kind, cell]) and ok
+				ok = _check(not seen_footprint.has(cell),
+						"%s: overlapping structures at %s" % [label, cell]) and ok
 				seen_footprint[cell] = true
 	# Walkable = '.' or 'p', outside every footprint.
 	var walkable := func(cell: Vector2i) -> bool:
@@ -154,8 +166,8 @@ static func _validate(index: int) -> void:
 	var spawns: Array = data.scout_spawns + data.goblin_spawns
 	var seen_spawn := {}
 	for spawn: Vector2i in spawns:
-		assert(walkable.call(spawn), "%s: spawn %s not walkable" % [label, spawn])
-		assert(not seen_spawn.has(spawn), "%s: duplicate spawn %s" % [label, spawn])
+		ok = _check(walkable.call(spawn), "%s: spawn %s not walkable" % [label, spawn]) and ok
+		ok = _check(not seen_spawn.has(spawn), "%s: duplicate spawn %s" % [label, spawn]) and ok
 		seen_spawn[spawn] = true
 	# Reachability: every spawn connected to the first scout spawn.
 	var start: Vector2i = data.scout_spawns[0]
@@ -170,4 +182,6 @@ static func _validate(index: int) -> void:
 			visited[nxt] = true
 			frontier.push_back(nxt)
 	for spawn: Vector2i in spawns:
-		assert(visited.has(spawn), "%s: spawn %s unreachable from %s" % [label, spawn, start])
+		ok = _check(visited.has(spawn),
+				"%s: spawn %s unreachable from %s" % [label, spawn, start]) and ok
+	return ok

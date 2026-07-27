@@ -37,6 +37,7 @@ const PITCH_VAR := 0.06
 
 var _players: Array[AudioStreamPlayer] = []
 var _rng := RandomNumberGenerator.new()
+var _steal_index := 0
 
 
 func _ready() -> void:
@@ -61,4 +62,6 @@ func _idle_player() -> AudioStreamPlayer:
 	for player in _players:
 		if not player.playing:
 			return player
-	return _players[0]  # steal the oldest slot
+	# Pool saturated: steal round-robin so no single sound gets cut twice.
+	_steal_index = (_steal_index + 1) % _players.size()
+	return _players[_steal_index]

@@ -110,8 +110,7 @@ var last_result_won := false
 
 
 func _ready() -> void:
-	if OS.is_debug_build():
-		Levels.validate_all()
+	Levels.validate_all()  # push_error-based, so it reports in release too
 	level = Game.data()
 	board.set_level(level)
 	_fit_camera()
@@ -127,15 +126,22 @@ func _ready() -> void:
 	overwatch_button.pressed.connect(_try_overwatch)
 	danger_button.toggled.connect(_on_danger_button_toggled)
 	restart_button.pressed.connect(_on_restart)
-	level_1_button.pressed.connect(_go_to_level.bind(0))
-	level_2_button.pressed.connect(_go_to_level.bind(1))
-	level_3_button.pressed.connect(_go_to_level.bind(2))
+	# Hotkeys/buttons cover the first 3 levels; extend the level_N input
+	# actions and this button row alongside any new Levels.LEVELS entries.
+	var level_buttons: Array[Button] = [level_1_button, level_2_button, level_3_button]
+	for i in level_buttons.size():
+		if i < Levels.LEVELS.size():
+			level_buttons[i].pressed.connect(_go_to_level.bind(i))
+		else:
+			level_buttons[i].visible = false
 	show_banner("LEVEL %d - %s" % [Game.current_level + 1, level.name])
 	player_turn_ready_msec = Time.get_ticks_msec()
 	print("[ThinShot] level %d '%s', player turn 1 begins" % [
 			Game.current_level + 1, level.name])
 	await get_tree().create_timer(1.1).timeout
-	if state == State.PLAYER_TURN:
+	# Swap to the turn banner unless the enemy turn or game over owns it
+	# (ANIMATING just means the player is already acting - still their turn).
+	if state == State.PLAYER_TURN or state == State.ANIMATING:
 		show_banner("DESERT SCOUTS' TURN")
 
 
@@ -297,7 +303,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("cycle_unit"):
 		_cycle_unit()
 		return
-	for i in 3:
+	for i in mini(3, Levels.LEVELS.size()):
 		if event.is_action_pressed("level_%d" % (i + 1)):
 			_go_to_level(i)
 			return
@@ -416,11 +422,9 @@ func _refresh_highlights() -> void:
 			if Board.manhattan(selected.cell, enemy.cell) <= selected.attack_range \
 					and board.has_line_of_sight(selected.cell, enemy.cell):
 				attacks.append(enemy.cell)
+	# Even with no moves or targets, the unit stays selected: overwatch (W)
+	# is always a legal order for a unit that has not attacked.
 	board.set_highlights(moves, attacks)
-	if moves.is_empty() and attacks.is_empty():
-		selected.set_done(true)
-		deselect()
-		return
 	_update_hover(board.global_to_cell(get_global_mouse_position()))
 
 
@@ -480,6 +484,9 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 					deselect()
 				if state != State.GAME_OVER:
 					state = prev_state
+					if prev_state == State.PLAYER_TURN:
+						_refresh_danger()
+						_update_unit_panel()
 				return
 			unit.start_walking()
 	unit.stop_walking()
@@ -537,11 +544,21 @@ func _resolve_shot(attacker: Unit, target: Unit, with_aim_beat: bool) -> void:
 		print("[ThinShot]   shot %s -> %s clips cover: %d dmg" % [
 				attacker.cell, target.cell, dmg])
 	target.take_damage(dmg)
+	_update_unit_panel()  # keep hovered-unit HP live even during enemy fire
 	await get_tree().create_timer(LOWER_TIME).timeout
 	attacker.lower_rifle()
 
 
 # --- Danger overlay ----------------------------------------------------------
+
+## Blocker for danger projection: only scouts block a goblin's projected
+## reach. Goblins move sequentially on their turn and can vacate cells for
+## each other, so counting them as blockers would under-warn (cells marked
+## safe that a goblin can provably reach). Over-warning is the safe error.
+func _cell_blocked_for_danger(cell: Vector2i) -> bool:
+	var unit := unit_at(cell)
+	return unit != null and unit.team == Unit.TEAM_SCOUT
+
 
 ## Every tile some living goblin could shoot next turn: reachable move cells
 ## (plus standing still) expanded by attack range with line of sight.
@@ -549,7 +566,7 @@ func _compute_danger_cells() -> Dictionary:
 	var danger := {}
 	for goblin in living_units(Unit.TEAM_GOBLIN):
 		var origins: Array = board.flood_fill(
-				goblin.cell, goblin.move_range, _cell_blocked).keys()
+				goblin.cell, goblin.move_range, _cell_blocked_for_danger).keys()
 		origins.append(goblin.cell)
 		var r := goblin.attack_range
 		for origin: Vector2i in origins:
@@ -638,6 +655,7 @@ func end_player_turn() -> void:
 	state = State.PLAYER_TURN
 	player_turn_ready_msec = Time.get_ticks_msec()
 	_refresh_danger()
+	_update_unit_panel()
 
 
 func run_enemy_turn() -> void:

@@ -71,17 +71,21 @@ godot --headless --path . --quit
 
 ```
 scenes/
-  Battle.tscn     # main scene: board, y-sorted entities, UI
+  Battle.tscn     # main scene: board, camera, y-sorted entities, UI
   Unit.tscn       # one combatant (Node2D + Sprite2D)
 scripts/
-  Battle.gd       # controller: turn state machine, input, AI, win/lose
-  Board.gd        # grid: iso math, BFS pathfinding, LOS, tile/highlight drawing
-  Unit.gd         # combatant: stats, damage, HP pips, damage numbers
+  Battle.gd       # controller: turn state machine, input, AI, campaign flow
+  Board.gd        # grid: iso math, BFS, LOS/cover traces, tile/highlight drawing
+  Unit.gd         # combatant: stats, animation state machine, damage, pips
+  Levels.gd       # campaign data: maps, spawns, structures + boot validator
+  Game.gd         # autoload: current level across scene reloads
+  Sfx.gd          # autoload: pooled sound playback
   HitFx.gd        # one-shot code-drawn muzzle flash / impact ring
+tools/            # asset generators/measurers (SFX synth, muzzle scanner)
+assets/audio/     # 11 generated retro SFX
 assets/sprites/
-  Scout/          # 8-direction idle frames + aim stance + 9-frame walk cycles
-  Goblin/         # same set for the goblins
-  Environment/    # desert rocks (3 variants)
+  Scout/, Goblin/ # 8-direction idle/walk/aim/aim-idle/death sets + dead stances
+  Environment/    # rocks, rusted junk, cacti, brick walls, huts, tent, fortress
 assets/Tiles/     # desert floor tileset (10 x 128x60 diamond variants)
 ```
 
