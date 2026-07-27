@@ -74,6 +74,7 @@ const MOVE_STEP_TIME := 0.16
 const TRACER_TIME := 0.09
 const AI_BEAT := 0.25
 const LOWER_TIME := 0.12  # rifle held after the shot before lowering
+const BURST_GAP := 0.13  # pause between the two rounds of a burst
 
 # Ignore end-turn requests this soon after control returns to the player -
 # they are almost always leftover E-mashing/clicking from the enemy turn.
@@ -86,6 +87,7 @@ var turn_number := 1
 var enemy_turn_running := false
 var player_turn_ready_msec := 0
 var danger_on := false
+var burst_armed := false
 var level: Dictionary = {}
 var last_result_won := false
 
@@ -95,6 +97,7 @@ var last_result_won := false
 @onready var turn_banner: Label = $UI/TurnBanner
 @onready var end_turn_button: Button = $UI/EndTurnButton
 @onready var overwatch_button: Button = $UI/OverwatchButton
+@onready var burst_button: Button = $UI/BurstButton
 @onready var danger_button: Button = $UI/DangerButton
 @onready var unit_panel: PanelContainer = $UI/UnitPanel
 @onready var panel_name_label: Label = $UI/UnitPanel/Margin/Rows/NameLabel
@@ -124,6 +127,7 @@ func _ready() -> void:
 		_spawn_unit(Unit.TEAM_GOBLIN, spawn)
 	end_turn_button.pressed.connect(end_player_turn)
 	overwatch_button.pressed.connect(_try_overwatch)
+	burst_button.toggled.connect(_on_burst_button_toggled)
 	danger_button.toggled.connect(_on_danger_button_toggled)
 	restart_button.pressed.connect(_on_restart)
 	# Hotkeys/buttons cover the first 3 levels; extend the level_N input
@@ -297,6 +301,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("overwatch"):
 		_try_overwatch()
 		return
+	if event.is_action_pressed("burst"):
+		_toggle_burst()
+		return
 	if event.is_action_pressed("toggle_danger"):
 		_toggle_danger()
 		return
@@ -329,9 +336,14 @@ func _handle_click(cell: Vector2i) -> void:
 	if selected != null:
 		if clicked != null and clicked.team == Unit.TEAM_GOBLIN \
 				and board.attack_cells.has(cell):
-			do_attack(selected, clicked)
+			if burst_armed:
+				_set_burst_armed(false)
+				do_burst(selected, clicked)
+			else:
+				do_attack(selected, clicked)
 			return
 		if board.move_cells.has(cell):
+			_set_burst_armed(false)  # moving forfeits the braced burst
 			do_move(selected, cell)
 			return
 	if clicked != null and clicked.team == Unit.TEAM_SCOUT and not clicked.acted:
@@ -354,8 +366,41 @@ func deselect() -> void:
 	if selected != null:
 		selected.set_selected(false)
 		selected = null
+	_set_burst_armed(false)
 	board.clear_highlights()
 	_update_unit_panel()
+
+
+## Arm/disarm burst fire for the selected scout. Eligible only while the
+## scout has neither moved nor attacked (a braced, standing volley).
+func _toggle_burst() -> void:
+	if burst_armed:
+		_set_burst_armed(false)
+		return
+	if state != State.PLAYER_TURN or selected == null:
+		return
+	if selected.team != Unit.TEAM_SCOUT or selected.moved or selected.acted:
+		return
+	_set_burst_armed(true)
+	Sfx.play("select", -3.0, 0.0)
+
+
+func _set_burst_armed(value: bool) -> void:
+	if burst_armed == value:
+		return
+	burst_armed = value
+	burst_button.set_pressed_no_signal(value)
+	board.set_burst_mode(value)
+	_update_unit_panel()
+
+
+func _on_burst_button_toggled(pressed: bool) -> void:
+	if pressed:
+		_toggle_burst()
+		# _toggle_burst may refuse; resync the button to the real state.
+		burst_button.set_pressed_no_signal(burst_armed)
+	else:
+		_set_burst_armed(false)
 
 
 ## Select the next living scout that can still act, wrapping in spawn order.
@@ -383,6 +428,10 @@ func _update_unit_panel() -> void:
 	panel_hp_label.text = "HP %d / %d" % [unit.hp, unit.max_hp]
 	panel_stats_label.text = "Move %d   Range %d   Dmg %d" % [
 			unit.move_range, unit.attack_range, unit.damage]
+	if unit == selected and burst_armed:
+		panel_status_label.text = "BURST ARMED"
+		panel_status_label.modulate = Color("ff7a2a")
+		return
 	panel_status_label.text = _unit_status(unit)
 	panel_status_label.modulate = Color("ffb84a") if unit.overwatching else Color.WHITE
 
@@ -517,13 +566,21 @@ func do_attack(attacker: Unit, target: Unit) -> void:
 
 
 ## The shot itself: face, (optionally) raise the rifle via the transition
-## animation, fire effects, damage, lower. Reaction shots skip the raise -
+## animation, fire one round, lower. Reaction shots skip the raise -
 ## the rifle is already up from overwatch.
 func _resolve_shot(attacker: Unit, target: Unit, with_aim_beat: bool) -> void:
 	var aim := (target.position - attacker.position).normalized()
 	attacker.set_facing(aim)
 	if with_aim_beat:
 		await attacker.raise_rifle()
+	await _fire_round(attacker, target)
+	await get_tree().create_timer(LOWER_TIME).timeout
+	attacker.lower_rifle()
+
+
+## One round leaving the muzzle: effects, sound, cover-checked damage.
+## Assumes the attacker is already facing the target with rifle raised.
+func _fire_round(attacker: Unit, target: Unit) -> void:
 	var muzzle := attacker.muzzle_point()
 	Sfx.play("shot")
 	HitFx.spawn(self, muzzle, HitFx.Kind.MUZZLE)
@@ -545,8 +602,33 @@ func _resolve_shot(attacker: Unit, target: Unit, with_aim_beat: bool) -> void:
 				attacker.cell, target.cell, dmg])
 	target.take_damage(dmg)
 	_update_unit_panel()  # keep hovered-unit HP live even during enemy fire
+
+
+## Braced two-round burst: only for scouts that have not moved this turn.
+## Each round is cover-checked independently; stops early if the target drops.
+func do_burst(attacker: Unit, target: Unit) -> void:
+	var prev_state := state
+	state = State.ANIMATING
+	board.clear_highlights()
+	print("[ThinShot] burst! %s -> %s" % [attacker.cell, target.cell])
+	var aim := (target.position - attacker.position).normalized()
+	attacker.set_facing(aim)
+	await attacker.raise_rifle()
+	await _fire_round(attacker, target)
+	if target.is_alive() and state != State.GAME_OVER:
+		await get_tree().create_timer(BURST_GAP).timeout
+		await _fire_round(attacker, target)
 	await get_tree().create_timer(LOWER_TIME).timeout
 	attacker.lower_rifle()
+	attacker.set_done(true)
+	if attacker == selected:
+		deselect()
+	if state == State.GAME_OVER:
+		return
+	state = prev_state
+	if prev_state == State.PLAYER_TURN:
+		_refresh_danger()
+		_update_unit_panel()
 
 
 # --- Danger overlay ----------------------------------------------------------
@@ -629,6 +711,7 @@ func end_player_turn() -> void:
 	show_banner("RUST CHOIR'S TURN")
 	end_turn_button.disabled = true
 	overwatch_button.disabled = true
+	burst_button.disabled = true
 	danger_button.disabled = true
 	# Goblins refresh at the start of THEIR turn (expires last turn's
 	# unfired goblin overwatch at the right moment).
@@ -650,6 +733,7 @@ func end_player_turn() -> void:
 	Sfx.play("turn_player", 0.0, 0.0)
 	end_turn_button.disabled = false
 	overwatch_button.disabled = false
+	burst_button.disabled = false
 	danger_button.disabled = false
 	show_banner("DESERT SCOUTS' TURN")
 	state = State.PLAYER_TURN

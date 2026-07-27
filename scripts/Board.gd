@@ -60,6 +60,8 @@ const ATTACK_HOVER_HL := Color(1.0, 0.35, 0.25, 0.55)
 # Amber variants signal a shot that clips junk cover (half damage).
 const AIM_LINE_COVER := Color(1.0, 0.82, 0.25, 0.85)
 const ATTACK_HOVER_COVER_HL := Color(1.0, 0.65, 0.2, 0.5)
+# Burst-armed attack highlight: hotter orange than the normal red.
+const BURST_HL := Color(1.0, 0.45, 0.05, 0.5)
 
 const NO_CELL := Vector2i(-1, -1)
 
@@ -85,6 +87,7 @@ var hover_cell := NO_CELL
 var path_preview: Array[Vector2i] = []
 var aim_from := NO_CELL
 var aim_covered := false
+var burst_mode := false
 # Cells any enemy could shoot next turn (selection-independent; cleared
 # only via set_danger, never by clear_highlights).
 var danger_cells: Dictionary = {}
@@ -111,6 +114,12 @@ func set_hover(cell: Vector2i, path: Array[Vector2i], p_aim_from: Vector2i,
 func set_danger(cells: Dictionary) -> void:
 	danger_cells = cells
 	queue_redraw()
+
+
+func set_burst_mode(value: bool) -> void:
+	if burst_mode != value:
+		burst_mode = value
+		queue_redraw()
 
 
 func clear_highlights() -> void:
@@ -346,7 +355,7 @@ func _draw() -> void:
 	for cell: Vector2i in move_cells:
 		draw_colored_polygon(_diamond(cell), MOVE_HL)
 	for cell in attack_cells:
-		draw_colored_polygon(_diamond(cell), ATTACK_HL)
+		draw_colored_polygon(_diamond(cell), BURST_HL if burst_mode else ATTACK_HL)
 	if hover_cell != NO_CELL:
 		if attack_cells.has(hover_cell):
 			draw_colored_polygon(_diamond(hover_cell),

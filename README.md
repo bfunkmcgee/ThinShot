@@ -27,6 +27,9 @@ Choir has numbers and holds the ground.
 - **W** or the **Overwatch** button — put the selected scout on overwatch
   (consumes its attack; it fires automatically at the first goblin that moves
   through its line of sight on the enemy turn)
+- **B** or the **Burst** button — arm burst fire for a scout that hasn't moved
+  (highlights turn orange); click a target to fire a braced two-round burst
+  (2×2 damage, each round halved by cover). Moving disarms it.
 - **D** or the **Danger** button — toggle the danger overlay (red-hatched tiles
   the goblins could shoot next turn)
 - **Tab** — cycle through scouts that can still act
@@ -47,6 +50,9 @@ Choir has numbers and holds the ground.
   raised (amber marker above its HP) and takes one free reaction shot at the
   first enemy that moves through its range and line of sight. Unfired
   overwatch expires at the owner's next turn.
+- **Burst fire** is scout-only: a scout that stays put may spend its attack on
+  a two-round burst — enough to drop a full-health goblin in one action, at
+  the price of not repositioning.
 - Goblins chase, seek firing positions, avoid open ground lightly, and retreat
   to cover when wounded with no shot available; a goblin that holds position
   with no shot goes on overwatch to cover its lane.
