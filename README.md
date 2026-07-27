@@ -24,9 +24,14 @@ Choir has numbers and holds the ground.
 - **Left-click** — select a scout / move to a yellow-highlighted tile / shoot a
   red-highlighted enemy
 - **Hover** — tile outline, movement path preview, dashed aim line on targets
-- **W** or the **Overwatch** button — put the selected scout on overwatch, then
-  **click the direction to watch** (consumes its attack; it fires automatically
-  at the first goblin that moves through the 135° arc it covers)
+- **W** or the **Watch** button — put the selected scout on overwatch, then
+  **click the direction to watch**: a green cone previews exactly which tiles
+  it will cover before you commit (consumes its attack; it fires automatically
+  at the first goblin that steps into that arc)
+- **F** or the **Face** button — turn the selected scout to look anywhere, for
+  **free**. Costs no move and no attack, works even for a scout that has
+  already acted, and can be repeated — it decides which way you face when the
+  goblins take their turn.
 - **B** or the **Burst** button — arm burst fire for a scout that hasn't moved
   (highlights turn orange); click a target to fire a braced two-round burst
   (2×2 damage, each round halved by cover). Moving disarms it.
@@ -55,8 +60,9 @@ Choir has numbers and holds the ground.
   across an enemy's front exposes your flank while advancing into it does not.
 - **Overwatch** works for both sides: an overwatching unit stands with rifle
   raised (amber marker above its HP) and takes one free reaction shot at the
-  first enemy that moves through **the arc it is watching** — enemy arcs are
-  hatched amber on the board. Unfired overwatch expires at the owner's next turn.
+  first enemy that moves through **the arc it is watching**. Covered ground is
+  hatched on the board: amber for goblin arcs, green for your own. Unfired
+  overwatch expires at the owner's next turn.
 - **Burst fire** is scout-only: a scout that stays put may spend its attack on
   a two-round burst — enough to drop a full-health goblin in one action, at
   the price of not repositioning.

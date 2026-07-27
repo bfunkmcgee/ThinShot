@@ -74,9 +74,12 @@ const BURST_HL := Color(1.0, 0.45, 0.05, 0.5)
 # Cyan means "flanking - cover ignored" (amber is already taken by cover).
 const AIM_LINE_FLANK := Color(0.45, 0.95, 1.0, 0.9)
 const ATTACK_HOVER_FLANK_HL := Color(0.3, 0.85, 1.0, 0.5)
-# Enemy overwatch arcs: amber, hatched on the opposite diagonal from danger.
+# Overwatch arcs, hatched on the opposite diagonal from danger. Amber for
+# enemy arcs (a threat), green for your own (ground you have covered).
 const WATCH_FILL := Color(1.0, 0.72, 0.28, 0.10)
 const WATCH_HATCH := Color(1.0, 0.72, 0.28, 0.26)
+const WATCH_FILL_ALLY := Color(0.45, 0.92, 0.5, 0.10)
+const WATCH_HATCH_ALLY := Color(0.5, 0.95, 0.55, 0.26)
 
 const NO_CELL := Vector2i(-1, -1)
 
@@ -104,7 +107,7 @@ var aim_from := NO_CELL
 var aim_covered := false
 var aim_flanking := false
 var burst_mode := false
-# Cells covered by enemy overwatch arcs (selection-independent).
+# Cells covered by overwatch arcs: cell -> true if the watcher is hostile.
 var watch_cells: Dictionary = {}
 # Cells any enemy could shoot next turn (selection-independent; cleared
 # only via set_danger, never by clear_highlights).
@@ -414,13 +417,15 @@ func _draw() -> void:
 		draw_colored_polygon(d, DANGER_FILL)
 		for f in [0.25, 0.5, 0.75]:
 			draw_line(d[3].lerp(d[2], f), d[0].lerp(d[1], f), DANGER_HATCH, 1.0, true)
-	# Enemy overwatch arcs, hatched on the opposite diagonal from danger so
-	# the two stay legible where they overlap.
+	# Overwatch arcs, hatched on the opposite diagonal from danger so the
+	# two stay legible where they overlap.
 	for cell: Vector2i in watch_cells:
+		var hostile: bool = watch_cells[cell]
 		var w := _diamond(cell)
-		draw_colored_polygon(w, WATCH_FILL)
+		draw_colored_polygon(w, WATCH_FILL if hostile else WATCH_FILL_ALLY)
+		var hatch := WATCH_HATCH if hostile else WATCH_HATCH_ALLY
 		for f in [0.3, 0.6]:
-			draw_line(w[3].lerp(w[0], f), w[2].lerp(w[1], f), WATCH_HATCH, 1.0, true)
+			draw_line(w[3].lerp(w[0], f), w[2].lerp(w[1], f), hatch, 1.0, true)
 	for cell: Vector2i in move_cells:
 		draw_colored_polygon(_diamond(cell), MOVE_HL)
 	for cell in attack_cells:

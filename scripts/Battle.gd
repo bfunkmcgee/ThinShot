@@ -4,6 +4,10 @@ extends Node2D
 
 enum State { PLAYER_TURN, ANIMATING, ENEMY_TURN, GAME_OVER }
 
+## Direction-picking modes: both preview a cone and commit on a click.
+## OVERWATCH consumes the unit's attack; FACE is free.
+enum AimMode { NONE, OVERWATCH, FACE }
+
 const UNIT_SCENE := preload("res://scenes/Unit.tscn")
 const ROCK_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_1.png"),
@@ -89,7 +93,7 @@ var enemy_turn_running := false
 var player_turn_ready_msec := 0
 var danger_on := false
 var burst_armed := false
-var aiming_overwatch := false
+var aim_mode := AimMode.NONE
 var level: Dictionary = {}
 var last_result_won := false
 var base_camera_pos := Vector2.ZERO
@@ -110,6 +114,7 @@ var fx_glow: Fx = null
 @onready var overwatch_button: Button = $UI/OverwatchButton
 @onready var burst_button: Button = $UI/BurstButton
 @onready var reload_button: Button = $UI/ReloadButton
+@onready var face_button: Button = $UI/FaceButton
 @onready var danger_button: Button = $UI/DangerButton
 @onready var unit_panel: PanelContainer = $UI/UnitPanel
 @onready var panel_name_label: Label = $UI/UnitPanel/Margin/Rows/NameLabel
@@ -140,7 +145,8 @@ func _ready() -> void:
 	for spawn: Vector2i in level.goblin_spawns:
 		_spawn_unit(Unit.TEAM_GOBLIN, spawn)
 	end_turn_button.pressed.connect(end_player_turn)
-	overwatch_button.pressed.connect(_try_overwatch)
+	overwatch_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.OVERWATCH))
+	face_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.FACE))
 	burst_button.toggled.connect(_on_burst_button_toggled)
 	reload_button.pressed.connect(_try_reload)
 	danger_button.toggled.connect(_on_danger_button_toggled)
@@ -343,6 +349,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("reload"):
 		_try_reload()
 		return
+	if event.is_action_pressed("face"):
+		_try_face()
+		return
 	if event.is_action_pressed("toggle_danger"):
 		_toggle_danger()
 		return
@@ -354,8 +363,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_go_to_level(i)
 			return
 	if event.is_action_pressed("cancel"):
-		if aiming_overwatch:
-			_cancel_overwatch_aim()
+		if aim_mode != AimMode.NONE:
+			_cancel_aim()
 		else:
 			deselect()
 		return
@@ -363,8 +372,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if mouse == null or not mouse.pressed:
 		return
 	if mouse.button_index == MOUSE_BUTTON_RIGHT:
-		if aiming_overwatch:
-			_cancel_overwatch_aim()
+		if aim_mode != AimMode.NONE:
+			_cancel_aim()
 		else:
 			deselect()
 		return
@@ -377,8 +386,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _handle_click(cell: Vector2i) -> void:
-	if aiming_overwatch and selected != null and cell != selected.cell:
-		_commit_overwatch_arc(cell)
+	if aim_mode != AimMode.NONE and selected != null and cell != selected.cell:
+		_commit_aim(cell)
 		return
 	var clicked := unit_at(cell)
 	if selected != null:
@@ -394,13 +403,27 @@ func _handle_click(cell: Vector2i) -> void:
 			_set_burst_armed(false)  # moving forfeits the braced burst
 			do_move(selected, cell)
 			return
-	if clicked != null and clicked.team == Unit.TEAM_SCOUT and not clicked.acted:
+	# Spent scouts stay selectable: turning to face is always available.
+	if clicked != null and clicked.team == Unit.TEAM_SCOUT:
 		select(clicked)
 	else:
 		deselect()
 
 
+## Drops any direction-picking mode without touching the selection.
+func _clear_aim_mode() -> void:
+	if aim_mode == AimMode.NONE:
+		return
+	aim_mode = AimMode.NONE
+	_sync_aim_buttons()
+	if selected != null:
+		selected.arc_preview_sector = -1
+		selected.queue_redraw()
+	_refresh_watch_cells()
+
+
 func select(unit: Unit) -> void:
+	_clear_aim_mode()
 	if selected != null:
 		selected.set_selected(false)
 	selected = unit
@@ -411,6 +434,7 @@ func select(unit: Unit) -> void:
 
 
 func deselect() -> void:
+	_clear_aim_mode()
 	if selected != null:
 		selected.set_selected(false)
 		selected = null
@@ -478,8 +502,9 @@ func _update_unit_panel() -> void:
 	panel_stats_label.text = "Move %d   Range %d   Dmg %d%s" % [
 			unit.move_range, unit.attack_range, unit.damage,
 			"   Ammo %d/%d" % [unit.ammo, unit.mag_size] if unit.mag_size > 0 else ""]
-	if aiming_overwatch and unit == selected:
-		panel_status_label.text = "AIMING ARC"
+	if aim_mode != AimMode.NONE and unit == selected:
+		panel_status_label.text = "AIMING ARC" if aim_mode == AimMode.OVERWATCH \
+				else "PICK A FACING"
 		panel_status_label.modulate = Color("ffb84a")
 		return
 	# Hovering a shootable enemy: show what the shot would actually do.
@@ -542,43 +567,83 @@ func _try_reload() -> void:
 ## Enter overwatch-aiming: the player picks which way the scout watches.
 ## Clicking a cell commits the arc; cancel/right-click backs out.
 func _try_overwatch() -> void:
-	if aiming_overwatch:
-		_cancel_overwatch_aim()
+	if aim_mode == AimMode.OVERWATCH:
+		_cancel_aim()
 		return
 	if state != State.PLAYER_TURN or selected == null or selected.acted \
 			or not selected.has_ammo():
 		return
-	aiming_overwatch = true
+	aim_mode = AimMode.OVERWATCH
+	_sync_aim_buttons()
 	_set_burst_armed(false)
 	board.clear_highlights()
 	show_banner("CHOOSE OVERWATCH ARC")
 	_update_hover(board.global_to_cell(get_global_mouse_position()))
 
 
-func _cancel_overwatch_aim() -> void:
-	if not aiming_overwatch:
+## Enter free-turn aiming. Turning costs nothing and can be done any number
+## of times, including after the unit has moved, shot, or gone on overwatch -
+## what it buys is choosing which way you face for the enemy turn.
+func _try_face() -> void:
+	if aim_mode == AimMode.FACE:
+		_cancel_aim()
 		return
-	aiming_overwatch = false
-	if selected != null:
-		selected.arc_preview_sector = -1
-		selected.queue_redraw()
-	_refresh_watch_cells()
+	if state != State.PLAYER_TURN or selected == null:
+		return
+	aim_mode = AimMode.FACE
+	_sync_aim_buttons()
+	_set_burst_armed(false)
+	board.clear_highlights()
+	show_banner("TURN TO FACE")
+	_update_hover(board.global_to_cell(get_global_mouse_position()))
+
+
+func _on_aim_button_toggled(pressed: bool, mode: AimMode) -> void:
+	if pressed:
+		if mode == AimMode.OVERWATCH:
+			_try_overwatch()
+		else:
+			_try_face()
+	elif aim_mode == mode:
+		_cancel_aim()
+	_sync_aim_buttons()  # the request may have been refused
+
+
+## Keep the two mode buttons showing the real aim state.
+func _sync_aim_buttons() -> void:
+	overwatch_button.set_pressed_no_signal(aim_mode == AimMode.OVERWATCH)
+	face_button.set_pressed_no_signal(aim_mode == AimMode.FACE)
+
+
+func _cancel_aim() -> void:
+	if aim_mode == AimMode.NONE:
+		return
+	_clear_aim_mode()
 	_refresh_highlights()
 
 
-## Lock the arc toward the clicked cell and commit the overwatch.
-func _commit_overwatch_arc(cell: Vector2i) -> void:
-	var scout := selected
-	var sector := Board.sector_from_to(scout.cell, cell)
-	aiming_overwatch = false
-	scout.arc_preview_sector = -1
-	scout.set_facing_sector(sector)
+## Commit the direction picked in whichever aim mode is active.
+func _commit_aim(cell: Vector2i) -> void:
+	var unit := selected
+	var sector := Board.sector_from_to(unit.cell, cell)
+	var mode := aim_mode
+	aim_mode = AimMode.NONE
+	_sync_aim_buttons()
+	unit.arc_preview_sector = -1
+	unit.set_facing_sector(sector)
+	if mode == AimMode.FACE:
+		# Free: the unit keeps whatever activation it had left.
+		Sfx.play("select", -6.0, 0.0)
+		print("[ThinShot] scout at %s turns to sector %d" % [unit.cell, sector])
+		_refresh_watch_cells()
+		_refresh_highlights()
+		return
 	deselect()
-	scout.set_done(true)
-	scout.set_overwatch(true)
+	unit.set_done(true)
+	unit.set_overwatch(true)
 	Sfx.play("overwatch_set", 0.0, 0.0)
 	_refresh_watch_cells()
-	print("[ThinShot] scout at %s watches sector %d" % [scout.cell, sector])
+	print("[ThinShot] scout at %s watches sector %d" % [unit.cell, sector])
 
 
 ## Cells an overwatching unit would cover: in range, in arc, with LOS.
@@ -599,13 +664,19 @@ func _overwatch_cells_for(unit: Unit, sector: int) -> Dictionary:
 	return cells
 
 
-## Union of every enemy overwatch arc currently threatening the board.
+## Every overwatch arc on the board: hostile arcs (amber) are threats to
+## route around, friendly arcs (green) are the ground you have covered.
+## Hostile wins where they overlap.
 func _refresh_watch_cells() -> void:
 	var cells := {}
-	for goblin in living_units(Unit.TEAM_GOBLIN):
-		if not goblin.overwatching:
-			continue
-		cells.merge(_overwatch_cells_for(goblin, goblin.facing_sector))
+	for team: int in [Unit.TEAM_SCOUT, Unit.TEAM_GOBLIN]:
+		var hostile: bool = team == Unit.TEAM_GOBLIN
+		for unit in living_units(team):
+			if not unit.overwatching:
+				continue
+			for cell: Vector2i in _overwatch_cells_for(unit, unit.facing_sector):
+				if hostile or not cells.has(cell):
+					cells[cell] = hostile
 	board.set_watch_cells(cells)
 
 
@@ -635,12 +706,16 @@ func _update_hover(cell: Vector2i) -> void:
 		cell = Board.NO_CELL
 	hover_cell = cell
 	# Aiming an overwatch arc: the cursor steers the cone, nothing else.
-	if aiming_overwatch and selected != null:
+	if aim_mode != AimMode.NONE and selected != null:
 		var sector := Board.sector_from_to(selected.cell, cell) if cell != Board.NO_CELL else -1
 		if sector != selected.arc_preview_sector:
 			selected.arc_preview_sector = sector
 			selected.queue_redraw()
-			board.set_watch_cells(_overwatch_cells_for(selected, sector) if sector >= 0 else {})
+			var cone := {}
+			if sector >= 0:
+				for watched: Vector2i in _overwatch_cells_for(selected, sector):
+					cone[watched] = false  # ally-colored preview
+			board.set_watch_cells(cone)
 		board.set_hover(cell, [], Board.NO_CELL)
 		_update_unit_panel()
 		return
@@ -921,6 +996,7 @@ func end_player_turn() -> void:
 	overwatch_button.disabled = true
 	burst_button.disabled = true
 	reload_button.disabled = true
+	face_button.disabled = true
 	danger_button.disabled = true
 	# Goblins refresh at the start of THEIR turn (expires last turn's
 	# unfired goblin overwatch at the right moment).
@@ -944,6 +1020,7 @@ func end_player_turn() -> void:
 	overwatch_button.disabled = false
 	burst_button.disabled = false
 	reload_button.disabled = false
+	face_button.disabled = false
 	danger_button.disabled = false
 	show_banner("DESERT SCOUTS' TURN")
 	state = State.PLAYER_TURN
