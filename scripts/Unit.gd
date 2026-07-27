@@ -121,8 +121,8 @@ const GOBLIN_MUZZLE_OFFSETS: Array[Vector2] = [
 const SPRITE_SCALE := Vector2(2, 2)
 const SPRITE_OFFSET := Vector2(0, -15)
 
-const PIP_SIZE := Vector2(8, 5)
-const PIP_GAP := 3.0
+const PIP_SIZE := Vector2(7, 5)
+const PIP_GAP := 2.0
 const PIP_Y := -68.0
 const PIP_FULL := Color("58c04a")
 const PIP_EMPTY := Color(0.15, 0.15, 0.15, 0.7)
@@ -169,8 +169,8 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 	cell = p_cell
 	if team == TEAM_SCOUT:
 		# Damage granularity is 2 so junk cover can halve it to 1.
-		max_hp = 6
-		move_range = 4
+		max_hp = 8
+		move_range = 5
 		attack_range = 4
 		damage = 2
 		frames = SCOUT_FRAMES
@@ -184,7 +184,7 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		set_facing(Vector2(1, 0.5))   # face the goblin side (south-east)
 	else:
 		max_hp = 4
-		move_range = 3
+		move_range = 4
 		attack_range = 3
 		damage = 2
 		frames = GOBLIN_FRAMES

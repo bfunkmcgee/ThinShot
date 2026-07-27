@@ -76,5 +76,6 @@ level_3={
 
 [rendering]
 
+environment/defaults/default_clear_color=Color(0.23, 0.19, 0.13, 1)
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"

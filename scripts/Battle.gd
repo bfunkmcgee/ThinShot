@@ -88,6 +88,7 @@ var level: Dictionary = {}
 var last_result_won := false
 
 @onready var board: Board = $Board
+@onready var camera: Camera2D = $Camera
 @onready var entities_node: Node2D = $Entities
 @onready var turn_banner: Label = $UI/TurnBanner
 @onready var end_turn_button: Button = $UI/EndTurnButton
@@ -111,6 +112,7 @@ func _ready() -> void:
 		Levels.validate_all()
 	level = Game.data()
 	board.set_level(level)
+	_fit_camera()
 	_validate_spawns()
 	_spawn_props()
 	for s: Dictionary in level.structures:
@@ -135,6 +137,29 @@ func _ready() -> void:
 		show_banner("DESERT SCOUTS' TURN")
 
 
+## Center the level on screen and zoom so it fits, leaving headroom for
+## the banner (top) and the button row / unit panel (bottom).
+func _fit_camera() -> void:
+	var half_w := Board.TILE_W / 2.0
+	var half_h := Board.TILE_H / 2.0
+	var min_x := (0 - (board.size.y - 1)) * half_w - half_w
+	var max_x := (board.size.x - 1) * half_w + half_w
+	var min_y := -half_h
+	var max_y := (board.size.x - 1 + board.size.y - 1) * half_h + half_h
+	var world_size := Vector2(max_x - min_x, max_y - min_y)
+	var view := get_viewport_rect().size
+	var margin_top := 52.0
+	var margin_bottom := 96.0
+	var avail := Vector2(view.x - 40.0, view.y - margin_top - margin_bottom)
+	var fit: float = minf(avail.x / world_size.x, avail.y / world_size.y)
+	fit = minf(fit, 1.0)
+	camera.zoom = Vector2(fit, fit)
+	var center_local := Vector2((min_x + max_x) / 2.0, (min_y + max_y) / 2.0)
+	var screen_center_y := margin_top + avail.y / 2.0
+	camera.position = board.to_global(center_local) \
+			+ Vector2(0, (view.y / 2.0 - screen_center_y) / fit)
+
+
 func _validate_spawns() -> void:
 	for spawn: Vector2i in level.scout_spawns + level.goblin_spawns:
 		if not board.in_bounds(spawn) or not board.is_walkable(spawn):
@@ -143,8 +168,8 @@ func _validate_spawns() -> void:
 
 
 func _spawn_props() -> void:
-	for y in Board.SIZE.y:
-		for x in Board.SIZE.x:
+	for y in board.size.y:
+		for x in board.size.x:
 			var cell := Vector2i(x, y)
 			# Deterministic variant per cell so layouts are stable.
 			match board.map_char(cell):
@@ -762,7 +787,7 @@ const SHAKE_OFFSETS: Array[Vector2] = [
 func _screen_shake() -> void:
 	var tween := create_tween()
 	for off in SHAKE_OFFSETS:
-		tween.tween_property(self, "position", off, 0.03)
+		tween.tween_property(camera, "offset", off, 0.03)
 
 
 func show_banner(text: String) -> void:

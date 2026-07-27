@@ -8,15 +8,16 @@ placeholder art). One desert skirmish: the **Desert Scouts** against the
 
 | | Desert Scouts (you) | Rust Choir goblins (AI) |
 |---|---|---|
-| Units | 3 | 4 |
-| HP | 6 | 4 |
-| Move | 4 tiles | 3 tiles |
+| Units | 3 | 4–5 |
+| HP | 8 | 4 |
+| Move | 5 tiles | 4 tiles |
 | Attack range | 4 | 3 |
 | Damage | 2 (1 through cover) | 2 (1 through cover) |
 
-A three-level desert campaign on 12×8 isometric maps: **Dry Wash** (open
+A three-level desert campaign on 16×10 isometric maps: **Dry Wash** (open
 skirmish), **The Scrapline** (the Choir's junkyard), and **Outpost 7** (fortress
-assault). You outrange them; they outnumber you.
+assault). Your scouts are elite — tougher, faster, longer-ranged — but the
+Choir has numbers and holds the ground.
 
 ## Controls
 

@@ -7,7 +7,6 @@ extends Node2D
 
 const TILE_W := 128
 const TILE_H := 60
-const SIZE := Vector2i(12, 8)
 
 ## What a cell means for movement and shooting.
 enum CellKind {
@@ -69,8 +68,9 @@ const DIRS: Array[Vector2i] = [
 ]
 
 # Level state, loaded by set_level().
+var size := Vector2i(12, 8)
 var map_rows: Array = []
-var _kind: Array = []                     # SIZE.y rows of Array[int] CellKind
+var _kind: Array = []                     # size.y rows of Array[int] CellKind
 var _structure_cells: Dictionary = {}     # Vector2i -> true
 
 # Per-cell render info ({region, flip, shade}) built by set_level.
@@ -124,6 +124,7 @@ func clear_highlights() -> void:
 ## Load a level definition: cell kinds from the map chars plus structure
 ## footprints, then rebuild the floor with the level's noise character.
 func set_level(data: Dictionary) -> void:
+	size = data.size
 	map_rows = data.map
 	_structure_cells = {}
 	for s: Dictionary in data.structures:
@@ -133,9 +134,9 @@ func set_level(data: Dictionary) -> void:
 			for dx in struct_size.x:
 				_structure_cells[anchor + Vector2i(dx, dy)] = true
 	_kind = []
-	for y in SIZE.y:
+	for y in size.y:
 		var row: Array[int] = []
-		for x in SIZE.x:
+		for x in size.x:
 			var cell := Vector2i(x, y)
 			var ch: String = map_rows[y][x]
 			if ch == "#" or ch == "W" or _structure_cells.has(cell):
@@ -170,7 +171,7 @@ func global_to_cell(point: Vector2) -> Vector2i:
 
 
 func in_bounds(cell: Vector2i) -> bool:
-	return cell.x >= 0 and cell.x < SIZE.x and cell.y >= 0 and cell.y < SIZE.y
+	return cell.x >= 0 and cell.x < size.x and cell.y >= 0 and cell.y < size.y
 
 
 func cell_kind(cell: Vector2i) -> CellKind:
@@ -287,9 +288,9 @@ func _build_tile_cache(zone_seed: int, shade_seed: int, thresholds: Array) -> vo
 
 	var accent_cells: Array[Vector2i] = []
 	tile_cache = []
-	for y in SIZE.y:
+	for y in size.y:
 		var row: Array = []
-		for x in SIZE.x:
+		for x in size.x:
 			var cell := Vector2i(x, y)
 			var n := zone_noise.get_noise_2d(cell.x, cell.y)
 			var zone: int = 0 if n < thresholds[0] else (1 if n < thresholds[1] else 2)
@@ -318,8 +319,8 @@ func _build_tile_cache(zone_seed: int, shade_seed: int, thresholds: Array) -> vo
 func _draw() -> void:
 	if tile_cache.is_empty():
 		return
-	for y in SIZE.y:
-		for x in SIZE.x:
+	for y in size.y:
+		for x in size.x:
 			var cell := Vector2i(x, y)
 			var info: Dictionary = tile_cache[y][x]
 			var region: Rect2 = info.region
