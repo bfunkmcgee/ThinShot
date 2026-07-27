@@ -9,6 +9,12 @@ signal died(unit: Unit)
 const TEAM_SCOUT := 0
 const TEAM_GOBLIN := 1
 
+## Which soldier this is. Team is allegiance; kind is the role, so the two
+## scout types can differ in weapon, stats, and art.
+enum Kind { SCOUT, TEAM_LEAD, GOBLIN }
+
+const LEAD_ROOT := "res://assets/sprites/Scout_TeamLead"
+
 # Directional pixel-art frames, indexed by 45-degree compass sector of the
 # screen-space facing vector: 0=E, 1=SE, 2=S, 3=SW, 4=W, 5=NW, 6=N, 7=NE.
 const SCOUT_FRAMES: Array[Texture2D] = [
@@ -93,6 +99,33 @@ static var SCOUT_RELOAD_FRAMES: Array = _load_dir_frames(
 static var GOBLIN_RELOAD_FRAMES: Array = _load_dir_frames(
 		"res://assets/sprites/Goblin/animations/standing_idle_reload")
 
+# Team lead. Its stances live under differently named folders than the
+# rank-and-file scout, so every set is spelled out here.
+static var LEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		LEAD_ROOT + "/standing_stance/rotations")
+static var LEAD_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		LEAD_ROOT + "/Solider_aims_his_rif/rotations")
+static var LEAD_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		LEAD_ROOT + "/Solider_is_dead_with/rotations")
+static var LEAD_IDLE_FRAMES: Array = _load_dir_frames(
+		LEAD_ROOT + "/standing_stance/animations/standing_idle")
+static var LEAD_WALK_FRAMES: Array = _load_dir_frames(
+		LEAD_ROOT + "/standing_stance/animations/standing_idle_walk")
+static var LEAD_RAISE_FRAMES: Array = _load_dir_frames(
+		LEAD_ROOT + "/standing_stance/animations/standing_idle_to_ready_to_fire")
+static var LEAD_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		LEAD_ROOT + "/Solider_aims_his_rif/animations/standing_ready_to_fire_idle")
+static var LEAD_DEATH_FRAMES: Array = _load_dir_frames(
+		LEAD_ROOT + "/standing_stance/animations/standing_idle_to_dead")
+static var LEAD_HURT_FRAMES: Array = _load_dir_frames(
+		LEAD_ROOT + "/standing_stance/animations/standing_idle_damage")
+static var LEAD_RELOAD_FRAMES: Array = _load_dir_frames(
+		LEAD_ROOT + "/standing_stance/animations/standing_idle_reload")
+# No alternate idle for the lead yet; resolves to 8 empty sets, which the
+# idle roll already treats as "no variation available".
+static var LEAD_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		LEAD_ROOT + "/standing_stance/animations/standing_idle_alt")
+
 # Visual-only randomness (which idle variation plays). Never read back into
 # game state, mirroring Sfx and Fx.
 static var _vis_rng := RandomNumberGenerator.new()
@@ -131,6 +164,19 @@ const SCOUT_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(-34, -44),  # north-west
 	Vector2(-8, -62),   # north
 	Vector2(30, -44),   # north-east
+]
+# Battle rifle: longer barrel, so the muzzle sits further out than the
+# carbine's. South is hand-corrected - facing the camera the rifle points
+# down-left rather than toward the viewer, which the scan cannot know.
+const LEAD_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(34, -36),   # east
+	Vector2(34, -20),   # south-east
+	Vector2(-12, -20),  # south
+	Vector2(-36, -20),  # south-west
+	Vector2(-38, -36),  # west
+	Vector2(-32, -52),  # north-west
+	Vector2(-6, -60),   # north
+	Vector2(30, -52),   # north-east
 ]
 const GOBLIN_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(34, -34),   # east
@@ -180,6 +226,7 @@ const WEDGE_IDLE := Color(1.0, 0.95, 0.8, 0.10)
 const WEDGE_ACTIVE := Color("ffb84a")  # matches the overwatch marker
 
 var team := TEAM_SCOUT
+var kind := Kind.SCOUT
 var max_hp := 3
 var move_range := 4
 var attack_range := 4
@@ -230,47 +277,70 @@ func _ready() -> void:
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
 
-func setup(p_team: int, p_cell: Vector2i) -> void:
-	team = p_team
+func setup(p_kind: Kind, p_cell: Vector2i) -> void:
+	kind = p_kind
+	team = TEAM_GOBLIN if kind == Kind.GOBLIN else TEAM_SCOUT
 	cell = p_cell
-	if team == TEAM_SCOUT:
-		# Damage granularity is 2 so junk cover can halve it to 1.
-		max_hp = 8
-		move_range = 5
-		attack_range = 4
-		damage = 2
-		accuracy = 90  # trained marksmen
-		mag_size = 3
-		frames = SCOUT_FRAMES
-		aim_frames = SCOUT_AIM_FRAMES
-		walk_frames = SCOUT_WALK_FRAMES
-		idle_frames = SCOUT_IDLE_FRAMES
-		raise_frames = SCOUT_RAISE_FRAMES
-		aim_idle_frames = SCOUT_AIM_IDLE_FRAMES
-		death_frames = SCOUT_DEATH_FRAMES
-		dead_frames = SCOUT_DEAD_FRAMES
-		idle_alt_frames = SCOUT_IDLE_ALT_FRAMES
-		hurt_frames = SCOUT_HURT_FRAMES
-		reload_frames = SCOUT_RELOAD_FRAMES
-		set_facing(Vector2(1, 0.5))   # face the goblin side (south-east)
-	else:
-		max_hp = 4
-		move_range = 4
-		attack_range = 3
-		damage = 2
-		accuracy = 60  # scavenged rifles, no training
-		frames = GOBLIN_FRAMES
-		aim_frames = GOBLIN_AIM_FRAMES
-		walk_frames = GOBLIN_WALK_FRAMES
-		idle_frames = GOBLIN_IDLE_FRAMES
-		raise_frames = GOBLIN_RAISE_FRAMES
-		aim_idle_frames = GOBLIN_AIM_IDLE_FRAMES
-		death_frames = GOBLIN_DEATH_FRAMES
-		dead_frames = GOBLIN_DEAD_FRAMES
-		idle_alt_frames = GOBLIN_IDLE_ALT_FRAMES
-		hurt_frames = GOBLIN_HURT_FRAMES
-		reload_frames = GOBLIN_RELOAD_FRAMES
-		set_facing(Vector2(-1, 0.5))  # face the scout side (south-west)
+	match kind:
+		Kind.SCOUT:
+			# Damage granularity is 2 so junk cover can halve it to 1.
+			max_hp = 8
+			move_range = 5
+			attack_range = 4
+			damage = 2
+			accuracy = 90  # trained marksmen
+			mag_size = 3
+			frames = SCOUT_FRAMES
+			aim_frames = SCOUT_AIM_FRAMES
+			walk_frames = SCOUT_WALK_FRAMES
+			idle_frames = SCOUT_IDLE_FRAMES
+			raise_frames = SCOUT_RAISE_FRAMES
+			aim_idle_frames = SCOUT_AIM_IDLE_FRAMES
+			death_frames = SCOUT_DEATH_FRAMES
+			dead_frames = SCOUT_DEAD_FRAMES
+			idle_alt_frames = SCOUT_IDLE_ALT_FRAMES
+			hurt_frames = SCOUT_HURT_FRAMES
+			reload_frames = SCOUT_RELOAD_FRAMES
+		Kind.TEAM_LEAD:
+			# Designated marksman: a battle rifle reaches further and drops a
+			# healthy goblin in one hit, paid for with a two-round magazine,
+			# a slower advance, and no burst.
+			max_hp = 8
+			move_range = 4
+			attack_range = 6
+			damage = 4
+			accuracy = 92
+			mag_size = 2
+			frames = LEAD_FRAMES
+			aim_frames = LEAD_AIM_FRAMES
+			walk_frames = LEAD_WALK_FRAMES
+			idle_frames = LEAD_IDLE_FRAMES
+			raise_frames = LEAD_RAISE_FRAMES
+			aim_idle_frames = LEAD_AIM_IDLE_FRAMES
+			death_frames = LEAD_DEATH_FRAMES
+			dead_frames = LEAD_DEAD_FRAMES
+			idle_alt_frames = LEAD_IDLE_ALT_FRAMES
+			hurt_frames = LEAD_HURT_FRAMES
+			reload_frames = LEAD_RELOAD_FRAMES
+		Kind.GOBLIN:
+			max_hp = 4
+			move_range = 4
+			attack_range = 3
+			damage = 2
+			accuracy = 60  # scavenged rifles, no training
+			frames = GOBLIN_FRAMES
+			aim_frames = GOBLIN_AIM_FRAMES
+			walk_frames = GOBLIN_WALK_FRAMES
+			idle_frames = GOBLIN_IDLE_FRAMES
+			raise_frames = GOBLIN_RAISE_FRAMES
+			aim_idle_frames = GOBLIN_AIM_IDLE_FRAMES
+			death_frames = GOBLIN_DEATH_FRAMES
+			dead_frames = GOBLIN_DEAD_FRAMES
+			idle_alt_frames = GOBLIN_IDLE_ALT_FRAMES
+			hurt_frames = GOBLIN_HURT_FRAMES
+			reload_frames = GOBLIN_RELOAD_FRAMES
+	# Face the enemy side at the start of the battle.
+	set_facing(Vector2(1, 0.5) if team == TEAM_SCOUT else Vector2(-1, 0.5))
 	hp = max_hp
 	ammo = mag_size
 	# Desync idle cycles so units don't all breathe in lockstep.
@@ -375,8 +445,27 @@ func _rifle_is_up() -> bool:
 
 ## Global position of the raised rifle's tip for the current facing.
 func muzzle_point() -> Vector2:
-	var offsets := SCOUT_MUZZLE_OFFSETS if team == TEAM_SCOUT else GOBLIN_MUZZLE_OFFSETS
+	var offsets := GOBLIN_MUZZLE_OFFSETS
+	if kind == Kind.SCOUT:
+		offsets = SCOUT_MUZZLE_OFFSETS
+	elif kind == Kind.TEAM_LEAD:
+		offsets = LEAD_MUZZLE_OFFSETS
 	return to_global(offsets[facing_sector])
+
+
+## Only the rank-and-file carbine can fire a burst; the lead's battle rifle
+## is semi-automatic.
+func can_burst() -> bool:
+	return kind == Kind.SCOUT
+
+
+func display_name() -> String:
+	match kind:
+		Kind.TEAM_LEAD:
+			return "Scout Team Lead"
+		Kind.GOBLIN:
+			return "Rust Choir Chorister"
+	return "Desert Scout"
 
 
 ## Enter/leave overwatch: rifle raises and stays up, marker above the pips.

@@ -26,7 +26,8 @@ const LEVELS: Array[Dictionary] = [
 			"...#p.....##..p.",
 			".........p......",
 		],
-		"scout_spawns": [Vector2i(0, 3), Vector2i(0, 5), Vector2i(1, 7)],
+		"scout_spawns": [Vector2i(0, 3), Vector2i(1, 7)],
+		"lead_spawns": [Vector2i(0, 5)],
 		"goblin_spawns": [Vector2i(15, 2), Vector2i(14, 4), Vector2i(15, 6), Vector2i(15, 8)],
 		"structures": [],
 		"zone_seed": 7,
@@ -52,7 +53,8 @@ const LEVELS: Array[Dictionary] = [
 			"................",
 			"......p.j.......",
 		],
-		"scout_spawns": [Vector2i(0, 2), Vector2i(1, 4), Vector2i(0, 7)],
+		"scout_spawns": [Vector2i(0, 2), Vector2i(0, 7)],
+		"lead_spawns": [Vector2i(1, 4)],
 		"goblin_spawns": [
 			Vector2i(10, 2), Vector2i(14, 4), Vector2i(10, 5),
 			Vector2i(10, 8), Vector2i(14, 8),
@@ -84,7 +86,8 @@ const LEVELS: Array[Dictionary] = [
 			"....#....j..j...",
 			"......p........p",
 		],
-		"scout_spawns": [Vector2i(0, 3), Vector2i(0, 5), Vector2i(2, 8)],
+		"scout_spawns": [Vector2i(0, 3), Vector2i(2, 8)],
+		"lead_spawns": [Vector2i(0, 5)],
 		"goblin_spawns": [
 			Vector2i(7, 2), Vector2i(9, 3), Vector2i(6, 5),
 			Vector2i(11, 5), Vector2i(12, 6),
@@ -163,7 +166,8 @@ static func _validate(index: int) -> bool:
 			return false
 		var ch: String = data.map[cell.y][cell.x]
 		return ch == "." or ch == "p"
-	var spawns: Array = data.scout_spawns + data.goblin_spawns
+	var spawns: Array = data.scout_spawns + data.get("lead_spawns", []) \
+			+ data.goblin_spawns
 	var seen_spawn := {}
 	for spawn: Vector2i in spawns:
 		ok = _check(walkable.call(spawn), "%s: spawn %s not walkable" % [label, spawn]) and ok

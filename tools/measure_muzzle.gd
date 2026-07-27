@@ -11,14 +11,21 @@ const DIRS := [
 ]
 
 
+const AIM_STANCES := [
+	["SCOUT", 60, "res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/%s.png"],
+	["GOBLIN", 64, "res://assets/sprites/Goblin/Standing_Ready_to_fire_stance/rotations/%s.png"],
+	["LEAD", 60, "res://assets/sprites/Scout_TeamLead/Solider_aims_his_rif/rotations/%s.png"],
+]
+
+
 func _init() -> void:
-	for team in [["Scout", 60], ["Goblin", 64]]:
-		var team_name: String = team[0]
-		var size: int = team[1]
-		print("%s_MUZZLE_OFFSETS:" % team_name.to_upper())
+	for stance in AIM_STANCES:
+		var label: String = stance[0]
+		var size: int = stance[1]
+		var template: String = stance[2]
+		print("%s_MUZZLE_OFFSETS:" % label)
 		for i in DIRS.size():
-			var path := "res://assets/sprites/%s/Standing_Ready_to_fire_stance/rotations/%s.png" % [
-					team_name, DIRS[i]]
+			var path: String = template % DIRS[i]
 			var img := Image.load_from_file(path)
 			var dir := Vector2.RIGHT.rotated(TAU * i / 8.0)
 			var center := Vector2(size / 2.0, size / 2.0)

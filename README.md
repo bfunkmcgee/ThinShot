@@ -6,14 +6,20 @@ placeholder art). One desert skirmish: the **Desert Scouts** against the
 
 ## The game
 
-| | Desert Scouts (you) | Rust Choir goblins (AI) |
-|---|---|---|
-| Units | 3 | 4–5 |
-| HP | 8 | 4 |
-| Move | 5 tiles | 4 tiles |
-| Attack range | 4 | 3 |
-| Damage | 2 (1 through cover) | 2 (1 through cover) |
-| Accuracy | 90% | 60% |
+| | Scout Team Lead | Desert Scout | Rust Choir goblin |
+|---|---|---|---|
+| Per squad | 1 | 2 | 4–5 (AI) |
+| Weapon | battle rifle | carbine | scavenged rifle |
+| HP | 8 | 8 | 4 |
+| Move | 4 tiles | 5 tiles | 4 tiles |
+| Attack range | **6** | 4 | 3 |
+| Damage | **4** (2 through cover) | 2 (1 through cover) | 2 (1 through cover) |
+| Accuracy | 92% | 90% | 60% |
+| Burst fire | no | yes | no |
+
+Your **Team Lead** is the squad's designated marksman: a battle rifle that
+reaches half again as far as a carbine and drops a healthy goblin in a single
+hit, paid for with a two-round magazine, a slower advance, and no burst.
 
 A three-level desert campaign on 16×10 isometric maps: **Dry Wash** (open
 skirmish), **The Scrapline** (the Choir's junkyard), and **Outpost 7** (fortress

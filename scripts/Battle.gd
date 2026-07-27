@@ -152,10 +152,12 @@ func _ready() -> void:
 	_spawn_props()
 	for s: Dictionary in level.structures:
 		_spawn_structure(s)
+	for spawn: Vector2i in level.get("lead_spawns", []):
+		_spawn_unit(Unit.Kind.TEAM_LEAD, spawn)
 	for spawn: Vector2i in level.scout_spawns:
-		_spawn_unit(Unit.TEAM_SCOUT, spawn)
+		_spawn_unit(Unit.Kind.SCOUT, spawn)
 	for spawn: Vector2i in level.goblin_spawns:
-		_spawn_unit(Unit.TEAM_GOBLIN, spawn)
+		_spawn_unit(Unit.Kind.GOBLIN, spawn)
 	end_turn_button.pressed.connect(end_player_turn)
 	overwatch_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.OVERWATCH))
 	face_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.FACE))
@@ -241,7 +243,8 @@ func _board_world_rect() -> Rect2:
 
 
 func _validate_spawns() -> void:
-	for spawn: Vector2i in level.scout_spawns + level.goblin_spawns:
+	for spawn: Vector2i in level.scout_spawns + level.get("lead_spawns", []) \
+			+ level.goblin_spawns:
 		if not board.in_bounds(spawn) or not board.is_walkable(spawn):
 			push_error("Bad spawn cell (blocked or out of bounds): %s" % spawn)
 			assert(false, "Bad spawn cell: %s" % spawn)
@@ -374,10 +377,10 @@ func _spawn_structure(s: Dictionary) -> void:
 		})
 
 
-func _spawn_unit(team: int, spawn_cell: Vector2i) -> void:
+func _spawn_unit(kind: Unit.Kind, spawn_cell: Vector2i) -> void:
 	var unit: Unit = UNIT_SCENE.instantiate()
 	entities_node.add_child(unit)
-	unit.setup(team, spawn_cell)
+	unit.setup(kind, spawn_cell)
 	unit.position = board.cell_to_global(spawn_cell)
 	unit.died.connect(_on_unit_died)
 
@@ -526,7 +529,7 @@ func _toggle_burst() -> void:
 		return
 	if state != State.PLAYER_TURN or selected == null:
 		return
-	if selected.team != Unit.TEAM_SCOUT or selected.moved or selected.acted \
+	if not selected.can_burst() or selected.moved or selected.acted \
 			or not selected.has_ammo(2):
 		return
 	_set_burst_armed(true)
@@ -571,8 +574,7 @@ func _update_unit_panel() -> void:
 		unit_panel.visible = false
 		return
 	unit_panel.visible = true
-	panel_name_label.text = "Desert Scout" if unit.team == Unit.TEAM_SCOUT \
-			else "Rust Choir Chorister"
+	panel_name_label.text = unit.display_name()
 	panel_hp_label.text = "HP %d / %d" % [unit.hp, unit.max_hp]
 	panel_stats_label.text = "Move %d  Rng %d  Dmg %d  Acc %d%%%s" % [
 			unit.move_range, unit.attack_range, unit.damage, unit.accuracy,
