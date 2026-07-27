@@ -879,9 +879,9 @@ func _fire_round(attacker: Unit, target: Unit) -> void:
 
 	Sfx.play("hit_impact")
 	HitFx.spawn(fx_glow, chest, HitFx.Kind.IMPACT)
-	fx_air.impact(chest, dir, target.team, lethal)
-	fx_air.blood_mist(chest, dir, target.team, lethal)
-	fx_ground.blood_spray(chest, target.position.y, dir, target.team, lethal)
+	fx_air.impact(chest, dir, lethal)
+	fx_air.blood_mist(chest, dir, lethal)
+	fx_ground.blood_spray(chest, target.position.y, dir, lethal)
 	_screen_shake(1.6 if lethal else 1.0)
 	target.take_damage(dmg, dir)
 	# A hit from outside the front arc knocks the target off overwatch.
@@ -1211,7 +1211,7 @@ func _best_watch_sector(goblin: Unit, scouts: Array[Unit]) -> int:
 
 func _on_unit_died(unit: Unit) -> void:
 	Sfx.play("unit_death")
-	fx_ground.stain(unit.position, unit.team)
+	fx_ground.stain(unit.position)
 	_puff_on_landing(unit)
 	check_game_over()
 

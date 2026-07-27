@@ -21,20 +21,10 @@ const RUST_MID := Color("774532")
 const RUST_DARK := Color("5f3725")
 const SPARK_HOT := Color("ffffd0")
 const SPARK_WARM := Color("ffe666")
-# Scouts bleed red, the Choir bleeds green ichor.
-const BLOOD_SCOUT := Color("a81f14")
-const BLOOD_SCOUT_DARK := Color("6e1109")
-const BLOOD_GOBLIN := Color("5c8a2a")
-const BLOOD_GOBLIN_DARK := Color("31501a")
+# Everyone on this battlefield bleeds red.
+const BLOOD := Color("a81f14")
+const BLOOD_DARK := Color("6e1109")
 const STAIN_COLOR := Color(0.17, 0.10, 0.07, 0.18)
-
-
-static func blood_of(team: int) -> Color:
-	return BLOOD_SCOUT if team == 0 else BLOOD_GOBLIN
-
-
-static func blood_dark_of(team: int) -> Color:
-	return BLOOD_SCOUT_DARK if team == 0 else BLOOD_GOBLIN_DARK
 
 var _p: Array = []
 var _marks: Array = []
@@ -138,7 +128,7 @@ func muzzle(pos: Vector2, dir: Vector2) -> void:
 
 
 ## Impact burst: a bright ring plus sand kicked off the body.
-func impact(pos: Vector2, dir: Vector2, _team: int, lethal := false) -> void:
+func impact(pos: Vector2, dir: Vector2, lethal := false) -> void:
 	_add(pos, Vector2.ZERO, 0.22, 4.0, 16.0, Color(SPARK_WARM, 0.7), Shape.RING)
 	for i in (6 if lethal else 4):
 		_add(pos, _spread(dir, deg_to_rad(40), _rng.randf_range(30, 90)),
@@ -148,39 +138,35 @@ func impact(pos: Vector2, dir: Vector2, _team: int, lethal := false) -> void:
 ## Blood bursting out of the wound: a fast mist punched through in the
 ## round's direction plus a little back-spatter toward the shooter.
 ## Belongs on the layer drawn above units.
-func blood_mist(pos: Vector2, dir: Vector2, team: int, lethal := false) -> void:
-	var gore := blood_of(team)
-	var dark := blood_dark_of(team)
+func blood_mist(pos: Vector2, dir: Vector2, lethal := false) -> void:
 	for i in (14 if lethal else 8):
 		_add(pos, _spread(dir, deg_to_rad(38), _rng.randf_range(90, 260)),
 				_rng.randf_range(0.10, 0.20),
 				_rng.randf_range(3, 6), 1.0,
-				Color(gore if i % 3 else dark, 0.95), Shape.STREAK, 60.0, 4.0)
+				Color(BLOOD if i % 3 else BLOOD_DARK, 0.95), Shape.STREAK, 60.0, 4.0)
 	for i in (5 if lethal else 3):
 		_add(pos, _spread(-dir, deg_to_rad(55), _rng.randf_range(30, 90)),
 				0.22, _rng.randf_range(2, 4), 1.0,
-				Color(dark, 0.85), Shape.PIXEL, 260.0, 2.0)
+				Color(BLOOD_DARK, 0.85), Shape.PIXEL, 260.0, 2.0)
 	if lethal:
 		# A heavier cloud hanging at the wound for a beat.
 		for i in 6:
 			_add(pos + Vector2(_rng.randf_range(-6, 6), _rng.randf_range(-6, 6)),
 					_spread(dir, PI, _rng.randf_range(6, 24)),
 					0.45, _rng.randf_range(5, 8), 2.0,
-					Color(dark, 0.55), Shape.PIXEL, 40.0, 2.5)
+					Color(BLOOD_DARK, 0.55), Shape.PIXEL, 40.0, 2.5)
 
 
 ## Droplets that arc away from the wound, fall, and permanently stain the
 ## sand where they land. Belongs on the ground layer so the splats sit
 ## under the units.
-func blood_spray(pos: Vector2, ground_y: float, dir: Vector2, team: int,
+func blood_spray(pos: Vector2, ground_y: float, dir: Vector2,
 		lethal := false) -> void:
-	var gore := blood_of(team)
-	var dark := blood_dark_of(team)
 	for i in (18 if lethal else 11):
 		var speed := _rng.randf_range(70, 210)
 		_add(pos, _spread(dir, deg_to_rad(52), speed),
 				1.4, _rng.randf_range(2, 4), _rng.randf_range(2, 4),
-				Color(gore if i % 2 else dark, 0.95), Shape.PIXEL,
+				Color(BLOOD if i % 2 else BLOOD_DARK, 0.95), Shape.PIXEL,
 				620.0, 0.4,
 				ground_y + _rng.randf_range(-6, 10),
 				_rng.randf_range(2.5, 5.0))
@@ -215,11 +201,9 @@ func casing(pos: Vector2, dir: Vector2) -> void:
 			pos.y + _rng.randf_range(28, 40))
 
 
-## Permanent pool left where a unit fell, in its own blood color.
-func stain(pos: Vector2, team := -1) -> void:
+## Permanent pool left where a unit fell.
+func stain(pos: Vector2) -> void:
 	_add_mark(pos, 14.0, STAIN_COLOR)
-	if team < 0:
-		return
 	for i in 5:
 		_add_mark(pos + Vector2(_rng.randf_range(-16, 16), _rng.randf_range(-7, 7)),
-				_rng.randf_range(4, 8), Color(blood_dark_of(team), 0.38))
+				_rng.randf_range(4, 8), Color(BLOOD_DARK, 0.38))
