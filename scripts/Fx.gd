@@ -21,6 +21,8 @@ const RUST_MID := Color("774532")
 const RUST_DARK := Color("5f3725")
 const SPARK_HOT := Color("ffffd0")
 const SPARK_WARM := Color("ffe666")
+const SMOKE := Color("cfc3ad")
+const SMOKE_WARM := Color("e0d0b0")
 # Everyone on this battlefield bleeds red.
 const BLOOD := Color("a81f14")
 const BLOOD_DARK := Color("6e1109")
@@ -30,13 +32,70 @@ var _p: Array = []
 var _marks: Array = []
 var _rng := RandomNumberGenerator.new()
 
+# Ambient wind: a steady trickle of sand motes crossing the board, with an
+# occasional stronger gust. Purely atmospheric - kept faint so it never
+# competes with the highlights for attention.
+var ambient_rect := Rect2()
+var ambient_rate := 0.0     # motes per second
+var ambient_wind := Vector2.ZERO
+var _ambient_accum := 0.0
+var _gust_countdown := 0.0
+
 
 func _ready() -> void:
 	_rng.randomize()
 	set_process(false)
 
 
+## Start a steady wind of sand motes drifting across the given world rect.
+func set_ambient(rect: Rect2, density: int, wind: Vector2) -> void:
+	ambient_rect = rect
+	ambient_wind = wind
+	# Motes live ~5s, so the rate needed to hold `density` on screen is
+	# density / lifetime.
+	ambient_rate = float(density) / 5.0
+	_gust_countdown = _rng.randf_range(6.0, 13.0)
+	if ambient_rate > 0.0:
+		set_process(true)
+
+
+func _spawn_mote(from_edge: bool, speed_scale := 1.0) -> void:
+	# Enter from the upwind edge, or seed anywhere on the first fill.
+	var pos := Vector2(
+			_rng.randf_range(ambient_rect.position.x, ambient_rect.end.x),
+			_rng.randf_range(ambient_rect.position.y, ambient_rect.end.y))
+	if from_edge:
+		pos.x = ambient_rect.end.x if ambient_wind.x < 0.0 else ambient_rect.position.x
+	var vel := ambient_wind * speed_scale * _rng.randf_range(0.7, 1.4)
+	vel.y += _rng.randf_range(-8, 8)
+	_add(pos, vel, _rng.randf_range(3.5, 6.0),
+			_rng.randf_range(2, 3), _rng.randf_range(1, 2),
+			Color(SAND_MID if _rng.randf() < 0.5 else SAND_DARK,
+					_rng.randf_range(0.07, 0.16)),
+			Shape.PIXEL, 0.0, 0.05)
+
+
+## A stronger sweep of sand low across the board.
+func gust() -> void:
+	for i in 26:
+		_spawn_mote(true, _rng.randf_range(2.2, 4.0))
+
+
+func _update_ambient(delta: float) -> void:
+	if ambient_rate <= 0.0:
+		return
+	_ambient_accum += delta * ambient_rate
+	while _ambient_accum >= 1.0:
+		_ambient_accum -= 1.0
+		_spawn_mote(true)
+	_gust_countdown -= delta
+	if _gust_countdown <= 0.0:
+		_gust_countdown = _rng.randf_range(7.0, 15.0)
+		gust()
+
+
 func _process(delta: float) -> void:
+	_update_ambient(delta)
 	var live := 0
 	for i in _p.size():
 		var d: Dictionary = _p[i]
@@ -57,7 +116,7 @@ func _process(delta: float) -> void:
 		live += 1
 	_p.resize(live)
 	queue_redraw()
-	if live == 0:
+	if live == 0 and ambient_rate <= 0.0:
 		set_process(false)
 
 
@@ -114,17 +173,48 @@ func footstep(pos: Vector2, strength := 1.0) -> void:
 				Color(SAND_DARK, 0.55), Shape.PIXEL, 260.0, 1.5)
 
 
-## Flash, sparks and lingering smoke at the muzzle.
+## Flash and sparks at the muzzle. Smoke is a separate emitter so it can
+## live on a non-additive layer and hang around after the flash is gone.
 func muzzle(pos: Vector2, dir: Vector2) -> void:
 	_add(pos, Vector2.ZERO, 0.12, 4.0, 18.0, Color(SPARK_WARM, 0.9), Shape.RING)
-	for i in 6:
-		_add(pos, _spread(dir, deg_to_rad(35), _rng.randf_range(120, 260)),
-				0.18, 3.0, 1.0,
-				SPARK_HOT if i % 2 == 0 else SPARK_WARM, Shape.STREAK, 90.0, 3.0)
+	# A short cone of flame down the barrel line.
+	for i in 5:
+		_add(pos + dir * float(i) * 3.0,
+				_spread(dir, deg_to_rad(14), _rng.randf_range(60, 130)),
+				0.09, 7.0 - float(i), 1.0,
+				Color(SPARK_HOT, 0.85), Shape.PIXEL, 0.0, 6.0)
+	for i in 8:
+		_add(pos, _spread(dir, deg_to_rad(38), _rng.randf_range(120, 300)),
+				_rng.randf_range(0.12, 0.22), 3.0, 1.0,
+				SPARK_HOT if i % 2 == 0 else SPARK_WARM, Shape.STREAK, 120.0, 3.0)
+	# Embers that arc and die out.
 	for i in 4:
-		_add(pos + Vector2(_rng.randf_range(-3, 3), 0),
-				_spread(Vector2.UP, PI * 0.35, _rng.randf_range(8, 20)),
-				0.7, 4.0, 9.0, Color(SAND_DARK, 0.30), Shape.PIXEL, -6.0, 1.2)
+		_add(pos, _spread(dir, deg_to_rad(60), _rng.randf_range(40, 110)),
+				_rng.randf_range(0.3, 0.55), 2.0, 1.0,
+				Color(SPARK_WARM, 0.8), Shape.PIXEL, 300.0, 1.0)
+
+
+## Gunsmoke rolling off the barrel: a puff punched along the barrel line
+## that slows, billows outward and drifts upward, plus a slow wisp that
+## keeps curling off the muzzle for a beat after the shot.
+func smoke_plume(pos: Vector2, dir: Vector2) -> void:
+	for i in 10:
+		var falloff := 1.0 - float(i) / 14.0
+		_add(pos + dir * _rng.randf_range(0, 10),
+				_spread(dir, deg_to_rad(30), _rng.randf_range(30, 110) * falloff)
+						+ Vector2(0, -_rng.randf_range(4, 16)),
+				_rng.randf_range(0.5, 1.1),
+				_rng.randf_range(3, 6), _rng.randf_range(11, 20),
+				Color(SMOKE_WARM if i % 3 == 0 else SMOKE,
+						_rng.randf_range(0.16, 0.30)),
+				Shape.PIXEL, -16.0, 1.7)
+	# Barrel wisp: slow, small, long-lived.
+	for i in 5:
+		_add(pos + Vector2(_rng.randf_range(-3, 3), _rng.randf_range(-3, 3)),
+				Vector2(_rng.randf_range(-6, 6), -_rng.randf_range(8, 20)),
+				_rng.randf_range(0.9, 1.6),
+				_rng.randf_range(2, 4), _rng.randf_range(7, 13),
+				Color(SMOKE, _rng.randf_range(0.10, 0.20)), Shape.PIXEL, -8.0, 1.2)
 
 
 ## Impact burst: a bright ring plus sand kicked off the body.

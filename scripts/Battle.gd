@@ -78,6 +78,8 @@ const MOVE_STEP_TIME := 0.16
 const TRACER_TIME := 0.09
 const AI_BEAT := 0.12
 const ACT_LEAD_IN := 0.15  # pause after marking a goblin, before it acts
+const SWAY_SPEED := 1.6      # radians/sec of the plant sway cycle
+const SWAY_TEXELS := 1.0     # sprite texels a plant leans at full sway
 const FLANK_ACCURACY := 10   # bonus to hit from outside the target's arc
 const LONG_SHOT_PENALTY := 5  # per tile past half the shooter's range
 const LOWER_TIME := 0.12  # rifle held after the shot before lowering
@@ -105,6 +107,7 @@ var _cam_shake := Vector2.ZERO
 var _shake_tween: Tween = null
 var _kick_tween: Tween = null
 var _rng := RandomNumberGenerator.new()
+var _swaying: Array = []
 var fx_ground: Fx = null
 var fx_air: Fx = null
 var fx_glow: Fx = null
@@ -216,6 +219,20 @@ func _setup_fx_layers() -> void:
 	fx_glow.material = glow_material
 	fx_glow.z_index = 15
 	add_child(fx_glow)
+	# Steady desert wind across the board, plus the occasional gust.
+	fx_air.set_ambient(_board_world_rect().grow(90.0), 26, Vector2(-34.0, 11.0))
+
+
+## The board's extent in world space, used to frame the camera and to bound
+## the ambient wind.
+func _board_world_rect() -> Rect2:
+	var half_w := Board.TILE_W / 2.0
+	var half_h := Board.TILE_H / 2.0
+	var min_x := (0 - (board.size.y - 1)) * half_w - half_w
+	var max_x := (board.size.x - 1) * half_w + half_w
+	var max_y := (board.size.x - 1 + board.size.y - 1) * half_h + half_h
+	var origin := board.to_global(Vector2(min_x, -half_h))
+	return Rect2(origin, Vector2(max_x - min_x, max_y + half_h))
 
 
 func _validate_spawns() -> void:
@@ -238,14 +255,21 @@ func _spawn_props() -> void:
 					_spawn_prop(JUNK_TEXTURES[(x * 11 + y * 17) % JUNK_TEXTURES.size()],
 							JUNK_OFFSET, cell)
 				"p":
-					_spawn_prop(PLANT_TEXTURES[(x * 5 + y * 23) % PLANT_TEXTURES.size()],
+					var plant := _spawn_prop(
+							PLANT_TEXTURES[(x * 5 + y * 23) % PLANT_TEXTURES.size()],
 							PLANT_OFFSET, cell)
+					# Phase from the cell so no two plants sway in step.
+					_swaying.append({
+						"sprite": plant,
+						"base_x": plant.position.x,
+						"phase": float((x * 7 + y * 13) % 16) / 16.0 * TAU,
+					})
 				"W":
 					var kind := _wall_kind(cell)
 					_spawn_prop(_wall_texture_for(kind), WALL_OFFSETS[kind], cell)
 
 
-func _spawn_prop(texture: Texture2D, offset: Vector2, cell: Vector2i) -> void:
+func _spawn_prop(texture: Texture2D, offset: Vector2, cell: Vector2i) -> Sprite2D:
 	var prop := Sprite2D.new()
 	prop.texture = texture
 	prop.offset = offset
@@ -253,6 +277,7 @@ func _spawn_prop(texture: Texture2D, offset: Vector2, cell: Vector2i) -> void:
 	prop.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	prop.position = board.cell_to_global(cell)
 	entities_node.add_child(prop)
+	return prop
 
 
 func _wall_connects(cell: Vector2i) -> bool:
@@ -846,6 +871,7 @@ func _fire_round(attacker: Unit, target: Unit) -> void:
 	HitFx.spawn(fx_glow, muzzle, HitFx.Kind.MUZZLE)
 	HitFx.spawn_tracer(fx_glow, muzzle, impact_point, TRACER_TIME)
 	fx_glow.muzzle(muzzle, dir)
+	fx_air.smoke_plume(muzzle, dir)  # non-additive layer so smoke reads as smoke
 	fx_ground.footstep(attacker.position, 0.5)  # blast dust at the shooter's feet
 	fx_ground.casing(muzzle, dir)
 	_camera_kick(dir)
@@ -1276,6 +1302,18 @@ const SHAKE_OFFSETS: Array[Vector2] = [
 ## fighting each other over the same property.
 func _process(_delta: float) -> void:
 	camera.offset = _cam_lean + _cam_shake
+	_sway_plants()
+
+
+## Cacti lean in the wind. The offset snaps to whole sprite texels (the props
+## draw at 2x) so the pixel art never shimmers between subpixel positions.
+func _sway_plants() -> void:
+	var t := Time.get_ticks_msec() / 1000.0
+	for entry: Dictionary in _swaying:
+		var wave: float = sin(t * SWAY_SPEED + entry.phase)
+		var step: float = SWAY_TEXELS * ROCK_SCALE.x * signf(wave) \
+				* (1.0 if absf(wave) > 0.45 else 0.0)
+		entry.sprite.position.x = entry.base_x + step
 
 
 func _screen_shake(strength := 1.0) -> void:
