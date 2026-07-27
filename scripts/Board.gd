@@ -48,6 +48,15 @@ const ZONE_ACCENTS: Array[int] = [6, 7, 4]
 const ACCENT_CHANCE := 0.07
 const ACCENT_MIN_SPACING := 2  # Chebyshev cells between any two accents
 
+# Ground contact shadows for props, matching Unit's sun direction. Positive
+# values are ellipse radii; DIAMOND_SHADOW means "shrunk tile diamond", so
+# adjacent walls and structure footprints union into one cast shadow.
+const SHADOW_SQUASH := 0.469  # TILE_H / TILE_W
+const SHADOW_OFFSET := Vector2(3, 2)
+const SHADOW_COLOR := Color(0.16, 0.10, 0.06, 0.24)
+const DIAMOND_SHADOW := -1.0
+const SHADOW_RADII := {"#": 22.0, "j": 20.0, "p": 12.0, "W": DIAMOND_SHADOW}
+
 const GRID_LINE := Color(0.35, 0.27, 0.15, 0.25)
 const MOVE_HL := Color(0.95, 0.85, 0.3, 0.35)
 const ATTACK_HL := Color(0.9, 0.2, 0.15, 0.4)
@@ -317,10 +326,13 @@ func _build_tile_cache(zone_seed: int, shade_seed: int, thresholds: Array) -> vo
 					accent_cells.append(cell)
 			# Subtle brightness patches (0.94..1.0) fake large-scale lighting.
 			var shade := 0.94 + 0.06 * (shade_noise.get_noise_2d(cell.x, cell.y) * 0.5 + 0.5)
+			var shadow: float = DIAMOND_SHADOW if is_structure(cell) \
+					else SHADOW_RADII.get(map_char(cell), 0.0)
 			row.append({
 				"region": TILE_REGIONS[variant],
 				"flip": _hash01(cell, 3) < 0.5,
 				"shade": Color(shade, shade, shade),
+				"shadow": shadow,
 			})
 		tile_cache.append(row)
 
@@ -347,6 +359,22 @@ func _draw() -> void:
 			var outline := _diamond(cell)
 			outline.append(outline[0])
 			draw_polyline(outline, GRID_LINE, 1.5, true)
+	# Prop shadows sit above the floor but below every gameplay overlay.
+	for y in size.y:
+		for x in size.x:
+			var radius: float = tile_cache[y][x].shadow
+			if radius == 0.0:
+				continue
+			var center := cell_to_local(Vector2i(x, y)) + SHADOW_OFFSET
+			if radius == DIAMOND_SHADOW:
+				var shape := PackedVector2Array()
+				for point in _diamond(Vector2i(x, y)):
+					shape.append(center + (point - cell_to_local(Vector2i(x, y))) * 0.88)
+				draw_colored_polygon(shape, SHADOW_COLOR)
+			else:
+				draw_set_transform(center, 0.0, Vector2(1.0, SHADOW_SQUASH))
+				draw_circle(Vector2.ZERO, radius, SHADOW_COLOR)
+				draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	for cell: Vector2i in danger_cells:
 		var d := _diamond(cell)
 		draw_colored_polygon(d, DANGER_FILL)

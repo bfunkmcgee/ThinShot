@@ -130,6 +130,15 @@ const RING_COLOR := Color("ffd94a")        # player selection
 const ENEMY_RING_COLOR := Color("ff5a3c")  # AI unit currently acting
 const DONE_TINT := Color(0.55, 0.55, 0.55)
 
+# Ground contact shadow. Squashed to the tile's own 2:1 ratio and nudged
+# toward a consistent upper-left sun, matching the props Board draws.
+const SHADOW_SQUASH := 0.469  # TILE_H / TILE_W
+const SHADOW_OFFSET := Vector2(3, 2)
+const SHADOW_RADIUS := 19.0
+const SHADOW_COLOR := Color(0.16, 0.10, 0.06, 0.26)
+const CORPSE_SHADOW_RADIUS := 26.0
+const CORPSE_SHADOW_COLOR := Color(0.16, 0.10, 0.06, 0.16)
+
 var team := TEAM_SCOUT
 var max_hp := 3
 var move_range := 4
@@ -383,6 +392,15 @@ func _die() -> void:
 	queue_redraw()
 
 
+func _draw_shadow() -> void:
+	var dead := hp <= 0
+	draw_set_transform(SHADOW_OFFSET, 0.0, Vector2(1.0, SHADOW_SQUASH))
+	draw_circle(Vector2.ZERO,
+			CORPSE_SHADOW_RADIUS if dead else SHADOW_RADIUS,
+			CORPSE_SHADOW_COLOR if dead else SHADOW_COLOR)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
 ## Floating "-N" label. Parented to this unit's parent (not the unit itself)
 ## so it outlives a killed unit; its tween is owned by the label for the same
 ## reason. z_index lifts it clear of the y-sorted entities.
@@ -426,6 +444,10 @@ func start_turn() -> void:
 
 
 func _draw() -> void:
+	# Drawn first (and before the corpse guard) so every body keeps its
+	# contact shadow. _draw renders behind child nodes, so the sprite's
+	# feet always sit on top of it.
+	_draw_shadow()
 	if hp <= 0:
 		return  # corpses carry no pips, rings, or markers
 	if selected:

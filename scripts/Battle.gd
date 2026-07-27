@@ -803,14 +803,16 @@ func _nearest(from_cell: Vector2i, candidates: Array[Unit]) -> Unit:
 	return best
 
 
-## Number of living scouts with range and line of sight on this cell.
-func _threat_at(cell: Vector2i, scouts: Array[Unit]) -> int:
-	var count := 0
+## How exposed a cell is to scout fire: 2 per clean firing line, 1 per line
+## that has to cross junk (those shots only land for half damage). This is
+## what makes the goblins actually value the cover on the map.
+func _exposure_at(cell: Vector2i, scouts: Array[Unit]) -> int:
+	var score := 0
 	for scout in scouts:
 		if Board.manhattan(cell, scout.cell) <= scout.attack_range \
 				and board.has_line_of_sight(scout.cell, cell):
-			count += 1
-	return count
+			score += 1 if board.shot_through_cover(scout.cell, cell) else 2
+	return score
 
 
 ## Best move destination for an AI unit. A cell it can shoot a scout from
@@ -818,12 +820,12 @@ func _threat_at(cell: Vector2i, scouts: Array[Unit]) -> int:
 ## healthy and a lot when wounded (so 1 HP goblins with no shot retreat to
 ## cover); nearer the chase target breaks remaining ties.
 func _best_ai_dest(goblin: Unit, cells: Array, scouts: Array[Unit], chase_cell: Vector2i) -> Vector2i:
-	var threat_weight := 50 if goblin.hp <= 2 else 3
+	var exposure_weight := 25 if goblin.hp <= 2 else 2
 	var best := Vector2i(-1, -1)
 	var best_score := 999999
 	for cell: Vector2i in cells:
 		var score := Board.manhattan(cell, chase_cell)
-		score += threat_weight * _threat_at(cell, scouts)
+		score += exposure_weight * _exposure_at(cell, scouts)
 		var shots := _shootable_from(cell, goblin.attack_range, scouts)
 		if not shots.is_empty():
 			score -= 1000
