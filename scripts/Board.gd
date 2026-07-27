@@ -71,6 +71,12 @@ const AIM_LINE_COVER := Color(1.0, 0.82, 0.25, 0.85)
 const ATTACK_HOVER_COVER_HL := Color(1.0, 0.65, 0.2, 0.5)
 # Burst-armed attack highlight: hotter orange than the normal red.
 const BURST_HL := Color(1.0, 0.45, 0.05, 0.5)
+# Cyan means "flanking - cover ignored" (amber is already taken by cover).
+const AIM_LINE_FLANK := Color(0.45, 0.95, 1.0, 0.9)
+const ATTACK_HOVER_FLANK_HL := Color(0.3, 0.85, 1.0, 0.5)
+# Enemy overwatch arcs: amber, hatched on the opposite diagonal from danger.
+const WATCH_FILL := Color(1.0, 0.72, 0.28, 0.10)
+const WATCH_HATCH := Color(1.0, 0.72, 0.28, 0.26)
 
 const NO_CELL := Vector2i(-1, -1)
 
@@ -96,7 +102,10 @@ var hover_cell := NO_CELL
 var path_preview: Array[Vector2i] = []
 var aim_from := NO_CELL
 var aim_covered := false
+var aim_flanking := false
 var burst_mode := false
+# Cells covered by enemy overwatch arcs (selection-independent).
+var watch_cells: Dictionary = {}
 # Cells any enemy could shoot next turn (selection-independent; cleared
 # only via set_danger, never by clear_highlights).
 var danger_cells: Dictionary = {}
@@ -109,14 +118,20 @@ func set_highlights(moves: Dictionary, attacks: Array[Vector2i]) -> void:
 
 
 func set_hover(cell: Vector2i, path: Array[Vector2i], p_aim_from: Vector2i,
-		p_aim_covered := false) -> void:
+		p_aim_covered := false, p_aim_flanking := false) -> void:
 	if cell == hover_cell and path == path_preview and p_aim_from == aim_from \
-			and p_aim_covered == aim_covered:
+			and p_aim_covered == aim_covered and p_aim_flanking == aim_flanking:
 		return
 	hover_cell = cell
 	path_preview = path
 	aim_from = p_aim_from
 	aim_covered = p_aim_covered
+	aim_flanking = p_aim_flanking
+	queue_redraw()
+
+
+func set_watch_cells(cells: Dictionary) -> void:
+	watch_cells = cells
 	queue_redraw()
 
 
@@ -136,6 +151,7 @@ func clear_highlights() -> void:
 	path_preview = []
 	aim_from = NO_CELL
 	aim_covered = false
+	aim_flanking = false
 	set_highlights({}, [])
 
 
@@ -214,6 +230,19 @@ func is_structure(cell: Vector2i) -> bool:
 
 static func manhattan(a: Vector2i, b: Vector2i) -> int:
 	return absi(a.x - b.x) + absi(a.y - b.y)
+
+
+## Facing sector (0=E, 1=SE .. 7=NE) pointing from one cell toward another.
+## Uses the same screen-space formula as Unit.set_facing, so a previewed
+## flank and a resolved flank can never disagree. -1 for the same cell.
+static func sector_from_to(from: Vector2i, to: Vector2i) -> int:
+	if from == to:
+		return -1
+	var d := to - from
+	var screen := Vector2(
+			float(d.x - d.y) * TILE_W / 2.0,
+			float(d.x + d.y) * TILE_H / 2.0)
+	return wrapi(roundi(screen.angle() / (TAU / 8.0)), 0, 8)
 
 
 ## True if a straight shot between the two cell centers crosses no full
@@ -380,14 +409,25 @@ func _draw() -> void:
 		draw_colored_polygon(d, DANGER_FILL)
 		for f in [0.25, 0.5, 0.75]:
 			draw_line(d[3].lerp(d[2], f), d[0].lerp(d[1], f), DANGER_HATCH, 1.0, true)
+	# Enemy overwatch arcs, hatched on the opposite diagonal from danger so
+	# the two stay legible where they overlap.
+	for cell: Vector2i in watch_cells:
+		var w := _diamond(cell)
+		draw_colored_polygon(w, WATCH_FILL)
+		for f in [0.3, 0.6]:
+			draw_line(w[3].lerp(w[0], f), w[2].lerp(w[1], f), WATCH_HATCH, 1.0, true)
 	for cell: Vector2i in move_cells:
 		draw_colored_polygon(_diamond(cell), MOVE_HL)
 	for cell in attack_cells:
 		draw_colored_polygon(_diamond(cell), BURST_HL if burst_mode else ATTACK_HL)
 	if hover_cell != NO_CELL:
 		if attack_cells.has(hover_cell):
-			draw_colored_polygon(_diamond(hover_cell),
-					ATTACK_HOVER_COVER_HL if aim_covered else ATTACK_HOVER_HL)
+			var hl := ATTACK_HOVER_HL
+			if aim_flanking:
+				hl = ATTACK_HOVER_FLANK_HL
+			elif aim_covered:
+				hl = ATTACK_HOVER_COVER_HL
+			draw_colored_polygon(_diamond(hover_cell), hl)
 		var outline := _diamond(hover_cell)
 		outline.append(outline[0])
 		draw_polyline(outline, HOVER_OUTLINE, 2.5, true)
@@ -400,5 +440,10 @@ func _draw() -> void:
 		for i in centers.size():
 			draw_circle(centers[i], 8.0 if i == centers.size() - 1 else 5.0, PATH_DOT)
 	if aim_from != NO_CELL and hover_cell != NO_CELL:
+		var line_color := AIM_LINE
+		if aim_flanking:
+			line_color = AIM_LINE_FLANK
+		elif aim_covered:
+			line_color = AIM_LINE_COVER
 		draw_dashed_line(cell_to_local(aim_from), cell_to_local(hover_cell),
-				AIM_LINE_COVER if aim_covered else AIM_LINE, 2.0, 10.0)
+				line_color, 2.0, 10.0)

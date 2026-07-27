@@ -24,9 +24,9 @@ Choir has numbers and holds the ground.
 - **Left-click** — select a scout / move to a yellow-highlighted tile / shoot a
   red-highlighted enemy
 - **Hover** — tile outline, movement path preview, dashed aim line on targets
-- **W** or the **Overwatch** button — put the selected scout on overwatch
-  (consumes its attack; it fires automatically at the first goblin that moves
-  through its line of sight on the enemy turn)
+- **W** or the **Overwatch** button — put the selected scout on overwatch, then
+  **click the direction to watch** (consumes its attack; it fires automatically
+  at the first goblin that moves through the 135° arc it covers)
 - **B** or the **Burst** button — arm burst fire for a scout that hasn't moved
   (highlights turn orange); click a target to fire a braced two-round burst
   (2×2 damage, each round halved by cover). Moving disarms it.
@@ -46,10 +46,15 @@ Choir has numbers and holds the ground.
 - **Rusted junk is partial cover**: you can't stand on it, but shots pass over
   it at **half damage** (the aim line turns amber). Cacti are decoration.
 - Winning advances to the next level; losing retries the current one.
+- **Facing matters.** Every unit covers a 135° front arc, drawn as a wedge at
+  its feet. Cover only protects against shots arriving inside that arc — a
+  **flanking** shot (cyan aim line) ignores junk entirely and knocks the target
+  off overwatch. Units face the way they last moved or shot, so sprinting
+  across an enemy's front exposes your flank while advancing into it does not.
 - **Overwatch** works for both sides: an overwatching unit stands with rifle
   raised (amber marker above its HP) and takes one free reaction shot at the
-  first enemy that moves through its range and line of sight. Unfired
-  overwatch expires at the owner's next turn.
+  first enemy that moves through **the arc it is watching** — enemy arcs are
+  hatched amber on the board. Unfired overwatch expires at the owner's next turn.
 - **Burst fire** is scout-only: a scout that stays put may spend its attack on
   a two-round burst — enough to drop a full-health goblin in one action, at
   the price of not repositioning.

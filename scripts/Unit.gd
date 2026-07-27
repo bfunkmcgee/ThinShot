@@ -87,6 +87,11 @@ static var GOBLIN_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
 
 enum Anim { IDLE, WALK, RAISE, AIM_IDLE, LOWER, DIE, DEAD }
 
+# Front arc half-width in 45-degree sectors: 1 -> 135 degrees of cover.
+# Shots from outside a unit's front arc ignore its cover, and overwatch
+# only reacts inside it.
+const ARC_HALF_SECTORS := 1
+
 const WALK_FPS := 18.0
 const IDLE_FPS := 8.0
 const AIM_IDLE_FPS := 8.0
@@ -139,6 +144,12 @@ const SHADOW_COLOR := Color(0.16, 0.10, 0.06, 0.26)
 const CORPSE_SHADOW_RADIUS := 26.0
 const CORPSE_SHADOW_COLOR := Color(0.16, 0.10, 0.06, 0.16)
 
+# Ground wedge showing the unit's front arc (where cover protects it and
+# overwatch reacts). Brighter while watching or selected.
+const WEDGE_RADIUS := 34.0
+const WEDGE_IDLE := Color(1.0, 0.95, 0.8, 0.10)
+const WEDGE_ACTIVE := Color("ffb84a")  # matches the overwatch marker
+
 var team := TEAM_SCOUT
 var max_hp := 3
 var move_range := 4
@@ -159,6 +170,8 @@ var aim_idle_frames: Array = SCOUT_AIM_IDLE_FRAMES
 var death_frames: Array = SCOUT_DEATH_FRAMES
 var dead_frames: Array[Texture2D] = SCOUT_DEAD_FRAMES
 var facing_sector := 2  # south
+var arc_half := ARC_HALF_SECTORS
+var arc_preview_sector := -1  # >= 0 while the player is aiming an arc
 var overwatching := false
 var anim := Anim.IDLE
 var anim_time := 0.0
@@ -235,8 +248,23 @@ static func _load_rotation_frames(base: String) -> Array[Texture2D]:
 func set_facing(screen_dir: Vector2) -> void:
 	if screen_dir.length_squared() < 0.01:
 		return
-	facing_sector = wrapi(roundi(screen_dir.angle() / (TAU / 8.0)), 0, 8)
+	set_facing_sector(wrapi(roundi(screen_dir.angle() / (TAU / 8.0)), 0, 8))
+
+
+func set_facing_sector(sector: int) -> void:
+	if sector < 0 or sector == facing_sector:
+		return
+	facing_sector = sector
 	_update_sprite()
+	queue_redraw()
+
+
+## True if the given sector falls inside this unit's front arc. Shots from
+## outside it ignore cover, and overwatch will not react to it.
+func covers_sector(sector: int) -> bool:
+	if sector < 0:
+		return true
+	return absi(wrapi(sector - facing_sector + 4, 0, 8) - 4) <= arc_half
 
 
 func _set_anim(value: Anim) -> void:
@@ -392,6 +420,26 @@ func _die() -> void:
 	queue_redraw()
 
 
+## Front-arc wedge on the ground. Points are built with the isometric
+## y-squash baked in so the wedge aims where the sprite is looking.
+func _draw_facing_wedge() -> void:
+	var sector := arc_preview_sector if arc_preview_sector >= 0 else facing_sector
+	var mid := sector * TAU / 8.0
+	var half := (arc_half + 0.5) * TAU / 8.0
+	var points := PackedVector2Array([Vector2.ZERO])
+	for i in 9:
+		var a: float = mid - half + 2.0 * half * float(i) / 8.0
+		points.append(Vector2(cos(a) * WEDGE_RADIUS, sin(a) * WEDGE_RADIUS * SHADOW_SQUASH))
+	var color := WEDGE_IDLE
+	if arc_preview_sector >= 0:
+		color = Color(WEDGE_ACTIVE, 0.45)
+	elif overwatching:
+		color = Color(WEDGE_ACTIVE, 0.34)
+	elif selected:
+		color = Color(WEDGE_ACTIVE, 0.20)
+	draw_colored_polygon(points, color)
+
+
 func _draw_shadow() -> void:
 	var dead := hp <= 0
 	draw_set_transform(SHADOW_OFFSET, 0.0, Vector2(1.0, SHADOW_SQUASH))
@@ -450,6 +498,7 @@ func _draw() -> void:
 	_draw_shadow()
 	if hp <= 0:
 		return  # corpses carry no pips, rings, or markers
+	_draw_facing_wedge()
 	if selected:
 		# Ground ellipse at the unit's feet, matching the isometric 2:1 view.
 		var ring := RING_COLOR if team == TEAM_SCOUT else ENEMY_RING_COLOR

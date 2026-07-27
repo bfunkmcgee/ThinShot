@@ -88,6 +88,7 @@ var enemy_turn_running := false
 var player_turn_ready_msec := 0
 var danger_on := false
 var burst_armed := false
+var aiming_overwatch := false
 var level: Dictionary = {}
 var last_result_won := false
 
@@ -315,13 +316,19 @@ func _unhandled_input(event: InputEvent) -> void:
 			_go_to_level(i)
 			return
 	if event.is_action_pressed("cancel"):
-		deselect()
+		if aiming_overwatch:
+			_cancel_overwatch_aim()
+		else:
+			deselect()
 		return
 	var mouse := event as InputEventMouseButton
 	if mouse == null or not mouse.pressed:
 		return
 	if mouse.button_index == MOUSE_BUTTON_RIGHT:
-		deselect()
+		if aiming_overwatch:
+			_cancel_overwatch_aim()
+		else:
+			deselect()
 		return
 	if mouse.button_index != MOUSE_BUTTON_LEFT:
 		return
@@ -332,6 +339,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _handle_click(cell: Vector2i) -> void:
+	if aiming_overwatch and selected != null and cell != selected.cell:
+		_commit_overwatch_arc(cell)
+		return
 	var clicked := unit_at(cell)
 	if selected != null:
 		if clicked != null and clicked.team == Unit.TEAM_GOBLIN \
@@ -428,6 +438,27 @@ func _update_unit_panel() -> void:
 	panel_hp_label.text = "HP %d / %d" % [unit.hp, unit.max_hp]
 	panel_stats_label.text = "Move %d   Range %d   Dmg %d" % [
 			unit.move_range, unit.attack_range, unit.damage]
+	if aiming_overwatch and unit == selected:
+		panel_status_label.text = "AIMING ARC"
+		panel_status_label.modulate = Color("ffb84a")
+		return
+	# Hovering a shootable enemy: show what the shot would actually do.
+	if unit.team == Unit.TEAM_GOBLIN and selected != null \
+			and board.attack_cells.has(unit.cell):
+		var flanking := _is_flanking(selected, unit)
+		var dmg := selected.damage
+		var note := ""
+		if flanking:
+			note = "FLANK"
+		elif board.shot_through_cover(selected.cell, unit.cell):
+			dmg >>= 1
+			note = "THROUGH COVER"
+		if burst_armed:
+			dmg *= 2
+			note = "BURST" if note == "" else "BURST - " + note
+		panel_status_label.text = "DAMAGE %d%s" % [dmg, "  " + note if note != "" else ""]
+		panel_status_label.modulate = Color("7ae8ff") if flanking else Color.WHITE
+		return
 	if unit == selected and burst_armed:
 		panel_status_label.text = "BURST ARMED"
 		panel_status_label.modulate = Color("ff7a2a")
@@ -446,16 +477,73 @@ func _unit_status(unit: Unit) -> String:
 	return "Ready"
 
 
-## Put the selected scout on overwatch, consuming its activation.
+## Enter overwatch-aiming: the player picks which way the scout watches.
+## Clicking a cell commits the arc; cancel/right-click backs out.
 func _try_overwatch() -> void:
+	if aiming_overwatch:
+		_cancel_overwatch_aim()
+		return
 	if state != State.PLAYER_TURN or selected == null or selected.acted:
 		return
+	aiming_overwatch = true
+	_set_burst_armed(false)
+	board.clear_highlights()
+	show_banner("CHOOSE OVERWATCH ARC")
+	_update_hover(board.global_to_cell(get_global_mouse_position()))
+
+
+func _cancel_overwatch_aim() -> void:
+	if not aiming_overwatch:
+		return
+	aiming_overwatch = false
+	if selected != null:
+		selected.arc_preview_sector = -1
+		selected.queue_redraw()
+	_refresh_watch_cells()
+	_refresh_highlights()
+
+
+## Lock the arc toward the clicked cell and commit the overwatch.
+func _commit_overwatch_arc(cell: Vector2i) -> void:
 	var scout := selected
+	var sector := Board.sector_from_to(scout.cell, cell)
+	aiming_overwatch = false
+	scout.arc_preview_sector = -1
+	scout.set_facing_sector(sector)
 	deselect()
 	scout.set_done(true)
 	scout.set_overwatch(true)
 	Sfx.play("overwatch_set", 0.0, 0.0)
-	print("[ThinShot] scout at %s goes on overwatch" % scout.cell)
+	_refresh_watch_cells()
+	print("[ThinShot] scout at %s watches sector %d" % [scout.cell, sector])
+
+
+## Cells an overwatching unit would cover: in range, in arc, with LOS.
+func _overwatch_cells_for(unit: Unit, sector: int) -> Dictionary:
+	var cells := {}
+	var r := unit.attack_range
+	for dy in range(-r, r + 1):
+		var w := r - absi(dy)
+		for dx in range(-w, w + 1):
+			var cell: Vector2i = unit.cell + Vector2i(dx, dy)
+			if cell == unit.cell or not board.in_bounds(cell) or not board.is_walkable(cell):
+				continue
+			var to_cell := Board.sector_from_to(unit.cell, cell)
+			if absi(wrapi(to_cell - sector + 4, 0, 8) - 4) > unit.arc_half:
+				continue
+			if board.has_line_of_sight(unit.cell, cell):
+				cells[cell] = true
+	return cells
+
+
+## Union of every enemy overwatch arc currently threatening the board.
+func _refresh_watch_cells() -> void:
+	var cells := {}
+	for goblin in living_units(Unit.TEAM_GOBLIN):
+		if not goblin.overwatching:
+			continue
+		cells.merge(_overwatch_cells_for(goblin, goblin.facing_sector))
+	board.set_watch_cells(cells)
 
 
 func _refresh_highlights() -> void:
@@ -483,16 +571,30 @@ func _update_hover(cell: Vector2i) -> void:
 	if not board.in_bounds(cell):
 		cell = Board.NO_CELL
 	hover_cell = cell
+	# Aiming an overwatch arc: the cursor steers the cone, nothing else.
+	if aiming_overwatch and selected != null:
+		var sector := Board.sector_from_to(selected.cell, cell) if cell != Board.NO_CELL else -1
+		if sector != selected.arc_preview_sector:
+			selected.arc_preview_sector = sector
+			selected.queue_redraw()
+			board.set_watch_cells(_overwatch_cells_for(selected, sector) if sector >= 0 else {})
+		board.set_hover(cell, [], Board.NO_CELL)
+		_update_unit_panel()
+		return
 	var path: Array[Vector2i] = []
 	var aim_from := Board.NO_CELL
 	var aim_covered := false
+	var aim_flanking := false
 	if selected != null and cell != Board.NO_CELL:
 		if board.move_cells.has(cell):
 			path = board.reconstruct_path(board.move_cells, cell)
 		elif board.attack_cells.has(cell):
+			var target := unit_at(cell)
 			aim_from = selected.cell
-			aim_covered = board.shot_through_cover(selected.cell, cell)
-	board.set_hover(cell, path, aim_from, aim_covered)
+			aim_flanking = target != null and _is_flanking(selected, target)
+			aim_covered = not aim_flanking \
+					and board.shot_through_cover(selected.cell, cell)
+	board.set_hover(cell, path, aim_from, aim_covered, aim_flanking)
 	_update_unit_panel()
 
 
@@ -543,6 +645,7 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 	state = prev_state
 	if prev_state == State.PLAYER_TURN:
 		_refresh_danger()
+		_refresh_watch_cells()
 		_update_unit_panel()
 		if selected == unit:
 			_refresh_highlights()
@@ -562,6 +665,7 @@ func do_attack(attacker: Unit, target: Unit) -> void:
 	state = prev_state
 	if prev_state == State.PLAYER_TURN:
 		_refresh_danger()
+		_refresh_watch_cells()
 		_update_unit_panel()
 
 
@@ -595,12 +699,20 @@ func _fire_round(attacker: Unit, target: Unit) -> void:
 	Sfx.play("hit_impact")
 	HitFx.spawn(self, target.position + Vector2(0, -36), HitFx.Kind.IMPACT)
 	_screen_shake()
+	var flanking := _is_flanking(attacker, target)
 	var dmg := attacker.damage
-	if board.shot_through_cover(attacker.cell, target.cell):
+	if not flanking and board.shot_through_cover(attacker.cell, target.cell):
 		dmg >>= 1
 		print("[ThinShot]   shot %s -> %s clips cover: %d dmg" % [
 				attacker.cell, target.cell, dmg])
+	elif flanking:
+		print("[ThinShot]   flanking shot %s -> %s: %d dmg" % [
+				attacker.cell, target.cell, dmg])
 	target.take_damage(dmg)
+	# A hit from outside the front arc knocks the target off overwatch.
+	if flanking and target.is_alive() and target.overwatching:
+		target.set_overwatch(false)
+		target.lower_rifle()
 	_update_unit_panel()  # keep hovered-unit HP live even during enemy fire
 
 
@@ -679,8 +791,15 @@ func _on_danger_button_toggled(pressed: bool) -> void:
 	_refresh_danger()
 
 
-## Living enemies of the mover that are on overwatch with range and LOS
-## on the mover's current cell.
+## True if the shot comes from outside the target's front arc, in which case
+## cover does not protect it. Derived from cells, never live positions, so
+## the hover preview and the resolved shot always agree.
+func _is_flanking(attacker: Unit, target: Unit) -> bool:
+	return not target.covers_sector(Board.sector_from_to(target.cell, attacker.cell))
+
+
+## Living enemies of the mover that are on overwatch with range, LOS, and
+## the mover inside their covered arc.
 func _overwatchers_against(mover: Unit) -> Array[Unit]:
 	var result: Array[Unit] = []
 	for child in entities_node.get_children():
@@ -690,6 +809,7 @@ func _overwatchers_against(mover: Unit) -> Array[Unit]:
 		if watcher.team == mover.team:
 			continue
 		if Board.manhattan(watcher.cell, mover.cell) <= watcher.attack_range \
+				and watcher.covers_sector(Board.sector_from_to(watcher.cell, mover.cell)) \
 				and board.has_line_of_sight(watcher.cell, mover.cell):
 			result.append(watcher)
 	return result
@@ -739,6 +859,7 @@ func end_player_turn() -> void:
 	state = State.PLAYER_TURN
 	player_turn_ready_msec = Time.get_ticks_msec()
 	_refresh_danger()
+	_refresh_watch_cells()
 	_update_unit_panel()
 
 
@@ -761,9 +882,7 @@ func run_enemy_turn() -> void:
 		else:
 			var target := _nearest(goblin.cell, scouts)
 			var reach := board.flood_fill(goblin.cell, goblin.move_range, _cell_blocked)
-			var candidates: Array = reach.keys()
-			candidates.append(goblin.cell)  # staying put is a valid choice
-			var dest := _best_ai_dest(goblin, candidates, scouts, target.cell)
+			var dest := _best_ai_dest(goblin, reach, scouts, target.cell)
 			var moved_now := board.in_bounds(dest) and dest != goblin.cell
 			if moved_now:
 				await do_move(goblin, dest)
@@ -775,7 +894,8 @@ func run_enemy_turn() -> void:
 			if shoots:
 				await do_attack(goblin, _nearest(goblin.cell, shootable))
 			elif not moved_now and goblin.is_alive():
-				# Dug in with no shot: cover the approach instead.
+				# Dug in with no shot: watch the lane the scouts must cross.
+				goblin.set_facing_sector(_best_watch_sector(goblin, scouts))
 				goblin.set_overwatch(true)
 				Sfx.play("overwatch_set", -4.0, 0.0)
 				print("[ThinShot]   goblin %d/%d holds %s on overwatch" % [
@@ -819,23 +939,64 @@ func _exposure_at(cell: Vector2i, scouts: Array[Unit]) -> int:
 ## beats every cell it can't; exposure to scout fire costs a little when
 ## healthy and a lot when wounded (so 1 HP goblins with no shot retreat to
 ## cover); nearer the chase target breaks remaining ties.
-func _best_ai_dest(goblin: Unit, cells: Array, scouts: Array[Unit], chase_cell: Vector2i) -> Vector2i:
+## `reach` is the flood_fill result (cell -> predecessor), which also tells us
+## which way the goblin would be facing when it arrives.
+func _best_ai_dest(goblin: Unit, reach: Dictionary, scouts: Array[Unit],
+		chase_cell: Vector2i) -> Vector2i:
 	var exposure_weight := 25 if goblin.hp <= 2 else 2
+	var candidates: Array = reach.keys()
+	candidates.append(goblin.cell)  # staying put is a valid choice
 	var best := Vector2i(-1, -1)
 	var best_score := 999999
-	for cell: Vector2i in cells:
+	for cell: Vector2i in candidates:
 		var score := Board.manhattan(cell, chase_cell)
 		score += exposure_weight * _exposure_at(cell, scouts)
 		var shots := _shootable_from(cell, goblin.attack_range, scouts)
+		var end_sector := -1
 		if not shots.is_empty():
+			var mark := _nearest(cell, shots)
+			end_sector = Board.sector_from_to(cell, mark.cell)
 			score -= 1000
 			# A clean firing position beats one that only has covered shots.
-			if board.shot_through_cover(cell, _nearest(cell, shots).cell):
+			if board.shot_through_cover(cell, mark.cell):
 				score += 400
+			# Shooting someone in the back bypasses their cover.
+			if not mark.covers_sector(Board.sector_from_to(mark.cell, cell)):
+				score -= 60
+		elif reach.has(cell):
+			end_sector = Board.sector_from_to(reach[cell], cell)
+		# Do not turn your back on the rest of the squad.
+		if end_sector >= 0:
+			for scout in scouts:
+				if Board.manhattan(cell, scout.cell) <= scout.attack_range \
+						and board.has_line_of_sight(scout.cell, cell) \
+						and absi(wrapi(Board.sector_from_to(cell, scout.cell)
+								- end_sector + 4, 0, 8) - 4) > goblin.arc_half:
+					score += 6
 		if score < best_score:
 			best_score = score
 			best = cell
 	return best
+
+
+## Which way a dug-in goblin should watch: the arc covering the most cells
+## the scouts could advance through. Integer scoring keeps ties deterministic.
+func _best_watch_sector(goblin: Unit, scouts: Array[Unit]) -> int:
+	var approach := {}
+	for scout in scouts:
+		approach.merge(board.flood_fill(scout.cell, scout.move_range, _cell_blocked))
+		approach[scout.cell] = true
+	var best_sector := goblin.facing_sector
+	var best_count := -1
+	for sector in 8:
+		var count := 0
+		for cell: Vector2i in _overwatch_cells_for(goblin, sector):
+			if approach.has(cell):
+				count += 1
+		if count > best_count:
+			best_count = count
+			best_sector = sector
+	return best_sector
 
 
 # --- Win / lose --------------------------------------------------------------
