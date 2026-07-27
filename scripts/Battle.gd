@@ -78,6 +78,8 @@ const MOVE_STEP_TIME := 0.16
 const TRACER_TIME := 0.09
 const AI_BEAT := 0.12
 const ACT_LEAD_IN := 0.15  # pause after marking a goblin, before it acts
+const FLANK_ACCURACY := 10   # bonus to hit from outside the target's arc
+const LONG_SHOT_PENALTY := 5  # per tile past half the shooter's range
 const LOWER_TIME := 0.12  # rifle held after the shot before lowering
 const BURST_GAP := 0.13  # pause between the two rounds of a burst
 
@@ -102,6 +104,7 @@ var _cam_lean := Vector2.ZERO
 var _cam_shake := Vector2.ZERO
 var _shake_tween: Tween = null
 var _kick_tween: Tween = null
+var _rng := RandomNumberGenerator.new()
 var fx_ground: Fx = null
 var fx_air: Fx = null
 var fx_glow: Fx = null
@@ -130,6 +133,7 @@ var fx_glow: Fx = null
 
 
 func _ready() -> void:
+	_rng.randomize()
 	Engine.time_scale = 1.0  # a reload mid-hit-stop must never persist
 	Levels.validate_all()  # push_error-based, so it reports in release too
 	level = Game.data()
@@ -499,9 +503,9 @@ func _update_unit_panel() -> void:
 	panel_name_label.text = "Desert Scout" if unit.team == Unit.TEAM_SCOUT \
 			else "Rust Choir Chorister"
 	panel_hp_label.text = "HP %d / %d" % [unit.hp, unit.max_hp]
-	panel_stats_label.text = "Move %d   Range %d   Dmg %d%s" % [
-			unit.move_range, unit.attack_range, unit.damage,
-			"   Ammo %d/%d" % [unit.ammo, unit.mag_size] if unit.mag_size > 0 else ""]
+	panel_stats_label.text = "Move %d  Rng %d  Dmg %d  Acc %d%%%s" % [
+			unit.move_range, unit.attack_range, unit.damage, unit.accuracy,
+			"  Ammo %d/%d" % [unit.ammo, unit.mag_size] if unit.mag_size > 0 else ""]
 	if aim_mode != AimMode.NONE and unit == selected:
 		panel_status_label.text = "AIMING ARC" if aim_mode == AimMode.OVERWATCH \
 				else "PICK A FACING"
@@ -519,9 +523,10 @@ func _update_unit_panel() -> void:
 			dmg >>= 1
 			note = "THROUGH COVER"
 		if burst_armed:
-			dmg *= 2
-			note = "BURST" if note == "" else "BURST - " + note
-		panel_status_label.text = "DAMAGE %d%s" % [dmg, "  " + note if note != "" else ""]
+			note = "x2 BURST" if note == "" else "x2 BURST - " + note
+		panel_status_label.text = "%d%% TO HIT - %d DMG%s" % [
+				hit_chance(selected, unit), dmg,
+				"  " + note if note != "" else ""]
 		panel_status_label.modulate = Color("7ae8ff") if flanking else Color.WHITE
 		return
 	if unit == selected and burst_armed:
@@ -829,12 +834,17 @@ func _fire_round(attacker: Unit, target: Unit) -> void:
 	var dir := (chest - muzzle).normalized()
 	var covered_cell := board.cover_cell_between(attacker.cell, target.cell)
 	var flanking := _is_flanking(attacker, target)
+	var chance := hit_chance(attacker, target)
+	var hit := _rng.randi_range(1, 100) <= chance
+	# A miss sails past the target and off to one side.
+	var impact_point := chest if hit else chest + dir * 54.0 \
+			+ dir.orthogonal() * _rng.randf_range(-34.0, 34.0)
 
 	attacker.spend_ammo()
 	attacker.recoil(dir)
 	Sfx.play("shot")
 	HitFx.spawn(fx_glow, muzzle, HitFx.Kind.MUZZLE)
-	HitFx.spawn_tracer(fx_glow, muzzle, chest, TRACER_TIME)
+	HitFx.spawn_tracer(fx_glow, muzzle, impact_point, TRACER_TIME)
 	fx_glow.muzzle(muzzle, dir)
 	fx_ground.footstep(attacker.position, 0.5)  # blast dust at the shooter's feet
 	fx_ground.casing(muzzle, dir)
@@ -848,14 +858,23 @@ func _fire_round(attacker: Unit, target: Unit) -> void:
 
 	await get_tree().create_timer(TRACER_TIME).timeout
 
+	if not hit:
+		print("[ThinShot]   %s -> %s MISSES (%d%%)" % [
+				attacker.cell, target.cell, chance])
+		Sfx.play("miss")
+		fx_ground.footstep(impact_point + Vector2(0, 30), 1.2)  # dust where it lands
+		target.spawn_miss_text()
+		_update_unit_panel()
+		return
+
 	var dmg := attacker.damage
 	if not flanking and covered_cell != Board.NO_CELL:
 		dmg >>= 1
-		print("[ThinShot]   shot %s -> %s clips cover: %d dmg" % [
-				attacker.cell, target.cell, dmg])
+		print("[ThinShot]   shot %s -> %s clips cover: %d dmg (%d%%)" % [
+				attacker.cell, target.cell, dmg, chance])
 	elif flanking:
-		print("[ThinShot]   flanking shot %s -> %s: %d dmg" % [
-				attacker.cell, target.cell, dmg])
+		print("[ThinShot]   flanking shot %s -> %s: %d dmg (%d%%)" % [
+				attacker.cell, target.cell, dmg, chance])
 	var lethal := target.hp - dmg <= 0
 
 	Sfx.play("hit_impact")
@@ -869,6 +888,20 @@ func _fire_round(attacker: Unit, target: Unit) -> void:
 		target.lower_rifle()
 	_update_unit_panel()  # keep hovered-unit HP live even during enemy fire
 	await _hit_stop(0.09 if lethal else 0.14, 0.075 if lethal else 0.045)
+
+
+## Percent chance this shot connects. Cover is deliberately NOT an accuracy
+## modifier - it already halves damage, and keeping the two rules separate
+## keeps both readable. Flanking helps; so does not taking a long shot.
+func hit_chance(attacker: Unit, target: Unit) -> int:
+	var chance := attacker.accuracy
+	if _is_flanking(attacker, target):
+		chance += FLANK_ACCURACY
+	var dist := Board.manhattan(attacker.cell, target.cell)
+	var comfortable: int = attacker.attack_range / 2
+	if dist > comfortable:
+		chance -= (dist - comfortable) * LONG_SHOT_PENALTY
+	return clampi(chance, 20, 99)
 
 
 ## Fire-and-forget spark on the junk cell the round passes through.

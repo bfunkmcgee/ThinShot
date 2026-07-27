@@ -13,6 +13,7 @@ placeholder art). One desert skirmish: the **Desert Scouts** against the
 | Move | 5 tiles | 4 tiles |
 | Attack range | 4 | 3 |
 | Damage | 2 (1 through cover) | 2 (1 through cover) |
+| Accuracy | 90% | 60% |
 
 A three-level desert campaign on 16×10 isometric maps: **Dry Wash** (open
 skirmish), **The Scrapline** (the Choir's junkyard), and **Outpost 7** (fortress
@@ -49,6 +50,11 @@ Choir has numbers and holds the ground.
 
 - Each unit may **move once and shoot once** per turn; shooting ends its
   activation (you can move-then-shoot, but not shoot-then-move).
+- **Shots can miss.** Your scouts are trained marksmen; the Choir fires
+  scavenged rifles badly. Hovering a target shows the exact odds. Flanking adds
+  +10%, and shots past half your range lose 5% per extra tile — so the accuracy
+  gap is the elite-squad edge, and closing distance sharpens it. Cover does
+  *not* reduce accuracy; it halves damage, which keeps the two rules separate.
 - **Rocks, brick walls, and buildings block movement *and* line of sight.**
 - **Rusted junk is partial cover**: you can't stand on it, but shots pass over
   it at **half damage** (the aim line turns amber). Cacti are decoration.

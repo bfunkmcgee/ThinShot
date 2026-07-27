@@ -162,6 +162,7 @@ var max_hp := 3
 var move_range := 4
 var attack_range := 4
 var damage := 1
+var accuracy := 90  # base percent chance to hit before modifiers
 var mag_size := 0  # 0 means unlimited ammo (goblins)
 var ammo := 0
 
@@ -211,6 +212,7 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		move_range = 5
 		attack_range = 4
 		damage = 2
+		accuracy = 90  # trained marksmen
 		mag_size = 3
 		frames = SCOUT_FRAMES
 		aim_frames = SCOUT_AIM_FRAMES
@@ -226,6 +228,7 @@ func setup(p_team: int, p_cell: Vector2i) -> void:
 		move_range = 4
 		attack_range = 3
 		damage = 2
+		accuracy = 60  # scavenged rifles, no training
 		frames = GOBLIN_FRAMES
 		aim_frames = GOBLIN_AIM_FRAMES
 		walk_frames = GOBLIN_WALK_FRAMES
@@ -510,14 +513,23 @@ func _draw_shadow() -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
+## Pale "MISS" callout where a shot went wide.
+func spawn_miss_text() -> void:
+	_spawn_float_text("MISS", Color(0.85, 0.88, 0.92), 20)
+
+
 ## Floating "-N" label. Parented to this unit's parent (not the unit itself)
 ## so it outlives a killed unit; its tween is owned by the label for the same
 ## reason. z_index lifts it clear of the y-sorted entities.
 func _spawn_damage_number(amount: int) -> void:
+	_spawn_float_text("-%d" % amount, Color(1.0, 0.35, 0.3), 24)
+
+
+func _spawn_float_text(text: String, color: Color, size: int) -> void:
 	var label := Label.new()
-	label.text = "-%d" % amount
-	label.add_theme_font_size_override("font_size", 24)
-	label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.3))
+	label.text = text
+	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	label.add_theme_constant_override("outline_size", 6)
 	label.z_index = 20

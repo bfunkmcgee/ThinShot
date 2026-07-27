@@ -166,6 +166,14 @@ func _init() -> void:
 		_tone(lose, freq, 0.2, 3.0)
 	_write_wav(OUT_DIR + "/lose.wav", lose)
 
+	# Round cracking past: a fast descending whistle with a noise edge.
+	_lcg = 29
+	var whiz := PackedFloat32Array()
+	_sweep(whiz, 1800.0, 420.0, 0.16, 6.0)
+	var air := PackedFloat32Array()
+	_noise_burst(air, 0.16, 5.0, 3200.0)
+	_write_wav(OUT_DIR + "/miss.wav", _mix(whiz, air, 0.45, 0.55))
+
 	# Magazine out, magazine in, bolt released.
 	_lcg = 23
 	var reload := PackedFloat32Array()
