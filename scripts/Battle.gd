@@ -37,10 +37,12 @@ const PLANT_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_14.png"),
 	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_15.png"),
 ]
+# The rotation names describe the wall's FACING, so its length runs along
+# the perpendicular axis: a south-west-facing wall runs NW-SE (grid x).
 const WALL_TEX_X_RUN := preload(
-		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/south-east.png")
-const WALL_TEX_Y_RUN := preload(
 		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/south-west.png")
+const WALL_TEX_Y_RUN := preload(
+		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/south-east.png")
 const WALL_TEX_JUNCTION := preload(
 		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/north.png")
 const WALL_TEX_CAP := preload(
