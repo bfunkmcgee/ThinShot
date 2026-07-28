@@ -35,11 +35,11 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -858.0
 offset_top = -70.0
-offset_right = -728.0
+offset_right = -748.0
 offset_bottom = -22.0
 focus_mode = 0
 toggle_mode = true
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 14
 text = "Face (F)"
 
 [node name="ReloadButton" type="Button" parent="UI"]
@@ -47,12 +47,12 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -718.0
+offset_left = -738.0
 offset_top = -70.0
-offset_right = -588.0
+offset_right = -628.0
 offset_bottom = -22.0
 focus_mode = 0
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 14
 text = "Reload (R)"
 
 [node name="BurstButton" type="Button" parent="UI"]
@@ -60,27 +60,41 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -578.0
+offset_left = -618.0
 offset_top = -70.0
-offset_right = -448.0
+offset_right = -508.0
 offset_bottom = -22.0
 focus_mode = 0
 toggle_mode = true
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 14
 text = "Burst (B)"
+
+[node name="AutoButton" type="Button" parent="UI"]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -498.0
+offset_top = -70.0
+offset_right = -388.0
+offset_bottom = -22.0
+focus_mode = 0
+toggle_mode = true
+theme_override_font_sizes/font_size = 14
+text = "Auto (A)"
 
 [node name="DangerButton" type="Button" parent="UI"]
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -438.0
+offset_left = -378.0
 offset_top = -70.0
-offset_right = -308.0
+offset_right = -268.0
 offset_bottom = -22.0
 focus_mode = 0
 toggle_mode = true
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 14
 text = "Danger (D)"
 
 [node name="UnitPanel" type="PanelContainer" parent="UI"]
@@ -130,13 +144,13 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -298.0
+offset_left = -258.0
 offset_top = -70.0
-offset_right = -168.0
+offset_right = -148.0
 offset_bottom = -22.0
 focus_mode = 0
 toggle_mode = true
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 14
 text = "Watch (W)"
 
 [node name="EndTurnButton" type="Button" parent="UI"]
@@ -144,13 +158,13 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -158.0
+offset_left = -138.0
 offset_top = -70.0
 offset_right = -28.0
 offset_bottom = -22.0
 focus_mode = 0
-theme_override_font_sizes/font_size = 16
-text = "End Turn (E)"
+theme_override_font_sizes/font_size = 14
+text = "End (E)"
 
 [node name="GameOver" type="ColorRect" parent="UI"]
 visible = false

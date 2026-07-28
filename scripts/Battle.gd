@@ -8,6 +8,9 @@ enum State { PLAYER_TURN, ANIMATING, ENEMY_TURN, GAME_OVER }
 ## OVERWATCH consumes the unit's attack; FACE is free.
 enum AimMode { NONE, OVERWATCH, FACE }
 
+## Which trigger setting the selected unit will use on its next shot.
+enum FireMode { SINGLE, BURST, AUTO }
+
 const UNIT_SCENE := preload("res://scenes/Unit.tscn")
 const ROCK_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_1.png"),
@@ -84,8 +87,13 @@ const SWAY_SPEED := 1.6      # radians/sec of the plant sway cycle
 const SWAY_TEXELS := 1.0     # sprite texels a plant leans at full sway
 const FLANK_ACCURACY := 10   # bonus to hit from outside the target's arc
 const LONG_SHOT_PENALTY := 5  # per tile past half the shooter's range
+const SUPPRESSION_ACCURACY := 25  # to-hit penalty while pinned down
 const LOWER_TIME := 0.12  # rifle held after the shot before lowering
-const BURST_GAP := 0.13  # pause between the two rounds of a burst
+const BURST_GAP := 0.13  # pause between the rounds of a burst
+const AUTO_GAP := 0.07   # full auto cycles faster than a burst
+const BURST_ROUNDS := 2
+const AUTO_ROUNDS := 4
+const AUTO_ACCURACY := -15  # per-round penalty for walking the gun
 
 # Ignore end-turn requests this soon after control returns to the player -
 # they are almost always leftover E-mashing/clicking from the enemy turn.
@@ -98,7 +106,7 @@ var turn_number := 1
 var enemy_turn_running := false
 var player_turn_ready_msec := 0
 var danger_on := false
-var burst_armed := false
+var fire_mode := FireMode.SINGLE
 var aim_mode := AimMode.NONE
 var level: Dictionary = {}
 var last_result_won := false
@@ -123,6 +131,7 @@ var fx_glow: Fx = null
 @onready var end_turn_button: Button = $UI/EndTurnButton
 @onready var overwatch_button: Button = $UI/OverwatchButton
 @onready var burst_button: Button = $UI/BurstButton
+@onready var auto_button: Button = $UI/AutoButton
 @onready var reload_button: Button = $UI/ReloadButton
 @onready var face_button: Button = $UI/FaceButton
 @onready var danger_button: Button = $UI/DangerButton
@@ -154,6 +163,8 @@ func _ready() -> void:
 		_spawn_structure(s)
 	for spawn: Vector2i in level.get("lead_spawns", []):
 		_spawn_unit(Unit.Kind.TEAM_LEAD, spawn)
+	for spawn: Vector2i in level.get("gunner_spawns", []):
+		_spawn_unit(Unit.Kind.MACHINEGUNNER, spawn)
 	for spawn: Vector2i in level.scout_spawns:
 		_spawn_unit(Unit.Kind.SCOUT, spawn)
 	for spawn: Vector2i in level.goblin_spawns:
@@ -161,7 +172,8 @@ func _ready() -> void:
 	end_turn_button.pressed.connect(end_player_turn)
 	overwatch_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.OVERWATCH))
 	face_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.FACE))
-	burst_button.toggled.connect(_on_burst_button_toggled)
+	burst_button.toggled.connect(_on_fire_button_toggled.bind(FireMode.BURST))
+	auto_button.toggled.connect(_on_fire_button_toggled.bind(FireMode.AUTO))
 	reload_button.pressed.connect(_try_reload)
 	danger_button.toggled.connect(_on_danger_button_toggled)
 	restart_button.pressed.connect(_on_restart)
@@ -244,7 +256,7 @@ func _board_world_rect() -> Rect2:
 
 func _validate_spawns() -> void:
 	for spawn: Vector2i in level.scout_spawns + level.get("lead_spawns", []) \
-			+ level.goblin_spawns:
+			+ level.get("gunner_spawns", []) + level.goblin_spawns:
 		if not board.in_bounds(spawn) or not board.is_walkable(spawn):
 			push_error("Bad spawn cell (blocked or out of bounds): %s" % spawn)
 			assert(false, "Bad spawn cell: %s" % spawn)
@@ -422,7 +434,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_try_overwatch()
 		return
 	if event.is_action_pressed("burst"):
-		_toggle_burst()
+		_toggle_fire_mode(FireMode.BURST)
+		return
+	if event.is_action_pressed("full_auto"):
+		_toggle_fire_mode(FireMode.AUTO)
 		return
 	if event.is_action_pressed("reload"):
 		_try_reload()
@@ -471,14 +486,9 @@ func _handle_click(cell: Vector2i) -> void:
 	if selected != null:
 		if clicked != null and clicked.team == Unit.TEAM_GOBLIN \
 				and board.attack_cells.has(cell):
-			if burst_armed:
-				_set_burst_armed(false)
-				do_burst(selected, clicked)
-			elif selected.has_ammo():
-				do_attack(selected, clicked)
+			_fire_selected_at(clicked)
 			return
 		if board.move_cells.has(cell):
-			_set_burst_armed(false)  # moving forfeits the braced burst
 			do_move(selected, cell)
 			return
 	# Spent scouts stay selectable: turning to face is always available.
@@ -500,6 +510,23 @@ func _clear_aim_mode() -> void:
 	_refresh_watch_cells()
 
 
+## Shoot the target with whatever trigger setting is currently armed,
+## falling back to the unit's default if the armed mode became unusable.
+func _fire_selected_at(target: Unit) -> void:
+	var mode := fire_mode
+	if not _can_use_mode(selected, mode):
+		mode = _default_fire_mode(selected)
+		if not _can_use_mode(selected, mode):
+			return
+	match mode:
+		FireMode.BURST:
+			do_volley(selected, target, BURST_ROUNDS, BURST_GAP, 0, false)
+		FireMode.AUTO:
+			do_volley(selected, target, AUTO_ROUNDS, AUTO_GAP, AUTO_ACCURACY, true)
+		_:
+			do_attack(selected, target)
+
+
 func select(unit: Unit) -> void:
 	_clear_aim_mode()
 	if selected != null:
@@ -516,42 +543,68 @@ func deselect() -> void:
 	if selected != null:
 		selected.set_selected(false)
 		selected = null
-	_set_burst_armed(false)
+	_set_fire_mode(_default_fire_mode(selected))
 	board.clear_highlights()
 	_update_unit_panel()
 
 
-## Arm/disarm burst fire for the selected scout. Eligible only while the
-## scout has neither moved nor attacked (a braced, standing volley).
-func _toggle_burst() -> void:
-	if burst_armed:
-		_set_burst_armed(false)
+## The trigger setting a unit falls back to. The machinegunner has no
+## semi-automatic position, so his rest state is burst.
+func _default_fire_mode(unit: Unit) -> FireMode:
+	return FireMode.SINGLE if unit != null and unit.can_single_shot() else FireMode.BURST
+
+
+## Rounds a mode spends, so ammo can be checked before arming or firing.
+func _rounds_for(mode: FireMode) -> int:
+	match mode:
+		FireMode.BURST:
+			return BURST_ROUNDS
+		FireMode.AUTO:
+			return AUTO_ROUNDS
+	return 1
+
+
+func _can_use_mode(unit: Unit, mode: FireMode) -> bool:
+	if unit == null or unit.acted or not unit.has_ammo(_rounds_for(mode)):
+		return false
+	match mode:
+		FireMode.BURST:
+			return unit.can_burst() and not (unit.burst_requires_still() and unit.moved)
+		FireMode.AUTO:
+			# Walking the gun needs a firing position, never the advance.
+			return unit.can_full_auto() and not unit.moved
+	return unit.can_single_shot()
+
+
+## Toggle a firing mode on the selected unit, falling back to its default.
+func _toggle_fire_mode(mode: FireMode) -> void:
+	if fire_mode == mode:
+		_set_fire_mode(_default_fire_mode(selected))
 		return
-	if state != State.PLAYER_TURN or selected == null:
+	if state != State.PLAYER_TURN or not _can_use_mode(selected, mode):
 		return
-	if not selected.can_burst() or selected.moved or selected.acted \
-			or not selected.has_ammo(2):
-		return
-	_set_burst_armed(true)
+	_set_fire_mode(mode)
 	Sfx.play("select", -3.0, 0.0)
 
 
-func _set_burst_armed(value: bool) -> void:
-	if burst_armed == value:
+func _set_fire_mode(mode: FireMode) -> void:
+	if fire_mode == mode:
 		return
-	burst_armed = value
-	burst_button.set_pressed_no_signal(value)
-	board.set_burst_mode(value)
+	fire_mode = mode
+	burst_button.set_pressed_no_signal(mode == FireMode.BURST)
+	auto_button.set_pressed_no_signal(mode == FireMode.AUTO)
+	board.set_fire_mode(mode)
 	_update_unit_panel()
 
 
-func _on_burst_button_toggled(pressed: bool) -> void:
+func _on_fire_button_toggled(pressed: bool, mode: FireMode) -> void:
 	if pressed:
-		_toggle_burst()
-		# _toggle_burst may refuse; resync the button to the real state.
-		burst_button.set_pressed_no_signal(burst_armed)
-	else:
-		_set_burst_armed(false)
+		_toggle_fire_mode(mode)
+	elif fire_mode == mode:
+		_set_fire_mode(_default_fire_mode(selected))
+	# The request may have been refused; resync both buttons.
+	burst_button.set_pressed_no_signal(fire_mode == FireMode.BURST)
+	auto_button.set_pressed_no_signal(fire_mode == FireMode.AUTO)
 
 
 ## Select the next living scout that can still act, wrapping in spawn order.
@@ -595,16 +648,25 @@ func _update_unit_panel() -> void:
 		elif board.shot_through_cover(selected.cell, unit.cell):
 			dmg >>= 1
 			note = "THROUGH COVER"
-		if burst_armed:
-			note = "x2 BURST" if note == "" else "x2 BURST - " + note
+		var rounds := _rounds_for(fire_mode)
+		var mod: int = AUTO_ACCURACY if fire_mode == FireMode.AUTO else 0
+		if rounds > 1:
+			var label := "AUTO - PINS" if fire_mode == FireMode.AUTO else "BURST"
+			note = "x%d %s" % [rounds, label] if note == "" \
+					else "x%d %s - %s" % [rounds, label, note]
 		panel_status_label.text = "%d%% TO HIT - %d DMG%s" % [
-				hit_chance(selected, unit), dmg,
+				hit_chance(selected, unit, mod), dmg,
 				"  " + note if note != "" else ""]
 		panel_status_label.modulate = Color("7ae8ff") if flanking else Color.WHITE
 		return
-	if unit == selected and burst_armed:
-		panel_status_label.text = "BURST ARMED"
+	if unit == selected and fire_mode != FireMode.SINGLE:
+		panel_status_label.text = "FULL AUTO ARMED" if fire_mode == FireMode.AUTO \
+				else "BURST ARMED"
 		panel_status_label.modulate = Color("ff7a2a")
+		return
+	if unit.is_suppressed():
+		panel_status_label.text = "SUPPRESSED"
+		panel_status_label.modulate = Unit.SUPPRESSED_COLOR
 		return
 	if unit.mag_size > 0 and unit.ammo == 0:
 		panel_status_label.text = "OUT OF AMMO - RELOAD (R)"
@@ -637,7 +699,7 @@ func _try_reload() -> void:
 	var prev_state := state
 	state = State.ANIMATING
 	scout.moved = true  # reloading costs the move, not the shot
-	_set_burst_armed(false)
+	_set_fire_mode(_default_fire_mode(selected))
 	board.clear_highlights()
 	Sfx.play("reload")
 	print("[ThinShot] scout at %s reloads" % scout.cell)
@@ -656,11 +718,11 @@ func _try_overwatch() -> void:
 		_cancel_aim()
 		return
 	if state != State.PLAYER_TURN or selected == null or selected.acted \
-			or not selected.has_ammo():
+			or not selected.has_ammo() or selected.is_suppressed():
 		return
 	aim_mode = AimMode.OVERWATCH
 	_sync_aim_buttons()
-	_set_burst_armed(false)
+	_set_fire_mode(_default_fire_mode(selected))
 	board.clear_highlights()
 	show_banner("CHOOSE OVERWATCH ARC")
 	_update_hover(board.global_to_cell(get_global_mouse_position()))
@@ -677,7 +739,7 @@ func _try_face() -> void:
 		return
 	aim_mode = AimMode.FACE
 	_sync_aim_buttons()
-	_set_burst_armed(false)
+	_set_fire_mode(_default_fire_mode(selected))
 	board.clear_highlights()
 	show_banner("TURN TO FACE")
 	_update_hover(board.global_to_cell(get_global_mouse_position()))
@@ -908,13 +970,13 @@ func _resolve_shot(attacker: Unit, target: Unit, with_aim_beat: bool) -> void:
 
 ## One round leaving the muzzle: effects, sound, cover-checked damage.
 ## Assumes the attacker is already facing the target with rifle raised.
-func _fire_round(attacker: Unit, target: Unit) -> void:
+func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0) -> void:
 	var muzzle := attacker.muzzle_point()
 	var chest := target.position + Vector2(0, -36)
 	var dir := (chest - muzzle).normalized()
 	var covered_cell := board.cover_cell_between(attacker.cell, target.cell)
 	var flanking := _is_flanking(attacker, target)
-	var chance := hit_chance(attacker, target)
+	var chance := hit_chance(attacker, target, accuracy_mod)
 	var hit := _rng.randi_range(1, 100) <= chance
 	# A miss sails past the target and off to one side.
 	var impact_point := chest if hit else chest + dir * 54.0 \
@@ -976,8 +1038,10 @@ func _fire_round(attacker: Unit, target: Unit) -> void:
 ## Percent chance this shot connects. Cover is deliberately NOT an accuracy
 ## modifier - it already halves damage, and keeping the two rules separate
 ## keeps both readable. Flanking helps; so does not taking a long shot.
-func hit_chance(attacker: Unit, target: Unit) -> int:
-	var chance := attacker.accuracy
+func hit_chance(attacker: Unit, target: Unit, accuracy_mod := 0) -> int:
+	var chance := attacker.accuracy + accuracy_mod
+	if attacker.is_suppressed():
+		chance -= SUPPRESSION_ACCURACY
 	if _is_flanking(attacker, target):
 		chance += FLANK_ACCURACY
 	var dist := Board.manhattan(attacker.cell, target.cell)
@@ -995,20 +1059,29 @@ func _spark_cover(cell: Vector2i, dir: Vector2, delay: float) -> void:
 		fx_glow.cover_spark(board.cell_to_global(cell) + Vector2(0, -20), dir)
 
 
-## Braced two-round burst: only for scouts that have not moved this turn.
-## Each round is cover-checked independently; stops early if the target drops.
-func do_burst(attacker: Unit, target: Unit) -> void:
+## A multi-round volley. Each round is cover- and accuracy-checked on its
+## own; the volley stops early if the target drops. Full auto walks the gun
+## across the target, trading accuracy per round for volume, and pins
+## whoever it was aimed at whether or not the rounds connect.
+func do_volley(attacker: Unit, target: Unit, rounds: int, gap: float,
+		accuracy_mod: int, suppresses: bool) -> void:
 	var prev_state := state
 	state = State.ANIMATING
 	board.clear_highlights()
-	print("[ThinShot] burst! %s -> %s" % [attacker.cell, target.cell])
+	print("[ThinShot] %d-round volley %s -> %s" % [rounds, attacker.cell, target.cell])
 	var aim := (target.position - attacker.position).normalized()
 	attacker.set_facing(aim)
 	await attacker.raise_rifle()
-	await _fire_round(attacker, target)
-	if target.is_alive() and state != State.GAME_OVER:
-		await get_tree().create_timer(BURST_GAP).timeout
-		await _fire_round(attacker, target)
+	for i in rounds:
+		if i > 0:
+			await get_tree().create_timer(gap).timeout
+		await _fire_round(attacker, target, accuracy_mod)
+		if not target.is_alive() or state == State.GAME_OVER \
+				or not attacker.has_ammo():
+			break
+	if suppresses and target.is_alive():
+		target.suppress()
+		print("[ThinShot]   %s is suppressed" % target.cell)
 	await get_tree().create_timer(LOWER_TIME).timeout
 	attacker.lower_rifle()
 	attacker.set_done(true)
@@ -1019,6 +1092,7 @@ func do_burst(attacker: Unit, target: Unit) -> void:
 	state = prev_state
 	if prev_state == State.PLAYER_TURN:
 		_refresh_danger()
+		_refresh_watch_cells()
 		_update_unit_panel()
 
 
@@ -1111,6 +1185,7 @@ func end_player_turn() -> void:
 	end_turn_button.disabled = true
 	overwatch_button.disabled = true
 	burst_button.disabled = true
+	auto_button.disabled = true
 	reload_button.disabled = true
 	face_button.disabled = true
 	danger_button.disabled = true
@@ -1135,6 +1210,7 @@ func end_player_turn() -> void:
 	end_turn_button.disabled = false
 	overwatch_button.disabled = false
 	burst_button.disabled = false
+	auto_button.disabled = false
 	reload_button.disabled = false
 	face_button.disabled = false
 	danger_button.disabled = false
@@ -1181,8 +1257,9 @@ func run_enemy_turn() -> void:
 					", shoots" if shoots else ""])
 			if shoots:
 				await do_attack(goblin, _nearest(goblin.cell, shootable))
-			elif not moved_now and goblin.is_alive():
+			elif not moved_now and goblin.is_alive() and not goblin.is_suppressed():
 				# Dug in with no shot: watch the lane the scouts must cross.
+				# A pinned goblin keeps its head down instead.
 				goblin.set_facing_sector(_best_watch_sector(goblin, scouts))
 				goblin.set_overwatch(true)
 				Sfx.play("overwatch_set", -4.0, 0.0)

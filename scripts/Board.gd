@@ -69,8 +69,9 @@ const ATTACK_HOVER_HL := Color(1.0, 0.35, 0.25, 0.55)
 # Amber variants signal a shot that clips junk cover (half damage).
 const AIM_LINE_COVER := Color(1.0, 0.82, 0.25, 0.85)
 const ATTACK_HOVER_COVER_HL := Color(1.0, 0.65, 0.2, 0.5)
-# Burst-armed attack highlight: hotter orange than the normal red.
+# Armed-fire-mode highlights: hotter than the normal attack red.
 const BURST_HL := Color(1.0, 0.45, 0.05, 0.5)
+const AUTO_HL := Color(1.0, 0.72, 0.1, 0.55)
 # Cyan means "flanking - cover ignored" (amber is already taken by cover).
 const AIM_LINE_FLANK := Color(0.45, 0.95, 1.0, 0.9)
 const ATTACK_HOVER_FLANK_HL := Color(0.3, 0.85, 1.0, 0.5)
@@ -106,7 +107,7 @@ var path_preview: Array[Vector2i] = []
 var aim_from := NO_CELL
 var aim_covered := false
 var aim_flanking := false
-var burst_mode := false
+var fire_mode := 0  # mirrors Battle.FireMode; tints the attack highlights
 # Cells covered by overwatch arcs: cell -> true if the watcher is hostile.
 var watch_cells: Dictionary = {}
 # Cells any enemy could shoot next turn (selection-independent; cleared
@@ -143,9 +144,9 @@ func set_danger(cells: Dictionary) -> void:
 	queue_redraw()
 
 
-func set_burst_mode(value: bool) -> void:
-	if burst_mode != value:
-		burst_mode = value
+func set_fire_mode(value: int) -> void:
+	if fire_mode != value:
+		fire_mode = value
 		queue_redraw()
 
 
@@ -428,8 +429,13 @@ func _draw() -> void:
 			draw_line(w[3].lerp(w[0], f), w[2].lerp(w[1], f), hatch, 1.0, true)
 	for cell: Vector2i in move_cells:
 		draw_colored_polygon(_diamond(cell), MOVE_HL)
+	var attack_color := ATTACK_HL
+	if fire_mode == 1:
+		attack_color = BURST_HL
+	elif fire_mode == 2:
+		attack_color = AUTO_HL
 	for cell in attack_cells:
-		draw_colored_polygon(_diamond(cell), BURST_HL if burst_mode else ATTACK_HL)
+		draw_colored_polygon(_diamond(cell), attack_color)
 	if hover_cell != NO_CELL:
 		if attack_cells.has(hover_cell):
 			var hl := ATTACK_HOVER_HL

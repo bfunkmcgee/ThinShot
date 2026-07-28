@@ -26,9 +26,13 @@ const LEVELS: Array[Dictionary] = [
 			"...#p.....##..p.",
 			".........p......",
 		],
-		"scout_spawns": [Vector2i(0, 3), Vector2i(1, 7)],
+		"scout_spawns": [Vector2i(0, 3), Vector2i(1, 7), Vector2i(1, 2)],
 		"lead_spawns": [Vector2i(0, 5)],
-		"goblin_spawns": [Vector2i(15, 2), Vector2i(14, 4), Vector2i(15, 6), Vector2i(15, 8)],
+		"gunner_spawns": [Vector2i(0, 6)],
+		"goblin_spawns": [
+			Vector2i(15, 2), Vector2i(14, 4), Vector2i(15, 6), Vector2i(15, 8),
+			Vector2i(14, 0), Vector2i(13, 7),
+		],
 		"structures": [],
 		"zone_seed": 7,
 		"shade_seed": 13,
@@ -53,11 +57,12 @@ const LEVELS: Array[Dictionary] = [
 			"................",
 			"......p.j.......",
 		],
-		"scout_spawns": [Vector2i(0, 2), Vector2i(0, 7)],
+		"scout_spawns": [Vector2i(0, 2), Vector2i(0, 7), Vector2i(1, 1)],
 		"lead_spawns": [Vector2i(1, 4)],
+		"gunner_spawns": [Vector2i(0, 5)],
 		"goblin_spawns": [
 			Vector2i(10, 2), Vector2i(14, 4), Vector2i(10, 5),
-			Vector2i(10, 8), Vector2i(14, 8),
+			Vector2i(10, 8), Vector2i(14, 8), Vector2i(14, 2), Vector2i(14, 6),
 		],
 		"structures": [
 			{"kind": "hut_1", "anchor": Vector2i(12, 1), "size": Vector2i(2, 2)},
@@ -86,11 +91,12 @@ const LEVELS: Array[Dictionary] = [
 			"....#....j..j...",
 			"......p........p",
 		],
-		"scout_spawns": [Vector2i(0, 3), Vector2i(2, 8)],
+		"scout_spawns": [Vector2i(0, 3), Vector2i(2, 8), Vector2i(0, 2)],
 		"lead_spawns": [Vector2i(0, 5)],
+		"gunner_spawns": [Vector2i(1, 9)],
 		"goblin_spawns": [
 			Vector2i(7, 2), Vector2i(9, 3), Vector2i(6, 5),
-			Vector2i(11, 5), Vector2i(12, 6),
+			Vector2i(11, 5), Vector2i(12, 6), Vector2i(8, 4), Vector2i(7, 6),
 		],
 		"structures": [
 			{"kind": "fortress", "anchor": Vector2i(10, 1), "size": Vector2i(4, 4)},
@@ -167,7 +173,7 @@ static func _validate(index: int) -> bool:
 		var ch: String = data.map[cell.y][cell.x]
 		return ch == "." or ch == "p"
 	var spawns: Array = data.scout_spawns + data.get("lead_spawns", []) \
-			+ data.goblin_spawns
+			+ data.get("gunner_spawns", []) + data.goblin_spawns
 	var seen_spawn := {}
 	for spawn: Vector2i in spawns:
 		ok = _check(walkable.call(spawn), "%s: spawn %s not walkable" % [label, spawn]) and ok

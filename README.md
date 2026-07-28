@@ -6,20 +6,30 @@ placeholder art). One desert skirmish: the **Desert Scouts** against the
 
 ## The game
 
-| | Scout Team Lead | Desert Scout | Rust Choir goblin |
-|---|---|---|---|
-| Per squad | 1 | 2 | 4–5 (AI) |
-| Weapon | battle rifle | carbine | scavenged rifle |
-| HP | 8 | 8 | 4 |
-| Move | 4 tiles | 5 tiles | 4 tiles |
-| Attack range | **6** | 4 | 3 |
-| Damage | **4** (2 through cover) | 2 (1 through cover) | 2 (1 through cover) |
-| Accuracy | 92% | 90% | 60% |
-| Burst fire | no | yes | no |
+| | Team Lead | Machinegunner | Desert Scout | Rust Choir goblin |
+|---|---|---|---|---|
+| Per squad | 1 | 1 | 3 | 6–7 (AI) |
+| Weapon | battle rifle | belt-fed MG | carbine | scavenged rifle |
+| HP | 8 | 8 | 8 | 4 |
+| Move | 4 | 3 | 5 | 4 |
+| Attack range | **6** | 4 | 4 | 3 |
+| Damage/round | **4** (2 in cover) | 2 (1 in cover) | 2 (1 in cover) | 2 (1 in cover) |
+| Accuracy | 92% | 78% | 90% | 60% |
+| Magazine | 2 | **6** | 3 | ∞ |
+| Fire modes | single | **burst, full auto** | single, burst | single |
 
-Your **Team Lead** is the squad's designated marksman: a battle rifle that
-reaches half again as far as a carbine and drops a healthy goblin in a single
-hit, paid for with a two-round magazine, a slower advance, and no burst.
+A five-soldier squad, each with a job:
+
+- **Team Lead** — designated marksman. A battle rifle reaching half again as
+  far as a carbine, dropping a healthy goblin in one hit. Paid for with a
+  two-round magazine, a slower advance, and no burst.
+- **Machinegunner** — suppression. No semi-automatic setting at all: his
+  lightest option is a two-round burst, and **full auto (A)** walks four rounds
+  across the target at reduced accuracy and **pins it** — a suppressed unit
+  shoots 25% worse and cannot set overwatch on its next turn, hit or miss.
+  Six rounds in the belt, but he is the slowest soldier on the field.
+- **Desert Scouts** ×3 — the fast, accurate line. Single shots, or a braced
+  burst when they hold still.
 
 A three-level desert campaign on 16×10 isometric maps: **Dry Wash** (open
 skirmish), **The Scrapline** (the Choir's junkyard), and **Outpost 7** (fortress
@@ -39,9 +49,11 @@ Choir has numbers and holds the ground.
   **free**. Costs no move and no attack, works even for a scout that has
   already acted, and can be repeated — it decides which way you face when the
   goblins take their turn.
-- **B** or the **Burst** button — arm burst fire for a scout that hasn't moved
-  (highlights turn orange); click a target to fire a braced two-round burst
-  (2×2 damage, each round halved by cover). Moving disarms it.
+- **B** or the **Burst** button — arm a two-round burst (highlights turn
+  orange). Riflemen must be braced (unmoved); the gunner fires it from the hip.
+- **A** or the **Auto** button — arm the machinegunner's four-round full auto
+  (highlights turn amber). Requires a firing position, and suppresses whoever
+  it is aimed at.
 - **R** or the **Reload** button — refill a scout's magazine. Costs the move,
   not the shot, so a dry scout can reload and still fire once.
 - **D** or the **Danger** button — toggle the danger overlay (red-hatched tiles
@@ -75,9 +87,9 @@ Choir has numbers and holds the ground.
   first enemy that moves through **the arc it is watching**. Covered ground is
   hatched on the board: amber for goblin arcs, green for your own. Unfired
   overwatch expires at the owner's next turn.
-- **Burst fire** is scout-only: a scout that stays put may spend its attack on
-  a two-round burst — enough to drop a full-health goblin in one action, at
-  the price of not repositioning.
+- **Suppression** is the machinegunner's job. Full auto pins the target
+  whether or not the rounds land: it shoots 25% worse and cannot go on
+  overwatch until the turn after. Pinned units wear a steel chevron.
 - **Scouts carry a 3-round magazine** (brass pips under their HP); goblins have
   unlimited ammo. A burst costs two rounds, so bursting every chance you get
   means reloading — and giving up a move — every other turn.

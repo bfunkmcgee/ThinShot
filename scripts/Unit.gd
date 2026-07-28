@@ -11,9 +11,10 @@ const TEAM_GOBLIN := 1
 
 ## Which soldier this is. Team is allegiance; kind is the role, so the two
 ## scout types can differ in weapon, stats, and art.
-enum Kind { SCOUT, TEAM_LEAD, GOBLIN }
+enum Kind { SCOUT, TEAM_LEAD, MACHINEGUNNER, GOBLIN }
 
 const LEAD_ROOT := "res://assets/sprites/Scout_TeamLead"
+const MG_ROOT := "res://assets/sprites/Scout_MachineGunner/Scout_MachineGunner"
 
 # Directional pixel-art frames, indexed by 45-degree compass sector of the
 # screen-space facing vector: 0=E, 1=SE, 2=S, 3=SW, 4=W, 5=NW, 6=N, 7=NE.
@@ -126,6 +127,29 @@ static var LEAD_RELOAD_FRAMES: Array = _load_dir_frames(
 static var LEAD_IDLE_ALT_FRAMES: Array = _load_dir_frames(
 		LEAD_ROOT + "/standing_stance/animations/standing_idle_alt")
 
+# Machinegunner.
+static var MG_FRAMES: Array[Texture2D] = _load_rotation_frames(MG_ROOT + "/rotations")
+static var MG_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		MG_ROOT + "/ReadyToFire_Stance/rotations")
+static var MG_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		MG_ROOT + "/Dead_Stance/rotations")
+static var MG_IDLE_FRAMES: Array = _load_dir_frames(
+		MG_ROOT + "/animations/standing_idle")
+static var MG_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		MG_ROOT + "/animations/standing_idle_alt")
+static var MG_WALK_FRAMES: Array = _load_dir_frames(
+		MG_ROOT + "/animations/standing_idle_walk")
+static var MG_RAISE_FRAMES: Array = _load_dir_frames(
+		MG_ROOT + "/animations/standing_idle_to_readyToFire")
+static var MG_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		MG_ROOT + "/ReadyToFire_Stance/animations/Standing_ReadyToFire_idle")
+static var MG_DEATH_FRAMES: Array = _load_dir_frames(
+		MG_ROOT + "/animations/standing_idle_to_dead")
+static var MG_HURT_FRAMES: Array = _load_dir_frames(
+		MG_ROOT + "/animations/standing_idle_damage")
+static var MG_RELOAD_FRAMES: Array = _load_dir_frames(
+		MG_ROOT + "/animations/standing_idle_reload")
+
 # Visual-only randomness (which idle variation plays). Never read back into
 # game state, mirroring Sfx and Fx.
 static var _vis_rng := RandomNumberGenerator.new()
@@ -178,6 +202,18 @@ const LEAD_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(-6, -60),   # north
 	Vector2(30, -52),   # north-east
 ]
+# Belt-fed weapon held low across the body. South and south-west are
+# hand-corrected off the scan, which lands on boots for those poses.
+const GUNNER_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(36, -34),   # east
+	Vector2(36, -26),   # south-east
+	Vector2(-14, -18),  # south
+	Vector2(-36, -24),  # south-west
+	Vector2(-38, -34),  # west
+	Vector2(-34, -46),  # north-west
+	Vector2(-6, -60),   # north
+	Vector2(32, -48),   # north-east
+]
 const GOBLIN_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(34, -34),   # east
 	Vector2(30, -20),   # south-east
@@ -206,6 +242,7 @@ const AMMO_Y := PIP_Y + 8.0
 const AMMO_FULL := Color("c9a227")
 const AMMO_EMPTY := Color(0.18, 0.14, 0.06, 0.7)
 const AMMO_OUT := Color("ff5a3c")
+const SUPPRESSED_COLOR := Color("8fb8d8")
 const RING_COLOR := Color("ffd94a")        # player selection
 const ENEMY_RING_COLOR := Color("ff5a3c")  # AI unit currently acting
 const DONE_TINT := Color(0.55, 0.55, 0.55)
@@ -255,6 +292,7 @@ var facing_sector := 2  # south
 var arc_half := ARC_HALF_SECTORS
 var arc_preview_sector := -1  # >= 0 while the player is aiming an arc
 var overwatching := false
+var suppression := 0  # team-turns of being pinned down remaining
 var anim := Anim.IDLE
 var anim_time := 0.0
 var anim_frame := 0
@@ -322,6 +360,26 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			idle_alt_frames = LEAD_IDLE_ALT_FRAMES
 			hurt_frames = LEAD_HURT_FRAMES
 			reload_frames = LEAD_RELOAD_FRAMES
+		Kind.MACHINEGUNNER:
+			# Belt-fed support weapon: no single shot, a deep magazine, and
+			# the volume of fire to pin a target. Slow to reposition.
+			max_hp = 8
+			move_range = 3
+			attack_range = 4
+			damage = 2
+			accuracy = 78  # sprays rather than aims
+			mag_size = 6
+			frames = MG_FRAMES
+			aim_frames = MG_AIM_FRAMES
+			walk_frames = MG_WALK_FRAMES
+			idle_frames = MG_IDLE_FRAMES
+			raise_frames = MG_RAISE_FRAMES
+			aim_idle_frames = MG_AIM_IDLE_FRAMES
+			death_frames = MG_DEATH_FRAMES
+			dead_frames = MG_DEAD_FRAMES
+			idle_alt_frames = MG_IDLE_ALT_FRAMES
+			hurt_frames = MG_HURT_FRAMES
+			reload_frames = MG_RELOAD_FRAMES
 		Kind.GOBLIN:
 			max_hp = 4
 			move_range = 4
@@ -446,23 +504,43 @@ func _rifle_is_up() -> bool:
 ## Global position of the raised rifle's tip for the current facing.
 func muzzle_point() -> Vector2:
 	var offsets := GOBLIN_MUZZLE_OFFSETS
-	if kind == Kind.SCOUT:
-		offsets = SCOUT_MUZZLE_OFFSETS
-	elif kind == Kind.TEAM_LEAD:
-		offsets = LEAD_MUZZLE_OFFSETS
+	match kind:
+		Kind.SCOUT:
+			offsets = SCOUT_MUZZLE_OFFSETS
+		Kind.TEAM_LEAD:
+			offsets = LEAD_MUZZLE_OFFSETS
+		Kind.MACHINEGUNNER:
+			offsets = GUNNER_MUZZLE_OFFSETS
 	return to_global(offsets[facing_sector])
 
 
-## Only the rank-and-file carbine can fire a burst; the lead's battle rifle
-## is semi-automatic.
+## The machinegunner has no semi-automatic setting - his lightest option is
+## a burst, so a plain click fires one.
+func can_single_shot() -> bool:
+	return kind != Kind.MACHINEGUNNER
+
+
+## The lead's battle rifle is semi-automatic; the other two scouts can burst.
 func can_burst() -> bool:
+	return kind == Kind.SCOUT or kind == Kind.MACHINEGUNNER
+
+
+## Bracing is what buys the rifleman his burst. The gunner's weapon does it
+## from the hip, so he keeps burst after moving.
+func burst_requires_still() -> bool:
 	return kind == Kind.SCOUT
+
+
+func can_full_auto() -> bool:
+	return kind == Kind.MACHINEGUNNER
 
 
 func display_name() -> String:
 	match kind:
 		Kind.TEAM_LEAD:
 			return "Scout Team Lead"
+		Kind.MACHINEGUNNER:
+			return "Scout Machinegunner"
 		Kind.GOBLIN:
 			return "Rust Choir Chorister"
 	return "Desert Scout"
@@ -581,6 +659,18 @@ func _update_sprite() -> void:
 
 func is_alive() -> bool:
 	return hp > 0
+
+
+## Pinned down by incoming fire: shoots worse and cannot set overwatch.
+## Set to 2 so it survives the decrement at the start of the target's own
+## next turn and actually costs them that turn.
+func suppress() -> void:
+	suppression = 2
+	queue_redraw()
+
+
+func is_suppressed() -> bool:
+	return suppression > 0
 
 
 func has_ammo(rounds := 1) -> bool:
@@ -743,6 +833,7 @@ func set_done(value: bool) -> void:
 func start_turn() -> void:
 	moved = false
 	acted = false
+	suppression = maxi(suppression - 1, 0)
 	modulate = Color.WHITE
 	if overwatching:
 		set_overwatch(false)  # unfired overwatch expires...
@@ -785,6 +876,12 @@ func _draw() -> void:
 		draw_colored_polygon(PackedVector2Array([
 			m + Vector2(0, -5), m + Vector2(5, 0), m + Vector2(0, 5), m + Vector2(-5, 0),
 		]), Color("ffb84a"))
+	elif is_suppressed():
+		# Steel chevron pressed downward: "this one has its head down".
+		var s := Vector2(0, PIP_Y - 9.0)
+		draw_colored_polygon(PackedVector2Array([
+			s + Vector2(-7, -4), s + Vector2(7, -4), s + Vector2(0, 6),
+		]), SUPPRESSED_COLOR)
 	if acting:
 		# Drop-in chevron marking the AI unit taking its action. Lives in
 		# empty air above the unit, so it never obscures the board.
