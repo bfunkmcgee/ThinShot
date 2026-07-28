@@ -43,6 +43,10 @@ const LEVELS: Array[Dictionary] = [
 		"smg_alt_spawns": [Vector2i(12, 6)],
 		# Novices are pushed out in front of everyone as a screen.
 		"novice_spawns": [Vector2i(15, 2), Vector2i(15, 5), Vector2i(15, 7)],
+		# The Cantor sits at the back of the middle lane behind the junk
+		# island, so he only starts mattering once the squad is most of the
+		# way across - the backstop rather than the opening problem.
+		"bolt_spawns": [Vector2i(15, 4)],
 		"structures": [],
 		"zone_seed": 7,
 		"shade_seed": 13,
@@ -83,6 +87,10 @@ const LEVELS: Array[Dictionary] = [
 		"smg_spawns": [Vector2i(9, 1)],
 		"smg_alt_spawns": [Vector2i(9, 8), Vector2i(12, 2)],
 		"novice_spawns": [Vector2i(12, 5), Vector2i(15, 2), Vector2i(15, 7)],
+		# Behind the inner barricade with junk at (11,4) to hide behind, five
+		# tiles of reach covering the corridor lengthwise. Crossing between
+		# the lines now costs something even when the gates are clear.
+		"bolt_spawns": [Vector2i(12, 4)],
 		"structures": [
 			{"kind": "hut_1", "anchor": Vector2i(13, 2), "size": Vector2i(2, 2)},
 			{"kind": "tent", "anchor": Vector2i(13, 6), "size": Vector2i(2, 2)},
@@ -126,6 +134,10 @@ const LEVELS: Array[Dictionary] = [
 		"smg_spawns": [Vector2i(10, 6)],
 		"smg_alt_spawns": [Vector2i(11, 6), Vector2i(11, 2)],
 		"novice_spawns": [Vector2i(10, 2), Vector2i(13, 5), Vector2i(15, 6)],
+		# Laid in on the west gate at (8,4) from five tiles back, straight
+		# down the entry lane. The gateway is the obvious way in, and this is
+		# what makes walking through it the wrong idea.
+		"bolt_spawns": [Vector2i(11, 4)],
 		"structures": [
 			{"kind": "fortress", "anchor": Vector2i(12, 1), "size": Vector2i(4, 4)},
 			{"kind": "hut_1", "anchor": Vector2i(2, 1), "size": Vector2i(2, 2)},
@@ -203,7 +215,7 @@ static func _validate(index: int) -> bool:
 	var spawns: Array = data.scout_spawns + data.get("lead_spawns", []) \
 			+ data.get("gunner_spawns", []) + data.goblin_spawns \
 			+ data.get("smg_spawns", []) + data.get("smg_alt_spawns", []) \
-			+ data.get("novice_spawns", [])
+			+ data.get("novice_spawns", []) + data.get("bolt_spawns", [])
 	var seen_spawn := {}
 	for spawn: Vector2i in spawns:
 		ok = _check(walkable.call(spawn), "%s: spawn %s not walkable" % [label, spawn]) and ok

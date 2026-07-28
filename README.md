@@ -6,19 +6,19 @@ placeholder art). One desert skirmish: the **Desert Scouts** against the
 
 ## The game
 
-| | Team Lead | Machinegunner | Desert Scout | Chorister | Raider | Skirmisher | Novice |
-|---|---|---|---|---|---|---|---|
-| Side | you | you | you | AI | AI | AI | AI |
-| Per battle | 1 | 1 | 3 | 3–4 | 1 | 1–2 | 3 |
-| Weapon | battle rifle | belt-fed MG | carbine | scavenged rifle | submachine gun | submachine gun | revolver |
-| HP | 8 | 8 | 8 | 4 | 4 | 3 | **2** |
-| Move | 4 | 3 | 5 | 4 | **5** | **6** | **5** |
-| Attack range | **6** | 4 | 4 | 3 | **2** | **2** | 3 |
-| Damage/round | **4** (2 in cover) | 2 (1) | 2 (1) | 2 (1) | 2 (1) | 2 (1) | 2 (1) |
-| Accuracy | 92% | 78% | 90% | 60% | 58% | 52% | **48%** |
-| Magazine | 2 | **6** | 3 | ∞ | ∞ | ∞ | ∞ |
-| Fire modes | single | **burst, full auto** | single, burst | single | **burst** | **burst** | single |
-| Ability | — | **suppressive fire** | — | — | — | — | — |
+| | Team Lead | Machinegunner | Desert Scout | Chorister | Raider | Skirmisher | Novice | Cantor |
+|---|---|---|---|---|---|---|---|---|
+| Side | you | you | you | AI | AI | AI | AI | AI |
+| Per battle | 1 | 1 | 3 | 3–4 | 1 | 1–2 | 3 | 1 |
+| Weapon | battle rifle | belt-fed MG | carbine | scavenged rifle | submachine gun | submachine gun | revolver | bolt rifle |
+| HP | 8 | 8 | 8 | 4 | 4 | 3 | **2** | 4 |
+| Move | 4 | 3 | 5 | 4 | **5** | **6** | **5** | 3 |
+| Attack range | **6** | 4 | 4 | 3 | **2** | **2** | 3 | **5** |
+| Damage/round | **4** (2 in cover) | 2 (1) | 2 (1) | 2 (1) | 2 (1) | 2 (1) | 2 (1) | **4** (2) |
+| Accuracy | 92% | 78% | 90% | 60% | 58% | 52% | **48%** | 70% |
+| Magazine | 2 | **6** | 3 | ∞ | ∞ | ∞ | ∞ | **1** |
+| Fire modes | single | **burst, full auto** | single, burst | single | **burst** | **burst** | single | single |
+| Ability | — | **suppressive fire** | — | — | — | — | — | — |
 
 A five-soldier squad, each with a job:
 
@@ -49,6 +49,18 @@ sidearm was left over, and pushed out front as a screen. Two HP means a single
 carbine round puts one down, and at 48% they mostly miss. They are dangerous
 only because there are always more of them, and because every round you spend
 on one is a round your Team Lead did not spend on something that matters.
+
+One goblin in the rabble is not a joke. The **Cantor** is the Choir's
+designated marksman: a bolt rifle reaching five tiles — further than anything
+you carry except the Team Lead's — at 70% and four damage a round, which is
+half a scout. He is the counter-sniper the campaign builds toward, and he
+answers to exactly one weakness. **One round in the rifle**, and the bolt
+worked by hand between shots, so he reloads after every single one. Reloading
+costs the move, so the Cantor is **rooted for as long as he keeps firing**: he
+will trade with you every turn, from the same tile, forever. Kill him with the
+Team Lead (six tiles out-reaches him, and four damage drops him in one), break
+line of sight and make him choose between shooting and repositioning, or eat a
+scout's worth of damage crossing his lane.
 
 A three-level desert campaign on 16×10 isometric maps: **Dry Wash** (open
 skirmish), **The Scrapline** (the Choir's junkyard), and **Outpost 7** (fortress
@@ -111,9 +123,13 @@ Choir has numbers and holds the ground.
   and cannot go on overwatch until the turn after, and wears a steel chevron.
   Pinning two goblins costs you the damage you'd have dealt to one — that
   trade is the decision.
-- **Scouts carry a 3-round magazine** (brass pips under their HP); goblins have
-  unlimited ammo. A burst costs two rounds, so bursting every chance you get
-  means reloading — and giving up a move — every other turn.
+- **Magazines** are drawn as brass pips under a unit's HP. Your scouts carry
+  one, and so does the Cantor; every other goblin has unlimited ammo. A burst
+  costs two rounds, so bursting every chance you get means reloading — and
+  giving up a move — every other turn. **Reloading costs the move, never the
+  shot**, for both sides: a dry unit can reload and still fire, but cannot
+  reposition that turn. Watch the Cantor's single pip to know whether he is
+  about to shoot or about to work the bolt.
 - Goblins chase, seek firing positions, avoid open ground lightly, and retreat
   to cover when wounded with no shot available; a goblin that holds position
   with no shot goes on overwatch to cover its lane.

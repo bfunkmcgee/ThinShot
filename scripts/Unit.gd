@@ -13,7 +13,7 @@ const TEAM_GOBLIN := 1
 ## scout types can differ in weapon, stats, and art.
 enum Kind {
 	SCOUT, TEAM_LEAD, MACHINEGUNNER,
-	GOBLIN, GOBLIN_SMG, GOBLIN_SMG_ALT, GOBLIN_REVOLVER,
+	GOBLIN, GOBLIN_SMG, GOBLIN_SMG_ALT, GOBLIN_REVOLVER, GOBLIN_BOLT,
 }
 
 const LEAD_ROOT := "res://assets/sprites/Scout_TeamLead"
@@ -21,6 +21,7 @@ const MG_ROOT := "res://assets/sprites/Scout_MachineGunner/Scout_MachineGunner"
 const SMG_ROOT := "res://assets/sprites/Goblin_SMG"
 const REV_ROOT := "res://assets/sprites/Goblin_revolver"
 const SMGA_ROOT := "res://assets/sprites/Goblin_SMG_alt"
+const BOLT_ROOT := "res://assets/sprites/Goblin_BoltRifle"
 
 # Directional pixel-art frames, indexed by 45-degree compass sector of the
 # screen-space facing vector: 0=E, 1=SE, 2=S, 3=SW, 4=W, 5=NW, 6=N, 7=NE.
@@ -230,6 +231,31 @@ static var SMGA_HURT_FRAMES: Array = _load_dir_frames(
 static var SMGA_RELOAD_FRAMES: Array = _load_dir_frames(
 		SMGA_ROOT + "/Goblin_SMG_alt/animations/standing_idle_reload")
 
+# Bolt-action marksman. The reload set carries real weight for this one - he
+# works the bolt between every shot, so it plays as often as his firing does.
+static var BOLT_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		BOLT_ROOT + "/Goblin_BoltRifle/rotations")
+static var BOLT_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		BOLT_ROOT + "/ReadyToFire_Stance/rotations")
+static var BOLT_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		BOLT_ROOT + "/Dead_stance/rotations")
+static var BOLT_IDLE_FRAMES: Array = _load_dir_frames(
+		BOLT_ROOT + "/Goblin_BoltRifle/animations/standing_idle")
+static var BOLT_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		BOLT_ROOT + "/Goblin_BoltRifle/animations/standing_idle_alt")
+static var BOLT_WALK_FRAMES: Array = _load_dir_frames(
+		BOLT_ROOT + "/Goblin_BoltRifle/animations/standing_idle_walk")
+static var BOLT_RAISE_FRAMES: Array = _load_dir_frames(
+		BOLT_ROOT + "/Goblin_BoltRifle/animations/standing_idle_to_readyToFire")
+static var BOLT_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		BOLT_ROOT + "/ReadyToFire_Stance/animations/standing-readyToFire_idle")
+static var BOLT_DEATH_FRAMES: Array = _load_dir_frames(
+		BOLT_ROOT + "/Goblin_BoltRifle/animations/standing_idle_to_dead")
+static var BOLT_HURT_FRAMES: Array = _load_dir_frames(
+		BOLT_ROOT + "/Goblin_BoltRifle/animations/standing_idle_damage")
+static var BOLT_RELOAD_FRAMES: Array = _load_dir_frames(
+		BOLT_ROOT + "/Goblin_BoltRifle/animations/standing_idle_reload")
+
 # Visual-only randomness (which idle variation plays). Never read back into
 # game state, mirroring Sfx and Fx.
 static var _vis_rng := RandomNumberGenerator.new()
@@ -333,6 +359,20 @@ const REV_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(-30, -50),  # north-west
 	Vector2(-2, -66),   # north
 	Vector2(30, -50),   # north-east
+]
+# A long bolt rifle, so the muzzle reaches further out than any other goblin
+# weapon. North is genuinely offset to his right - the barrel stands clear of
+# the head as a thin column in the art, and the scan lands on its tip. The
+# southern three are hand-corrected off the boots the scan finds there.
+const BOLT_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(32, -36),   # east
+	Vector2(32, -22),   # south-east
+	Vector2(-24, -24),  # south
+	Vector2(-34, -22),  # south-west
+	Vector2(-34, -32),  # west
+	Vector2(-30, -44),  # north-west
+	Vector2(16, -68),   # north
+	Vector2(28, -46),   # north-east
 ]
 const GOBLIN_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(34, -34),   # east
@@ -547,6 +587,29 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			idle_alt_frames = SMGA_IDLE_ALT_FRAMES
 			hurt_frames = SMGA_HURT_FRAMES
 			reload_frames = SMGA_RELOAD_FRAMES
+		Kind.GOBLIN_BOLT:
+			# The Choir's designated marksman. One round in the rifle and the
+			# bolt worked by hand between shots, so he reloads after every
+			# single one - and since reloading costs the move, he is rooted
+			# for as long as he keeps firing. In exchange he outranges every
+			# other goblin and hits hard enough to halve a scout.
+			max_hp = 4
+			move_range = 3
+			attack_range = 5
+			damage = 4
+			accuracy = 70  # the only goblin who actually aims
+			mag_size = 1
+			frames = BOLT_FRAMES
+			aim_frames = BOLT_AIM_FRAMES
+			walk_frames = BOLT_WALK_FRAMES
+			idle_frames = BOLT_IDLE_FRAMES
+			raise_frames = BOLT_RAISE_FRAMES
+			aim_idle_frames = BOLT_AIM_IDLE_FRAMES
+			death_frames = BOLT_DEATH_FRAMES
+			dead_frames = BOLT_DEAD_FRAMES
+			idle_alt_frames = BOLT_IDLE_ALT_FRAMES
+			hurt_frames = BOLT_HURT_FRAMES
+			reload_frames = BOLT_RELOAD_FRAMES
 		Kind.GOBLIN_REVOLVER:
 			# The Choir's newest and worst-equipped: no shirt, no cover, and
 			# whatever sidearm was left over. Two HP means a single carbine
@@ -718,6 +781,8 @@ func muzzle_point() -> Vector2:
 			offsets = SMG_MUZZLE_OFFSETS
 		Kind.GOBLIN_SMG_ALT:
 			offsets = SMGA_MUZZLE_OFFSETS
+		Kind.GOBLIN_BOLT:
+			offsets = BOLT_MUZZLE_OFFSETS
 		Kind.GOBLIN_REVOLVER:
 			offsets = REV_MUZZLE_OFFSETS
 	return to_global(offsets[facing_sector])
@@ -763,6 +828,8 @@ func display_name() -> String:
 			return "Rust Choir Raider"
 		Kind.GOBLIN_SMG_ALT:
 			return "Rust Choir Skirmisher"
+		Kind.GOBLIN_BOLT:
+			return "Rust Choir Cantor"
 		Kind.GOBLIN_REVOLVER:
 			return "Rust Choir Novice"
 	return "Desert Scout"
@@ -858,6 +925,8 @@ func _current_cycle() -> Array:
 
 
 func _update_sprite() -> void:
+	if sprite == null:
+		return  # setup() can run before _ready() outside a live tree
 	if anim == Anim.DEAD:
 		var corpse := dead_frames[facing_sector]
 		if corpse != null:
@@ -908,6 +977,12 @@ func spend_ammo() -> void:
 func reload() -> void:
 	ammo = mag_size
 	queue_redraw()
+
+
+## Dry and carrying a magazine, so it cannot shoot until it reloads. Units
+## with unlimited ammo (mag_size 0) never need one.
+func needs_reload() -> bool:
+	return mag_size > 0 and ammo == 0
 
 
 ## Kick the sprite backward off a shot and settle it. sprite.position is

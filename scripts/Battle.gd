@@ -179,6 +179,8 @@ func _ready() -> void:
 		_spawn_unit(Unit.Kind.GOBLIN_SMG_ALT, spawn)
 	for spawn: Vector2i in level.get("novice_spawns", []):
 		_spawn_unit(Unit.Kind.GOBLIN_REVOLVER, spawn)
+	for spawn: Vector2i in level.get("bolt_spawns", []):
+		_spawn_unit(Unit.Kind.GOBLIN_BOLT, spawn)
 	end_turn_button.pressed.connect(end_player_turn)
 	overwatch_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.OVERWATCH))
 	face_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.FACE))
@@ -269,7 +271,7 @@ func _validate_spawns() -> void:
 	for spawn: Vector2i in level.scout_spawns + level.get("lead_spawns", []) \
 			+ level.get("gunner_spawns", []) + level.goblin_spawns \
 			+ level.get("smg_spawns", []) + level.get("smg_alt_spawns", []) \
-			+ level.get("novice_spawns", []):
+			+ level.get("novice_spawns", []) + level.get("bolt_spawns", []):
 		if not board.in_bounds(spawn) or not board.is_walkable(spawn):
 			push_error("Bad spawn cell (blocked or out of bounds): %s" % spawn)
 			assert(false, "Bad spawn cell: %s" % spawn)
@@ -1355,28 +1357,35 @@ func run_enemy_turn() -> void:
 		goblin.set_selected(true)
 		goblin.set_acting(true)
 		await get_tree().create_timer(ACT_LEAD_IN).timeout
+		# An empty weapon is worked before anything else is decided, and costs
+		# the move - the same rule the scouts reload under.
+		var reloaded := await _ai_reload(goblin, acted, squad.size())
 		var shootable := _shootable_from(goblin.cell, goblin.attack_range, scouts)
-		if not shootable.is_empty():
+		if goblin.has_ammo() and not shootable.is_empty():
 			print("[ThinShot]   goblin %d/%d shoots from %s" % [acted, squad.size(), from_cell])
 			await _ai_fire(goblin, _nearest(goblin.cell, shootable))
 		else:
-			var target := _nearest(goblin.cell, scouts)
-			var reach := board.flood_fill(goblin.cell, goblin.move_range,
-					_blocked_for_team.bind(goblin.team))
-			var dest := _best_ai_dest(goblin, reach, scouts, target.cell)
-			var moved_now := board.in_bounds(dest) and dest != goblin.cell
-			if moved_now:
-				await do_move(goblin, dest)
+			var moved_now := false
+			if not reloaded:  # working the bolt already spent the move
+				var target := _nearest(goblin.cell, scouts)
+				var reach := board.flood_fill(goblin.cell, goblin.move_range,
+						_blocked_for_team.bind(goblin.team))
+				var dest := _best_ai_dest(goblin, reach, scouts, target.cell)
+				moved_now = board.in_bounds(dest) and dest != goblin.cell
+				if moved_now:
+					await do_move(goblin, dest)
 			shootable = _shootable_from(goblin.cell, goblin.attack_range, living_units(Unit.TEAM_SCOUT))
-			var shoots := goblin.is_alive() and not shootable.is_empty()
-			print("[ThinShot]   goblin %d/%d moves %s -> %s%s" % [
-					acted, squad.size(), from_cell, goblin.cell,
-					", shoots" if shoots else ""])
+			var shoots := goblin.is_alive() and goblin.has_ammo() and not shootable.is_empty()
+			print("[ThinShot]   goblin %d/%d %s %s -> %s%s" % [
+					acted, squad.size(), "reloads at" if reloaded else "moves",
+					from_cell, goblin.cell, ", shoots" if shoots else ""])
 			if shoots:
 				await _ai_fire(goblin, _nearest(goblin.cell, shootable))
-			elif not moved_now and goblin.is_alive() and not goblin.is_suppressed():
-				# Dug in with no shot: watch the lane the scouts must cross.
-				# A pinned goblin keeps its head down instead.
+			elif not moved_now and goblin.is_alive() and not goblin.is_suppressed() \
+					and goblin.has_ammo():
+				# Dug in with no shot: watch the lane the scouts must cross. A
+				# pinned goblin keeps its head down instead, and a dry one has
+				# nothing to react with.
 				goblin.set_facing_sector(_best_watch_sector(goblin, scouts))
 				goblin.set_overwatch(true)
 				Sfx.play("overwatch_set", -4.0, 0.0)
@@ -1387,6 +1396,22 @@ func run_enemy_turn() -> void:
 		if state == State.GAME_OVER:
 			return
 		await get_tree().create_timer(AI_BEAT).timeout
+
+
+## Works a dry AI weapon. Costs the move rather than the shot, mirroring
+## _try_reload, so a unit that reloads can still fire the same turn but cannot
+## reposition - which is the whole shape of the bolt-action marksman: he holds
+## his ground for exactly as long as he keeps shooting. Returns whether a
+## reload happened, since that is what spends the move.
+func _ai_reload(goblin: Unit, index: int, squad_size: int) -> bool:
+	if not goblin.needs_reload():
+		return false
+	goblin.moved = true
+	Sfx.play("reload")
+	print("[ThinShot]   goblin %d/%d reloads at %s" % [index, squad_size, goblin.cell])
+	await goblin.play_reload()
+	goblin.reload()  # magazine seats as the animation lands
+	return true
 
 
 ## AI units shoot with the heaviest setting their weapon allows, so a raider
