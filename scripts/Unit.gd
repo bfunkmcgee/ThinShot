@@ -11,12 +11,16 @@ const TEAM_GOBLIN := 1
 
 ## Which soldier this is. Team is allegiance; kind is the role, so the two
 ## scout types can differ in weapon, stats, and art.
-enum Kind { SCOUT, TEAM_LEAD, MACHINEGUNNER, GOBLIN, GOBLIN_SMG, GOBLIN_REVOLVER }
+enum Kind {
+	SCOUT, TEAM_LEAD, MACHINEGUNNER,
+	GOBLIN, GOBLIN_SMG, GOBLIN_SMG_ALT, GOBLIN_REVOLVER,
+}
 
 const LEAD_ROOT := "res://assets/sprites/Scout_TeamLead"
 const MG_ROOT := "res://assets/sprites/Scout_MachineGunner/Scout_MachineGunner"
 const SMG_ROOT := "res://assets/sprites/Goblin_SMG"
 const REV_ROOT := "res://assets/sprites/Goblin_revolver"
+const SMGA_ROOT := "res://assets/sprites/Goblin_SMG_alt"
 
 # Directional pixel-art frames, indexed by 45-degree compass sector of the
 # screen-space facing vector: 0=E, 1=SE, 2=S, 3=SW, 4=W, 5=NW, 6=N, 7=NE.
@@ -201,6 +205,31 @@ static var REV_HURT_FRAMES: Array = _load_dir_frames(
 static var REV_RELOAD_FRAMES: Array = _load_dir_frames(
 		REV_ROOT + "/goblin_revolver/animations/standing_idle_reload")
 
+# Alt raider. Same sheet layout as the raider above, except the aim-idle folder
+# is named after its generation prompt, so it is scanned rather than baked in.
+static var SMGA_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		SMGA_ROOT + "/Goblin_SMG_alt/rotations")
+static var SMGA_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		SMGA_ROOT + "/ready_to_fire_stance/rotations")
+static var SMGA_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		SMGA_ROOT + "/dead_stance/rotations")
+static var SMGA_IDLE_FRAMES: Array = _load_dir_frames(
+		SMGA_ROOT + "/Goblin_SMG_alt/animations/standing_idle")
+static var SMGA_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		SMGA_ROOT + "/Goblin_SMG_alt/animations/standing_idle_alt")
+static var SMGA_WALK_FRAMES: Array = _load_dir_frames(
+		SMGA_ROOT + "/Goblin_SMG_alt/animations/standing_idle_walk")
+static var SMGA_RAISE_FRAMES: Array = _load_dir_frames(
+		SMGA_ROOT + "/Goblin_SMG_alt/animations/standing_idle_to_readyToFire")
+static var SMGA_AIM_IDLE_FRAMES: Array = _load_only_anim(
+		SMGA_ROOT + "/ready_to_fire_stance/animations")
+static var SMGA_DEATH_FRAMES: Array = _load_dir_frames(
+		SMGA_ROOT + "/Goblin_SMG_alt/animations/standing_idle_to_dead")
+static var SMGA_HURT_FRAMES: Array = _load_dir_frames(
+		SMGA_ROOT + "/Goblin_SMG_alt/animations/standing_idle_damage")
+static var SMGA_RELOAD_FRAMES: Array = _load_dir_frames(
+		SMGA_ROOT + "/Goblin_SMG_alt/animations/standing_idle_reload")
+
 # Visual-only randomness (which idle variation plays). Never read back into
 # game state, mirroring Sfx and Fx.
 static var _vis_rng := RandomNumberGenerator.new()
@@ -278,6 +307,21 @@ const SMG_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(-4, -60),   # north
 	Vector2(32, -44),   # north-east
 ]
+# The alt raider is scrawnier and holds the same weapon tighter, so its
+# muzzle sits a little closer in. Measured off 56x56 sheets against the
+# SPRITE_OFFSET_56 anchor; the southern three are taken from the raider's
+# hand-corrected values, since with the weapon aimed at the camera the scan
+# lands on boots for those poses.
+const SMGA_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(30, -40),   # east
+	Vector2(26, -22),   # south-east
+	Vector2(-12, -20),  # south
+	Vector2(-26, -22),  # south-west
+	Vector2(-32, -40),  # west
+	Vector2(-28, -42),  # north-west
+	Vector2(2, -62),    # north
+	Vector2(26, -42),   # north-east
+]
 # A revolver on an outstretched arm reaches further from the body than a
 # shouldered weapon. South is hand-corrected off the boot the scan finds.
 const REV_MUZZLE_OFFSETS: Array[Vector2] = [
@@ -305,6 +349,10 @@ const GOBLIN_MUZZLE_OFFSETS: Array[Vector2] = [
 # a ~30px figure at ~60px on screen, sitting on the diamond center.
 const SPRITE_SCALE := Vector2(2, 2)
 const SPRITE_OFFSET := Vector2(0, -15)
+# The alt raider ships on 56x56 sheets rather than 64x64. Its figure is the
+# same size, but the tighter canvas puts the boots two screen pixels high on
+# the shared anchor, so it gets its own.
+const SPRITE_OFFSET_56 := Vector2(0, -14)
 
 const PIP_SIZE := Vector2(7, 5)
 const PIP_GAP := 2.0
@@ -378,6 +426,8 @@ var marker_y := 0.0:
 	set(value):
 		marker_y = value
 		queue_redraw()
+# Sprite anchor for this unit's sheet size; setup() picks it per kind.
+var sprite_offset := SPRITE_OFFSET
 var _body_tween: Tween = null
 var _marker_tween: Tween = null
 
@@ -387,7 +437,7 @@ var _marker_tween: Tween = null
 func _ready() -> void:
 	_vis_rng.randomize()
 	sprite.scale = SPRITE_SCALE
-	sprite.offset = SPRITE_OFFSET
+	sprite.offset = sprite_offset
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
 
@@ -476,6 +526,27 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			idle_alt_frames = SMG_IDLE_ALT_FRAMES
 			hurt_frames = SMG_HURT_FRAMES
 			reload_frames = SMG_RELOAD_FRAMES
+		Kind.GOBLIN_SMG_ALT:
+			# The same submachine gun on a half-starved frame. He outruns every
+			# other unit on the field and arrives a turn ahead of his heavier
+			# twin - but he cannot hold the weapon down, so he hits less often
+			# and folds a shot sooner behind cover.
+			max_hp = 3
+			move_range = 6
+			attack_range = 2
+			damage = 2
+			accuracy = 52  # too light to fight the recoil
+			frames = SMGA_FRAMES
+			aim_frames = SMGA_AIM_FRAMES
+			walk_frames = SMGA_WALK_FRAMES
+			idle_frames = SMGA_IDLE_FRAMES
+			raise_frames = SMGA_RAISE_FRAMES
+			aim_idle_frames = SMGA_AIM_IDLE_FRAMES
+			death_frames = SMGA_DEATH_FRAMES
+			dead_frames = SMGA_DEAD_FRAMES
+			idle_alt_frames = SMGA_IDLE_ALT_FRAMES
+			hurt_frames = SMGA_HURT_FRAMES
+			reload_frames = SMGA_RELOAD_FRAMES
 		Kind.GOBLIN_REVOLVER:
 			# The Choir's newest and worst-equipped: no shirt, no cover, and
 			# whatever sidearm was left over. Two HP means a single carbine
@@ -513,6 +584,9 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			idle_alt_frames = GOBLIN_IDLE_ALT_FRAMES
 			hurt_frames = GOBLIN_HURT_FRAMES
 			reload_frames = GOBLIN_RELOAD_FRAMES
+	sprite_offset = SPRITE_OFFSET_56 if kind == Kind.GOBLIN_SMG_ALT else SPRITE_OFFSET
+	if sprite != null:  # setup() can run before _ready() outside a live tree
+		sprite.offset = sprite_offset
 	# Face the enemy side at the start of the battle.
 	set_facing(Vector2(1, 0.5) if team == TEAM_SCOUT else Vector2(-1, 0.5))
 	hp = max_hp
@@ -531,6 +605,19 @@ static func _load_dir_frames(base: String) -> Array:
 			i += 1
 		result.append(dir_frames)
 	return result
+
+
+## Loads the single animation sitting under an animations/ folder. Pixel Lab
+## names some export folders after the sentence that generated them, which is
+## both unstable and unreadable - find the folder instead of baking it in.
+static func _load_only_anim(anim_root: String) -> Array:
+	var dir := DirAccess.open(anim_root)
+	if dir != null:
+		var names := dir.get_directories()
+		if not names.is_empty():
+			return _load_dir_frames(anim_root + "/" + names[0])
+	push_error("[Unit] no animation folder under " + anim_root)
+	return []
 
 
 ## Loads a rotations/ folder of single per-direction PNGs (east.png, ...).
@@ -629,6 +716,8 @@ func muzzle_point() -> Vector2:
 			offsets = GUNNER_MUZZLE_OFFSETS
 		Kind.GOBLIN_SMG:
 			offsets = SMG_MUZZLE_OFFSETS
+		Kind.GOBLIN_SMG_ALT:
+			offsets = SMGA_MUZZLE_OFFSETS
 		Kind.GOBLIN_REVOLVER:
 			offsets = REV_MUZZLE_OFFSETS
 	return to_global(offsets[facing_sector])
@@ -643,7 +732,7 @@ func can_single_shot() -> bool:
 ## The lead's battle rifle is semi-automatic; everything automatic bursts.
 func can_burst() -> bool:
 	return kind == Kind.SCOUT or kind == Kind.MACHINEGUNNER \
-			or kind == Kind.GOBLIN_SMG
+			or kind == Kind.GOBLIN_SMG or kind == Kind.GOBLIN_SMG_ALT
 
 
 ## Bracing is what buys the rifleman his burst. The gunner's weapon does it
@@ -672,6 +761,8 @@ func display_name() -> String:
 			return "Rust Choir Chorister"
 		Kind.GOBLIN_SMG:
 			return "Rust Choir Raider"
+		Kind.GOBLIN_SMG_ALT:
+			return "Rust Choir Skirmisher"
 		Kind.GOBLIN_REVOLVER:
 			return "Rust Choir Novice"
 	return "Desert Scout"

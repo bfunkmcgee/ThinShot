@@ -37,7 +37,10 @@ const LEVELS: Array[Dictionary] = [
 			Vector2i(13, 1), Vector2i(14, 4), Vector2i(14, 8),
 		],
 		# Raiders start a lane ahead of the riflemen and come straight on.
-		"smg_spawns": [Vector2i(12, 3), Vector2i(12, 6)],
+		# One per lane, and the southern one is the scrawny variant - open
+		# ground is where his extra tile of movement reads clearest.
+		"smg_spawns": [Vector2i(12, 3)],
+		"smg_alt_spawns": [Vector2i(12, 6)],
 		# Novices are pushed out in front of everyone as a screen.
 		"novice_spawns": [Vector2i(15, 2), Vector2i(15, 5), Vector2i(15, 7)],
 		"structures": [],
@@ -75,8 +78,10 @@ const LEVELS: Array[Dictionary] = [
 			Vector2i(7, 7), Vector2i(8, 7),    # south gate
 		],
 		# Raiders wait in the corridor between the barricades, ready to
-		# rush whichever gate the scouts commit to.
-		"smg_spawns": [Vector2i(9, 1), Vector2i(9, 8)],
+		# rush whichever gate the scouts commit to. The skirmishers are the
+		# ones who can cross it in a single turn, so a second waits deep.
+		"smg_spawns": [Vector2i(9, 1)],
+		"smg_alt_spawns": [Vector2i(9, 8), Vector2i(12, 2)],
 		"novice_spawns": [Vector2i(12, 5), Vector2i(15, 2), Vector2i(15, 7)],
 		"structures": [
 			{"kind": "hut_1", "anchor": Vector2i(13, 2), "size": Vector2i(2, 2)},
@@ -116,8 +121,10 @@ const LEVELS: Array[Dictionary] = [
 			Vector2i(10, 1),                   # courtyard
 			Vector2i(14, 5),                   # fortress door
 		],
-		# Raiders hold the south gates and counter-attack through them.
-		"smg_spawns": [Vector2i(10, 6), Vector2i(11, 6)],
+		# Raiders hold the south gates and counter-attack through them; a
+		# skirmisher in the courtyard reaches whichever gateway breaks first.
+		"smg_spawns": [Vector2i(10, 6)],
+		"smg_alt_spawns": [Vector2i(11, 6), Vector2i(11, 2)],
 		"novice_spawns": [Vector2i(10, 2), Vector2i(13, 5), Vector2i(15, 6)],
 		"structures": [
 			{"kind": "fortress", "anchor": Vector2i(12, 1), "size": Vector2i(4, 4)},
@@ -195,7 +202,8 @@ static func _validate(index: int) -> bool:
 		return ch == "." or ch == "p"
 	var spawns: Array = data.scout_spawns + data.get("lead_spawns", []) \
 			+ data.get("gunner_spawns", []) + data.goblin_spawns \
-			+ data.get("smg_spawns", []) + data.get("novice_spawns", [])
+			+ data.get("smg_spawns", []) + data.get("smg_alt_spawns", []) \
+			+ data.get("novice_spawns", [])
 	var seen_spawn := {}
 	for spawn: Vector2i in spawns:
 		ok = _check(walkable.call(spawn), "%s: spawn %s not walkable" % [label, spawn]) and ok

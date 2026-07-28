@@ -6,19 +6,19 @@ placeholder art). One desert skirmish: the **Desert Scouts** against the
 
 ## The game
 
-| | Team Lead | Machinegunner | Desert Scout | Chorister | Raider | Novice |
-|---|---|---|---|---|---|---|
-| Side | you | you | you | AI | AI | AI |
-| Per battle | 1 | 1 | 3 | 3–4 | 2 | 3 |
-| Weapon | battle rifle | belt-fed MG | carbine | scavenged rifle | submachine gun | revolver |
-| HP | 8 | 8 | 8 | 4 | 4 | **2** |
-| Move | 4 | 3 | 5 | 4 | **5** | **5** |
-| Attack range | **6** | 4 | 4 | 3 | **2** | 3 |
-| Damage/round | **4** (2 in cover) | 2 (1) | 2 (1) | 2 (1) | 2 (1) | 2 (1) |
-| Accuracy | 92% | 78% | 90% | 60% | 58% | **48%** |
-| Magazine | 2 | **6** | 3 | ∞ | ∞ | ∞ |
-| Fire modes | single | **burst, full auto** | single, burst | single | **burst** | single |
-| Ability | — | **suppressive fire** | — | — | — | — |
+| | Team Lead | Machinegunner | Desert Scout | Chorister | Raider | Skirmisher | Novice |
+|---|---|---|---|---|---|---|---|
+| Side | you | you | you | AI | AI | AI | AI |
+| Per battle | 1 | 1 | 3 | 3–4 | 1 | 1–2 | 3 |
+| Weapon | battle rifle | belt-fed MG | carbine | scavenged rifle | submachine gun | submachine gun | revolver |
+| HP | 8 | 8 | 8 | 4 | 4 | 3 | **2** |
+| Move | 4 | 3 | 5 | 4 | **5** | **6** | **5** |
+| Attack range | **6** | 4 | 4 | 3 | **2** | **2** | 3 |
+| Damage/round | **4** (2 in cover) | 2 (1) | 2 (1) | 2 (1) | 2 (1) | 2 (1) | 2 (1) |
+| Accuracy | 92% | 78% | 90% | 60% | 58% | 52% | **48%** |
+| Magazine | 2 | **6** | 3 | ∞ | ∞ | ∞ | ∞ |
+| Fire modes | single | **burst, full auto** | single, burst | single | **burst** | **burst** | single |
+| Ability | — | **suppressive fire** | — | — | — | — | — |
 
 A five-soldier squad, each with a job:
 
@@ -39,7 +39,12 @@ The Choir is an armed rabble, and its roster shows it. **Choristers** hold
 ground with scavenged rifles. **Raiders** carry submachine guns: almost no
 reach at two tiles, but they move as fast as your riflemen and fire a burst the
 moment they close, so the answer is to kill them on the way in rather than let
-them arrive. **Novices** are the bottom of it — shirtless, handed whatever
+them arrive. **Skirmishers** are the same gun on a half-starved frame — the
+fastest thing on the field at six tiles, so they arrive a full turn ahead of
+their heavier twin and split your attention before the real push lands. Being
+scrawny costs them: too light to hold the weapon down (52%), and thin enough
+that three rounds through cover put one away instead of four. **Novices** are
+the bottom of it — shirtless, handed whatever
 sidearm was left over, and pushed out front as a screen. Two HP means a single
 carbine round puts one down, and at 48% they mostly miss. They are dangerous
 only because there are always more of them, and because every round you spend

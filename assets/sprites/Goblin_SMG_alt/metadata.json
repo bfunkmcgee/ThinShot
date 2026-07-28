@@ -1,0 +1,816 @@
+{
+  "group_id": "16ffe57e-8334-4ac5-8eeb-611cd3cf3dfb",
+  "states": [
+    {
+      "character": {
+        "id": "db07a61a-913f-4e99-9c26-7d17859dfb02",
+        "name": "Goblin_SMG_alt",
+        "prompt": "Scrawny green goblin, neutral standing pose, baggy streetwear hoodie and sneakers, holding a vintage boxy submachine gun with wooden grip and stick magazine, large ears, sharp teeth, confident expression, low top-down perspective, crisp silhouette.",
+        "size": {
+          "width": 56,
+          "height": 56
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-29T21:54:43.933809+00:00"
+      },
+      "folder": "Goblin_SMG_alt",
+      "frames": {
+        "rotations": {
+          "south": "Goblin_SMG_alt/rotations/south.png",
+          "south-east": "Goblin_SMG_alt/rotations/south-east.png",
+          "east": "Goblin_SMG_alt/rotations/east.png",
+          "north-east": "Goblin_SMG_alt/rotations/north-east.png",
+          "north": "Goblin_SMG_alt/rotations/north.png",
+          "north-west": "Goblin_SMG_alt/rotations/north-west.png",
+          "west": "Goblin_SMG_alt/rotations/west.png",
+          "south-west": "Goblin_SMG_alt/rotations/south-west.png"
+        },
+        "animations": {
+          "standing_idle_to_dead": {
+            "east": [
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/east/frame_008.png"
+            ],
+            "north-east": [
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-east/frame_008.png"
+            ],
+            "south-east": [
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-east/frame_008.png"
+            ],
+            "west": [
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/west/frame_008.png"
+            ],
+            "north": [
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north/frame_008.png"
+            ],
+            "south": [
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south/frame_008.png"
+            ],
+            "north-west": [
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/north-west/frame_008.png"
+            ],
+            "south-west": [
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_dead/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_alt": {
+            "north-west": [
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-west/frame_008.png"
+            ],
+            "south": [
+              "Goblin_SMG_alt/animations/standing_idle_alt/south/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south/frame_008.png"
+            ],
+            "east": [
+              "Goblin_SMG_alt/animations/standing_idle_alt/east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/east/frame_008.png"
+            ],
+            "north-east": [
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north-east/frame_008.png"
+            ],
+            "south-east": [
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-east/frame_008.png"
+            ],
+            "north": [
+              "Goblin_SMG_alt/animations/standing_idle_alt/north/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/north/frame_008.png"
+            ],
+            "west": [
+              "Goblin_SMG_alt/animations/standing_idle_alt/west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/west/frame_008.png"
+            ],
+            "south-west": [
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_alt/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_reload": {
+            "west": [
+              "Goblin_SMG_alt/animations/standing_idle_reload/west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/west/frame_008.png"
+            ],
+            "east": [
+              "Goblin_SMG_alt/animations/standing_idle_reload/east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/east/frame_008.png"
+            ],
+            "north": [
+              "Goblin_SMG_alt/animations/standing_idle_reload/north/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north/frame_008.png"
+            ],
+            "north-west": [
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-west/frame_008.png"
+            ],
+            "north-east": [
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/north-east/frame_008.png"
+            ],
+            "south-east": [
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-east/frame_008.png"
+            ],
+            "south": [
+              "Goblin_SMG_alt/animations/standing_idle_reload/south/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south/frame_008.png"
+            ],
+            "south-west": [
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_reload/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_damage": {
+            "south-east": [
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-east/frame_008.png"
+            ],
+            "east": [
+              "Goblin_SMG_alt/animations/standing_idle_damage/east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/east/frame_008.png"
+            ],
+            "south-west": [
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south-west/frame_008.png"
+            ],
+            "north-east": [
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-east/frame_008.png"
+            ],
+            "west": [
+              "Goblin_SMG_alt/animations/standing_idle_damage/west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/west/frame_008.png"
+            ],
+            "north": [
+              "Goblin_SMG_alt/animations/standing_idle_damage/north/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north/frame_008.png"
+            ],
+            "south": [
+              "Goblin_SMG_alt/animations/standing_idle_damage/south/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/south/frame_008.png"
+            ],
+            "north-west": [
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_damage/north-west/frame_008.png"
+            ]
+          },
+          "standing_idle": {
+            "east": [
+              "Goblin_SMG_alt/animations/standing_idle/east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle/east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle/east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle/east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle/east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle/east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle/east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle/east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle/east/frame_008.png"
+            ],
+            "north-west": [
+              "Goblin_SMG_alt/animations/standing_idle/north-west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-west/frame_008.png"
+            ],
+            "south-west": [
+              "Goblin_SMG_alt/animations/standing_idle/south-west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-west/frame_008.png"
+            ],
+            "north": [
+              "Goblin_SMG_alt/animations/standing_idle/north/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle/north/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle/north/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle/north/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle/north/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle/north/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle/north/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle/north/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle/north/frame_008.png"
+            ],
+            "north-east": [
+              "Goblin_SMG_alt/animations/standing_idle/north-east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle/north-east/frame_008.png"
+            ],
+            "south": [
+              "Goblin_SMG_alt/animations/standing_idle/south/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle/south/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle/south/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle/south/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle/south/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle/south/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle/south/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle/south/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle/south/frame_008.png"
+            ],
+            "south-east": [
+              "Goblin_SMG_alt/animations/standing_idle/south-east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle/south-east/frame_008.png"
+            ],
+            "west": [
+              "Goblin_SMG_alt/animations/standing_idle/west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle/west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle/west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle/west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle/west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle/west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle/west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle/west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle/west/frame_008.png"
+            ]
+          },
+          "standing_idle_to_readyToFire": {
+            "south": [
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south/frame_008.png"
+            ],
+            "south-east": [
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-east/frame_008.png"
+            ],
+            "south-west": [
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/south-west/frame_008.png"
+            ],
+            "west": [
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/west/frame_008.png"
+            ],
+            "east": [
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/east/frame_008.png"
+            ],
+            "north-east": [
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-east/frame_008.png"
+            ],
+            "north": [
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north/frame_008.png"
+            ],
+            "north-west": [
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_to_readyToFire/north-west/frame_008.png"
+            ]
+          },
+          "standing_idle_walk": {
+            "east": [
+              "Goblin_SMG_alt/animations/standing_idle_walk/east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/east/frame_008.png"
+            ],
+            "west": [
+              "Goblin_SMG_alt/animations/standing_idle_walk/west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/west/frame_008.png"
+            ],
+            "north": [
+              "Goblin_SMG_alt/animations/standing_idle_walk/north/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north/frame_008.png"
+            ],
+            "south": [
+              "Goblin_SMG_alt/animations/standing_idle_walk/south/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south/frame_008.png"
+            ],
+            "north-east": [
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-east/frame_008.png"
+            ],
+            "north-west": [
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/north-west/frame_008.png"
+            ],
+            "south-east": [
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-east/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-east/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-east/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-east/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-east/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-east/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-east/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-east/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-east/frame_008.png"
+            ],
+            "south-west": [
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-west/frame_000.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-west/frame_001.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-west/frame_002.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-west/frame_003.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-west/frame_004.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-west/frame_005.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-west/frame_006.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-west/frame_007.png",
+              "Goblin_SMG_alt/animations/standing_idle_walk/south-west/frame_008.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "8d6a14c2-b0ad-498c-88cd-d22763925c5d",
+        "name": "ready_to_fire_stance",
+        "prompt": "Scrawny green goblin, neutral standing pose, baggy streetwear hoodie and sneakers, holding a vintage boxy submachine gun with wooden grip and stick magazine, large ears, sharp teeth, confident expression, low top-down perspective, crisp silhouette.",
+        "size": {
+          "width": 56,
+          "height": 56
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-07-01T12:41:22.904050+00:00"
+      },
+      "folder": "ready_to_fire_stance",
+      "frames": {
+        "rotations": {
+          "south": "ready_to_fire_stance/rotations/south.png",
+          "south-east": "ready_to_fire_stance/rotations/south-east.png",
+          "east": "ready_to_fire_stance/rotations/east.png",
+          "north-east": "ready_to_fire_stance/rotations/north-east.png",
+          "north": "ready_to_fire_stance/rotations/north.png",
+          "north-west": "ready_to_fire_stance/rotations/north-west.png",
+          "west": "ready_to_fire_stance/rotations/west.png",
+          "south-west": "ready_to_fire_stance/rotations/south-west.png"
+        },
+        "animations": {
+          "The_goblin_stands_firmly_in_place_keeping_his_subm": {
+            "north-east": [
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-east/frame_000.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-east/frame_001.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-east/frame_002.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-east/frame_003.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-east/frame_004.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-east/frame_005.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-east/frame_006.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-east/frame_007.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-east/frame_008.png"
+            ],
+            "north-west": [
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-west/frame_000.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-west/frame_001.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-west/frame_002.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-west/frame_003.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-west/frame_004.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-west/frame_005.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-west/frame_006.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-west/frame_007.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north-west/frame_008.png"
+            ],
+            "north": [
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north/frame_000.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north/frame_001.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north/frame_002.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north/frame_003.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north/frame_004.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north/frame_005.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north/frame_006.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north/frame_007.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/north/frame_008.png"
+            ],
+            "south-west": [
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-west/frame_000.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-west/frame_001.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-west/frame_002.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-west/frame_003.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-west/frame_004.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-west/frame_005.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-west/frame_006.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-west/frame_007.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-west/frame_008.png"
+            ],
+            "west": [
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/west/frame_000.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/west/frame_001.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/west/frame_002.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/west/frame_003.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/west/frame_004.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/west/frame_005.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/west/frame_006.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/west/frame_007.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/west/frame_008.png"
+            ],
+            "south-east": [
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-east/frame_000.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-east/frame_001.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-east/frame_002.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-east/frame_003.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-east/frame_004.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-east/frame_005.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-east/frame_006.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-east/frame_007.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south-east/frame_008.png"
+            ],
+            "east": [
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/east/frame_000.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/east/frame_001.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/east/frame_002.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/east/frame_003.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/east/frame_004.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/east/frame_005.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/east/frame_006.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/east/frame_007.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/east/frame_008.png"
+            ],
+            "south": [
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south/frame_000.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south/frame_001.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south/frame_002.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south/frame_003.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south/frame_004.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south/frame_005.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south/frame_006.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south/frame_007.png",
+              "ready_to_fire_stance/animations/The_goblin_stands_firmly_in_place_keeping_his_subm/south/frame_008.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "c2bf98ce-5f6a-4753-b7db-c1353756f621",
+        "name": "dead_stance",
+        "prompt": "Scrawny green goblin, neutral standing pose, baggy streetwear hoodie and sneakers, holding a vintage boxy submachine gun with wooden grip and stick magazine, large ears, sharp teeth, confident expression, low top-down perspective, crisp silhouette.",
+        "size": {
+          "width": 56,
+          "height": 56
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-07-28T10:43:05.162458+00:00"
+      },
+      "folder": "dead_stance",
+      "frames": {
+        "rotations": {
+          "south": "dead_stance/rotations/south.png",
+          "south-east": "dead_stance/rotations/south-east.png",
+          "east": "dead_stance/rotations/east.png",
+          "north-east": "dead_stance/rotations/north-east.png",
+          "north": "dead_stance/rotations/north.png",
+          "north-west": "dead_stance/rotations/north-west.png",
+          "west": "dead_stance/rotations/west.png",
+          "south-west": "dead_stance/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-07-28T11:39:38.370941"
+}

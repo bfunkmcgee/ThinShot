@@ -18,6 +18,7 @@ const AIM_STANCES := [
 	["GUNNER", 60, "res://assets/sprites/Scout_MachineGunner/Scout_MachineGunner/ReadyToFire_Stance/rotations/%s.png"],
 	["GOBLIN_SMG", 64, "res://assets/sprites/Goblin_SMG/Goblin_aims_submachi/rotations/%s.png"],
 	["GOBLIN_REVOLVER", 64, "res://assets/sprites/Goblin_revolver/standing_readyToFire_stance/rotations/%s.png"],
+	["GOBLIN_SMG_ALT", 56, "res://assets/sprites/Goblin_SMG_alt/ready_to_fire_stance/rotations/%s.png"],
 ]
 
 
