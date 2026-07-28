@@ -9,29 +9,34 @@ class_name Levels
 
 const LEVELS: Array[Dictionary] = [
 	{
-		# Three lanes: open wash through the middle, rock outcrops guarding
-		# the north and south rims. Junk covers the two wash crossings.
+		# Four rock outcrops pinch the field into three lanes, and a junk
+		# island splits the middle one so it cannot be walked straight down.
+		# Every lane has a piece of cover to bound between, and each cover
+		# piece has open ground on both sides so it can be flanked around.
+		# Goblins hold in pairs, one per lane, which is what gives the
+		# gunner's suppression something worth pinning.
 		"name": "DRY WASH",
 		"fiction": "The dry riverbed where the Rust Choir first crossed into scout territory.",
 		"size": Vector2i(16, 10),
 		"map": [
-			"......p.........",
-			"....##.....#..p.",
+			"..p.##.....##...",
+			"....##...p.##...",
+			"......j.........",
+			"..........j.....",
+			".......jj....j..",
+			".......jj....j..",
+			"...p......j.....",
+			"......j.......p.",
 			"....##.....##...",
-			".#.....j........",
-			"................",
-			"................",
-			"..#.....j.....#.",
-			"...#......##....",
-			"...#p.....##..p.",
-			".........p......",
+			"....##..p..##...",
 		],
-		"scout_spawns": [Vector2i(0, 3), Vector2i(1, 7), Vector2i(1, 2)],
+		"scout_spawns": [Vector2i(1, 2), Vector2i(1, 7), Vector2i(2, 4)],
 		"lead_spawns": [Vector2i(0, 5)],
-		"gunner_spawns": [Vector2i(0, 6)],
+		"gunner_spawns": [Vector2i(2, 5)],
 		"goblin_spawns": [
-			Vector2i(15, 2), Vector2i(14, 4), Vector2i(15, 6), Vector2i(15, 8),
-			Vector2i(14, 0), Vector2i(13, 7),
+			Vector2i(13, 1), Vector2i(14, 1),  # north lane
+			Vector2i(14, 4), Vector2i(14, 5),  # centre
+			Vector2i(13, 8), Vector2i(14, 8),  # south lane
 		],
 		"structures": [],
 		"zone_seed": 7,
@@ -39,69 +44,79 @@ const LEVELS: Array[Dictionary] = [
 		"zone_thresholds": [-0.12, 0.22],
 	},
 	{
-		# A junk barricade wall bisects the yard at x=8 with three gates
-		# (y 2, 5, 8). The Choir compound sits behind it; loose scrap gives
-		# the scouts approach cover in front.
+		# Two scrap barricades in depth. The outer line (x=6) has gates at
+		# y=3 and y=7; the inner line (x=11) has gates at y=1 and y=5 -
+		# deliberately offset, so breaching the first one leaves you crossing
+		# the yard sideways under fire to reach the second. Gate defenders
+		# stand in pairs, and the corridor between the lines is the killing
+		# ground the machinegunner exists for.
 		"name": "THE SCRAPLINE",
 		"fiction": "The Choir's scrap-tithe yard - tribute junk sung into rows.",
 		"size": Vector2i(16, 10),
 		"map": [
-			".p......j.......",
-			"....j...j.......",
-			"..#.............",
-			"........j.j.....",
-			"........j..j....",
-			"p...............",
-			".....j..j.......",
-			"..#.....j.......",
-			"................",
-			"......p.j.......",
+			".p....j..p.j....",
+			"......j.........",
+			"...j..j....j....",
+			"...........j....",
+			"......j....j....",
+			"....j.j.........",
+			"......j....j....",
+			"...j.......j....",
+			"......j....j....",
+			"..p...j..p.j....",
 		],
-		"scout_spawns": [Vector2i(0, 2), Vector2i(0, 7), Vector2i(1, 1)],
-		"lead_spawns": [Vector2i(1, 4)],
-		"gunner_spawns": [Vector2i(0, 5)],
+		"scout_spawns": [Vector2i(1, 1), Vector2i(1, 8), Vector2i(2, 5)],
+		"lead_spawns": [Vector2i(0, 4)],
+		"gunner_spawns": [Vector2i(2, 4)],
 		"goblin_spawns": [
-			Vector2i(10, 2), Vector2i(14, 4), Vector2i(10, 5),
-			Vector2i(10, 8), Vector2i(14, 8), Vector2i(14, 2), Vector2i(14, 6),
+			Vector2i(7, 3), Vector2i(8, 3),    # north gate
+			Vector2i(7, 7), Vector2i(8, 7),    # south gate
+			Vector2i(12, 4), Vector2i(12, 5),  # inner reserve
+			Vector2i(15, 5),
 		],
 		"structures": [
-			{"kind": "hut_1", "anchor": Vector2i(12, 1), "size": Vector2i(2, 2)},
-			{"kind": "tent", "anchor": Vector2i(12, 6), "size": Vector2i(2, 2)},
+			{"kind": "hut_1", "anchor": Vector2i(13, 2), "size": Vector2i(2, 2)},
+			{"kind": "tent", "anchor": Vector2i(13, 6), "size": Vector2i(2, 2)},
 		],
 		"zone_seed": 21,
 		"shade_seed": 34,
 		"zone_thresholds": [-0.5, -0.2],
 	},
 	{
-		# The fortress compound: walled courtyard with a west gate (5,3) and
-		# two south gates (7,7) and (11,7); the east flank is open. A small
-		# hamlet outside gives the scouts staging cover.
+		# A properly sealed compound this time. The fortress is flush to the
+		# east edge so there is no walking around the back: the only ways in
+		# are the west gate (8,4) and the two south gates (11,7) and (14,7).
+		# Three ways in, all covered, and the garrison holds each in pairs.
+		# The hamlet and rocks outside give the squad staging cover to set
+		# the gun up before anyone steps into a gateway.
 		"name": "OUTPOST 7",
 		"fiction": "The old desert command, now the Choir's hive. The scouts go in at dawn.",
 		"size": Vector2i(16, 10),
 		"map": [
-			"....p.WWWWW.....",
-			".....W..........",
-			".....W..........",
-			"...j............",
-			".....W..........",
-			"...#.W..........",
-			".....W..........",
-			".....WW.WWW.WW..",
-			"....#....j..j...",
-			"......p........p",
+			".p......WWWWWWWW",
+			"......p.W.......",
+			".....#..W.......",
+			".....#..W.......",
+			"....j...........",
+			"......j.W.......",
+			"........W.......",
+			".........WW.WW.W",
+			"....p.j.........",
+			".......p........",
 		],
-		"scout_spawns": [Vector2i(0, 3), Vector2i(2, 8), Vector2i(0, 2)],
-		"lead_spawns": [Vector2i(0, 5)],
-		"gunner_spawns": [Vector2i(1, 9)],
+		"scout_spawns": [Vector2i(0, 2), Vector2i(1, 8), Vector2i(0, 6)],
+		"lead_spawns": [Vector2i(0, 4)],
+		"gunner_spawns": [Vector2i(1, 5)],
 		"goblin_spawns": [
-			Vector2i(7, 2), Vector2i(9, 3), Vector2i(6, 5),
-			Vector2i(11, 5), Vector2i(12, 6), Vector2i(8, 4), Vector2i(7, 6),
+			Vector2i(9, 3), Vector2i(9, 4),    # west gate
+			Vector2i(10, 6), Vector2i(11, 6),  # south gates
+			Vector2i(10, 1), Vector2i(10, 2),  # courtyard
+			Vector2i(14, 5),                   # fortress door
 		],
 		"structures": [
-			{"kind": "fortress", "anchor": Vector2i(10, 1), "size": Vector2i(4, 4)},
-			{"kind": "hut_1", "anchor": Vector2i(1, 1), "size": Vector2i(2, 2)},
-			{"kind": "hut_2", "anchor": Vector2i(1, 6), "size": Vector2i(2, 2)},
+			{"kind": "fortress", "anchor": Vector2i(12, 1), "size": Vector2i(4, 4)},
+			{"kind": "hut_1", "anchor": Vector2i(2, 1), "size": Vector2i(2, 2)},
+			{"kind": "hut_2", "anchor": Vector2i(2, 6), "size": Vector2i(2, 2)},
 		],
 		"zone_seed": 42,
 		"shade_seed": 55,
