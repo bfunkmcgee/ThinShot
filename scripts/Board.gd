@@ -72,6 +72,7 @@ const ATTACK_HOVER_COVER_HL := Color(1.0, 0.65, 0.2, 0.5)
 # Armed-fire-mode highlights: hotter than the normal attack red.
 const BURST_HL := Color(1.0, 0.45, 0.05, 0.5)
 const AUTO_HL := Color(1.0, 0.72, 0.1, 0.55)
+const SUPPRESS_HL := Color(0.45, 0.72, 0.9, 0.5)
 # Cyan means "flanking - cover ignored" (amber is already taken by cover).
 const AIM_LINE_FLANK := Color(0.45, 0.95, 1.0, 0.9)
 const ATTACK_HOVER_FLANK_HL := Color(0.3, 0.85, 1.0, 0.5)
@@ -434,6 +435,8 @@ func _draw() -> void:
 		attack_color = BURST_HL
 	elif fire_mode == 2:
 		attack_color = AUTO_HL
+	elif fire_mode == 3:
+		attack_color = SUPPRESS_HL
 	for cell in attack_cells:
 		draw_colored_polygon(_diamond(cell), attack_color)
 	if hover_cell != NO_CELL:

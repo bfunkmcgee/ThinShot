@@ -9,7 +9,9 @@ enum State { PLAYER_TURN, ANIMATING, ENEMY_TURN, GAME_OVER }
 enum AimMode { NONE, OVERWATCH, FACE }
 
 ## Which trigger setting the selected unit will use on its next shot.
-enum FireMode { SINGLE, BURST, AUTO }
+## SUPPRESS is the machinegunner's ability rather than a trigger setting:
+## it deals no damage and pins an area instead.
+enum FireMode { SINGLE, BURST, AUTO, SUPPRESS }
 
 const UNIT_SCENE := preload("res://scenes/Unit.tscn")
 const ROCK_TEXTURES: Array[Texture2D] = [
@@ -94,6 +96,7 @@ const AUTO_GAP := 0.07   # full auto cycles faster than a burst
 const BURST_ROUNDS := 2
 const AUTO_ROUNDS := 4
 const AUTO_ACCURACY := -15  # per-round penalty for walking the gun
+const SUPPRESS_ROUNDS := 3
 
 # Ignore end-turn requests this soon after control returns to the player -
 # they are almost always leftover E-mashing/clicking from the enemy turn.
@@ -132,6 +135,7 @@ var fx_glow: Fx = null
 @onready var overwatch_button: Button = $UI/OverwatchButton
 @onready var burst_button: Button = $UI/BurstButton
 @onready var auto_button: Button = $UI/AutoButton
+@onready var suppress_button: Button = $UI/SuppressButton
 @onready var reload_button: Button = $UI/ReloadButton
 @onready var face_button: Button = $UI/FaceButton
 @onready var danger_button: Button = $UI/DangerButton
@@ -174,6 +178,7 @@ func _ready() -> void:
 	face_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.FACE))
 	burst_button.toggled.connect(_on_fire_button_toggled.bind(FireMode.BURST))
 	auto_button.toggled.connect(_on_fire_button_toggled.bind(FireMode.AUTO))
+	suppress_button.toggled.connect(_on_fire_button_toggled.bind(FireMode.SUPPRESS))
 	reload_button.pressed.connect(_try_reload)
 	danger_button.toggled.connect(_on_danger_button_toggled)
 	restart_button.pressed.connect(_on_restart)
@@ -439,6 +444,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("full_auto"):
 		_toggle_fire_mode(FireMode.AUTO)
 		return
+	if event.is_action_pressed("suppress"):
+		_toggle_fire_mode(FireMode.SUPPRESS)
+		return
 	if event.is_action_pressed("reload"):
 		_try_reload()
 		return
@@ -520,9 +528,11 @@ func _fire_selected_at(target: Unit) -> void:
 			return
 	match mode:
 		FireMode.BURST:
-			do_volley(selected, target, BURST_ROUNDS, BURST_GAP, 0, false)
+			do_volley(selected, target, BURST_ROUNDS, BURST_GAP, 0)
 		FireMode.AUTO:
-			do_volley(selected, target, AUTO_ROUNDS, AUTO_GAP, AUTO_ACCURACY, true)
+			do_volley(selected, target, AUTO_ROUNDS, AUTO_GAP, AUTO_ACCURACY)
+		FireMode.SUPPRESS:
+			do_suppressive_fire(selected, target)
 		_:
 			do_attack(selected, target)
 
@@ -533,6 +543,7 @@ func select(unit: Unit) -> void:
 		selected.set_selected(false)
 	selected = unit
 	unit.set_selected(true)
+	_set_fire_mode(_default_fire_mode(unit))  # each soldier has its own default
 	Sfx.play("select", 0.0, 0.0)
 	_refresh_highlights()
 	_update_unit_panel()
@@ -561,6 +572,8 @@ func _rounds_for(mode: FireMode) -> int:
 			return BURST_ROUNDS
 		FireMode.AUTO:
 			return AUTO_ROUNDS
+		FireMode.SUPPRESS:
+			return SUPPRESS_ROUNDS
 	return 1
 
 
@@ -573,6 +586,8 @@ func _can_use_mode(unit: Unit, mode: FireMode) -> bool:
 		FireMode.AUTO:
 			# Walking the gun needs a firing position, never the advance.
 			return unit.can_full_auto() and not unit.moved
+		FireMode.SUPPRESS:
+			return unit.can_suppress()
 	return unit.can_single_shot()
 
 
@@ -591,10 +606,15 @@ func _set_fire_mode(mode: FireMode) -> void:
 	if fire_mode == mode:
 		return
 	fire_mode = mode
-	burst_button.set_pressed_no_signal(mode == FireMode.BURST)
-	auto_button.set_pressed_no_signal(mode == FireMode.AUTO)
 	board.set_fire_mode(mode)
+	_sync_fire_buttons()
 	_update_unit_panel()
+
+
+func _sync_fire_buttons() -> void:
+	burst_button.set_pressed_no_signal(fire_mode == FireMode.BURST)
+	auto_button.set_pressed_no_signal(fire_mode == FireMode.AUTO)
+	suppress_button.set_pressed_no_signal(fire_mode == FireMode.SUPPRESS)
 
 
 func _on_fire_button_toggled(pressed: bool, mode: FireMode) -> void:
@@ -602,9 +622,7 @@ func _on_fire_button_toggled(pressed: bool, mode: FireMode) -> void:
 		_toggle_fire_mode(mode)
 	elif fire_mode == mode:
 		_set_fire_mode(_default_fire_mode(selected))
-	# The request may have been refused; resync both buttons.
-	burst_button.set_pressed_no_signal(fire_mode == FireMode.BURST)
-	auto_button.set_pressed_no_signal(fire_mode == FireMode.AUTO)
+	_sync_fire_buttons()  # the request may have been refused
 
 
 ## Select the next living scout that can still act, wrapping in spawn order.
@@ -640,6 +658,10 @@ func _update_unit_panel() -> void:
 	# Hovering a shootable enemy: show what the shot would actually do.
 	if unit.team == Unit.TEAM_GOBLIN and selected != null \
 			and board.attack_cells.has(unit.cell):
+		if fire_mode == FireMode.SUPPRESS:
+			panel_status_label.text = "x%d SUPPRESS - NO DAMAGE, PINS AREA" % SUPPRESS_ROUNDS
+			panel_status_label.modulate = Unit.SUPPRESSED_COLOR
+			return
 		var flanking := _is_flanking(selected, unit)
 		var dmg := selected.damage
 		var note := ""
@@ -651,7 +673,7 @@ func _update_unit_panel() -> void:
 		var rounds := _rounds_for(fire_mode)
 		var mod: int = AUTO_ACCURACY if fire_mode == FireMode.AUTO else 0
 		if rounds > 1:
-			var label := "AUTO - PINS" if fire_mode == FireMode.AUTO else "BURST"
+			var label := "AUTO" if fire_mode == FireMode.AUTO else "BURST"
 			note = "x%d %s" % [rounds, label] if note == "" \
 					else "x%d %s - %s" % [rounds, label, note]
 		panel_status_label.text = "%d%% TO HIT - %d DMG%s" % [
@@ -660,9 +682,16 @@ func _update_unit_panel() -> void:
 		panel_status_label.modulate = Color("7ae8ff") if flanking else Color.WHITE
 		return
 	if unit == selected and fire_mode != FireMode.SINGLE:
-		panel_status_label.text = "FULL AUTO ARMED" if fire_mode == FireMode.AUTO \
-				else "BURST ARMED"
-		panel_status_label.modulate = Color("ff7a2a")
+		match fire_mode:
+			FireMode.AUTO:
+				panel_status_label.text = "FULL AUTO ARMED"
+				panel_status_label.modulate = Color("ff7a2a")
+			FireMode.SUPPRESS:
+				panel_status_label.text = "SUPPRESSIVE FIRE ARMED"
+				panel_status_label.modulate = Unit.SUPPRESSED_COLOR
+			_:
+				panel_status_label.text = "BURST ARMED"
+				panel_status_label.modulate = Color("ff7a2a")
 		return
 	if unit.is_suppressed():
 		panel_status_label.text = "SUPPRESSED"
@@ -955,6 +984,68 @@ func do_attack(attacker: Unit, target: Unit) -> void:
 		_update_unit_panel()
 
 
+## Suppressive fire: the machinegunner's ability. Rounds go downrange around
+## the target rather than into it - no damage, no hit rolls - and everything
+## hostile at or beside the impact point is pinned. Trades killing for
+## control: two goblins with their heads down instead of one wounded.
+func do_suppressive_fire(attacker: Unit, target: Unit) -> void:
+	var prev_state := state
+	state = State.ANIMATING
+	board.clear_highlights()
+	print("[ThinShot] suppressive fire %s -> %s" % [attacker.cell, target.cell])
+	var aim := (target.position - attacker.position).normalized()
+	attacker.set_facing(aim)
+	await attacker.raise_rifle()
+	for i in SUPPRESS_ROUNDS:
+		if i > 0:
+			await get_tree().create_timer(AUTO_GAP).timeout
+		await _fire_suppression_round(attacker, target)
+	# Pin the target and anything hostile beside it.
+	var pinned: Array[Vector2i] = []
+	for unit in living_units(_enemy_team_of(attacker)):
+		if Board.manhattan(unit.cell, target.cell) <= 1:
+			unit.suppress()
+			pinned.append(unit.cell)
+	print("[ThinShot]   pinned %s" % [pinned])
+	await get_tree().create_timer(LOWER_TIME).timeout
+	attacker.lower_rifle()
+	attacker.set_done(true)
+	if attacker == selected:
+		deselect()
+	state = prev_state
+	if prev_state == State.PLAYER_TURN:
+		_refresh_danger()
+		_refresh_watch_cells()
+		_update_unit_panel()
+
+
+func _enemy_team_of(unit: Unit) -> int:
+	return Unit.TEAM_GOBLIN if unit.team == Unit.TEAM_SCOUT else Unit.TEAM_SCOUT
+
+
+## One round of suppressing fire: full muzzle presentation, but the round
+## deliberately strikes the ground around the target instead of the target.
+func _fire_suppression_round(attacker: Unit, target: Unit) -> void:
+	var muzzle := attacker.muzzle_point()
+	var chest := target.position + Vector2(0, -36)
+	var dir := (chest - muzzle).normalized()
+	var splash := chest + dir * _rng.randf_range(10.0, 40.0) \
+			+ dir.orthogonal() * _rng.randf_range(-30.0, 30.0)
+	attacker.spend_ammo()
+	attacker.recoil(dir)
+	Sfx.play("shot")
+	HitFx.spawn(fx_glow, muzzle, HitFx.Kind.MUZZLE)
+	HitFx.spawn_tracer(fx_glow, muzzle, splash, TRACER_TIME)
+	fx_glow.muzzle(muzzle, dir)
+	fx_air.smoke_plume(muzzle, dir)
+	fx_ground.casing(muzzle, dir)
+	_camera_kick(dir)
+	await get_tree().create_timer(TRACER_TIME).timeout
+	Sfx.play("miss")
+	fx_ground.footstep(splash + Vector2(0, 26), 1.4)
+	_screen_shake(0.6)
+
+
 ## The shot itself: face, (optionally) raise the rifle via the transition
 ## animation, fire one round, lower. Reaction shots skip the raise -
 ## the rifle is already up from overwatch.
@@ -1064,7 +1155,7 @@ func _spark_cover(cell: Vector2i, dir: Vector2, delay: float) -> void:
 ## across the target, trading accuracy per round for volume, and pins
 ## whoever it was aimed at whether or not the rounds connect.
 func do_volley(attacker: Unit, target: Unit, rounds: int, gap: float,
-		accuracy_mod: int, suppresses: bool) -> void:
+		accuracy_mod: int) -> void:
 	var prev_state := state
 	state = State.ANIMATING
 	board.clear_highlights()
@@ -1079,9 +1170,6 @@ func do_volley(attacker: Unit, target: Unit, rounds: int, gap: float,
 		if not target.is_alive() or state == State.GAME_OVER \
 				or not attacker.has_ammo():
 			break
-	if suppresses and target.is_alive():
-		target.suppress()
-		print("[ThinShot]   %s is suppressed" % target.cell)
 	await get_tree().create_timer(LOWER_TIME).timeout
 	attacker.lower_rifle()
 	attacker.set_done(true)
@@ -1186,6 +1274,7 @@ func end_player_turn() -> void:
 	overwatch_button.disabled = true
 	burst_button.disabled = true
 	auto_button.disabled = true
+	suppress_button.disabled = true
 	reload_button.disabled = true
 	face_button.disabled = true
 	danger_button.disabled = true
@@ -1211,6 +1300,7 @@ func end_player_turn() -> void:
 	overwatch_button.disabled = false
 	burst_button.disabled = false
 	auto_button.disabled = false
+	suppress_button.disabled = false
 	reload_button.disabled = false
 	face_button.disabled = false
 	danger_button.disabled = false

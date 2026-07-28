@@ -535,6 +535,12 @@ func can_full_auto() -> bool:
 	return kind == Kind.MACHINEGUNNER
 
 
+## Suppressive fire is the gunner's ability alone - nobody else carries the
+## volume of ammunition to keep heads down.
+func can_suppress() -> bool:
+	return kind == Kind.MACHINEGUNNER
+
+
 func display_name() -> String:
 	match kind:
 		Kind.TEAM_LEAD:
