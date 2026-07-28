@@ -98,8 +98,12 @@ var _structure_cells: Dictionary = {}     # Vector2i -> true
 # Per-cell render info ({region, flip, shade}) built by set_level.
 var tile_cache: Array = []
 
-# cell -> came_from cell, for cells the selected unit can move to.
+# cell -> came_from cell, for every cell the selected unit can route
+# THROUGH. Paths are reconstructed from this.
 var move_cells: Dictionary = {}
+# The subset of those it could actually stop on - drawn and clickable.
+# Squadmates can be walked past but not stood on, so these differ.
+var move_dests: Dictionary = {}
 # Cells containing enemies the selected unit can shoot.
 var attack_cells: Array[Vector2i] = []
 # Hover feedback state, pushed in by Battle.
@@ -116,8 +120,10 @@ var watch_cells: Dictionary = {}
 var danger_cells: Dictionary = {}
 
 
-func set_highlights(moves: Dictionary, attacks: Array[Vector2i]) -> void:
+func set_highlights(moves: Dictionary, dests: Dictionary,
+		attacks: Array[Vector2i]) -> void:
 	move_cells = moves
+	move_dests = dests
 	attack_cells = attacks
 	queue_redraw()
 
@@ -157,7 +163,7 @@ func clear_highlights() -> void:
 	aim_from = NO_CELL
 	aim_covered = false
 	aim_flanking = false
-	set_highlights({}, [])
+	set_highlights({}, {}, [])
 
 
 ## Load a level definition: cell kinds from the map chars plus structure
@@ -428,7 +434,7 @@ func _draw() -> void:
 		var hatch := WATCH_HATCH if hostile else WATCH_HATCH_ALLY
 		for f in [0.3, 0.6]:
 			draw_line(w[3].lerp(w[0], f), w[2].lerp(w[1], f), hatch, 1.0, true)
-	for cell: Vector2i in move_cells:
+	for cell: Vector2i in move_dests:
 		draw_colored_polygon(_diamond(cell), MOVE_HL)
 	var attack_color := ATTACK_HL
 	if fire_mode == 1:

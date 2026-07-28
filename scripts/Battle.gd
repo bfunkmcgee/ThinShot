@@ -420,8 +420,22 @@ func unit_at(cell: Vector2i) -> Unit:
 	return null
 
 
-func _cell_blocked(cell: Vector2i) -> bool:
-	return unit_at(cell) != null
+## Movement blocker for a given team: only enemies stop you. Soldiers
+## squeeze past their own squadmates, which matters on maps built around
+## one-tile gates. Ending a move on an occupied tile is still illegal -
+## that is enforced separately, on the destination rather than the path.
+func _blocked_for_team(cell: Vector2i, team: int) -> bool:
+	var other := unit_at(cell)
+	return other != null and other.team != team
+
+
+## Of the cells a unit can reach, the ones it could actually stand on.
+func _free_dests(reachable: Dictionary) -> Dictionary:
+	var dests := {}
+	for cell: Vector2i in reachable:
+		if unit_at(cell) == null:
+			dests[cell] = true
+	return dests
 
 
 # --- Player input ------------------------------------------------------------
@@ -496,7 +510,7 @@ func _handle_click(cell: Vector2i) -> void:
 				and board.attack_cells.has(cell):
 			_fire_selected_at(clicked)
 			return
-		if board.move_cells.has(cell):
+		if board.move_dests.has(cell):
 			do_move(selected, cell)
 			return
 	# Spent scouts stay selectable: turning to face is always available.
@@ -862,7 +876,8 @@ func _refresh_highlights() -> void:
 		return
 	var moves := {}
 	if not selected.moved:
-		moves = board.flood_fill(selected.cell, selected.move_range, _cell_blocked)
+		moves = board.flood_fill(selected.cell, selected.move_range,
+				_blocked_for_team.bind(selected.team))
 	var attacks: Array[Vector2i] = []
 	if not selected.acted and selected.has_ammo():
 		for enemy in living_units(Unit.TEAM_GOBLIN):
@@ -871,7 +886,7 @@ func _refresh_highlights() -> void:
 				attacks.append(enemy.cell)
 	# Even with no moves or targets, the unit stays selected: overwatch (W)
 	# is always a legal order for a unit that has not attacked.
-	board.set_highlights(moves, attacks)
+	board.set_highlights(moves, _free_dests(moves), attacks)
 	_update_hover(board.global_to_cell(get_global_mouse_position()))
 
 
@@ -900,7 +915,7 @@ func _update_hover(cell: Vector2i) -> void:
 	var aim_covered := false
 	var aim_flanking := false
 	if selected != null and cell != Board.NO_CELL:
-		if board.move_cells.has(cell):
+		if board.move_dests.has(cell):
 			path = board.reconstruct_path(board.move_cells, cell)
 		elif board.attack_cells.has(cell):
 			var target := unit_at(cell)
@@ -918,8 +933,9 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 	var prev_state := state
 	state = State.ANIMATING
 	board.clear_highlights()
-	var came_from := board.flood_fill(unit.cell, unit.move_range, _cell_blocked)
-	if not came_from.has(dest):
+	var came_from := board.flood_fill(unit.cell, unit.move_range,
+			_blocked_for_team.bind(unit.team))
+	if not came_from.has(dest) or unit_at(dest) != null:
 		state = prev_state
 		return
 	var path := board.reconstruct_path(came_from, dest)
@@ -1186,22 +1202,17 @@ func do_volley(attacker: Unit, target: Unit, rounds: int, gap: float,
 
 # --- Danger overlay ----------------------------------------------------------
 
-## Blocker for danger projection: only scouts block a goblin's projected
-## reach. Goblins move sequentially on their turn and can vacate cells for
-## each other, so counting them as blockers would under-warn (cells marked
-## safe that a goblin can provably reach). Over-warning is the safe error.
-func _cell_blocked_for_danger(cell: Vector2i) -> bool:
-	var unit := unit_at(cell)
-	return unit != null and unit.team == Unit.TEAM_SCOUT
-
-
 ## Every tile some living goblin could shoot next turn: reachable move cells
 ## (plus standing still) expanded by attack range with line of sight.
+## Projected with the same rule the goblins actually move under, so the
+## overlay cannot promise safety that the enemy turn then breaks. Occupied
+## cells are left in as firing origins on purpose - goblins act one at a
+## time and vacate them for each other, so over-warning is the safe error.
 func _compute_danger_cells() -> Dictionary:
 	var danger := {}
 	for goblin in living_units(Unit.TEAM_GOBLIN):
-		var origins: Array = board.flood_fill(
-				goblin.cell, goblin.move_range, _cell_blocked_for_danger).keys()
+		var origins: Array = board.flood_fill(goblin.cell, goblin.move_range,
+				_blocked_for_team.bind(goblin.team)).keys()
 		origins.append(goblin.cell)
 		var r := goblin.attack_range
 		for origin: Vector2i in origins:
@@ -1335,7 +1346,8 @@ func run_enemy_turn() -> void:
 			await do_attack(goblin, _nearest(goblin.cell, shootable))
 		else:
 			var target := _nearest(goblin.cell, scouts)
-			var reach := board.flood_fill(goblin.cell, goblin.move_range, _cell_blocked)
+			var reach := board.flood_fill(goblin.cell, goblin.move_range,
+					_blocked_for_team.bind(goblin.team))
 			var dest := _best_ai_dest(goblin, reach, scouts, target.cell)
 			var moved_now := board.in_bounds(dest) and dest != goblin.cell
 			if moved_now:
@@ -1400,8 +1412,10 @@ func _exposure_at(cell: Vector2i, scouts: Array[Unit]) -> int:
 func _best_ai_dest(goblin: Unit, reach: Dictionary, scouts: Array[Unit],
 		chase_cell: Vector2i) -> Vector2i:
 	var exposure_weight := 25 if goblin.hp <= 2 else 2
-	var candidates: Array = reach.keys()
-	candidates.append(goblin.cell)  # staying put is a valid choice
+	# Reachable cells include squadmates' tiles, which can be crossed but
+	# not occupied; standing still is always an option.
+	var candidates: Array = _free_dests(reach).keys()
+	candidates.append(goblin.cell)
 	var best := Vector2i(-1, -1)
 	var best_score := 999999
 	for cell: Vector2i in candidates:
@@ -1440,7 +1454,8 @@ func _best_ai_dest(goblin: Unit, reach: Dictionary, scouts: Array[Unit],
 func _best_watch_sector(goblin: Unit, scouts: Array[Unit]) -> int:
 	var approach := {}
 	for scout in scouts:
-		approach.merge(board.flood_fill(scout.cell, scout.move_range, _cell_blocked))
+		approach.merge(board.flood_fill(scout.cell, scout.move_range,
+				_blocked_for_team.bind(scout.team)))
 		approach[scout.cell] = true
 	var best_sector := goblin.facing_sector
 	var best_count := -1
