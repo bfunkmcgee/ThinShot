@@ -10,6 +10,10 @@ extends Node2D
 
 enum Shape { PIXEL, STREAK, RING }
 
+## What a landed particle leaves behind: a soaked-in blob (blood, craters)
+## or a piece of brass lying where it fell.
+enum MarkKind { BLOB, CASING }
+
 # Ground marks are squashed to the tile's 2:1 isometric ratio so they read
 # as lying flat on the sand rather than facing the camera.
 const GROUND_SQUASH := 0.469
@@ -18,7 +22,7 @@ const MAX_PARTICLES := 256
 # Ground marks are permanent for the battle. Misses are common enough that
 # a long firefight leaves a lot of them, so the cap is generous - they are
 # only draw_circle calls in a _draw that reruns while particles are alive.
-const MAX_MARKS := 160
+const MAX_MARKS := 240
 
 # Palette sampled from the actual desert art.
 const SAND_MID := Color("e9b569")
@@ -40,6 +44,8 @@ const HOLE_RIM := Color(0.90, 0.80, 0.60, 0.26)
 # Rounds clipping scrap chew rust rather than sand.
 const HOLE_CORE_RUST := Color(0.16, 0.08, 0.04, 0.66)
 const HOLE_RIM_RUST := Color(0.62, 0.38, 0.22, 0.30)
+const CASING_BRASS := Color("d8b256")
+const CASING_SPENT := Color(0.62, 0.47, 0.20, 0.85)
 
 var _p: Array = []
 var _marks: Array = []
@@ -120,11 +126,19 @@ func _process(delta: float) -> void:
 		d.pos += d.vel * delta
 		if d.floor_y != 0.0 and d.pos.y >= d.floor_y:
 			d.pos.y = d.floor_y
-			d.vel = Vector2.ZERO
-			if d.mark > 0.0:
-				# A droplet that lands becomes a permanent splat.
-				_add_mark(d.pos, d.mark, Color(d.col, 0.42))
-				continue
+			if d.bounces > 0:
+				# Brass tumbles once before it settles.
+				d.bounces -= 1
+				d.vel = Vector2(d.vel.x * 0.55, -absf(d.vel.y) * 0.36)
+			else:
+				d.vel = Vector2.ZERO
+				if d.mark > 0.0:
+					# What lands stays: a splat, or a piece of spent brass.
+					if d.mark_kind == MarkKind.CASING:
+						_add_casing_mark(d.pos)
+					else:
+						_add_mark(d.pos, d.mark, Color(d.col, 0.42))
+					continue
 		_p[live] = d
 		live += 1
 	_p.resize(live)
@@ -135,6 +149,18 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	for m: Dictionary in _marks:
+		if m.kind == MarkKind.CASING:
+			# Endpoints are squashed directly rather than via a transform,
+			# so the case lies on the ground plane at its resting angle.
+			var ang: float = m.angle
+			var half_len: float = m.size
+			var brass: Color = m.col
+			var at: Vector2 = m.pos
+			var half := Vector2(cos(ang), sin(ang) * GROUND_SQUASH) * half_len
+			draw_line(at - half, at + half, brass, 2.0)
+			draw_line(at + half * 0.55, at + half,
+					Color(brass, brass.a * 0.55), 2.0)
+			continue
 		draw_set_transform(m.pos, 0.0, Vector2(1.0, GROUND_SQUASH))
 		var rim: Color = m.rim
 		if rim.a > 0.0:
@@ -158,13 +184,14 @@ func _draw() -> void:
 
 func _add(pos: Vector2, vel: Vector2, life: float, size: float, size_end: float,
 		col: Color, shape: Shape, grav := 0.0, drag := 0.0, floor_y := 0.0,
-		mark := 0.0) -> void:
+		mark := 0.0, mark_kind := MarkKind.BLOB, bounces := 0) -> void:
 	if _p.size() >= MAX_PARTICLES:
 		_p.pop_front()
 	_p.append({
 		"pos": pos, "vel": vel, "grav": grav, "drag": drag,
 		"age": 0.0, "life": life, "size": size, "size_end": size_end,
 		"col": col, "shape": shape, "floor_y": floor_y, "mark": mark,
+		"mark_kind": mark_kind, "bounces": bounces,
 	})
 	set_process(true)
 
@@ -176,6 +203,22 @@ func _add_mark(pos: Vector2, size: float, col: Color,
 	_marks.append({
 		"pos": pos, "size": size, "col": col,
 		"rim": rim, "rim_size": rim_size,
+		"kind": MarkKind.BLOB, "angle": 0.0,
+	})
+	queue_redraw()
+
+
+## A spent case lying on the sand, at whatever angle it came to rest.
+func _add_casing_mark(pos: Vector2) -> void:
+	if _marks.size() >= MAX_MARKS:
+		_marks.pop_front()
+	_marks.append({
+		"pos": pos,
+		"size": _rng.randf_range(3.0, 4.0),
+		"col": CASING_SPENT if _rng.randf() < 0.5 else CASING_BRASS,
+		"rim": Color(0, 0, 0, 0), "rim_size": 0.0,
+		"kind": MarkKind.CASING,
+		"angle": _rng.randf_range(0.0, PI),
 	})
 	queue_redraw()
 
@@ -320,12 +363,14 @@ func death_puff(pos: Vector2) -> void:
 				Shape.PIXEL, 90.0, 1.8)
 
 
-## Ejected shell casing that bounces once and settles on the sand.
+## Ejected shell casing: flicked clear of the weapon, tumbles once off the
+## ground, then stays there for the rest of the battle.
 func casing(pos: Vector2, dir: Vector2) -> void:
 	var side := dir.orthogonal().normalized()
-	_add(pos, side * _rng.randf_range(50, 90) + Vector2(0, -60),
-			4.0, 3.0, 3.0, Color("d6b593"), Shape.PIXEL, 700.0, 0.0,
-			pos.y + _rng.randf_range(28, 40))
+	_add(pos, side * _rng.randf_range(55, 105) + Vector2(0, -_rng.randf_range(55, 85)),
+			3.0, 3.0, 3.0, CASING_BRASS, Shape.PIXEL, 760.0, 0.0,
+			pos.y + _rng.randf_range(30, 44),
+			1.0, MarkKind.CASING, 1)
 
 
 ## Permanent pool left where a unit fell.
