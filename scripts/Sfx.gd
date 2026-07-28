@@ -19,24 +19,28 @@ const STREAMS := {
 	"lose": preload("res://assets/audio/lose.wav"),
 }
 
-# Per-sound mix so call sites stay one-liners.
+# Per-sound mix so call sites stay one-liners. The sustained stings carry
+# roughly twice the RMS of the impacts, so they sit a good deal lower here
+# to land at a comparable loudness.
 const BASE_DB := {
-	"shot": -4.0,
+	"shot": -3.0,
 	"hit_impact": -3.0,
-	"unit_death": -3.0,
-	"select": -9.0,
-	"footstep_1": -14.0,
-	"footstep_2": -14.0,
-	"overwatch_set": -6.0,
-	"reload": -8.0,
-	"miss": -7.0,
-	"turn_player": -5.0,
-	"turn_enemy": -5.0,
-	"win": 0.0,
-	"lose": 0.0,
+	"unit_death": -6.0,
+	"select": -11.0,
+	"footstep_1": -15.0,
+	"footstep_2": -15.0,
+	"overwatch_set": -8.0,
+	"reload": -9.0,
+	"miss": -8.0,
+	"turn_player": -9.0,
+	"turn_enemy": -8.0,
+	"win": -5.0,
+	"lose": -5.0,
 }
 
-const POOL_SIZE := 8
+# Tails run long now (a rifle report rings for half a second), so a full-auto
+# burst can have a dozen voices alive at once.
+const POOL_SIZE := 14
 const PITCH_VAR := 0.06
 
 var _players: Array[AudioStreamPlayer] = []

@@ -1,8 +1,13 @@
 extends SceneTree
 
-## Generates ThinShot's placeholder retro SFX as 16-bit PCM mono 44.1kHz WAVs.
+## Generates ThinShot's SFX as 16-bit PCM mono 44.1kHz WAVs.
 ## Run: godot --headless -s tools/gen_sfx.gd
-## Deterministic: noise uses a fixed-seed LCG, so output bytes are reproducible.
+##
+## Design brief: visceral and dark. Every impact is layered as transient +
+## body + tail rather than a single burst, weight comes from saturated sub
+## content, and the musical stings use low minor and tritone intervals - no
+## bright arpeggios. Deterministic: noise runs off a fixed-seed LCG, so the
+## committed WAVs are byte-reproducible.
 
 const RATE := 44100
 const OUT_DIR := "res://assets/audio"
@@ -15,16 +20,128 @@ func _noise() -> float:
 	return float(_lcg) / float(0x40000000) - 1.0
 
 
+## Soft clip. Adds odd harmonics and glues layers into one body.
+static func _sat(x: float, drive: float) -> float:
+	var y := x * drive
+	return y / (1.0 + absf(y))
+
+
 static func _env(t: float, dur: float, k: float) -> float:
 	return exp(-k * t / dur)
 
 
+static func _blank(dur: float) -> PackedFloat32Array:
+	var b := PackedFloat32Array()
+	b.resize(int(dur * RATE))
+	return b
+
+
+static func _mix_into(dst: PackedFloat32Array, src: PackedFloat32Array,
+		gain: float, offset := 0) -> void:
+	var need := offset + src.size()
+	if dst.size() < need:
+		dst.resize(need)
+	for i in src.size():
+		dst[offset + i] += src[i] * gain
+
+
+## Exponential pitch sweep. Sine for weight, square for grit.
+func _sweep(dur: float, f0: float, f1: float, k: float, square := false,
+		attack := 0.002) -> PackedFloat32Array:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var phase := 0.0
+	for i in n:
+		var t := float(i) / RATE
+		var f: float = f0 * pow(f1 / f0, t / dur)
+		phase += f / RATE
+		var v := sin(TAU * phase)
+		if square:
+			v = 1.0 if fmod(phase, 1.0) < 0.5 else -1.0
+		out[i] = v * minf(t / attack, 1.0) * _env(t, dur, k)
+	return out
+
+
+## Two detuned sines. The beating between them is what reads as dread.
+func _detuned(dur: float, f0: float, f1: float, detune: float, k: float,
+		attack := 0.01) -> PackedFloat32Array:
+	var a := _sweep(dur, f0, f1, k, false, attack)
+	var b := _sweep(dur, f0 * detune, f1 * detune, k, false, attack)
+	var out := PackedFloat32Array()
+	out.resize(a.size())
+	for i in a.size():
+		out[i] = (a[i] + b[i]) * 0.5
+	return out
+
+
+## State-variable filtered noise with a swept cutoff. mode: low/band/high.
+func _fnoise(dur: float, k: float, fc0: float, fc1: float, q: float,
+		mode := "low", attack := 0.001) -> PackedFloat32Array:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var low := 0.0
+	var band := 0.0
+	var damp: float = clampf(1.0 / maxf(q, 0.5), 0.0, 1.9)
+	for i in n:
+		var t := float(i) / RATE
+		var fc: float = fc0 * pow(fc1 / fc0, t / dur)
+		var f: float = clampf(2.0 * sin(PI * minf(fc, RATE * 0.45) / RATE), 0.0, 1.0)
+		var high := _noise() - low - damp * band
+		band += f * high
+		low += f * band
+		var v := low
+		if mode == "band":
+			v = band
+		elif mode == "high":
+			v = high
+		out[i] = v * minf(t / attack, 1.0) * _env(t, dur, k)
+	return out
+
+
+static func _comb(src: PackedFloat32Array, d: int, fb: float,
+		length: int) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	out.resize(length)
+	for i in length:
+		var v: float = src[i] if i < src.size() else 0.0
+		if i >= d:
+			v += out[i - d] * fb
+		out[i] = v
+	return out
+
+
+## Cheap room. Three combs at coprime delays, so the tail does not ring
+## metallically - it just gives the sound somewhere to die.
+static func _room(dry: PackedFloat32Array, tail: float, mix: float) -> PackedFloat32Array:
+	var length := dry.size() + int(tail * RATE)
+	var out := PackedFloat32Array()
+	out.resize(length)
+	for i in dry.size():
+		out[i] = dry[i]
+	var delays := [1103, 1571, 2069]
+	var fbs := [0.80, 0.76, 0.71]
+	for idx in delays.size():
+		var wet := _comb(dry, delays[idx], fbs[idx], length)
+		for i in length:
+			out[i] += wet[i] * mix
+	return out
+
+
+static func _drive(buf: PackedFloat32Array, amount: float) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	out.resize(buf.size())
+	for i in buf.size():
+		out[i] = _sat(buf[i], amount)
+	return out
+
+
 func _write_wav(path: String, samples: PackedFloat32Array) -> void:
-	# Normalize to 0.7 peak.
 	var peak := 0.0001
 	for s in samples:
 		peak = maxf(peak, absf(s))
-	var gain := 0.7 / peak
+	var gain := 0.82 / peak
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	var n := samples.size()
 	f.store_buffer("RIFF".to_ascii_buffer())
@@ -42,151 +159,142 @@ func _write_wav(path: String, samples: PackedFloat32Array) -> void:
 	f.store_32(n * 2)
 	for s in samples:
 		f.store_16(int(clampf(s * gain, -1.0, 1.0) * 32767.0) & 0xFFFF)
-	print("wrote %s (%d samples)" % [path, n])
-
-
-## Square-wave tone burst with exponential decay, appended to buf.
-func _tone(buf: PackedFloat32Array, freq: float, dur: float, k: float,
-		vibrato := 0.0) -> void:
-	var n := int(dur * RATE)
-	var phase := 0.0
-	for i in n:
-		var t := float(i) / RATE
-		var f := freq * (1.0 + vibrato * sin(TAU * 6.0 * t))
-		phase += f / RATE
-		var v := 1.0 if fmod(phase, 1.0) < 0.5 else -1.0
-		buf.append(v * _env(t, dur, k))
-
-
-## Square sweep from f0 to f1 over dur.
-func _sweep(buf: PackedFloat32Array, f0: float, f1: float, dur: float, k: float,
-		vibrato := 0.0) -> void:
-	var n := int(dur * RATE)
-	var phase := 0.0
-	for i in n:
-		var t := float(i) / RATE
-		var f := lerpf(f0, f1, t / dur) * (1.0 + vibrato * sin(TAU * 6.0 * t))
-		phase += f / RATE
-		var v := 1.0 if fmod(phase, 1.0) < 0.5 else -1.0
-		buf.append(v * _env(t, dur, k))
-
-
-## Low-passed noise burst (simple one-pole filter).
-func _noise_burst(buf: PackedFloat32Array, dur: float, k: float,
-		cutoff: float, attack := 0.001) -> void:
-	var n := int(dur * RATE)
-	var alpha := clampf(TAU * cutoff / RATE, 0.0, 1.0)
-	var lp := 0.0
-	for i in n:
-		var t := float(i) / RATE
-		lp += alpha * (_noise() - lp)
-		var a := minf(t / attack, 1.0)
-		buf.append(lp * a * _env(t, dur, k))
-
-
-static func _mix(a: PackedFloat32Array, b: PackedFloat32Array,
-		wa: float, wb: float) -> PackedFloat32Array:
-	var out := PackedFloat32Array()
-	var n := maxi(a.size(), b.size())
-	out.resize(n)
-	for i in n:
-		var va := a[i] if i < a.size() else 0.0
-		var vb := b[i] if i < b.size() else 0.0
-		out[i] = va * wa + vb * wb
-	return out
+	print("wrote %s (%.2fs)" % [path, float(n) / RATE])
 
 
 func _init() -> void:
 	DirAccess.make_dir_recursive_absolute(OUT_DIR)
-
-	_lcg = 7
-	var noise_part := PackedFloat32Array()
-	_noise_burst(noise_part, 0.14, 7.0, 6000.0)
-	var thump := PackedFloat32Array()
-	_sweep(thump, 220.0, 60.0, 0.14, 5.0)
-	_write_wav(OUT_DIR + "/shot.wav", _mix(noise_part, thump, 0.6, 0.4))
-
-	_lcg = 11
-	var crack := PackedFloat32Array()
-	_noise_burst(crack, 0.12, 10.0, 5000.0)
-	var thud := PackedFloat32Array()
-	_tone(thud, 150.0, 0.12, 6.0)
-	_write_wav(OUT_DIR + "/hit_impact.wav", _mix(crack, thud, 0.55, 0.45))
-
-	_lcg = 13
-	var death := PackedFloat32Array()
-	_sweep(death, 440.0, 80.0, 0.45, 4.0, 0.04)
-	var tail := PackedFloat32Array()
-	tail.resize(int(0.30 * RATE))
-	_noise_burst(tail, 0.15, 5.0, 900.0)
-	_write_wav(OUT_DIR + "/unit_death.wav", _mix(death, tail, 0.8, 0.2))
-
-	var sel := PackedFloat32Array()
-	_tone(sel, 880.0, 0.08, 8.0)
-	_write_wav(OUT_DIR + "/select.wav", sel)
-
-	_lcg = 17
-	var step1 := PackedFloat32Array()
-	_noise_burst(step1, 0.06, 9.0, 1200.0)
-	_write_wav(OUT_DIR + "/footstep_1.wav", step1)
-
-	_lcg = 19
-	var step2 := PackedFloat32Array()
-	_noise_burst(step2, 0.054, 9.0, 900.0)
-	_write_wav(OUT_DIR + "/footstep_2.wav", step2)
-
-	var ow := PackedFloat32Array()
-	_tone(ow, 523.25, 0.09, 5.0)
-	_tone(ow, 783.99, 0.11, 5.0)
-	_write_wav(OUT_DIR + "/overwatch_set.wav", ow)
-
-	var tp := PackedFloat32Array()
-	for freq in [261.63, 329.63, 392.0]:
-		_tone(tp, freq, 0.11, 4.0)
-	_write_wav(OUT_DIR + "/turn_player.wav", tp)
-
-	var te := PackedFloat32Array()
-	for freq in [196.0, 155.56, 130.81]:
-		_tone(te, freq, 0.11, 4.0)
-	_write_wav(OUT_DIR + "/turn_enemy.wav", te)
-
-	var win := PackedFloat32Array()
-	for freq in [261.63, 329.63, 392.0, 523.25]:
-		_tone(win, freq, 0.12, 5.0)
-	var chord := PackedFloat32Array()
-	for freq in [261.63, 329.63, 392.0, 523.25]:
-		var note := PackedFloat32Array()
-		_tone(note, freq, 0.42, 3.0)
-		chord = _mix(chord, note, 1.0, 0.3)
-	win.append_array(chord)
-	_write_wav(OUT_DIR + "/win.wav", win)
-
-	var lose := PackedFloat32Array()
-	for freq in [164.81, 130.81, 110.0, 87.31]:
-		_tone(lose, freq, 0.2, 3.0)
-	_write_wav(OUT_DIR + "/lose.wav", lose)
-
-	# Round cracking past: a fast descending whistle with a noise edge.
-	_lcg = 29
-	var whiz := PackedFloat32Array()
-	_sweep(whiz, 1800.0, 420.0, 0.16, 6.0)
-	var air := PackedFloat32Array()
-	_noise_burst(air, 0.16, 5.0, 3200.0)
-	_write_wav(OUT_DIR + "/miss.wav", _mix(whiz, air, 0.45, 0.55))
-
-	# Magazine out, magazine in, bolt released.
-	_lcg = 23
-	var reload := PackedFloat32Array()
-	_noise_burst(reload, 0.05, 12.0, 3000.0)
-	for i in int(0.06 * RATE):
-		reload.append(0.0)
-	_noise_burst(reload, 0.05, 12.0, 2200.0)
-	var thunk := PackedFloat32Array()
-	_tone(thunk, 110.0, 0.10, 7.0)
-	var head := reload.size()
-	reload.resize(head + thunk.size())
-	for i in thunk.size():
-		reload[head + i] = thunk[i] * 0.8
-	_write_wav(OUT_DIR + "/reload.wav", reload)
-
+	_shot()
+	_hit_impact()
+	_unit_death()
+	_select()
+	_footsteps()
+	_overwatch_set()
+	_turn_stings()
+	_win_lose()
+	_reload()
+	_miss()
 	quit()
+
+
+## Rifle report: snap, gut-punch body, and a report rolling away over sand.
+func _shot() -> void:
+	_lcg = 7
+	var buf := _blank(0.5)
+	_mix_into(buf, _fnoise(0.008, 40.0, 7000.0, 3000.0, 1.0, "high"), 0.9)
+	_mix_into(buf, _fnoise(0.13, 16.0, 2600.0, 700.0, 1.6, "band"), 0.8)
+	_mix_into(buf, _sweep(0.24, 190.0, 46.0, 9.0), 1.0)
+	_mix_into(buf, _sweep(0.10, 520.0, 120.0, 22.0, true), 0.35)
+	_mix_into(buf, _fnoise(0.45, 6.0, 900.0, 180.0, 0.8), 0.3)
+	_write_wav(OUT_DIR + "/shot.wav", _room(_drive(buf, 1.9), 0.14, 0.10))
+
+
+## Round meeting a body: crack, wet thump, low squelch under it.
+func _hit_impact() -> void:
+	_lcg = 11
+	var buf := _blank(0.34)
+	_mix_into(buf, _fnoise(0.006, 50.0, 6000.0, 2500.0, 1.0, "high"), 0.7)
+	_mix_into(buf, _sweep(0.19, 135.0, 62.0, 11.0), 1.0)
+	_mix_into(buf, _fnoise(0.2, 13.0, 2400.0, 320.0, 1.2, "low"), 0.65)
+	_write_wav(OUT_DIR + "/hit_impact.wav", _room(_drive(buf, 2.2), 0.1, 0.08))
+
+
+## A body going down: detuned groan collapsing into a sub drop.
+func _unit_death() -> void:
+	_lcg = 13
+	var buf := _blank(1.05)
+	_mix_into(buf, _detuned(0.75, 300.0, 62.0, 1.021, 3.4), 0.85)
+	_mix_into(buf, _sweep(0.95, 95.0, 28.0, 2.4), 1.0)
+	_mix_into(buf, _fnoise(0.7, 4.5, 1400.0, 190.0, 0.9), 0.5)
+	_mix_into(buf, _fnoise(0.05, 30.0, 3000.0, 800.0, 1.4, "band"), 0.4)
+	_write_wav(OUT_DIR + "/unit_death.wav", _room(_drive(buf, 1.7), 0.35, 0.2))
+
+
+## Muted tactical acknowledgement - a stock tap, not a chime.
+func _select() -> void:
+	_lcg = 3
+	var buf := _blank(0.09)
+	_mix_into(buf, _sweep(0.055, 320.0, 190.0, 26.0, true), 0.7)
+	_mix_into(buf, _fnoise(0.02, 30.0, 2200.0, 900.0, 1.5, "band"), 0.5)
+	_write_wav(OUT_DIR + "/select.wav", _drive(buf, 1.5))
+
+
+## Boots into grit: a low thud with dry sand over the top.
+func _footsteps() -> void:
+	for variant in 2:
+		_lcg = 17 + variant * 6
+		var buf := _blank(0.12)
+		_mix_into(buf, _sweep(0.07, 105.0 - variant * 14.0, 48.0, 20.0), 0.9)
+		_mix_into(buf, _fnoise(0.075, 17.0, 1500.0 - variant * 400.0, 300.0, 0.9), 0.55)
+		_write_wav(OUT_DIR + "/footstep_%d.wav" % (variant + 1), _drive(buf, 1.4))
+
+
+## Weapon settling into the shoulder: metal seating, then a low held tone.
+func _overwatch_set() -> void:
+	_lcg = 23
+	var buf := _blank(0.42)
+	_mix_into(buf, _fnoise(0.05, 22.0, 3400.0, 1800.0, 7.0, "band"), 0.8)
+	_mix_into(buf, _sweep(0.3, 174.6, 164.8, 5.0), 0.9, int(0.05 * RATE))
+	_mix_into(buf, _sweep(0.3, 87.3, 82.4, 4.0), 0.7, int(0.05 * RATE))
+	_write_wav(OUT_DIR + "/overwatch_set.wav", _room(_drive(buf, 1.6), 0.16, 0.14))
+
+
+## Turn stings. Ours is a low minor triad that swells and settles; theirs is
+## a tritone - the oldest dissonance there is - crawling upward.
+func _turn_stings() -> void:
+	_lcg = 31
+	var player := _blank(1.0)
+	for freq in [110.0, 130.81, 164.81]:
+		_mix_into(player, _sweep(0.85, freq, freq * 0.995, 2.6, false, 0.09), 0.6)
+	_mix_into(player, _sweep(0.5, 62.0, 55.0, 3.0), 0.8)
+	_write_wav(OUT_DIR + "/turn_player.wav", _room(_drive(player, 1.5), 0.3, 0.18))
+
+	_lcg = 37
+	var enemy := _blank(1.0)
+	_mix_into(enemy, _detuned(0.9, 103.8, 110.0, 1.006, 2.2, 0.14), 0.9)
+	_mix_into(enemy, _sweep(0.9, 146.8, 155.6, 2.0, false, 0.18), 0.65)
+	_mix_into(enemy, _fnoise(0.85, 2.0, 300.0, 900.0, 1.1), 0.35)
+	_write_wav(OUT_DIR + "/turn_enemy.wav", _room(_drive(enemy, 1.8), 0.35, 0.24))
+
+
+## Endings. Victory is grim rather than triumphant - an open fifth over a
+## drum hit. Defeat is a sub collapsing under a beating minor second.
+func _win_lose() -> void:
+	_lcg = 41
+	var win := _blank(1.5)
+	_mix_into(win, _sweep(0.3, 150.0, 52.0, 7.0), 1.0)
+	for freq in [110.0, 164.81, 220.0]:
+		_mix_into(win, _sweep(1.15, freq, freq, 1.9, false, 0.16), 0.55,
+				int(0.12 * RATE))
+	_write_wav(OUT_DIR + "/win.wav", _room(_drive(win, 1.6), 0.45, 0.26))
+
+	_lcg = 43
+	var lose := _blank(1.6)
+	_mix_into(lose, _sweep(1.3, 124.0, 27.0, 2.0, false, 0.05), 1.0)
+	_mix_into(lose, _detuned(1.25, 110.0, 104.0, 1.045, 2.2, 0.1), 0.7)
+	_mix_into(lose, _fnoise(1.2, 2.6, 800.0, 120.0, 0.8), 0.4)
+	_write_wav(OUT_DIR + "/lose.wav", _room(_drive(lose, 1.7), 0.5, 0.3))
+
+
+## Magazine out, magazine in, bolt released - heavy, mechanical.
+func _reload() -> void:
+	_lcg = 29
+	var buf := _blank(0.55)
+	_mix_into(buf, _fnoise(0.045, 26.0, 3600.0, 1500.0, 6.0, "band"), 0.75)
+	_mix_into(buf, _fnoise(0.05, 22.0, 2800.0, 1100.0, 5.0, "band"), 0.8,
+			int(0.14 * RATE))
+	_mix_into(buf, _sweep(0.16, 150.0, 58.0, 12.0), 0.9, int(0.14 * RATE))
+	_mix_into(buf, _fnoise(0.04, 30.0, 4200.0, 2000.0, 8.0, "band"), 0.7,
+			int(0.3 * RATE))
+	_mix_into(buf, _sweep(0.13, 120.0, 52.0, 14.0), 0.7, int(0.3 * RATE))
+	_write_wav(OUT_DIR + "/reload.wav", _room(_drive(buf, 1.7), 0.12, 0.1))
+
+
+## A round cracking past your ear and away downrange.
+func _miss() -> void:
+	_lcg = 47
+	var buf := _blank(0.4)
+	_mix_into(buf, _fnoise(0.02, 34.0, 6000.0, 3000.0, 2.0, "high"), 0.6)
+	_mix_into(buf, _fnoise(0.3, 7.0, 3600.0, 420.0, 5.0, "band"), 1.0)
+	_mix_into(buf, _sweep(0.16, 260.0, 70.0, 11.0), 0.35)
+	_write_wav(OUT_DIR + "/miss.wav", _room(_drive(buf, 1.6), 0.18, 0.14))
