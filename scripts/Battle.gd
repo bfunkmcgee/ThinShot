@@ -173,6 +173,8 @@ func _ready() -> void:
 		_spawn_unit(Unit.Kind.SCOUT, spawn)
 	for spawn: Vector2i in level.goblin_spawns:
 		_spawn_unit(Unit.Kind.GOBLIN, spawn)
+	for spawn: Vector2i in level.get("smg_spawns", []):
+		_spawn_unit(Unit.Kind.GOBLIN_SMG, spawn)
 	end_turn_button.pressed.connect(end_player_turn)
 	overwatch_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.OVERWATCH))
 	face_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.FACE))
@@ -261,7 +263,8 @@ func _board_world_rect() -> Rect2:
 
 func _validate_spawns() -> void:
 	for spawn: Vector2i in level.scout_spawns + level.get("lead_spawns", []) \
-			+ level.get("gunner_spawns", []) + level.goblin_spawns:
+			+ level.get("gunner_spawns", []) + level.goblin_spawns \
+			+ level.get("smg_spawns", []):
 		if not board.in_bounds(spawn) or not board.is_walkable(spawn):
 			push_error("Bad spawn cell (blocked or out of bounds): %s" % spawn)
 			assert(false, "Bad spawn cell: %s" % spawn)
@@ -1350,7 +1353,7 @@ func run_enemy_turn() -> void:
 		var shootable := _shootable_from(goblin.cell, goblin.attack_range, scouts)
 		if not shootable.is_empty():
 			print("[ThinShot]   goblin %d/%d shoots from %s" % [acted, squad.size(), from_cell])
-			await do_attack(goblin, _nearest(goblin.cell, shootable))
+			await _ai_fire(goblin, _nearest(goblin.cell, shootable))
 		else:
 			var target := _nearest(goblin.cell, scouts)
 			var reach := board.flood_fill(goblin.cell, goblin.move_range,
@@ -1365,7 +1368,7 @@ func run_enemy_turn() -> void:
 					acted, squad.size(), from_cell, goblin.cell,
 					", shoots" if shoots else ""])
 			if shoots:
-				await do_attack(goblin, _nearest(goblin.cell, shootable))
+				await _ai_fire(goblin, _nearest(goblin.cell, shootable))
 			elif not moved_now and goblin.is_alive() and not goblin.is_suppressed():
 				# Dug in with no shot: watch the lane the scouts must cross.
 				# A pinned goblin keeps its head down instead.
@@ -1379,6 +1382,15 @@ func run_enemy_turn() -> void:
 		if state == State.GAME_OVER:
 			return
 		await get_tree().create_timer(AI_BEAT).timeout
+
+
+## AI units shoot with the heaviest setting their weapon allows, so a raider
+## empties a burst instead of squeezing off one round like a rifleman.
+func _ai_fire(attacker: Unit, target: Unit) -> void:
+	if _can_use_mode(attacker, FireMode.BURST):
+		await do_volley(attacker, target, BURST_ROUNDS, BURST_GAP, 0)
+	else:
+		await do_attack(attacker, target)
 
 
 func _shootable_from(from_cell: Vector2i, attack_range: int, targets: Array[Unit]) -> Array[Unit]:

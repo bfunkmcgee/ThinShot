@@ -35,9 +35,10 @@ const LEVELS: Array[Dictionary] = [
 		"gunner_spawns": [Vector2i(2, 5)],
 		"goblin_spawns": [
 			Vector2i(13, 1), Vector2i(14, 1),  # north lane
-			Vector2i(14, 4), Vector2i(14, 5),  # centre
-			Vector2i(13, 8), Vector2i(14, 8),  # south lane
+			Vector2i(14, 4), Vector2i(14, 8),  # centre and south
 		],
+		# Raiders start a lane ahead of the riflemen and come straight on.
+		"smg_spawns": [Vector2i(12, 3), Vector2i(12, 6)],
 		"structures": [],
 		"zone_seed": 7,
 		"shade_seed": 13,
@@ -71,9 +72,11 @@ const LEVELS: Array[Dictionary] = [
 		"goblin_spawns": [
 			Vector2i(7, 3), Vector2i(8, 3),    # north gate
 			Vector2i(7, 7), Vector2i(8, 7),    # south gate
-			Vector2i(12, 4), Vector2i(12, 5),  # inner reserve
-			Vector2i(15, 5),
+			Vector2i(12, 5),                   # inner reserve
 		],
+		# Raiders wait in the corridor between the barricades, ready to
+		# rush whichever gate the scouts commit to.
+		"smg_spawns": [Vector2i(9, 1), Vector2i(9, 8)],
 		"structures": [
 			{"kind": "hut_1", "anchor": Vector2i(13, 2), "size": Vector2i(2, 2)},
 			{"kind": "tent", "anchor": Vector2i(13, 6), "size": Vector2i(2, 2)},
@@ -109,10 +112,11 @@ const LEVELS: Array[Dictionary] = [
 		"gunner_spawns": [Vector2i(1, 5)],
 		"goblin_spawns": [
 			Vector2i(9, 3), Vector2i(9, 4),    # west gate
-			Vector2i(10, 6), Vector2i(11, 6),  # south gates
 			Vector2i(10, 1), Vector2i(10, 2),  # courtyard
 			Vector2i(14, 5),                   # fortress door
 		],
+		# Raiders hold the south gates and counter-attack through them.
+		"smg_spawns": [Vector2i(10, 6), Vector2i(11, 6)],
 		"structures": [
 			{"kind": "fortress", "anchor": Vector2i(12, 1), "size": Vector2i(4, 4)},
 			{"kind": "hut_1", "anchor": Vector2i(2, 1), "size": Vector2i(2, 2)},
@@ -188,7 +192,8 @@ static func _validate(index: int) -> bool:
 		var ch: String = data.map[cell.y][cell.x]
 		return ch == "." or ch == "p"
 	var spawns: Array = data.scout_spawns + data.get("lead_spawns", []) \
-			+ data.get("gunner_spawns", []) + data.goblin_spawns
+			+ data.get("gunner_spawns", []) + data.goblin_spawns \
+			+ data.get("smg_spawns", [])
 	var seen_spawn := {}
 	for spawn: Vector2i in spawns:
 		ok = _check(walkable.call(spawn), "%s: spawn %s not walkable" % [label, spawn]) and ok

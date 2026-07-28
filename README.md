@@ -6,18 +6,19 @@ placeholder art). One desert skirmish: the **Desert Scouts** against the
 
 ## The game
 
-| | Team Lead | Machinegunner | Desert Scout | Rust Choir goblin |
-|---|---|---|---|---|
-| Per squad | 1 | 1 | 3 | 6–7 (AI) |
-| Weapon | battle rifle | belt-fed MG | carbine | scavenged rifle |
-| HP | 8 | 8 | 8 | 4 |
-| Move | 4 | 3 | 5 | 4 |
-| Attack range | **6** | 4 | 4 | 3 |
-| Damage/round | **4** (2 in cover) | 2 (1 in cover) | 2 (1 in cover) | 2 (1 in cover) |
-| Accuracy | 92% | 78% | 90% | 60% |
-| Magazine | 2 | **6** | 3 | ∞ |
-| Fire modes | single | **burst, full auto** | single, burst |
-| Ability | — | **suppressive fire** | — | single |
+| | Team Lead | Machinegunner | Desert Scout | Chorister | Raider |
+|---|---|---|---|---|---|
+| Side | you | you | you | AI | AI |
+| Per battle | 1 | 1 | 3 | 4–5 | 2 |
+| Weapon | battle rifle | belt-fed MG | carbine | scavenged rifle | submachine gun |
+| HP | 8 | 8 | 8 | 4 | 4 |
+| Move | 4 | 3 | 5 | 4 | **5** |
+| Attack range | **6** | 4 | 4 | 3 | **2** |
+| Damage/round | **4** (2 in cover) | 2 (1) | 2 (1) | 2 (1) | 2 (1) |
+| Accuracy | 92% | 78% | 90% | 60% | 58% |
+| Magazine | 2 | **6** | 3 | ∞ | ∞ |
+| Fire modes | single | **burst, full auto** | single, burst | single | **burst** |
+| Ability | — | **suppressive fire** | — | — | — |
 
 A five-soldier squad, each with a job:
 
@@ -33,6 +34,11 @@ A five-soldier squad, each with a job:
   slowest soldier on the field.
 - **Desert Scouts** ×3 — the fast, accurate line. Single shots, or a braced
   burst when they hold still.
+
+The Choir fields two kinds. **Choristers** hold ground with scavenged rifles.
+**Raiders** carry submachine guns: almost no reach at two tiles, but they move
+as fast as your riflemen and fire a burst the moment they close, so the answer
+is to kill them on the way in rather than let them arrive.
 
 A three-level desert campaign on 16×10 isometric maps: **Dry Wash** (open
 skirmish), **The Scrapline** (the Choir's junkyard), and **Outpost 7** (fortress

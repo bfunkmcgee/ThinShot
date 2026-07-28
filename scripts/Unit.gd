@@ -11,10 +11,11 @@ const TEAM_GOBLIN := 1
 
 ## Which soldier this is. Team is allegiance; kind is the role, so the two
 ## scout types can differ in weapon, stats, and art.
-enum Kind { SCOUT, TEAM_LEAD, MACHINEGUNNER, GOBLIN }
+enum Kind { SCOUT, TEAM_LEAD, MACHINEGUNNER, GOBLIN, GOBLIN_SMG }
 
 const LEAD_ROOT := "res://assets/sprites/Scout_TeamLead"
 const MG_ROOT := "res://assets/sprites/Scout_MachineGunner/Scout_MachineGunner"
+const SMG_ROOT := "res://assets/sprites/Goblin_SMG"
 
 # Directional pixel-art frames, indexed by 45-degree compass sector of the
 # screen-space facing vector: 0=E, 1=SE, 2=S, 3=SW, 4=W, 5=NW, 6=N, 7=NE.
@@ -150,6 +151,31 @@ static var MG_HURT_FRAMES: Array = _load_dir_frames(
 static var MG_RELOAD_FRAMES: Array = _load_dir_frames(
 		MG_ROOT + "/animations/standing_idle_reload")
 
+# Choir raider with a submachine gun. Note the aim-idle folder uses a
+# hyphen where every other set uses an underscore.
+static var SMG_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		SMG_ROOT + "/Goblin_SMG/rotations")
+static var SMG_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		SMG_ROOT + "/Goblin_aims_submachi/rotations")
+static var SMG_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		SMG_ROOT + "/dead_with_blood/rotations")
+static var SMG_IDLE_FRAMES: Array = _load_dir_frames(
+		SMG_ROOT + "/Goblin_SMG/animations/standing_idle")
+static var SMG_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		SMG_ROOT + "/Goblin_SMG/animations/standing_idle_alt")
+static var SMG_WALK_FRAMES: Array = _load_dir_frames(
+		SMG_ROOT + "/Goblin_SMG/animations/standing_idle_walk")
+static var SMG_RAISE_FRAMES: Array = _load_dir_frames(
+		SMG_ROOT + "/Goblin_SMG/animations/standing_idle_to_readyToFire")
+static var SMG_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		SMG_ROOT + "/Goblin_aims_submachi/animations/standing-readyToFire_idle")
+static var SMG_DEATH_FRAMES: Array = _load_dir_frames(
+		SMG_ROOT + "/Goblin_SMG/animations/standing_idle_to_dead")
+static var SMG_HURT_FRAMES: Array = _load_dir_frames(
+		SMG_ROOT + "/Goblin_SMG/animations/standing_idle_damage")
+static var SMG_RELOAD_FRAMES: Array = _load_dir_frames(
+		SMG_ROOT + "/Goblin_SMG/animations/standing_idle_reload")
+
 # Visual-only randomness (which idle variation plays). Never read back into
 # game state, mirroring Sfx and Fx.
 static var _vis_rng := RandomNumberGenerator.new()
@@ -213,6 +239,19 @@ const GUNNER_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(-34, -46),  # north-west
 	Vector2(-6, -60),   # north
 	Vector2(32, -48),   # north-east
+]
+# A submachine gun is short and held tight to the chest, so the muzzle sits
+# closer in than a rifle's. The three southern facings are hand-corrected -
+# with the weapon pointing at the camera the scan lands on boots.
+const SMG_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(36, -34),   # east
+	Vector2(26, -22),   # south-east
+	Vector2(-12, -20),  # south
+	Vector2(-26, -22),  # south-west
+	Vector2(-32, -34),  # west
+	Vector2(-28, -44),  # north-west
+	Vector2(-4, -60),   # north
+	Vector2(32, -44),   # north-east
 ]
 const GOBLIN_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(34, -34),   # east
@@ -317,7 +356,8 @@ func _ready() -> void:
 
 func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 	kind = p_kind
-	team = TEAM_GOBLIN if kind == Kind.GOBLIN else TEAM_SCOUT
+	team = TEAM_GOBLIN if kind == Kind.GOBLIN or kind == Kind.GOBLIN_SMG \
+			else TEAM_SCOUT
 	cell = p_cell
 	match kind:
 		Kind.SCOUT:
@@ -380,6 +420,25 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			idle_alt_frames = MG_IDLE_ALT_FRAMES
 			hurt_frames = MG_HURT_FRAMES
 			reload_frames = MG_RELOAD_FRAMES
+		Kind.GOBLIN_SMG:
+			# Close-assault raider: rushes in and empties a burst at knife
+			# range. Almost no reach, so the answer is to kill it on the way.
+			max_hp = 4
+			move_range = 5
+			attack_range = 2
+			damage = 2
+			accuracy = 58
+			frames = SMG_FRAMES
+			aim_frames = SMG_AIM_FRAMES
+			walk_frames = SMG_WALK_FRAMES
+			idle_frames = SMG_IDLE_FRAMES
+			raise_frames = SMG_RAISE_FRAMES
+			aim_idle_frames = SMG_AIM_IDLE_FRAMES
+			death_frames = SMG_DEATH_FRAMES
+			dead_frames = SMG_DEAD_FRAMES
+			idle_alt_frames = SMG_IDLE_ALT_FRAMES
+			hurt_frames = SMG_HURT_FRAMES
+			reload_frames = SMG_RELOAD_FRAMES
 		Kind.GOBLIN:
 			max_hp = 4
 			move_range = 4
@@ -511,6 +570,8 @@ func muzzle_point() -> Vector2:
 			offsets = LEAD_MUZZLE_OFFSETS
 		Kind.MACHINEGUNNER:
 			offsets = GUNNER_MUZZLE_OFFSETS
+		Kind.GOBLIN_SMG:
+			offsets = SMG_MUZZLE_OFFSETS
 	return to_global(offsets[facing_sector])
 
 
@@ -520,9 +581,10 @@ func can_single_shot() -> bool:
 	return kind != Kind.MACHINEGUNNER
 
 
-## The lead's battle rifle is semi-automatic; the other two scouts can burst.
+## The lead's battle rifle is semi-automatic; everything automatic bursts.
 func can_burst() -> bool:
-	return kind == Kind.SCOUT or kind == Kind.MACHINEGUNNER
+	return kind == Kind.SCOUT or kind == Kind.MACHINEGUNNER \
+			or kind == Kind.GOBLIN_SMG
 
 
 ## Bracing is what buys the rifleman his burst. The gunner's weapon does it
@@ -549,6 +611,8 @@ func display_name() -> String:
 			return "Scout Machinegunner"
 		Kind.GOBLIN:
 			return "Rust Choir Chorister"
+		Kind.GOBLIN_SMG:
+			return "Rust Choir Raider"
 	return "Desert Scout"
 
 
