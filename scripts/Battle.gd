@@ -6,7 +6,7 @@ enum State { PLAYER_TURN, ANIMATING, ENEMY_TURN, GAME_OVER }
 
 ## Direction-picking modes: both preview a cone and commit on a click.
 ## OVERWATCH consumes the unit's attack; FACE is free.
-enum AimMode { NONE, OVERWATCH, FACE }
+enum AimMode { NONE, OVERWATCH, FACE, THROW_FRAG, THROW_SMOKE }
 
 ## Which trigger setting the selected unit will use on its next shot.
 ## SUPPRESS is the machinegunner's ability rather than a trigger setting:
@@ -98,6 +98,20 @@ const AUTO_ROUNDS := 4
 const AUTO_ACCURACY := -15  # per-round penalty for walking the gun
 const SUPPRESS_ROUNDS := 3
 
+# Thrown ordnance - the squad's edge, and the one thing the Choir has no
+# answer to. Carried as a shared pool rather than per soldier, so the decision
+# is "is this the moment" rather than "which pocket".
+const FRAG_CHARGES := 2
+const SMOKE_CHARGES := 2
+const THROW_RANGE := 4       # tiles from the thrower, needs line of sight
+const FRAG_DAMAGE := 3       # no hit roll and cover does not stop it
+# Turns of smoke, counted down at the start of each player turn. One means the
+# cloud stands for the rest of the turn it was thrown and all of the enemy
+# turn that follows - long enough to cross under, not long enough to camp.
+const SMOKE_TURNS := 1
+const THROW_ARC_TIME := 0.42
+const THROW_ARC_HEIGHT := 90.0
+
 # Ignore end-turn requests this soon after control returns to the player -
 # they are almost always leftover E-mashing/clicking from the enemy turn.
 const END_TURN_GRACE_MS := 350
@@ -126,6 +140,12 @@ var structure_frames: Dictionary = {}
 var fx_ground: Fx = null
 var fx_air: Fx = null
 var fx_glow: Fx = null
+# Squad ordnance, shared across all five soldiers and spent for the battle.
+var frags_left := FRAG_CHARGES
+var smokes_left := SMOKE_CHARGES
+# Live smoke: cell -> player turns remaining.
+var smoke: Dictionary = {}
+var _smoke_puff_accum := 0.0
 
 @onready var board: Board = $Board
 @onready var camera: Camera2D = $Camera
@@ -139,6 +159,8 @@ var fx_glow: Fx = null
 @onready var reload_button: Button = $UI/ReloadButton
 @onready var face_button: Button = $UI/FaceButton
 @onready var danger_button: Button = $UI/DangerButton
+@onready var frag_button: Button = $UI/FragButton
+@onready var smoke_button: Button = $UI/SmokeButton
 @onready var unit_panel: PanelContainer = $UI/UnitPanel
 @onready var panel_name_label: Label = $UI/UnitPanel/Margin/Rows/NameLabel
 @onready var panel_hp_label: Label = $UI/UnitPanel/Margin/Rows/HpLabel
@@ -188,6 +210,9 @@ func _ready() -> void:
 	auto_button.toggled.connect(_on_fire_button_toggled.bind(FireMode.AUTO))
 	suppress_button.toggled.connect(_on_fire_button_toggled.bind(FireMode.SUPPRESS))
 	reload_button.pressed.connect(_try_reload)
+	frag_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.THROW_FRAG))
+	smoke_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.THROW_SMOKE))
+	_sync_throw_buttons()
 	danger_button.toggled.connect(_on_danger_button_toggled)
 	restart_button.pressed.connect(_on_restart)
 	# Hotkeys/buttons cover the first 3 levels; extend the level_N input
@@ -474,6 +499,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("reload"):
 		_try_reload()
 		return
+	if event.is_action_pressed("throw_frag"):
+		_try_throw(AimMode.THROW_FRAG)
+		return
+	if event.is_action_pressed("throw_smoke"):
+		_try_throw(AimMode.THROW_SMOKE)
+		return
 	if event.is_action_pressed("face"):
 		_try_face()
 		return
@@ -536,6 +567,7 @@ func _clear_aim_mode() -> void:
 		return
 	aim_mode = AimMode.NONE
 	_sync_aim_buttons()
+	board.set_blast_cells({}, true)
 	if selected != null:
 		selected.arc_preview_sector = -1
 		selected.queue_redraw()
@@ -674,6 +706,14 @@ func _update_unit_panel() -> void:
 	panel_stats_label.text = "Move %d  Rng %d  Dmg %d  Acc %d%%%s" % [
 			unit.move_range, unit.attack_range, unit.damage, unit.accuracy,
 			"  Ammo %d/%d" % [unit.ammo, unit.mag_size] if unit.mag_size > 0 else ""]
+	if aim_mode == AimMode.THROW_FRAG and unit == selected:
+		panel_status_label.text = "PICK FRAG TARGET"
+		panel_status_label.modulate = Color("ff8a3c")
+		return
+	if aim_mode == AimMode.THROW_SMOKE and unit == selected:
+		panel_status_label.text = "PICK SMOKE TARGET"
+		panel_status_label.modulate = Color("cfd4d8")
+		return
 	if aim_mode != AimMode.NONE and unit == selected:
 		panel_status_label.text = "AIMING ARC" if aim_mode == AimMode.OVERWATCH \
 				else "PICK A FACING"
@@ -800,10 +840,13 @@ func _try_face() -> void:
 
 func _on_aim_button_toggled(pressed: bool, mode: AimMode) -> void:
 	if pressed:
-		if mode == AimMode.OVERWATCH:
-			_try_overwatch()
-		else:
-			_try_face()
+		match mode:
+			AimMode.OVERWATCH:
+				_try_overwatch()
+			AimMode.FACE:
+				_try_face()
+			_:
+				_try_throw(mode)
 	elif aim_mode == mode:
 		_cancel_aim()
 	_sync_aim_buttons()  # the request may have been refused
@@ -813,6 +856,8 @@ func _on_aim_button_toggled(pressed: bool, mode: AimMode) -> void:
 func _sync_aim_buttons() -> void:
 	overwatch_button.set_pressed_no_signal(aim_mode == AimMode.OVERWATCH)
 	face_button.set_pressed_no_signal(aim_mode == AimMode.FACE)
+	frag_button.set_pressed_no_signal(aim_mode == AimMode.THROW_FRAG)
+	smoke_button.set_pressed_no_signal(aim_mode == AimMode.THROW_SMOKE)
 
 
 func _cancel_aim() -> void:
@@ -822,11 +867,24 @@ func _cancel_aim() -> void:
 	_refresh_highlights()
 
 
-## Commit the direction picked in whichever aim mode is active.
+## Commit the direction (or, for a grenade, the target cell) picked in
+## whichever aim mode is active.
 func _commit_aim(cell: Vector2i) -> void:
 	var unit := selected
-	var sector := Board.sector_from_to(unit.cell, cell)
 	var mode := aim_mode
+	if mode == AimMode.THROW_FRAG or mode == AimMode.THROW_SMOKE:
+		if not _can_target_throw(unit, cell):
+			return  # out of range, out of sight, or solid: keep aiming
+		aim_mode = AimMode.NONE
+		_sync_aim_buttons()
+		unit.arc_preview_sector = -1
+		board.set_blast_cells({}, true)
+		if mode == AimMode.THROW_FRAG:
+			do_throw_frag(unit, cell)
+		else:
+			do_throw_smoke(unit, cell)
+		return
+	var sector := Board.sector_from_to(unit.cell, cell)
 	aim_mode = AimMode.NONE
 	_sync_aim_buttons()
 	unit.arc_preview_sector = -1
@@ -906,6 +964,17 @@ func _update_hover(cell: Vector2i) -> void:
 	if not board.in_bounds(cell):
 		cell = Board.NO_CELL
 	hover_cell = cell
+	# Aiming a grenade: the cursor picks the landing cell, and the footprint
+	# it would catch is drawn outright. An unreachable cell shows nothing,
+	# which is what tells the player the throw would be refused.
+	if (aim_mode == AimMode.THROW_FRAG or aim_mode == AimMode.THROW_SMOKE) \
+			and selected != null:
+		var reachable := cell != Board.NO_CELL and _can_target_throw(selected, cell)
+		board.set_blast_cells(_blast_cells_at(cell) if reachable else {},
+				aim_mode == AimMode.THROW_FRAG)
+		board.set_hover(cell, [], Board.NO_CELL)
+		_update_unit_panel()
+		return
 	# Aiming an overwatch arc: the cursor steers the cone, nothing else.
 	if aim_mode != AimMode.NONE and selected != null:
 		var sector := Board.sector_from_to(selected.cell, cell) if cell != Board.NO_CELL else -1
@@ -1047,6 +1116,176 @@ func do_suppressive_fire(attacker: Unit, target: Unit) -> void:
 
 func _enemy_team_of(unit: Unit) -> int:
 	return Unit.TEAM_GOBLIN if unit.team == Unit.TEAM_SCOUT else Unit.TEAM_SCOUT
+
+
+# ---------------------------------------------------------------- ordnance --
+# Grenades are the squad's answer to being outnumbered. They do not roll to
+# hit and cover does not stop them, which makes them the only reliable damage
+# on the field - and the only thing that touches more than one cell at once.
+
+
+## The footprint a grenade covers: the cell it lands on plus its four
+## orthogonal neighbours. Blockers are excluded, so a blast never reaches
+## through a wall and smoke never sits inside one.
+func _blast_cells_at(cell: Vector2i) -> Dictionary:
+	var cells := {cell: true}
+	for dir in Board.DIRS:
+		var nxt: Vector2i = cell + dir
+		if board.in_bounds(nxt) and not board.is_blocker(nxt):
+			cells[nxt] = true
+	return cells
+
+
+## A grenade can be released at any cell in range that the thrower can see and
+## that is not solid. Junk counts - lobbing onto the scrap the Choir is hiding
+## behind is the whole point.
+func _can_target_throw(thrower: Unit, cell: Vector2i) -> bool:
+	return board.in_bounds(cell) and not board.is_blocker(cell) \
+			and Board.manhattan(thrower.cell, cell) <= THROW_RANGE \
+			and board.has_line_of_sight(thrower.cell, cell)
+
+
+func _charges_for(mode: AimMode) -> int:
+	return frags_left if mode == AimMode.THROW_FRAG else smokes_left
+
+
+## Enter throw-aiming. Costs the attack when it lands, never the move, so a
+## soldier can advance and then throw.
+func _try_throw(mode: AimMode) -> void:
+	if aim_mode == mode:
+		_cancel_aim()
+		return
+	if state != State.PLAYER_TURN or selected == null or selected.acted \
+			or _charges_for(mode) <= 0:
+		return
+	aim_mode = mode
+	_sync_aim_buttons()
+	_set_fire_mode(_default_fire_mode(selected))
+	board.clear_highlights()
+	show_banner("CHOOSE FRAG TARGET" if mode == AimMode.THROW_FRAG
+			else "CHOOSE SMOKE TARGET")
+	_update_hover(board.global_to_cell(get_global_mouse_position()))
+
+
+## The grenade itself, arcing over whatever is in the way. Drawn as a handful
+## of short-lived motes stepped along a parabola rather than a real node.
+func _throw_arc(from_pos: Vector2, to_pos: Vector2) -> void:
+	var steps := 9
+	for i in range(1, steps + 1):
+		var t := float(i) / float(steps)
+		var lift := -THROW_ARC_HEIGHT * 4.0 * t * (1.0 - t)  # peaks at midpoint
+		fx_air.smoke_drift(from_pos.lerp(to_pos, t) + Vector2(0, lift - 30.0))
+		await get_tree().create_timer(THROW_ARC_TIME / float(steps)).timeout
+
+
+## Shared throw preamble: face the target, arc the grenade over, spend the
+## thrower's activation.
+func _deliver_throw(thrower: Unit, cell: Vector2i) -> void:
+	var landing := board.cell_to_global(cell)
+	thrower.set_facing((landing - thrower.position).normalized())
+	await thrower.raise_rifle()
+	Sfx.play("select", -3.0, 0.0)
+	await _throw_arc(thrower.muzzle_point(), landing)
+	thrower.lower_rifle()
+
+
+func do_throw_frag(thrower: Unit, cell: Vector2i) -> void:
+	var prev_state := state
+	state = State.ANIMATING
+	board.clear_highlights()
+	frags_left -= 1
+	print("[ThinShot] frag %s -> %s (%d left)" % [thrower.cell, cell, frags_left])
+	await _deliver_throw(thrower, cell)
+	var blast := _blast_cells_at(cell)
+	var center := board.cell_to_global(cell)
+	Sfx.play("explosion")
+	# One full detonation at the centre. The outer cells get dust and smoke
+	# only - five explosions would evict the whole particle pool and the
+	# blast would read as less, not more.
+	fx_air.explosion(center + Vector2(0, -20))
+	for hit_cell: Vector2i in blast:
+		var pos := board.cell_to_global(hit_cell)
+		fx_ground.scorch(pos)
+		if hit_cell != cell:
+			fx_ground.footstep(pos, 2.0)
+			for i in 3:
+				fx_air.smoke_drift(pos + Vector2(0, -16))
+	_screen_shake(2.6)
+	_camera_kick((center - thrower.position).normalized())
+	await _hit_stop(0.25, 0.09)
+	# Everyone inside the footprint, both sides. No hit roll, no cover.
+	var caught: Array[Unit] = []
+	for unit in living_units(Unit.TEAM_GOBLIN) + living_units(Unit.TEAM_SCOUT):
+		if blast.has(unit.cell):
+			caught.append(unit)
+	for unit in caught:
+		var away := (unit.position - center).normalized()
+		fx_air.blood_mist(unit.position + Vector2(0, -36), away,
+				unit.hp <= FRAG_DAMAGE)
+		unit.take_damage(FRAG_DAMAGE, away)
+	print("[ThinShot]   frag caught %d unit(s)" % caught.size())
+	_finish_throw(thrower, prev_state)
+
+
+func do_throw_smoke(thrower: Unit, cell: Vector2i) -> void:
+	var prev_state := state
+	state = State.ANIMATING
+	board.clear_highlights()
+	smokes_left -= 1
+	print("[ThinShot] smoke %s -> %s (%d left)" % [thrower.cell, cell, smokes_left])
+	await _deliver_throw(thrower, cell)
+	var cloud := _blast_cells_at(cell)
+	Sfx.play("smoke_pop")
+	for smoke_cell: Vector2i in cloud:
+		smoke[smoke_cell] = SMOKE_TURNS
+		var pos := board.cell_to_global(smoke_cell)
+		for i in 7:
+			fx_air.smoke_drift(pos)
+	_apply_smoke()
+	print("[ThinShot]   smoke covers %d cell(s)" % cloud.size())
+	_finish_throw(thrower, prev_state)
+
+
+## Spend the thrower's turn and put the board back the way the shot paths do.
+func _finish_throw(thrower: Unit, prev_state: State) -> void:
+	thrower.set_done(true)
+	if thrower == selected:
+		deselect()
+	if state == State.GAME_OVER:
+		return
+	state = prev_state
+	if prev_state == State.PLAYER_TURN:
+		_refresh_danger()
+		_refresh_watch_cells()
+		_update_unit_panel()
+	_sync_throw_buttons()
+
+
+## Push the live cloud to the board. Everything that depends on sight -
+## overwatch cones, the danger overlay, the AI's own checks - reads
+## has_line_of_sight, so this one call is the whole propagation.
+func _apply_smoke() -> void:
+	board.set_smoke(smoke.duplicate())
+	_refresh_watch_cells()
+	_refresh_danger()
+
+
+## Age the clouds by one player turn and clear the spent ones.
+func _tick_smoke() -> void:
+	if smoke.is_empty():
+		return
+	for cell: Vector2i in smoke.keys():
+		smoke[cell] -= 1
+		if smoke[cell] <= 0:
+			smoke.erase(cell)
+	_apply_smoke()
+
+
+func _sync_throw_buttons() -> void:
+	frag_button.text = "Frag %d (G)" % frags_left
+	smoke_button.text = "Smoke %d (C)" % smokes_left
+	frag_button.disabled = frags_left <= 0
+	smoke_button.disabled = smokes_left <= 0
 
 
 ## One round of suppressing fire: full muzzle presentation, but the round
@@ -1306,6 +1545,8 @@ func end_player_turn() -> void:
 	reload_button.disabled = true
 	face_button.disabled = true
 	danger_button.disabled = true
+	frag_button.disabled = true
+	smoke_button.disabled = true
 	# Goblins refresh at the start of THEIR turn (expires last turn's
 	# unfired goblin overwatch at the right moment).
 	for goblin in living_units(Unit.TEAM_GOBLIN):
@@ -1332,6 +1573,10 @@ func end_player_turn() -> void:
 	reload_button.disabled = false
 	face_button.disabled = false
 	danger_button.disabled = false
+	_sync_throw_buttons()  # respects charges rather than blanket-enabling
+	# Smoke thrown last turn has now covered the enemy turn it was meant to
+	# cover, so it burns off as control comes back.
+	_tick_smoke()
 	show_banner("DESERT SCOUTS' TURN")
 	state = State.PLAYER_TURN
 	player_turn_ready_msec = Time.get_ticks_msec()
@@ -1586,10 +1831,25 @@ const SHAKE_OFFSETS: Array[Vector2] = [
 ## Camera offset is composited from independent channels so a recoil kick and
 ## an impact shake can overlap (a burst fires two shots 0.13s apart) without
 ## fighting each other over the same property.
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	camera.offset = _cam_lean + _cam_shake
 	_sway_plants()
 	_animate_structures()
+	_boil_smoke(delta)
+
+
+## Keep live smoke moving. The Board draws the flat footprint for clarity;
+## these puffs go on the layer above the units so the cloud actually screens
+## what is standing in it.
+func _boil_smoke(delta: float) -> void:
+	if smoke.is_empty():
+		return
+	_smoke_puff_accum += delta * 14.0
+	while _smoke_puff_accum >= 1.0:
+		_smoke_puff_accum -= 1.0
+		var cells: Array = smoke.keys()
+		var cell: Vector2i = cells[_rng.randi_range(0, cells.size() - 1)]
+		fx_air.smoke_drift(board.cell_to_global(cell) + Vector2(0, -18))
 
 
 ## Advance the huts' and outpost's breeze loops.

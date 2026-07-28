@@ -78,6 +78,14 @@ const AIM_LINE_FLANK := Color(0.45, 0.95, 1.0, 0.9)
 const ATTACK_HOVER_FLANK_HL := Color(0.3, 0.85, 1.0, 0.5)
 # Overwatch arcs, hatched on the opposite diagonal from danger. Amber for
 # enemy arcs (a threat), green for your own (ground you have covered).
+# Thrown ordnance. The blast preview is the footprint a grenade would cover
+# if released at the hovered cell; smoke is live cover already on the board.
+const BLAST_FRAG_HL := Color(1.0, 0.42, 0.12, 0.42)
+const BLAST_SMOKE_HL := Color(0.80, 0.84, 0.88, 0.38)
+const BLAST_EDGE := Color(1.0, 0.85, 0.6, 0.75)
+const SMOKE_FILL := Color(0.74, 0.72, 0.68, 0.50)
+const SMOKE_EDGE := Color(0.84, 0.83, 0.80, 0.30)
+
 const WATCH_FILL := Color(1.0, 0.72, 0.28, 0.10)
 const WATCH_HATCH := Color(1.0, 0.72, 0.28, 0.26)
 const WATCH_FILL_ALLY := Color(0.45, 0.92, 0.5, 0.10)
@@ -114,6 +122,12 @@ var aim_covered := false
 var aim_flanking := false
 var fire_mode := 0  # mirrors Battle.FireMode; tints the attack highlights
 # Cells covered by overwatch arcs: cell -> true if the watcher is hostile.
+# Live smoke: blocks line of sight for both sides but never movement.
+var smoke_cells: Dictionary = {}
+# Preview footprint while a grenade is being aimed; true = frag, false = smoke.
+var blast_cells: Dictionary = {}
+var blast_is_frag := true
+
 var watch_cells: Dictionary = {}
 # Cells any enemy could shoot next turn (selection-independent; cleared
 # only via set_danger, never by clear_highlights).
@@ -151,6 +165,19 @@ func set_danger(cells: Dictionary) -> void:
 	queue_redraw()
 
 
+func set_smoke(cells: Dictionary) -> void:
+	smoke_cells = cells
+	queue_redraw()
+
+
+func set_blast_cells(cells: Dictionary, is_frag: bool) -> void:
+	if cells == blast_cells and is_frag == blast_is_frag:
+		return
+	blast_cells = cells
+	blast_is_frag = is_frag
+	queue_redraw()
+
+
 func set_fire_mode(value: int) -> void:
 	if fire_mode != value:
 		fire_mode = value
@@ -163,6 +190,7 @@ func clear_highlights() -> void:
 	aim_from = NO_CELL
 	aim_covered = false
 	aim_flanking = false
+	set_blast_cells({}, true)  # smoke is board state and deliberately survives
 	set_highlights({}, {}, [])
 
 
@@ -257,8 +285,12 @@ static func sector_from_to(from: Vector2i, to: Vector2i) -> int:
 
 
 ## True if a straight shot between the two cell centers crosses no full
-## blocker. Junk (COVER) does not stop sight - it attenuates damage instead.
-## Samples the segment in cell space; endpoints themselves are ignored.
+## blocker and no smoke. Junk (COVER) does not stop sight - it attenuates
+## damage instead. Samples the segment in cell space; endpoints themselves are
+## ignored, so a unit standing in its own smoke can still shoot out of it and
+## be shot at - only lines that pass THROUGH the cloud are cut.
+## Every sight test in the game routes through here, so smoke shortens overwatch
+## cones, hides the danger overlay, and blinds the AI without further plumbing.
 func has_line_of_sight(from: Vector2i, to: Vector2i) -> bool:
 	var a := Vector2(from)
 	var b := Vector2(to)
@@ -266,7 +298,9 @@ func has_line_of_sight(from: Vector2i, to: Vector2i) -> bool:
 	for i in range(1, steps):
 		var p := a.lerp(b, float(i) / float(steps))
 		var cell := Vector2i(roundi(p.x), roundi(p.y))
-		if cell != from and cell != to and is_blocker(cell):
+		if cell == from or cell == to:
+			continue
+		if is_blocker(cell) or smoke_cells.has(cell):
 			return false
 	return true
 
@@ -420,6 +454,14 @@ func _draw() -> void:
 				draw_set_transform(center, 0.0, Vector2(1.0, SHADOW_SQUASH))
 				draw_circle(Vector2.ZERO, radius, SHADOW_COLOR)
 				draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	# Smoke is world, not overlay: it goes down with the props so every
+	# gameplay marking still reads on top of it.
+	for cell: Vector2i in smoke_cells:
+		var s := _diamond(cell)
+		draw_colored_polygon(s, SMOKE_FILL)
+		var ring := s.duplicate()
+		ring.append(ring[0])
+		draw_polyline(ring, SMOKE_EDGE, 2.0, true)
 	for cell: Vector2i in danger_cells:
 		var d := _diamond(cell)
 		draw_colored_polygon(d, DANGER_FILL)
@@ -445,6 +487,14 @@ func _draw() -> void:
 		attack_color = SUPPRESS_HL
 	for cell in attack_cells:
 		draw_colored_polygon(_diamond(cell), attack_color)
+	# Grenade footprint under the cursor, outlined so the exact cells that
+	# will be caught are unambiguous before the throw is committed.
+	for cell: Vector2i in blast_cells:
+		var b := _diamond(cell)
+		draw_colored_polygon(b, BLAST_FRAG_HL if blast_is_frag else BLAST_SMOKE_HL)
+		var edge := b.duplicate()
+		edge.append(edge[0])
+		draw_polyline(edge, BLAST_EDGE, 1.5, true)
 	if hover_cell != NO_CELL:
 		if attack_cells.has(hover_cell):
 			var hl := ATTACK_HOVER_HL

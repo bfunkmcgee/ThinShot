@@ -111,6 +111,34 @@ toggle_mode = true
 theme_override_font_sizes/font_size = 13
 text = "Danger (D)"
 
+[node name="FragButton" type="Button" parent="UI"]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -228.0
+offset_top = -124.0
+offset_right = -133.0
+offset_bottom = -76.0
+focus_mode = 0
+toggle_mode = true
+theme_override_font_sizes/font_size = 13
+text = "Frag 2 (G)"
+
+[node name="SmokeButton" type="Button" parent="UI"]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -123.0
+offset_top = -124.0
+offset_right = -28.0
+offset_bottom = -76.0
+focus_mode = 0
+toggle_mode = true
+theme_override_font_sizes/font_size = 13
+text = "Smoke 2 (C)"
+
 [node name="UnitPanel" type="PanelContainer" parent="UI"]
 visible = false
 anchor_top = 1.0

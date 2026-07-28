@@ -174,7 +174,42 @@ func _init() -> void:
 	_win_lose()
 	_reload()
 	_miss()
+	_explosion()
+	_smoke_pop()
 	quit()
+
+
+## Grenade going off: a hard crack off the top, a sub that drops through the
+## floor under it, and a long dirty tail of debris raining back down. The
+## loudest thing in the mix by a distance - it should feel like the one
+## moment the squad stops being outgunned.
+func _explosion() -> void:
+	_lcg = 29
+	var buf := _blank(1.5)
+	# Crack: the detonation itself, gone almost immediately.
+	_mix_into(buf, _fnoise(0.010, 45.0, 9000.0, 2200.0, 1.0, "high"), 1.0)
+	# Body: two sweeps an octave apart so it reads as size, not just bass.
+	_mix_into(buf, _sweep(0.55, 240.0, 28.0, 7.0), 1.0)
+	_mix_into(buf, _detuned(0.42, 120.0, 22.0, 1.007, 6.0), 0.85)
+	# Blast wave: broadband noise collapsing downward.
+	_mix_into(buf, _fnoise(0.34, 9.0, 5200.0, 260.0, 1.3, "band"), 0.9)
+	# Tail: debris and dust settling, well behind the transient.
+	_mix_into(buf, _fnoise(1.1, 4.0, 1500.0, 90.0, 0.7), 0.42, int(0.05 * RATE))
+	_mix_into(buf, _fnoise(0.7, 5.5, 620.0, 70.0, 0.9), 0.3, int(0.16 * RATE))
+	_write_wav(OUT_DIR + "/explosion.wav", _room(_drive(buf, 2.6), 0.55, 0.30))
+
+
+## Smoke canister: a dull pop with no crack to it, then the long soft hiss of
+## the cloud building. Deliberately the opposite of the frag - nothing sharp.
+func _smoke_pop() -> void:
+	_lcg = 31
+	var buf := _blank(1.1)
+	_mix_into(buf, _sweep(0.14, 300.0, 90.0, 14.0), 0.8)
+	_mix_into(buf, _fnoise(0.09, 20.0, 1800.0, 500.0, 1.1, "band"), 0.5)
+	# The hiss: high, quiet, and much longer than the pop that started it.
+	_mix_into(buf, _fnoise(0.95, 2.4, 4200.0, 1900.0, 0.6, "high"), 0.5,
+			int(0.04 * RATE))
+	_write_wav(OUT_DIR + "/smoke_pop.wav", _room(_drive(buf, 1.4), 0.3, 0.18))
 
 
 ## Rifle report: snap, gut-punch body, and a report rolling away over sand.

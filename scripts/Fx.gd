@@ -378,6 +378,53 @@ func casing(pos: Vector2, dir: Vector2) -> void:
 			1.0, MarkKind.CASING, 1)
 
 
+## Grenade detonation: a hot flash ring, fragments thrown flat along the
+## ground, and a column of dirty smoke that outlives both. Loud enough that
+## the blast footprint is obvious without reading the highlights.
+func explosion(pos: Vector2) -> void:
+	_add(pos, Vector2.ZERO, 0.16, 10.0, 70.0, Color(SPARK_HOT, 0.85), Shape.RING)
+	_add(pos, Vector2.ZERO, 0.30, 6.0, 104.0, Color(SPARK_WARM, 0.40), Shape.RING)
+	for i in 22:  # fragments, thrown low and fast in every direction
+		_add(pos, _spread(Vector2.RIGHT.rotated(TAU * i / 22.0), deg_to_rad(20),
+						_rng.randf_range(150, 420)),
+				_rng.randf_range(0.20, 0.42), _rng.randf_range(3, 6), 1.0,
+				Color(SPARK_WARM if i % 3 else SAND_MID, 0.9), Shape.STREAK,
+				520.0, 2.4, pos.y + _rng.randf_range(6, 20))
+	for i in 16:  # dirt kicked up off the crater
+		_add(pos + Vector2(_rng.randf_range(-18, 18), _rng.randf_range(-6, 6)),
+				_spread(Vector2.UP, PI * 0.55, _rng.randf_range(70, 200)),
+				_rng.randf_range(0.45, 0.85), _rng.randf_range(5, 9), 2.0,
+				Color(SAND_DARK if i % 2 else RUST_MID, 0.7), Shape.PIXEL, 340.0, 1.6)
+	for i in 14:  # smoke column, rising and spreading as it goes
+		_add(pos + Vector2(_rng.randf_range(-16, 16), _rng.randf_range(-8, 8)),
+				_spread(Vector2.UP, PI * 0.4, _rng.randf_range(20, 60)),
+				_rng.randf_range(0.9, 1.7), _rng.randf_range(8, 14),
+				_rng.randf_range(22, 34),
+				Color(SMOKE.darkened(0.45), _rng.randf_range(0.30, 0.5)),
+				Shape.PIXEL, -14.0, 1.1)
+
+
+## Scorch left on the sand where a grenade went off. Permanent, like the
+## bullet holes and casings.
+func scorch(pos: Vector2) -> void:
+	_add_mark(pos, 17.0, Color(0.10, 0.07, 0.05, 0.42),
+			Color(0.28, 0.18, 0.10, 0.24), 30.0)
+	for i in 7:
+		_add_mark(pos + Vector2(_rng.randf_range(-26, 26), _rng.randf_range(-12, 12)),
+				_rng.randf_range(4, 9), Color(0.13, 0.09, 0.06, 0.30))
+
+
+## One drifting puff of a standing smoke cloud. Battle calls this repeatedly
+## over live smoke cells so the screened ground keeps moving instead of
+## sitting there as a flat tint.
+func smoke_drift(pos: Vector2) -> void:
+	_add(pos + Vector2(_rng.randf_range(-30, 30), _rng.randf_range(-12, 12)),
+			Vector2(_rng.randf_range(-14, 14), -_rng.randf_range(4, 16)),
+			_rng.randf_range(1.1, 2.0),
+			_rng.randf_range(14, 22), _rng.randf_range(30, 46),
+			Color(SMOKE_WARM, _rng.randf_range(0.10, 0.20)), Shape.PIXEL, -5.0, 0.9)
+
+
 ## Permanent pool left where a unit fell.
 func stain(pos: Vector2) -> void:
 	_add_mark(pos, 14.0, STAIN_COLOR)

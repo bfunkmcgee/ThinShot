@@ -13,6 +13,8 @@ const STREAMS := {
 	"overwatch_set": preload("res://assets/audio/overwatch_set.wav"),
 	"reload": preload("res://assets/audio/reload.wav"),
 	"miss": preload("res://assets/audio/miss.wav"),
+	"explosion": preload("res://assets/audio/explosion.wav"),
+	"smoke_pop": preload("res://assets/audio/smoke_pop.wav"),
 	"turn_player": preload("res://assets/audio/turn_player.wav"),
 	"turn_enemy": preload("res://assets/audio/turn_enemy.wav"),
 	"win": preload("res://assets/audio/win.wav"),
@@ -32,6 +34,9 @@ const BASE_DB := {
 	"overwatch_set": -8.0,
 	"reload": -9.0,
 	"miss": -8.0,
+	# The frag is the loudest event in the game on purpose.
+	"explosion": -1.0,
+	"smoke_pop": -9.0,
 	"turn_player": -9.0,
 	"turn_enemy": -8.0,
 	"win": -5.0,

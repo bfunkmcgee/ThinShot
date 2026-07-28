@@ -20,6 +20,12 @@ placeholder art). One desert skirmish: the **Desert Scouts** against the
 | Fire modes | single | **burst, full auto** | single, burst | single | **burst** | **burst** | single | single |
 | Ability | — | **suppressive fire** | — | — | — | — | — | — |
 
+The squad also carries **ordnance the Choir has nothing like** — two frags and
+two smokes for the whole battle, pooled, thrown by whichever soldier is in the
+right place. It is the answer to being outnumbered: grenades are the only
+thing in the game that touches more than one cell, and the only damage that
+does not roll to hit.
+
 A five-soldier squad, each with a job:
 
 - **Team Lead** — designated marksman. A battle rifle reaching half again as
@@ -86,6 +92,11 @@ Choir has numbers and holds the ground.
   (highlights turn amber). Requires a firing position.
 - **S** or the **Suppress** button — arm the machinegunner's suppressive fire
   (highlights turn blue). Deals no damage; pins the target and its neighbours.
+- **G** or the **Frag** button — throw a fragmentation grenade, then **click
+  the tile to land it on**: the five cells it will catch light up orange
+  before you commit. Four tiles of throw range, needs line of sight.
+- **C** or the **Smoke** button — throw a smoke grenade the same way (the
+  preview turns pale). Lays a cloud that blinds both sides.
 - **R** or the **Reload** button — refill a scout's magazine. Costs the move,
   not the shot, so a dry scout can reload and still fire once.
 - **D** or the **Danger** button — toggle the danger overlay (red-hatched tiles
@@ -119,6 +130,20 @@ Choir has numbers and holds the ground.
   first enemy that moves through **the arc it is watching**. Covered ground is
   hatched on the board: amber for goblin arcs, green for your own. Unfired
   overwatch expires at the owner's next turn.
+- **Grenades** cost the attack, never the move, so a soldier can advance and
+  then throw. They are **thrown at a tile rather than a unit**, land on that
+  tile plus its four neighbours, **always connect** (no hit roll), and **cover
+  does not stop them** — lobbing onto the scrap the Choir is hiding behind is
+  the entire point. A blast will not reach through a wall.
+  - **Frag** deals 3 to everything in the footprint. That kills a Novice or a
+    Skirmisher outright and leaves a Chorister, Raider, or Cantor on 1.
+  - **Smoke** blocks line of sight through those cells — for **both sides**,
+    including yours. It stands for the rest of the turn you threw it and the
+    whole enemy turn that follows, then burns off. Throw it, walk the rest of
+    the squad under it, and the Cantor gets nothing. A unit standing *in* its
+    own cloud can still see out; only lines passing *through* it are cut.
+  - **A frag catches your own scouts too.** The preview shows exactly which
+    tiles are in it, and that warning is the whole safety rail.
 - **Suppression** is the machinegunner's alone. A pinned unit shoots 25% worse
   and cannot go on overwatch until the turn after, and wears a steel chevron.
   Pinning two goblins costs you the damage you'd have dealt to one — that
