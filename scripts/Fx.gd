@@ -39,8 +39,10 @@ const BLOOD := Color("a81f14")
 const BLOOD_DARK := Color("6e1109")
 const STAIN_COLOR := Color(0.17, 0.10, 0.07, 0.18)
 # A strike on the ground: a dark punched core inside a ring of pale ejecta.
-const HOLE_CORE := Color(0.12, 0.08, 0.05, 0.62)
-const HOLE_RIM := Color(0.90, 0.80, 0.60, 0.26)
+const HOLE_CORE := Color(0.12, 0.08, 0.05, 0.66)
+# Scuffed subsoil, not pale ejecta - a light rim composites to nothing
+# against sand that is already light.
+const HOLE_RIM := Color(0.44, 0.33, 0.21, 0.30)
 # Rounds clipping scrap chew rust rather than sand.
 const HOLE_CORE_RUST := Color(0.16, 0.08, 0.04, 0.66)
 const HOLE_RIM_RUST := Color(0.62, 0.38, 0.22, 0.30)
@@ -157,9 +159,9 @@ func _draw() -> void:
 			var brass: Color = m.col
 			var at: Vector2 = m.pos
 			var half := Vector2(cos(ang), sin(ang) * GROUND_SQUASH) * half_len
-			draw_line(at - half, at + half, brass, 2.0)
+			draw_line(at - half, at + half, brass, 3.0)
 			draw_line(at + half * 0.55, at + half,
-					Color(brass, brass.a * 0.55), 2.0)
+					Color(brass, brass.a * 0.55), 3.0)
 			continue
 		draw_set_transform(m.pos, 0.0, Vector2(1.0, GROUND_SQUASH))
 		var rim: Color = m.rim
@@ -214,7 +216,7 @@ func _add_casing_mark(pos: Vector2) -> void:
 		_marks.pop_front()
 	_marks.append({
 		"pos": pos,
-		"size": _rng.randf_range(3.0, 4.0),
+		"size": _rng.randf_range(7.0, 9.0),  # half-length; ~14px of brass
 		"col": CASING_SPENT if _rng.randf() < 0.5 else CASING_BRASS,
 		"rim": Color(0, 0, 0, 0), "rim_size": 0.0,
 		"kind": MarkKind.CASING,
@@ -225,18 +227,21 @@ func _add_casing_mark(pos: Vector2) -> void:
 
 ## A round striking the ground: a permanent pockmark with a scatter of grit
 ## thrown clear of it. `rust` swaps the palette for hits on scrap.
+## Sized against the death pool (radius 14), which is the reference for
+## "clearly readable on the ground": a strike scar sits well under it but
+## still resolves at the board's zoom.
 func bullet_hole(pos: Vector2, dir := Vector2.ZERO, rust := false) -> void:
-	var r := _rng.randf_range(2.6, 4.2)
+	var r := _rng.randf_range(5.0, 7.0)
 	_add_mark(pos, r,
 			HOLE_CORE_RUST if rust else HOLE_CORE,
 			HOLE_RIM_RUST if rust else HOLE_RIM,
-			r * _rng.randf_range(2.0, 2.7))
+			r * _rng.randf_range(1.8, 2.2))
 	# A couple of chips flung out of the crater, opposite the round.
 	var away := -dir if dir != Vector2.ZERO else Vector2.UP
 	for i in 3:
 		_add(pos, _spread(away, deg_to_rad(70), _rng.randf_range(30, 90)),
-				0.35, _rng.randf_range(2, 3), 1.0,
-				Color(RUST_MID if rust else SAND_DARK, 0.8),
+				0.35, _rng.randf_range(3, 4), 1.0,
+				Color(RUST_MID if rust else SAND_DARK, 0.85),
 				Shape.PIXEL, 460.0, 1.0)
 
 
@@ -339,7 +344,7 @@ func blood_spray(pos: Vector2, ground_y: float, dir: Vector2,
 				Color(BLOOD if i % 2 else BLOOD_DARK, 0.95), Shape.PIXEL,
 				620.0, 0.4,
 				ground_y + _rng.randf_range(-6, 10),
-				_rng.randf_range(2.5, 5.0))
+				_rng.randf_range(5.0, 8.5))
 
 
 ## Rust sparks thrown off the junk pile a round clips on its way through.
@@ -368,7 +373,7 @@ func death_puff(pos: Vector2) -> void:
 func casing(pos: Vector2, dir: Vector2) -> void:
 	var side := dir.orthogonal().normalized()
 	_add(pos, side * _rng.randf_range(55, 105) + Vector2(0, -_rng.randf_range(55, 85)),
-			3.0, 3.0, 3.0, CASING_BRASS, Shape.PIXEL, 760.0, 0.0,
+			3.0, 4.5, 4.5, CASING_BRASS, Shape.PIXEL, 760.0, 0.0,
 			pos.y + _rng.randf_range(30, 44),
 			1.0, MarkKind.CASING, 1)
 
