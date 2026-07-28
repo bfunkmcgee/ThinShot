@@ -11,11 +11,12 @@ const TEAM_GOBLIN := 1
 
 ## Which soldier this is. Team is allegiance; kind is the role, so the two
 ## scout types can differ in weapon, stats, and art.
-enum Kind { SCOUT, TEAM_LEAD, MACHINEGUNNER, GOBLIN, GOBLIN_SMG }
+enum Kind { SCOUT, TEAM_LEAD, MACHINEGUNNER, GOBLIN, GOBLIN_SMG, GOBLIN_REVOLVER }
 
 const LEAD_ROOT := "res://assets/sprites/Scout_TeamLead"
 const MG_ROOT := "res://assets/sprites/Scout_MachineGunner/Scout_MachineGunner"
 const SMG_ROOT := "res://assets/sprites/Goblin_SMG"
+const REV_ROOT := "res://assets/sprites/Goblin_revolver"
 
 # Directional pixel-art frames, indexed by 45-degree compass sector of the
 # screen-space facing vector: 0=E, 1=SE, 2=S, 3=SW, 4=W, 5=NW, 6=N, 7=NE.
@@ -176,6 +177,30 @@ static var SMG_HURT_FRAMES: Array = _load_dir_frames(
 static var SMG_RELOAD_FRAMES: Array = _load_dir_frames(
 		SMG_ROOT + "/Goblin_SMG/animations/standing_idle_reload")
 
+# The bottom of the Choir's roster: a shirtless novice with a revolver.
+static var REV_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		REV_ROOT + "/goblin_revolver/rotations")
+static var REV_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		REV_ROOT + "/standing_readyToFire_stance/rotations")
+static var REV_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		REV_ROOT + "/dead_stance/rotations")
+static var REV_IDLE_FRAMES: Array = _load_dir_frames(
+		REV_ROOT + "/goblin_revolver/animations/standing_idle")
+static var REV_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		REV_ROOT + "/goblin_revolver/animations/standing_idle_alt")
+static var REV_WALK_FRAMES: Array = _load_dir_frames(
+		REV_ROOT + "/goblin_revolver/animations/standing_idle_walk")
+static var REV_RAISE_FRAMES: Array = _load_dir_frames(
+		REV_ROOT + "/goblin_revolver/animations/standing_idle_to_readyToFire")
+static var REV_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		REV_ROOT + "/standing_readyToFire_stance/animations/standing-readyToFire_idle")
+static var REV_DEATH_FRAMES: Array = _load_dir_frames(
+		REV_ROOT + "/goblin_revolver/animations/standing_idle_to_dead")
+static var REV_HURT_FRAMES: Array = _load_dir_frames(
+		REV_ROOT + "/goblin_revolver/animations/standing_idle_damage")
+static var REV_RELOAD_FRAMES: Array = _load_dir_frames(
+		REV_ROOT + "/goblin_revolver/animations/standing_idle_reload")
+
 # Visual-only randomness (which idle variation plays). Never read back into
 # game state, mirroring Sfx and Fx.
 static var _vis_rng := RandomNumberGenerator.new()
@@ -252,6 +277,18 @@ const SMG_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(-28, -44),  # north-west
 	Vector2(-4, -60),   # north
 	Vector2(32, -44),   # north-east
+]
+# A revolver on an outstretched arm reaches further from the body than a
+# shouldered weapon. South is hand-corrected off the boot the scan finds.
+const REV_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(38, -32),   # east
+	Vector2(32, -14),   # south-east
+	Vector2(-14, -20),  # south
+	Vector2(-32, -14),  # south-west
+	Vector2(-38, -32),  # west
+	Vector2(-30, -50),  # north-west
+	Vector2(-2, -66),   # north
+	Vector2(30, -50),   # north-east
 ]
 const GOBLIN_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(34, -34),   # east
@@ -356,8 +393,8 @@ func _ready() -> void:
 
 func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 	kind = p_kind
-	team = TEAM_GOBLIN if kind == Kind.GOBLIN or kind == Kind.GOBLIN_SMG \
-			else TEAM_SCOUT
+	team = TEAM_SCOUT if kind == Kind.SCOUT or kind == Kind.TEAM_LEAD \
+			or kind == Kind.MACHINEGUNNER else TEAM_GOBLIN
 	cell = p_cell
 	match kind:
 		Kind.SCOUT:
@@ -439,6 +476,26 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			idle_alt_frames = SMG_IDLE_ALT_FRAMES
 			hurt_frames = SMG_HURT_FRAMES
 			reload_frames = SMG_RELOAD_FRAMES
+		Kind.GOBLIN_REVOLVER:
+			# The Choir's newest and worst-equipped: no shirt, no cover, and
+			# whatever sidearm was left over. Two HP means a single carbine
+			# round puts him down - the fiction stated in numbers.
+			max_hp = 2
+			move_range = 5
+			attack_range = 3
+			damage = 2
+			accuracy = 48  # a worn revolver and no training at all
+			frames = REV_FRAMES
+			aim_frames = REV_AIM_FRAMES
+			walk_frames = REV_WALK_FRAMES
+			idle_frames = REV_IDLE_FRAMES
+			raise_frames = REV_RAISE_FRAMES
+			aim_idle_frames = REV_AIM_IDLE_FRAMES
+			death_frames = REV_DEATH_FRAMES
+			dead_frames = REV_DEAD_FRAMES
+			idle_alt_frames = REV_IDLE_ALT_FRAMES
+			hurt_frames = REV_HURT_FRAMES
+			reload_frames = REV_RELOAD_FRAMES
 		Kind.GOBLIN:
 			max_hp = 4
 			move_range = 4
@@ -572,6 +629,8 @@ func muzzle_point() -> Vector2:
 			offsets = GUNNER_MUZZLE_OFFSETS
 		Kind.GOBLIN_SMG:
 			offsets = SMG_MUZZLE_OFFSETS
+		Kind.GOBLIN_REVOLVER:
+			offsets = REV_MUZZLE_OFFSETS
 	return to_global(offsets[facing_sector])
 
 
@@ -613,6 +672,8 @@ func display_name() -> String:
 			return "Rust Choir Chorister"
 		Kind.GOBLIN_SMG:
 			return "Rust Choir Raider"
+		Kind.GOBLIN_REVOLVER:
+			return "Rust Choir Novice"
 	return "Desert Scout"
 
 

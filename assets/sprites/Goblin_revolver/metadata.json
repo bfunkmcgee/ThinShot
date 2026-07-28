@@ -1,0 +1,816 @@
+{
+  "group_id": "ea1b3a0a-6e57-4279-8108-09cba4f0d1e8",
+  "states": [
+    {
+      "character": {
+        "id": "3fe94c3f-4669-4306-a838-b5aa86e3064c",
+        "name": "goblin_revolver",
+        "prompt": "A goblin in a tattered oversized hoodie and baggy trousers, wearing a makeshift tactical harness made of duct tape and straps, holding a rusted, outdated assault rifle, low top-down perspective, single color black outline.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-07-28T01:21:55.686282+00:00"
+      },
+      "folder": "goblin_revolver",
+      "frames": {
+        "rotations": {
+          "south": "goblin_revolver/rotations/south.png",
+          "south-east": "goblin_revolver/rotations/south-east.png",
+          "east": "goblin_revolver/rotations/east.png",
+          "north-east": "goblin_revolver/rotations/north-east.png",
+          "north": "goblin_revolver/rotations/north.png",
+          "north-west": "goblin_revolver/rotations/north-west.png",
+          "west": "goblin_revolver/rotations/west.png",
+          "south-west": "goblin_revolver/rotations/south-west.png"
+        },
+        "animations": {
+          "standing_idle_walk": {
+            "east": [
+              "goblin_revolver/animations/standing_idle_walk/east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_walk/east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_walk/east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_walk/east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_walk/east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_walk/east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_walk/east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_walk/east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_walk/east/frame_008.png"
+            ],
+            "north-west": [
+              "goblin_revolver/animations/standing_idle_walk/north-west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_walk/north-west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_walk/north-west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_walk/north-west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_walk/north-west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_walk/north-west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_walk/north-west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_walk/north-west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_walk/north-west/frame_008.png"
+            ],
+            "south-east": [
+              "goblin_revolver/animations/standing_idle_walk/south-east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_walk/south-east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_walk/south-east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_walk/south-east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_walk/south-east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_walk/south-east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_walk/south-east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_walk/south-east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_walk/south-east/frame_008.png"
+            ],
+            "south": [
+              "goblin_revolver/animations/standing_idle_walk/south/frame_000.png",
+              "goblin_revolver/animations/standing_idle_walk/south/frame_001.png",
+              "goblin_revolver/animations/standing_idle_walk/south/frame_002.png",
+              "goblin_revolver/animations/standing_idle_walk/south/frame_003.png",
+              "goblin_revolver/animations/standing_idle_walk/south/frame_004.png",
+              "goblin_revolver/animations/standing_idle_walk/south/frame_005.png",
+              "goblin_revolver/animations/standing_idle_walk/south/frame_006.png",
+              "goblin_revolver/animations/standing_idle_walk/south/frame_007.png",
+              "goblin_revolver/animations/standing_idle_walk/south/frame_008.png"
+            ],
+            "west": [
+              "goblin_revolver/animations/standing_idle_walk/west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_walk/west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_walk/west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_walk/west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_walk/west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_walk/west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_walk/west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_walk/west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_walk/west/frame_008.png"
+            ],
+            "north": [
+              "goblin_revolver/animations/standing_idle_walk/north/frame_000.png",
+              "goblin_revolver/animations/standing_idle_walk/north/frame_001.png",
+              "goblin_revolver/animations/standing_idle_walk/north/frame_002.png",
+              "goblin_revolver/animations/standing_idle_walk/north/frame_003.png",
+              "goblin_revolver/animations/standing_idle_walk/north/frame_004.png",
+              "goblin_revolver/animations/standing_idle_walk/north/frame_005.png",
+              "goblin_revolver/animations/standing_idle_walk/north/frame_006.png",
+              "goblin_revolver/animations/standing_idle_walk/north/frame_007.png",
+              "goblin_revolver/animations/standing_idle_walk/north/frame_008.png"
+            ],
+            "south-west": [
+              "goblin_revolver/animations/standing_idle_walk/south-west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_walk/south-west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_walk/south-west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_walk/south-west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_walk/south-west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_walk/south-west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_walk/south-west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_walk/south-west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_walk/south-west/frame_008.png"
+            ],
+            "north-east": [
+              "goblin_revolver/animations/standing_idle_walk/north-east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_walk/north-east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_walk/north-east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_walk/north-east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_walk/north-east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_walk/north-east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_walk/north-east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_walk/north-east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_walk/north-east/frame_008.png"
+            ]
+          },
+          "standing_idle_damage": {
+            "north-east": [
+              "goblin_revolver/animations/standing_idle_damage/north-east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_damage/north-east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_damage/north-east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_damage/north-east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_damage/north-east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_damage/north-east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_damage/north-east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_damage/north-east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_damage/north-east/frame_008.png"
+            ],
+            "east": [
+              "goblin_revolver/animations/standing_idle_damage/east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_damage/east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_damage/east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_damage/east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_damage/east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_damage/east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_damage/east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_damage/east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_damage/east/frame_008.png"
+            ],
+            "south-east": [
+              "goblin_revolver/animations/standing_idle_damage/south-east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_damage/south-east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_damage/south-east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_damage/south-east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_damage/south-east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_damage/south-east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_damage/south-east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_damage/south-east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_damage/south-east/frame_008.png"
+            ],
+            "west": [
+              "goblin_revolver/animations/standing_idle_damage/west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_damage/west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_damage/west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_damage/west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_damage/west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_damage/west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_damage/west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_damage/west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_damage/west/frame_008.png"
+            ],
+            "south-west": [
+              "goblin_revolver/animations/standing_idle_damage/south-west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_damage/south-west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_damage/south-west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_damage/south-west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_damage/south-west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_damage/south-west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_damage/south-west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_damage/south-west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_damage/south-west/frame_008.png"
+            ],
+            "north": [
+              "goblin_revolver/animations/standing_idle_damage/north/frame_000.png",
+              "goblin_revolver/animations/standing_idle_damage/north/frame_001.png",
+              "goblin_revolver/animations/standing_idle_damage/north/frame_002.png",
+              "goblin_revolver/animations/standing_idle_damage/north/frame_003.png",
+              "goblin_revolver/animations/standing_idle_damage/north/frame_004.png",
+              "goblin_revolver/animations/standing_idle_damage/north/frame_005.png",
+              "goblin_revolver/animations/standing_idle_damage/north/frame_006.png",
+              "goblin_revolver/animations/standing_idle_damage/north/frame_007.png",
+              "goblin_revolver/animations/standing_idle_damage/north/frame_008.png"
+            ],
+            "north-west": [
+              "goblin_revolver/animations/standing_idle_damage/north-west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_damage/north-west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_damage/north-west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_damage/north-west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_damage/north-west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_damage/north-west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_damage/north-west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_damage/north-west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_damage/north-west/frame_008.png"
+            ],
+            "south": [
+              "goblin_revolver/animations/standing_idle_damage/south/frame_000.png",
+              "goblin_revolver/animations/standing_idle_damage/south/frame_001.png",
+              "goblin_revolver/animations/standing_idle_damage/south/frame_002.png",
+              "goblin_revolver/animations/standing_idle_damage/south/frame_003.png",
+              "goblin_revolver/animations/standing_idle_damage/south/frame_004.png",
+              "goblin_revolver/animations/standing_idle_damage/south/frame_005.png",
+              "goblin_revolver/animations/standing_idle_damage/south/frame_006.png",
+              "goblin_revolver/animations/standing_idle_damage/south/frame_007.png",
+              "goblin_revolver/animations/standing_idle_damage/south/frame_008.png"
+            ]
+          },
+          "standing_idle_to_dead": {
+            "south-west": [
+              "goblin_revolver/animations/standing_idle_to_dead/south-west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-west/frame_008.png"
+            ],
+            "east": [
+              "goblin_revolver/animations/standing_idle_to_dead/east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_dead/east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_dead/east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_dead/east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_dead/east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_dead/east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_dead/east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_dead/east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_dead/east/frame_008.png"
+            ],
+            "south": [
+              "goblin_revolver/animations/standing_idle_to_dead/south/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south/frame_008.png"
+            ],
+            "north-east": [
+              "goblin_revolver/animations/standing_idle_to_dead/north-east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-east/frame_008.png"
+            ],
+            "south-east": [
+              "goblin_revolver/animations/standing_idle_to_dead/south-east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_dead/south-east/frame_008.png"
+            ],
+            "north-west": [
+              "goblin_revolver/animations/standing_idle_to_dead/north-west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north-west/frame_008.png"
+            ],
+            "north": [
+              "goblin_revolver/animations/standing_idle_to_dead/north/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_dead/north/frame_008.png"
+            ],
+            "west": [
+              "goblin_revolver/animations/standing_idle_to_dead/west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_dead/west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_dead/west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_dead/west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_dead/west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_dead/west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_dead/west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_dead/west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_dead/west/frame_008.png"
+            ]
+          },
+          "standing_idle_alt": {
+            "south": [
+              "goblin_revolver/animations/standing_idle_alt/south/frame_000.png",
+              "goblin_revolver/animations/standing_idle_alt/south/frame_001.png",
+              "goblin_revolver/animations/standing_idle_alt/south/frame_002.png",
+              "goblin_revolver/animations/standing_idle_alt/south/frame_003.png",
+              "goblin_revolver/animations/standing_idle_alt/south/frame_004.png",
+              "goblin_revolver/animations/standing_idle_alt/south/frame_005.png",
+              "goblin_revolver/animations/standing_idle_alt/south/frame_006.png",
+              "goblin_revolver/animations/standing_idle_alt/south/frame_007.png",
+              "goblin_revolver/animations/standing_idle_alt/south/frame_008.png"
+            ],
+            "north-west": [
+              "goblin_revolver/animations/standing_idle_alt/north-west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_alt/north-west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_alt/north-west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_alt/north-west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_alt/north-west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_alt/north-west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_alt/north-west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_alt/north-west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_alt/north-west/frame_008.png"
+            ],
+            "west": [
+              "goblin_revolver/animations/standing_idle_alt/west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_alt/west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_alt/west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_alt/west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_alt/west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_alt/west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_alt/west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_alt/west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_alt/west/frame_008.png"
+            ],
+            "east": [
+              "goblin_revolver/animations/standing_idle_alt/east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_alt/east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_alt/east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_alt/east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_alt/east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_alt/east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_alt/east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_alt/east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_alt/east/frame_008.png"
+            ],
+            "south-east": [
+              "goblin_revolver/animations/standing_idle_alt/south-east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_alt/south-east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_alt/south-east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_alt/south-east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_alt/south-east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_alt/south-east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_alt/south-east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_alt/south-east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_alt/south-east/frame_008.png"
+            ],
+            "south-west": [
+              "goblin_revolver/animations/standing_idle_alt/south-west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_alt/south-west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_alt/south-west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_alt/south-west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_alt/south-west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_alt/south-west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_alt/south-west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_alt/south-west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_alt/south-west/frame_008.png"
+            ],
+            "north": [
+              "goblin_revolver/animations/standing_idle_alt/north/frame_000.png",
+              "goblin_revolver/animations/standing_idle_alt/north/frame_001.png",
+              "goblin_revolver/animations/standing_idle_alt/north/frame_002.png",
+              "goblin_revolver/animations/standing_idle_alt/north/frame_003.png",
+              "goblin_revolver/animations/standing_idle_alt/north/frame_004.png",
+              "goblin_revolver/animations/standing_idle_alt/north/frame_005.png",
+              "goblin_revolver/animations/standing_idle_alt/north/frame_006.png",
+              "goblin_revolver/animations/standing_idle_alt/north/frame_007.png",
+              "goblin_revolver/animations/standing_idle_alt/north/frame_008.png"
+            ],
+            "north-east": [
+              "goblin_revolver/animations/standing_idle_alt/north-east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_alt/north-east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_alt/north-east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_alt/north-east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_alt/north-east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_alt/north-east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_alt/north-east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_alt/north-east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_alt/north-east/frame_008.png"
+            ]
+          },
+          "standing_idle": {
+            "east": [
+              "goblin_revolver/animations/standing_idle/east/frame_000.png",
+              "goblin_revolver/animations/standing_idle/east/frame_001.png",
+              "goblin_revolver/animations/standing_idle/east/frame_002.png",
+              "goblin_revolver/animations/standing_idle/east/frame_003.png",
+              "goblin_revolver/animations/standing_idle/east/frame_004.png",
+              "goblin_revolver/animations/standing_idle/east/frame_005.png",
+              "goblin_revolver/animations/standing_idle/east/frame_006.png",
+              "goblin_revolver/animations/standing_idle/east/frame_007.png",
+              "goblin_revolver/animations/standing_idle/east/frame_008.png"
+            ],
+            "south": [
+              "goblin_revolver/animations/standing_idle/south/frame_000.png",
+              "goblin_revolver/animations/standing_idle/south/frame_001.png",
+              "goblin_revolver/animations/standing_idle/south/frame_002.png",
+              "goblin_revolver/animations/standing_idle/south/frame_003.png",
+              "goblin_revolver/animations/standing_idle/south/frame_004.png",
+              "goblin_revolver/animations/standing_idle/south/frame_005.png",
+              "goblin_revolver/animations/standing_idle/south/frame_006.png",
+              "goblin_revolver/animations/standing_idle/south/frame_007.png",
+              "goblin_revolver/animations/standing_idle/south/frame_008.png"
+            ],
+            "north": [
+              "goblin_revolver/animations/standing_idle/north/frame_000.png",
+              "goblin_revolver/animations/standing_idle/north/frame_001.png",
+              "goblin_revolver/animations/standing_idle/north/frame_002.png",
+              "goblin_revolver/animations/standing_idle/north/frame_003.png",
+              "goblin_revolver/animations/standing_idle/north/frame_004.png",
+              "goblin_revolver/animations/standing_idle/north/frame_005.png",
+              "goblin_revolver/animations/standing_idle/north/frame_006.png",
+              "goblin_revolver/animations/standing_idle/north/frame_007.png",
+              "goblin_revolver/animations/standing_idle/north/frame_008.png"
+            ],
+            "west": [
+              "goblin_revolver/animations/standing_idle/west/frame_000.png",
+              "goblin_revolver/animations/standing_idle/west/frame_001.png",
+              "goblin_revolver/animations/standing_idle/west/frame_002.png",
+              "goblin_revolver/animations/standing_idle/west/frame_003.png",
+              "goblin_revolver/animations/standing_idle/west/frame_004.png",
+              "goblin_revolver/animations/standing_idle/west/frame_005.png",
+              "goblin_revolver/animations/standing_idle/west/frame_006.png",
+              "goblin_revolver/animations/standing_idle/west/frame_007.png",
+              "goblin_revolver/animations/standing_idle/west/frame_008.png"
+            ],
+            "south-west": [
+              "goblin_revolver/animations/standing_idle/south-west/frame_000.png",
+              "goblin_revolver/animations/standing_idle/south-west/frame_001.png",
+              "goblin_revolver/animations/standing_idle/south-west/frame_002.png",
+              "goblin_revolver/animations/standing_idle/south-west/frame_003.png",
+              "goblin_revolver/animations/standing_idle/south-west/frame_004.png",
+              "goblin_revolver/animations/standing_idle/south-west/frame_005.png",
+              "goblin_revolver/animations/standing_idle/south-west/frame_006.png",
+              "goblin_revolver/animations/standing_idle/south-west/frame_007.png",
+              "goblin_revolver/animations/standing_idle/south-west/frame_008.png"
+            ],
+            "south-east": [
+              "goblin_revolver/animations/standing_idle/south-east/frame_000.png",
+              "goblin_revolver/animations/standing_idle/south-east/frame_001.png",
+              "goblin_revolver/animations/standing_idle/south-east/frame_002.png",
+              "goblin_revolver/animations/standing_idle/south-east/frame_003.png",
+              "goblin_revolver/animations/standing_idle/south-east/frame_004.png",
+              "goblin_revolver/animations/standing_idle/south-east/frame_005.png",
+              "goblin_revolver/animations/standing_idle/south-east/frame_006.png",
+              "goblin_revolver/animations/standing_idle/south-east/frame_007.png",
+              "goblin_revolver/animations/standing_idle/south-east/frame_008.png"
+            ],
+            "north-west": [
+              "goblin_revolver/animations/standing_idle/north-west/frame_000.png",
+              "goblin_revolver/animations/standing_idle/north-west/frame_001.png",
+              "goblin_revolver/animations/standing_idle/north-west/frame_002.png",
+              "goblin_revolver/animations/standing_idle/north-west/frame_003.png",
+              "goblin_revolver/animations/standing_idle/north-west/frame_004.png",
+              "goblin_revolver/animations/standing_idle/north-west/frame_005.png",
+              "goblin_revolver/animations/standing_idle/north-west/frame_006.png",
+              "goblin_revolver/animations/standing_idle/north-west/frame_007.png",
+              "goblin_revolver/animations/standing_idle/north-west/frame_008.png"
+            ],
+            "north-east": [
+              "goblin_revolver/animations/standing_idle/north-east/frame_000.png",
+              "goblin_revolver/animations/standing_idle/north-east/frame_001.png",
+              "goblin_revolver/animations/standing_idle/north-east/frame_002.png",
+              "goblin_revolver/animations/standing_idle/north-east/frame_003.png",
+              "goblin_revolver/animations/standing_idle/north-east/frame_004.png",
+              "goblin_revolver/animations/standing_idle/north-east/frame_005.png",
+              "goblin_revolver/animations/standing_idle/north-east/frame_006.png",
+              "goblin_revolver/animations/standing_idle/north-east/frame_007.png",
+              "goblin_revolver/animations/standing_idle/north-east/frame_008.png"
+            ]
+          },
+          "standing_idle_reload": {
+            "south-west": [
+              "goblin_revolver/animations/standing_idle_reload/south-west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_reload/south-west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_reload/south-west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_reload/south-west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_reload/south-west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_reload/south-west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_reload/south-west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_reload/south-west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_reload/south-west/frame_008.png"
+            ],
+            "west": [
+              "goblin_revolver/animations/standing_idle_reload/west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_reload/west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_reload/west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_reload/west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_reload/west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_reload/west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_reload/west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_reload/west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_reload/west/frame_008.png"
+            ],
+            "north-west": [
+              "goblin_revolver/animations/standing_idle_reload/north-west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_reload/north-west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_reload/north-west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_reload/north-west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_reload/north-west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_reload/north-west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_reload/north-west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_reload/north-west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_reload/north-west/frame_008.png"
+            ],
+            "south-east": [
+              "goblin_revolver/animations/standing_idle_reload/south-east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_reload/south-east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_reload/south-east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_reload/south-east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_reload/south-east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_reload/south-east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_reload/south-east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_reload/south-east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_reload/south-east/frame_008.png"
+            ],
+            "south": [
+              "goblin_revolver/animations/standing_idle_reload/south/frame_000.png",
+              "goblin_revolver/animations/standing_idle_reload/south/frame_001.png",
+              "goblin_revolver/animations/standing_idle_reload/south/frame_002.png",
+              "goblin_revolver/animations/standing_idle_reload/south/frame_003.png",
+              "goblin_revolver/animations/standing_idle_reload/south/frame_004.png",
+              "goblin_revolver/animations/standing_idle_reload/south/frame_005.png",
+              "goblin_revolver/animations/standing_idle_reload/south/frame_006.png",
+              "goblin_revolver/animations/standing_idle_reload/south/frame_007.png",
+              "goblin_revolver/animations/standing_idle_reload/south/frame_008.png"
+            ],
+            "north": [
+              "goblin_revolver/animations/standing_idle_reload/north/frame_000.png",
+              "goblin_revolver/animations/standing_idle_reload/north/frame_001.png",
+              "goblin_revolver/animations/standing_idle_reload/north/frame_002.png",
+              "goblin_revolver/animations/standing_idle_reload/north/frame_003.png",
+              "goblin_revolver/animations/standing_idle_reload/north/frame_004.png",
+              "goblin_revolver/animations/standing_idle_reload/north/frame_005.png",
+              "goblin_revolver/animations/standing_idle_reload/north/frame_006.png",
+              "goblin_revolver/animations/standing_idle_reload/north/frame_007.png",
+              "goblin_revolver/animations/standing_idle_reload/north/frame_008.png"
+            ],
+            "east": [
+              "goblin_revolver/animations/standing_idle_reload/east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_reload/east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_reload/east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_reload/east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_reload/east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_reload/east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_reload/east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_reload/east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_reload/east/frame_008.png"
+            ],
+            "north-east": [
+              "goblin_revolver/animations/standing_idle_reload/north-east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_reload/north-east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_reload/north-east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_reload/north-east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_reload/north-east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_reload/north-east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_reload/north-east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_reload/north-east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_reload/north-east/frame_008.png"
+            ]
+          },
+          "standing_idle_to_readyToFire": {
+            "north-east": [
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-east/frame_008.png"
+            ],
+            "south-west": [
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-west/frame_008.png"
+            ],
+            "east": [
+              "goblin_revolver/animations/standing_idle_to_readyToFire/east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/east/frame_008.png"
+            ],
+            "north": [
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north/frame_008.png"
+            ],
+            "north-west": [
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/north-west/frame_008.png"
+            ],
+            "south-east": [
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-east/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-east/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-east/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-east/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-east/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-east/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-east/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-east/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south-east/frame_008.png"
+            ],
+            "west": [
+              "goblin_revolver/animations/standing_idle_to_readyToFire/west/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/west/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/west/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/west/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/west/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/west/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/west/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/west/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/west/frame_008.png"
+            ],
+            "south": [
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south/frame_000.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south/frame_001.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south/frame_002.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south/frame_003.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south/frame_004.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south/frame_005.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south/frame_006.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south/frame_007.png",
+              "goblin_revolver/animations/standing_idle_to_readyToFire/south/frame_008.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "7f4e8ea9-d582-4207-983c-7c92841af3ba",
+        "name": "standing_readyToFire_stance",
+        "prompt": "A goblin in a tattered oversized hoodie and baggy trousers, wearing a makeshift tactical harness made of duct tape and straps, holding a rusted, outdated assault rifle, low top-down perspective, single color black outline.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-07-28T10:12:00.105082+00:00"
+      },
+      "folder": "standing_readyToFire_stance",
+      "frames": {
+        "rotations": {
+          "south": "standing_readyToFire_stance/rotations/south.png",
+          "south-east": "standing_readyToFire_stance/rotations/south-east.png",
+          "east": "standing_readyToFire_stance/rotations/east.png",
+          "north-east": "standing_readyToFire_stance/rotations/north-east.png",
+          "north": "standing_readyToFire_stance/rotations/north.png",
+          "north-west": "standing_readyToFire_stance/rotations/north-west.png",
+          "west": "standing_readyToFire_stance/rotations/west.png",
+          "south-west": "standing_readyToFire_stance/rotations/south-west.png"
+        },
+        "animations": {
+          "standing-readyToFire_idle": {
+            "north-west": [
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-west/frame_000.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-west/frame_001.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-west/frame_002.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-west/frame_003.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-west/frame_004.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-west/frame_005.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-west/frame_006.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-west/frame_007.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-west/frame_008.png"
+            ],
+            "south-east": [
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-east/frame_000.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-east/frame_001.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-east/frame_002.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-east/frame_003.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-east/frame_004.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-east/frame_005.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-east/frame_006.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-east/frame_007.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-east/frame_008.png"
+            ],
+            "south": [
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south/frame_000.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south/frame_001.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south/frame_002.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south/frame_003.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south/frame_004.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south/frame_005.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south/frame_006.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south/frame_007.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south/frame_008.png"
+            ],
+            "west": [
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/west/frame_000.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/west/frame_001.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/west/frame_002.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/west/frame_003.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/west/frame_004.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/west/frame_005.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/west/frame_006.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/west/frame_007.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/west/frame_008.png"
+            ],
+            "north-east": [
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-east/frame_000.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-east/frame_001.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-east/frame_002.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-east/frame_003.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-east/frame_004.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-east/frame_005.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-east/frame_006.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-east/frame_007.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north-east/frame_008.png"
+            ],
+            "north": [
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north/frame_000.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north/frame_001.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north/frame_002.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north/frame_003.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north/frame_004.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north/frame_005.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north/frame_006.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north/frame_007.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/north/frame_008.png"
+            ],
+            "south-west": [
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-west/frame_000.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-west/frame_001.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-west/frame_002.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-west/frame_003.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-west/frame_004.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-west/frame_005.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-west/frame_006.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-west/frame_007.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/south-west/frame_008.png"
+            ],
+            "east": [
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/east/frame_000.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/east/frame_001.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/east/frame_002.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/east/frame_003.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/east/frame_004.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/east/frame_005.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/east/frame_006.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/east/frame_007.png",
+              "standing_readyToFire_stance/animations/standing-readyToFire_idle/east/frame_008.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "a3802100-9ad2-407e-907f-07a3ff750655",
+        "name": "dead_stance",
+        "prompt": "A goblin in a tattered oversized hoodie and baggy trousers, wearing a makeshift tactical harness made of duct tape and straps, holding a rusted, outdated assault rifle, low top-down perspective, single color black outline.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-07-28T10:14:36.743606+00:00"
+      },
+      "folder": "dead_stance",
+      "frames": {
+        "rotations": {
+          "south": "dead_stance/rotations/south.png",
+          "south-east": "dead_stance/rotations/south-east.png",
+          "east": "dead_stance/rotations/east.png",
+          "north-east": "dead_stance/rotations/north-east.png",
+          "north": "dead_stance/rotations/north.png",
+          "north-west": "dead_stance/rotations/north-west.png",
+          "west": "dead_stance/rotations/west.png",
+          "south-west": "dead_stance/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-07-28T11:19:01.448480"
+}

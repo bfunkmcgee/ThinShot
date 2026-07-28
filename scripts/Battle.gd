@@ -175,6 +175,8 @@ func _ready() -> void:
 		_spawn_unit(Unit.Kind.GOBLIN, spawn)
 	for spawn: Vector2i in level.get("smg_spawns", []):
 		_spawn_unit(Unit.Kind.GOBLIN_SMG, spawn)
+	for spawn: Vector2i in level.get("novice_spawns", []):
+		_spawn_unit(Unit.Kind.GOBLIN_REVOLVER, spawn)
 	end_turn_button.pressed.connect(end_player_turn)
 	overwatch_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.OVERWATCH))
 	face_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.FACE))
@@ -264,7 +266,7 @@ func _board_world_rect() -> Rect2:
 func _validate_spawns() -> void:
 	for spawn: Vector2i in level.scout_spawns + level.get("lead_spawns", []) \
 			+ level.get("gunner_spawns", []) + level.goblin_spawns \
-			+ level.get("smg_spawns", []):
+			+ level.get("smg_spawns", []) + level.get("novice_spawns", []):
 		if not board.in_bounds(spawn) or not board.is_walkable(spawn):
 			push_error("Bad spawn cell (blocked or out of bounds): %s" % spawn)
 			assert(false, "Bad spawn cell: %s" % spawn)
