@@ -10,8 +10,15 @@ extends Node2D
 
 enum Shape { PIXEL, STREAK, RING }
 
+# Ground marks are squashed to the tile's 2:1 isometric ratio so they read
+# as lying flat on the sand rather than facing the camera.
+const GROUND_SQUASH := 0.469
+
 const MAX_PARTICLES := 256
-const MAX_MARKS := 80
+# Ground marks are permanent for the battle. Misses are common enough that
+# a long firefight leaves a lot of them, so the cap is generous - they are
+# only draw_circle calls in a _draw that reruns while particles are alive.
+const MAX_MARKS := 160
 
 # Palette sampled from the actual desert art.
 const SAND_MID := Color("e9b569")
@@ -27,6 +34,12 @@ const SMOKE_WARM := Color("e0d0b0")
 const BLOOD := Color("a81f14")
 const BLOOD_DARK := Color("6e1109")
 const STAIN_COLOR := Color(0.17, 0.10, 0.07, 0.18)
+# A strike on the ground: a dark punched core inside a ring of pale ejecta.
+const HOLE_CORE := Color(0.12, 0.08, 0.05, 0.62)
+const HOLE_RIM := Color(0.90, 0.80, 0.60, 0.26)
+# Rounds clipping scrap chew rust rather than sand.
+const HOLE_CORE_RUST := Color(0.16, 0.08, 0.04, 0.66)
+const HOLE_RIM_RUST := Color(0.62, 0.38, 0.22, 0.30)
 
 var _p: Array = []
 var _marks: Array = []
@@ -122,7 +135,10 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	for m: Dictionary in _marks:
-		draw_set_transform(m.pos, 0.0, Vector2(1.0, 0.469))
+		draw_set_transform(m.pos, 0.0, Vector2(1.0, GROUND_SQUASH))
+		var rim: Color = m.rim
+		if rim.a > 0.0:
+			draw_circle(Vector2.ZERO, m.rim_size, rim)
 		draw_circle(Vector2.ZERO, m.size, m.col)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	for d: Dictionary in _p:
@@ -153,11 +169,32 @@ func _add(pos: Vector2, vel: Vector2, life: float, size: float, size_end: float,
 	set_process(true)
 
 
-func _add_mark(pos: Vector2, size: float, col: Color) -> void:
+func _add_mark(pos: Vector2, size: float, col: Color,
+		rim := Color(0, 0, 0, 0), rim_size := 0.0) -> void:
 	if _marks.size() >= MAX_MARKS:
 		_marks.pop_front()
-	_marks.append({"pos": pos, "size": size, "col": col})
+	_marks.append({
+		"pos": pos, "size": size, "col": col,
+		"rim": rim, "rim_size": rim_size,
+	})
 	queue_redraw()
+
+
+## A round striking the ground: a permanent pockmark with a scatter of grit
+## thrown clear of it. `rust` swaps the palette for hits on scrap.
+func bullet_hole(pos: Vector2, dir := Vector2.ZERO, rust := false) -> void:
+	var r := _rng.randf_range(2.6, 4.2)
+	_add_mark(pos, r,
+			HOLE_CORE_RUST if rust else HOLE_CORE,
+			HOLE_RIM_RUST if rust else HOLE_RIM,
+			r * _rng.randf_range(2.0, 2.7))
+	# A couple of chips flung out of the crater, opposite the round.
+	var away := -dir if dir != Vector2.ZERO else Vector2.UP
+	for i in 3:
+		_add(pos, _spread(away, deg_to_rad(70), _rng.randf_range(30, 90)),
+				0.35, _rng.randf_range(2, 3), 1.0,
+				Color(RUST_MID if rust else SAND_DARK, 0.8),
+				Shape.PIXEL, 460.0, 1.0)
 
 
 func _spread(dir: Vector2, spread_rad: float, speed: float) -> Vector2:

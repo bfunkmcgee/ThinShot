@@ -1058,7 +1058,9 @@ func _fire_suppression_round(attacker: Unit, target: Unit) -> void:
 	_camera_kick(dir)
 	await get_tree().create_timer(TRACER_TIME).timeout
 	Sfx.play("miss")
-	fx_ground.footstep(splash + Vector2(0, 26), 1.4)
+	var strike := splash + Vector2(0, 26)
+	fx_ground.footstep(strike, 1.4)
+	fx_ground.bullet_hole(strike, dir)
 	_screen_shake(0.6)
 
 
@@ -1112,7 +1114,9 @@ func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0) -> void:
 		print("[ThinShot]   %s -> %s MISSES (%d%%)" % [
 				attacker.cell, target.cell, chance])
 		Sfx.play("miss")
-		fx_ground.footstep(impact_point + Vector2(0, 30), 1.2)  # dust where it lands
+		var strike := impact_point + Vector2(0, 30)
+		fx_ground.footstep(strike, 1.2)  # dust where it lands
+		fx_ground.bullet_hole(strike, dir)
 		target.spawn_miss_text()
 		_update_unit_panel()
 		return
@@ -1162,8 +1166,11 @@ func hit_chance(attacker: Unit, target: Unit, accuracy_mod := 0) -> int:
 func _spark_cover(cell: Vector2i, dir: Vector2, delay: float) -> void:
 	if delay > 0.0:
 		await get_tree().create_timer(delay).timeout
-	if is_instance_valid(fx_glow):
-		fx_glow.cover_spark(board.cell_to_global(cell) + Vector2(0, -20), dir)
+	if not is_instance_valid(fx_glow):
+		return
+	var at := board.cell_to_global(cell)
+	fx_glow.cover_spark(at + Vector2(0, -20), dir)
+	fx_ground.bullet_hole(at + Vector2(_rng.randf_range(-14, 14), 0), dir, true)
 
 
 ## A multi-round volley. Each round is cover- and accuracy-checked on its
