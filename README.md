@@ -184,11 +184,30 @@ campaign and playing again starts you with five fresh recruits.
 - **Shots can miss.** Your scouts are trained marksmen; the Choir fires
   scavenged rifles badly. Hovering a target shows the exact odds. Flanking adds
   +10%, and shots past half your range lose 5% per extra tile — so the accuracy
-  gap is the elite-squad edge, and closing distance sharpens it. Cover does
-  *not* reduce accuracy; it halves damage, which keeps the two rules separate.
-- **Rocks, brick walls, and buildings block movement *and* line of sight.**
-- **Rusted junk is partial cover**: you can't stand on it, but shots pass over
-  it at **half damage** (the aim line turns amber). Cacti are decoration.
+  gap is the elite-squad edge, and closing distance sharpens it. Half cover
+  costs the shooter damage only; full cover costs damage *and* accuracy, which
+  is the whole reason to prefer a wall to a scrap pile.
+- **Cover is where you stand, not what the bullet crosses.** A soldier is in
+  cover from a direction when the tile next to them that way is something to
+  get behind — so pressing up against a wall is a decision, and the ground
+  between two walls is a route.
+  - **Half cover** — rusted junk. Shots pass over it at **half damage**, both
+    ways. You can shoot over it freely.
+  - **Full cover** — rock, brick wall, building. **Half damage *and* 25% harder
+    to hit**, and it blocks sight both ways.
+  - One wall covers a **135° wedge**; an inside corner covers most of the
+    field. **Facing still decides it** — caught with your back to a wall you
+    are not behind it, so a flanking shot ignores cover entirely, and the free
+    turn-to-face order (**F**) is how you take cover without moving.
+  - Tiles you can reach that offer cover are dotted, and the tile under your
+    cursor shows a bar on every protected edge — thick for a wall, thin for
+    scrap. A soldier in cover hunkers down and wears shield bars by its HP.
+- **You can lean around your own cover to shoot.** If a wall blocks your shot,
+  you lean **past its edge** and take it at **-10% to hit**. That works at a
+  corner or the end of a wall run, and *not* against the middle of an unbroken
+  wall — the next section of the same wall is still in the way. Hovering a
+  target shows `PEEK` when the shot is one.
+- Cacti are decoration.
 - Every mission opens on a **briefing** — situation, then orders — and a won
   mission closes on a **debrief** that points at the next one. A lost attempt
   gets no debrief; it is not part of the story.

@@ -415,6 +415,13 @@ const RANK_H := 4.0     # how far it rises
 const RANK_T := 2.0     # stroke thickness
 const RANK_STEP := 5.0  # vertical pitch between chevrons
 
+# How far the body drops when hunkered behind cover. Small on purpose: the
+# prop drawn in front does most of the work, this just breaks the silhouette.
+const CROUCH_SINK := 5.0
+# Cover pips beside the rank chevrons: one bar for half, two for full.
+const COVER_HALF_COLOR := Color("8ad4a0")
+const COVER_FULL_COLOR := Color("6fe08a")
+
 const SUPPRESSED_COLOR := Color("8fb8d8")
 const RING_COLOR := Color("ffd94a")        # player selection
 const ENEMY_RING_COLOR := Color("ff5a3c")  # AI unit currently acting
@@ -484,6 +491,9 @@ var marker_y := 0.0:
 		queue_redraw()
 # Sprite anchor for this unit's sheet size; setup() picks it per kind.
 var sprite_offset := SPRITE_OFFSET
+# Board.CoverLevel of the cell this unit is standing on, as a plain int so
+# Unit stays independent of Board. 0 = none, 1 = half, 2 = full.
+var cover_level := 0
 var _body_tween: Tween = null
 var _marker_tween: Tween = null
 
@@ -1038,6 +1048,23 @@ func needs_reload() -> bool:
 	return mag_size > 0 and ammo == 0
 
 
+## Lean out around a corner and settle back. Same channel as recoil, so a
+## peek shot's lean and its kick compose instead of fighting.
+func lean(offset: Vector2) -> void:
+	_body_shove(offset, 0.30, Tween.TRANS_QUAD)
+
+
+## Hunker down behind cover, or stand back up. The sprite sinks a few pixels
+## and the cover prop in front - drawn later by the y-sort - takes care of the
+## rest, which is a convincing crouch for no new art at all.
+func set_in_cover(level: int) -> void:
+	if cover_level == level:
+		return
+	cover_level = level
+	sprite.offset = sprite_offset + Vector2(0, CROUCH_SINK if level > 0 else 0.0)
+	queue_redraw()
+
+
 ## Kick the sprite backward off a shot and settle it. sprite.position is
 ## otherwise unused (SPRITE_OFFSET lives in sprite.offset), so body motion
 ## has its own channel and never fights the animation frames.
@@ -1222,6 +1249,13 @@ func _draw() -> void:
 				Vector2(rx, ry), Vector2(rx - RANK_W, ry - RANK_H),
 				Vector2(rx - RANK_W, ry - RANK_H + RANK_T), Vector2(rx, ry + RANK_T),
 			]), RANK_COLOR)
+	if cover_level > 0:
+		# Shield bars on the right of the HP row, mirroring the rank chevrons
+		# on the left: one bar behind a scrap pile, two behind a wall.
+		var cx := start_x + total_width + RANK_GAP
+		var col := COVER_FULL_COLOR if cover_level > 1 else COVER_HALF_COLOR
+		for i in cover_level:
+			draw_rect(Rect2(cx + i * 4.0, PIP_Y - 1.0, 2.0, PIP_SIZE.y + 2.0), col)
 	if mag_size > 0:
 		var ammo_width := mag_size * AMMO_SIZE.x + (mag_size - 1) * AMMO_GAP
 		var ammo_x := -ammo_width / 2.0

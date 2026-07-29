@@ -97,6 +97,9 @@ const SWAY_TEXELS := 1.0     # sprite texels a plant leans at full sway
 const FLANK_ACCURACY := 10   # bonus to hit from outside the target's arc
 const LONG_SHOT_PENALTY := 5  # per tile past half the shooter's range
 const SUPPRESSION_ACCURACY := 25  # to-hit penalty while pinned down
+const FULL_COVER_ACCURACY := 25   # to-hit penalty against a target behind a wall
+const PEEK_ACCURACY := 10         # to-hit penalty for leaning around your own
+const PEEK_LEAN := 0.34           # how far toward the corner the body shifts
 const LOWER_TIME := 0.12  # rifle held after the shot before lowering
 const BURST_GAP := 0.13  # pause between the rounds of a burst
 const AUTO_GAP := 0.07   # full auto cycles faster than a burst
@@ -261,6 +264,7 @@ func _ready() -> void:
 		else:
 			level_buttons[i].visible = false
 	_refresh_objectives()
+	_refresh_watch_cells()  # also settles everyone into whatever cover they spawned in
 	_show_briefing()
 	show_banner("LEVEL %d - %s" % [Game.current_level + 1, level.name])
 	player_turn_ready_msec = Time.get_ticks_msec()
@@ -808,11 +812,17 @@ func _update_unit_panel() -> void:
 		var flanking := _is_flanking(selected, unit)
 		var dmg := selected.damage
 		var note := ""
+		var cover := effective_cover(selected, unit)
 		if flanking:
 			note = "FLANK"
-		elif board.shot_through_cover(selected.cell, unit.cell):
+		elif cover == Board.CoverLevel.FULL:
 			dmg >>= 1
-			note = "THROUGH COVER"
+			note = "FULL COVER"
+		elif cover == Board.CoverLevel.HALF:
+			dmg >>= 1
+			note = "HALF COVER"
+		if _is_peeking(selected, unit):
+			note = "PEEK" if note == "" else "PEEK - " + note
 		var rounds := _rounds_for(fire_mode)
 		var mod: int = AUTO_ACCURACY if fire_mode == FireMode.AUTO else 0
 		if rounds > 1:
@@ -849,13 +859,18 @@ func _update_unit_panel() -> void:
 
 
 func _unit_status(unit: Unit) -> String:
+	var cover := ""
+	if unit.cover_level >= int(Board.CoverLevel.FULL):
+		cover = " - IN FULL COVER"
+	elif unit.cover_level >= int(Board.CoverLevel.HALF):
+		cover = " - IN HALF COVER"
 	if unit.overwatching:
-		return "OVERWATCH"
+		return "OVERWATCH" + cover
 	if unit.acted:
-		return "Done"
+		return "Done" + cover
 	if unit.moved:
-		return "Moved"
-	return "Ready"
+		return "Moved" + cover
+	return "Ready" + cover
 
 
 ## Refill the selected scout's magazine. Costs the move, not the shot, so a
@@ -1004,7 +1019,29 @@ func _overwatch_cells_for(unit: Unit, sector: int) -> Dictionary:
 ## Every overwatch arc on the board: hostile arcs (amber) are threats to
 ## route around, friendly arcs (green) are the ground you have covered.
 ## Hostile wins where they overlap.
+## The best cover this unit is actually using: the strongest cover among the
+## sectors inside its front arc. A soldier with its back to a wall is not
+## behind it, so facing decides this as much as position does - which makes the
+## free turn-to-face order a way to take cover.
+func _cover_for(unit: Unit) -> int:
+	var best := 0
+	var by_sector := board.cover_map_at(unit.cell)
+	for sector: int in by_sector:
+		if unit.covers_sector(sector):
+			best = maxi(best, int(by_sector[sector]))
+	return best
+
+
+func _refresh_cover() -> void:
+	for team: int in [Unit.TEAM_SCOUT, Unit.TEAM_GOBLIN]:
+		for unit in living_units(team):
+			unit.set_in_cover(_cover_for(unit))
+
+
 func _refresh_watch_cells() -> void:
+	# Cover changes when a unit moves and when it turns, and every caller of
+	# this already means "the board just changed", so the two stay in step.
+	_refresh_cover()
 	var cells := {}
 	for team: int in [Unit.TEAM_SCOUT, Unit.TEAM_GOBLIN]:
 		var hostile: bool = team == Unit.TEAM_GOBLIN
@@ -1029,11 +1066,18 @@ func _refresh_highlights() -> void:
 	if not selected.acted and selected.has_ammo():
 		for enemy in living_units(Unit.TEAM_GOBLIN):
 			if Board.manhattan(selected.cell, enemy.cell) <= selected.attack_range \
-					and board.has_line_of_sight(selected.cell, enemy.cell):
+					and board.can_engage(selected.cell, enemy.cell):
 				attacks.append(enemy.cell)
 	# Even with no moves or targets, the unit stays selected: overwatch (W)
 	# is always a legal order for a unit that has not attacked.
 	board.set_highlights(moves, _free_dests(moves), attacks)
+	# Mark every reachable tile that offers protection, so the player can see
+	# the route between cover rather than discovering it a tile at a time.
+	var covered := {}
+	for cell: Vector2i in board.move_dests:
+		if board.has_any_cover(cell):
+			covered[cell] = true
+	board.set_cover_overlay(selected.cell, covered)
 	_refresh_objectives()  # which caches are in reach depends on the selection
 	_update_hover(board.global_to_cell(get_global_mouse_position()))
 
@@ -1080,9 +1124,14 @@ func _update_hover(cell: Vector2i) -> void:
 			var target := unit_at(cell)
 			aim_from = selected.cell
 			aim_flanking = target != null and _is_flanking(selected, target)
-			aim_covered = not aim_flanking \
-					and board.shot_through_cover(selected.cell, cell)
+			aim_covered = target != null \
+					and effective_cover(selected, target) != Board.CoverLevel.NONE
 	board.set_hover(cell, path, aim_from, aim_covered, aim_flanking)
+	# Hovering somewhere you could move to previews the cover you would have
+	# standing there; otherwise the overlay stays on the unit's own tile.
+	if selected != null:
+		board.set_cover_overlay(cell if board.move_dests.has(cell) else selected.cell,
+				board.cover_dests)
 	_update_unit_panel()
 
 
@@ -1651,10 +1700,20 @@ func _resolve_shot(attacker: Unit, target: Unit, with_aim_beat: bool) -> void:
 ## Assumes the attacker is already facing the target with rifle raised.
 func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0) -> void:
 	var muzzle := attacker.muzzle_point()
+	# Leaning out: shift the muzzle toward the cell being leaned into, so the
+	# round visibly comes around the corner instead of through the wall.
+	var peek := board.peek_origin(attacker.cell, target.cell)
+	if peek != Board.NO_CELL:
+		var lean := board.cell_to_global(peek) - board.cell_to_global(attacker.cell)
+		muzzle += lean * PEEK_LEAN
+		attacker.lean(lean * PEEK_LEAN)
 	var chest := target.position + Vector2(0, -36)
 	var dir := (chest - muzzle).normalized()
-	var covered_cell := board.cover_cell_between(attacker.cell, target.cell)
 	var flanking := _is_flanking(attacker, target)
+	# Sparks come off whatever the target is actually hunkered behind.
+	var covered_cell := Board.NO_CELL
+	if not flanking:
+		covered_cell = board.cover_source(attacker.cell, target.cell)
 	var chance := hit_chance(attacker, target, accuracy_mod)
 	var hit := _rng.randi_range(1, 100) <= chance
 	# A miss sails past the target and off to one side.
@@ -1692,10 +1751,12 @@ func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0) -> void:
 		return
 
 	var dmg := attacker.damage
-	if not flanking and covered_cell != Board.NO_CELL:
+	var cover := effective_cover(attacker, target)
+	if cover != Board.CoverLevel.NONE:
 		dmg >>= 1
-		print("[ThinShot]   shot %s -> %s clips cover: %d dmg (%d%%)" % [
-				attacker.cell, target.cell, dmg, chance])
+		print("[ThinShot]   shot %s -> %s into %s cover: %d dmg (%d%%)" % [
+				attacker.cell, target.cell,
+				"full" if cover == Board.CoverLevel.FULL else "half", dmg, chance])
 	elif flanking:
 		print("[ThinShot]   flanking shot %s -> %s: %d dmg (%d%%)" % [
 				attacker.cell, target.cell, dmg, chance])
@@ -1727,6 +1788,14 @@ func hit_chance(attacker: Unit, target: Unit, accuracy_mod := 0) -> int:
 		chance -= SUPPRESSION_ACCURACY
 	if _is_flanking(attacker, target):
 		chance += FLANK_ACCURACY
+	# Half cover only costs damage, keeping the old rule intact. Full cover is
+	# what a soldier is genuinely hard to hit behind, so it costs accuracy too -
+	# that difference is the whole reason to prefer a wall to a scrap pile.
+	elif effective_cover(attacker, target) == Board.CoverLevel.FULL:
+		chance -= FULL_COVER_ACCURACY
+	# Leaning out around your own cover is an awkward way to shoot.
+	if _is_peeking(attacker, target):
+		chance -= PEEK_ACCURACY
 	var dist := Board.manhattan(attacker.cell, target.cell)
 	var comfortable: int = attacker.attack_range / 2
 	# A Marksman has shot at that range enough times for it to stop mattering.
@@ -1828,6 +1897,21 @@ func _on_danger_button_toggled(pressed: bool) -> void:
 ## the hover preview and the resolved shot always agree.
 func _is_flanking(attacker: Unit, target: Unit) -> bool:
 	return not target.covers_sector(Board.sector_from_to(target.cell, attacker.cell))
+
+
+## The cover that actually applies to this shot. A unit only benefits from
+## what it is facing into - shot from outside its front arc, it is caught with
+## its back to the wall rather than behind it, and the cover does nothing.
+func effective_cover(attacker: Unit, target: Unit) -> Board.CoverLevel:
+	if _is_flanking(attacker, target):
+		return Board.CoverLevel.NONE
+	return board.cover_between(attacker.cell, target.cell)
+
+
+## True when the shooter has to lean around its own full cover to take this
+## shot: the direct line is blocked, but an adjacent cell can see the target.
+func _is_peeking(attacker: Unit, target: Unit) -> bool:
+	return board.can_peek(attacker.cell, target.cell)
 
 
 ## Living enemies of the mover that are on overwatch with range, LOS, and
@@ -1999,7 +2083,7 @@ func _shootable_from(from_cell: Vector2i, attack_range: int, targets: Array[Unit
 	var result: Array[Unit] = []
 	for unit in targets:
 		if Board.manhattan(from_cell, unit.cell) <= attack_range \
-				and board.has_line_of_sight(from_cell, unit.cell):
+				and board.can_engage(from_cell, unit.cell):
 			result.append(unit)
 	return result
 
@@ -2019,8 +2103,16 @@ func _exposure_at(cell: Vector2i, scouts: Array[Unit]) -> int:
 	var score := 0
 	for scout in scouts:
 		if Board.manhattan(cell, scout.cell) <= scout.attack_range \
-				and board.has_line_of_sight(scout.cell, cell):
-			score += 1 if board.shot_through_cover(scout.cell, cell) else 2
+				and board.can_engage(scout.cell, cell):
+			# Now measured from the cover the cell itself would give, which is
+			# what makes the AI move wall to wall rather than just away.
+			match board.cover_between(scout.cell, cell):
+				Board.CoverLevel.FULL:
+					score += 0
+				Board.CoverLevel.HALF:
+					score += 1
+				_:
+					score += 2
 	return score
 
 
@@ -2048,8 +2140,8 @@ func _best_ai_dest(goblin: Unit, reach: Dictionary, scouts: Array[Unit],
 			var mark := _nearest(cell, shots)
 			end_sector = Board.sector_from_to(cell, mark.cell)
 			score -= 1000
-			# A clean firing position beats one that only has covered shots.
-			if board.shot_through_cover(cell, mark.cell):
+			# A clean firing position beats one where the target is dug in.
+			if board.cover_between(cell, mark.cell) != Board.CoverLevel.NONE:
 				score += 400
 			# Shooting someone in the back bypasses their cover.
 			if not mark.covers_sector(Board.sector_from_to(mark.cell, cell)):

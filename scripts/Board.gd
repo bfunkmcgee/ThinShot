@@ -97,6 +97,21 @@ const EXTRACT_EDGE := Color(0.5, 1.0, 0.6, 0.55)
 const EXTRACT_ARMED_FILL := Color(0.4, 1.0, 0.5, 0.30)
 const EXTRACT_ARMED_EDGE := Color(0.7, 1.0, 0.8, 0.95)
 
+# Cover readability. A bar hugging a tile edge means "something to get behind
+# on that side"; a dot in the middle of a reachable tile means "there is cover
+# here somewhere", so a route between covered tiles can be read at a glance.
+const COVER_HALF_PIP := Color(0.55, 0.86, 0.62, 0.95)
+const COVER_FULL_PIP := Color(0.45, 1.0, 0.58, 1.0)
+const COVER_DEST_DOT := Color(0.55, 0.95, 0.65, 0.55)
+# Which diamond vertices bound the edge facing each orthogonal neighbour.
+# _diamond() is ordered [top, right, bottom, left] and +x reads south-east.
+const COVER_EDGES := {
+	Vector2i(1, 0): [1, 2],   # south-east
+	Vector2i(0, 1): [2, 3],   # south-west
+	Vector2i(-1, 0): [3, 0],  # north-west
+	Vector2i(0, -1): [0, 1],  # north-east
+}
+
 const WATCH_FILL := Color(1.0, 0.72, 0.28, 0.10)
 const WATCH_HATCH := Color(1.0, 0.72, 0.28, 0.26)
 const WATCH_FILL_ALLY := Color(0.45, 0.92, 0.5, 0.10)
@@ -135,6 +150,11 @@ var fire_mode := 0  # mirrors Battle.FireMode; tints the attack highlights
 # Cells covered by overwatch arcs: cell -> true if the watcher is hostile.
 # Objectives. cache_cells maps an intact cache cell -> true if a selected
 # scout is close enough to demolish it this turn.
+# Cover overlay: the one cell to spell out edge by edge, and the set of
+# reachable cells that have cover at all.
+var cover_focus := NO_CELL
+var cover_dests: Dictionary = {}
+
 var cache_cells: Dictionary = {}
 var extract_cells: Dictionary = {}
 var extract_armed := false
@@ -183,6 +203,14 @@ func set_danger(cells: Dictionary) -> void:
 	queue_redraw()
 
 
+func set_cover_overlay(focus: Vector2i, dests: Dictionary) -> void:
+	if focus == cover_focus and dests == cover_dests:
+		return
+	cover_focus = focus
+	cover_dests = dests
+	queue_redraw()
+
+
 func set_objectives(caches: Dictionary, extracts: Dictionary, armed: bool) -> void:
 	cache_cells = caches
 	extract_cells = extracts
@@ -223,6 +251,7 @@ func clear_highlights() -> void:
 	aim_covered = false
 	aim_flanking = false
 	set_blast_cells({}, true)  # smoke is board state and deliberately survives
+	set_cover_overlay(NO_CELL, {})
 	set_highlights({}, {}, [])
 
 
@@ -337,23 +366,137 @@ func has_line_of_sight(from: Vector2i, to: Vector2i) -> bool:
 	return true
 
 
-## The first junk (COVER) cell a straight shot crosses, or NO_CELL. Uses the
-## same sampling as has_line_of_sight so the two can never disagree.
-func cover_cell_between(from: Vector2i, to: Vector2i) -> Vector2i:
+# ------------------------------------------------------------------- cover --
+# Cover is a property of the cell you STAND on, not of the line a bullet
+# happens to cross. A unit is covered from a direction when the neighbouring
+# cell that way is something to get behind - so hugging a wall is a decision,
+# and the ground between two positions is a route rather than a lottery.
+#
+# Junk gives HALF cover: you can shoot over it, and it can be shot over, at
+# reduced damage. Rock, wall and building give FULL cover: much harder to hit
+# past, and it blocks sight both ways - which is what the peek rule exists to
+# work around.
+
+enum CoverLevel { NONE, HALF, FULL }
+
+## An adjacent blocker shields the sector pointing at it plus the sector each
+## side, so one wall covers a 135 degree wedge and an inside corner covers most
+## of the field. Matches the 135 degree front arc units already use.
+const COVER_SPREAD := 1
+
+
+func cover_level_of(cell: Vector2i) -> CoverLevel:
+	if not in_bounds(cell):
+		return CoverLevel.FULL  # the map edge is something to put your back to
+	match cell_kind(cell):
+		CellKind.BLOCK:
+			return CoverLevel.FULL
+		CellKind.COVER:
+			return CoverLevel.HALF
+	return CoverLevel.NONE
+
+
+## Best cover this cell has against each of the 8 facing sectors.
+## Returns sector -> CoverLevel for every sector that has any.
+func cover_map_at(cell: Vector2i) -> Dictionary:
+	var out := {}
+	for dir in DIRS:
+		var level := cover_level_of(cell + dir)
+		if level == CoverLevel.NONE:
+			continue
+		var sector := sector_from_to(cell, cell + dir)
+		for offset in range(-COVER_SPREAD, COVER_SPREAD + 1):
+			var s := wrapi(sector + offset, 0, 8)
+			if int(out.get(s, CoverLevel.NONE)) < int(level):
+				out[s] = level
+	return out
+
+
+## The cover a target standing at `target` has against a shot from `from`.
+func cover_between(from: Vector2i, target: Vector2i) -> CoverLevel:
+	var sector := sector_from_to(target, from)
+	return cover_map_at(target).get(sector, CoverLevel.NONE)
+
+
+## Which neighbouring cell is actually doing the protecting, so effects can
+## spark off the right piece of scenery. NO_CELL when the target is exposed.
+func cover_source(from: Vector2i, target: Vector2i) -> Vector2i:
+	var want := sector_from_to(target, from)
+	var best := NO_CELL
+	var best_level := CoverLevel.NONE
+	for dir in DIRS:
+		var level := cover_level_of(target + dir)
+		if level == CoverLevel.NONE:
+			continue
+		var sector := sector_from_to(target, target + dir)
+		if absi(wrapi(want - sector + 4, 0, 8) - 4) > COVER_SPREAD:
+			continue
+		if int(level) > int(best_level):
+			best_level = level
+			best = target + dir
+	return best
+
+
+## True if this cell is worth moving to for protection at all.
+func has_any_cover(cell: Vector2i) -> bool:
+	return not cover_map_at(cell).is_empty()
+
+
+## Line of sight that ignores a given set of cells - used by the peek rule to
+## look past the specific piece of cover the shooter is hugging, and nothing
+## else on the line.
+func _los_ignoring(from: Vector2i, to: Vector2i, ignore: Dictionary) -> bool:
 	var a := Vector2(from)
 	var b := Vector2(to)
 	var steps := int(a.distance_to(b) * 4.0) + 1
 	for i in range(1, steps):
 		var p := a.lerp(b, float(i) / float(steps))
 		var cell := Vector2i(roundi(p.x), roundi(p.y))
-		if cell != from and cell != to and cell_kind(cell) == CellKind.COVER:
-			return cell
+		if cell == from or cell == to or ignore.has(cell):
+			continue
+		if is_blocker(cell) or smoke_cells.has(cell):
+			return false
+	return true
+
+
+## Can a shooter at `from` lean around the edge of its own full cover to hit
+## `to`? Only fires when the direct line is blocked. The shooter does not move:
+## it leans **perpendicular** to whatever it is hugging and shoots past the
+## edge, so the piece being hugged stops blocking but nothing else does.
+##
+## That is what separates a corner from a wall. Lean past the end of a wall run
+## and the shot is there; lean against the middle of an unbroken wall and the
+## next section of the same wall is still in the way.
+## Returns the cell leaned toward, or NO_CELL when there is no angle.
+func peek_origin(from: Vector2i, to: Vector2i) -> Vector2i:
+	if has_line_of_sight(from, to):
+		return NO_CELL  # nothing to lean around
+	# Only full cover is worth leaning past; junk never blocked sight anyway.
+	var hugged := {}
+	for dir in DIRS:
+		if cover_level_of(from + dir) == CoverLevel.FULL:
+			hugged[from + dir] = true
+	if hugged.is_empty():
+		return NO_CELL
+	for cover_cell: Vector2i in hugged:
+		var d: Vector2i = cover_cell - from
+		for perp in [Vector2i(d.y, d.x), Vector2i(-d.y, -d.x)]:
+			var side: Vector2i = from + perp
+			if not in_bounds(side) or is_blocker(side) or smoke_cells.has(side):
+				continue
+			if _los_ignoring(side, to, hugged):
+				return side
 	return NO_CELL
 
 
-## True if the straight shot crosses at least one junk (COVER) cell.
-func shot_through_cover(from: Vector2i, to: Vector2i) -> bool:
-	return cover_cell_between(from, to) != NO_CELL
+func can_peek(from: Vector2i, to: Vector2i) -> bool:
+	return peek_origin(from, to) != NO_CELL
+
+
+## Can a shooter at `from` engage `to` at all - straight down the line, or by
+## leaning around the edge of whatever it is tucked behind?
+func can_engage(from: Vector2i, to: Vector2i) -> bool:
+	return has_line_of_sight(from, to) or peek_origin(from, to) != NO_CELL
 
 
 ## BFS from start up to max_range steps. Walls and cells where blocked.call(cell)
@@ -531,6 +674,28 @@ func _draw() -> void:
 			draw_line(w[3].lerp(w[0], f), w[2].lerp(w[1], f), hatch, 1.0, true)
 	for cell: Vector2i in move_dests:
 		draw_colored_polygon(_diamond(cell), MOVE_HL)
+	# A dot marks a reachable tile that has cover of some kind, so a bound
+	# from one piece of cover to the next can be planned without hovering
+	# every candidate.
+	for cell: Vector2i in cover_dests:
+		draw_circle(cell_to_local(cell) + Vector2(0, 4.0), 3.5, COVER_DEST_DOT)
+	# The focused tile gets it spelled out: a bar on every edge that has
+	# something worth hiding behind, thicker for a wall than for scrap.
+	if cover_focus != NO_CELL:
+		var d := _diamond(cover_focus)
+		var centre := cell_to_local(cover_focus)
+		for dir: Vector2i in COVER_EDGES:
+			var level := cover_level_of(cover_focus + dir)
+			if level == CoverLevel.NONE:
+				continue
+			var pair: Array = COVER_EDGES[dir]
+			var a: Vector2 = d[int(pair[0])]
+			var b: Vector2 = d[int(pair[1])]
+			var inward := (centre - (a + b) * 0.5).normalized() * 6.0
+			var full := level == CoverLevel.FULL
+			draw_line(a.lerp(b, 0.22) + inward, a.lerp(b, 0.78) + inward,
+					COVER_FULL_PIP if full else COVER_HALF_PIP,
+					5.0 if full else 3.0, true)
 	var attack_color := ATTACK_HL
 	if fire_mode == 1:
 		attack_color = BURST_HL
