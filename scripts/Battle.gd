@@ -114,6 +114,8 @@ const SUPPRESS_ROUNDS := 3
 const FRAG_CHARGES := 2
 const SMOKE_CHARGES := 2
 const THROW_RANGE := 4       # tiles from the thrower, needs line of sight
+# Half-width of the square a grenade covers: 1 gives the 3x3 footprint.
+const BLAST_RADIUS := 1
 const FRAG_DAMAGE := 3       # no hit roll and cover does not stop it
 # Turns of smoke, counted down at the start of each player turn. One means the
 # cloud stands for the rest of the turn it was thrown and all of the enemy
@@ -1490,15 +1492,17 @@ func do_demolish(scout: Unit, cache: Dictionary) -> void:
 # on the field - and the only thing that touches more than one cell at once.
 
 
-## The footprint a grenade covers: the cell it lands on plus its four
-## orthogonal neighbours. Blockers are excluded, so a blast never reaches
-## through a wall and smoke never sits inside one.
+## The footprint a grenade covers: the full square around where it lands,
+## diagonals included - nine cells at BLAST_RADIUS 1. Blockers are excluded,
+## so a blast never reaches into a wall and smoke never sits inside one.
+## Shared by both grenades, so frag and smoke always cover the same shape.
 func _blast_cells_at(cell: Vector2i) -> Dictionary:
 	var cells := {cell: true}
-	for dir in Board.DIRS:
-		var nxt: Vector2i = cell + dir
-		if board.in_bounds(nxt) and not board.is_blocker(nxt):
-			cells[nxt] = true
+	for dy in range(-BLAST_RADIUS, BLAST_RADIUS + 1):
+		for dx in range(-BLAST_RADIUS, BLAST_RADIUS + 1):
+			var nxt := cell + Vector2i(dx, dy)
+			if board.in_bounds(nxt) and not board.is_blocker(nxt):
+				cells[nxt] = true
 	return cells
 
 
@@ -1574,7 +1578,10 @@ func do_throw_frag(thrower: Unit, cell: Vector2i) -> void:
 		fx_ground.scorch(pos)
 		if hit_cell != cell:
 			fx_ground.footstep(pos, 2.0)
-			for i in 3:
+			# Two per outer cell rather than three: the footprint doubled to
+			# nine, and the centre detonation must not get evicted from the
+			# particle pool by its own dust.
+			for i in 2:
 				fx_air.smoke_drift(pos + Vector2(0, -16))
 	_screen_shake(2.6)
 	_camera_kick((center - thrower.position).normalized())

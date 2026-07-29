@@ -232,9 +232,9 @@ campaign and playing again starts you with five fresh recruits.
   hatched on the board: amber for goblin arcs, green for your own. Unfired
   overwatch expires at the owner's next turn.
 - **Grenades** cost the attack, never the move, so a soldier can advance and
-  then throw. They are **thrown at a tile rather than a unit**, land on that
-  tile plus its four neighbours, **always connect** (no hit roll), and **cover
-  does not stop them** — lobbing onto the scrap the Choir is hiding behind is
+  then throw. They are **thrown at a tile rather than a unit**, cover the
+  **3×3 square** around where they land, **always connect** (no hit roll), and
+  **cover does not stop them** — lobbing onto the scrap the Choir is hiding behind is
   the entire point. A blast will not reach through a wall.
   - **Frag** deals 3 to everything in the footprint. That kills a Novice or a
     Skirmisher outright and leaves a Chorister, Raider, or Cantor on 1.
@@ -243,8 +243,9 @@ campaign and playing again starts you with five fresh recruits.
     whole enemy turn that follows, then burns off. Throw it, walk the rest of
     the squad under it, and the Cantor gets nothing. A unit standing *in* its
     own cloud can still see out; only lines passing *through* it are cut.
-  - **A frag catches your own scouts too.** The preview shows exactly which
-    tiles are in it, and that warning is the whole safety rail.
+  - **A frag catches your own scouts too**, and a 3×3 is wide enough that it
+    will if you are careless. The preview shows exactly which tiles are in it,
+    and that warning is the whole safety rail.
 - **Suppression** is the machinegunner's alone. A pinned unit shoots 25% worse
   and cannot go on overwatch until the turn after, and wears a steel chevron.
   Pinning two goblins costs you the damage you'd have dealt to one — that
