@@ -881,8 +881,7 @@ static func kind_role_name(p_kind: Kind) -> String:
 func display_name() -> String:
 	if surname.is_empty():
 		return kind_role_name(kind)
-	var abbrev := Game.rank_abbrev(rank)
-	return surname if abbrev.is_empty() else "%s %s" % [abbrev, surname]
+	return Game.soldier_label({"rank": rank, "surname": surname})
 
 
 func role_name() -> String:

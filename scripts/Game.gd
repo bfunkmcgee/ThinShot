@@ -124,6 +124,14 @@ func xp_to_next(xp: int) -> int:
 	return int(RANKS[rank + 1].xp) - xp
 
 
+## "SSgt. FINCH", or just "ABARA" for someone who has not been promoted yet -
+## rank 0 has no abbreviation and must not leave a dangling space.
+func soldier_label(soldier: Dictionary) -> String:
+	var abbrev := rank_abbrev(int(soldier.get("rank", 0)))
+	var name := str(soldier.get("surname", ""))
+	return name if abbrev.is_empty() else "%s %s" % [abbrev, name]
+
+
 func soldier_by_id(id: int) -> Dictionary:
 	for soldier: Dictionary in roster:
 		if int(soldier.id) == id:

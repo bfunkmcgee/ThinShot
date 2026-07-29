@@ -185,6 +185,7 @@ var caches: Array = []
 @onready var debrief_label: Label = $UI/GameOver/DebriefLabel
 @onready var promotion_panel: ColorRect = $UI/Promotion
 @onready var promotion_title_label: Label = $UI/Promotion/TitleLabel
+@onready var promotion_role_label: Label = $UI/Promotion/RoleLabel
 @onready var promotion_prompt_label: Label = $UI/Promotion/PromptLabel
 @onready var promotion_a_button: Button = $UI/Promotion/PerkAButton
 @onready var promotion_b_button: Button = $UI/Promotion/PerkBButton
@@ -257,8 +258,6 @@ func _ready() -> void:
 	# (ANIMATING just means the player is already acting - still their turn).
 	if state == State.PLAYER_TURN or state == State.ANIMATING:
 		show_banner("DESERT SCOUTS' TURN")
-
-
 ## Boot straight into a level: `godot --path . -- --level 2`. Everything after
 ## the bare `--` is ours. Exists so a headless run can smoke-test a level other
 ## than the first one, which is otherwise only reachable by playing to it.
@@ -2156,15 +2155,44 @@ func _debrief_text(won: bool) -> String:
 	var lines: Array[String] = []
 	for soldier: Dictionary in Game.roster:
 		var gained: int = int(Game.mission_xp.get(int(soldier.id), 0))
+		# The role goes on every line: a list of five surnames tells you
+		# nothing about who you actually lost.
+		var who := "%s, %s" % [Game.soldier_label(soldier),
+				Unit.kind_role_name(int(soldier.kind))]
 		if not bool(soldier.alive):
-			lines.append("%s - KILLED IN ACTION" % soldier.surname)
+			lines.append("%s - KILLED IN ACTION" % who)
 		elif gained > 0:
-			lines.append("%s %s  +%d xp" % [
-					Game.rank_abbrev(int(soldier.rank)), soldier.surname, gained])
+			lines.append("%s  +%d xp" % [who, gained])
 		else:
-			lines.append("%s %s" % [
-					Game.rank_abbrev(int(soldier.rank)), soldier.surname])
+			lines.append(who)
 	return "\n".join(lines)
+
+
+## The unit still standing on the board for a roster soldier, if any. Only
+## survivors are promoted, so this normally resolves.
+func _unit_for_soldier(id: int) -> Unit:
+	for unit in living_units(Unit.TEAM_SCOUT):
+		if unit.soldier_id == id:
+			return unit
+	return null
+
+
+## Which job this soldier does, and the numbers the choice actually turns on -
+## Sprinter means something very different to a move-3 machinegunner than to a
+## move-5 scout, and without the role on screen there is no way to tell them
+## apart by name.
+func _promotion_role_text(soldier: Dictionary) -> String:
+	var role := Unit.kind_role_name(int(soldier.kind)).to_upper()
+	var unit := _unit_for_soldier(int(soldier.id))
+	if unit == null:
+		return role
+	var parts: Array[String] = [role,
+			"MOVE %d" % unit.move_range,
+			"RNG %d" % unit.attack_range,
+			"ACC %d%%" % unit.accuracy]
+	for perk: String in unit.perks:
+		parts.append(str(Game.PERKS[perk].name).to_upper())
+	return "  -  ".join(parts)
 
 
 ## Show the next queued perk choice, or hand control back to the game-over
@@ -2181,10 +2209,13 @@ func _advance_promotions() -> void:
 		return
 	var rank := int(promotion.rank)
 	var choices: Array = Game.PERK_RANKS[rank]
-	promotion_title_label.text = "%s %s - %s" % [
-			Game.rank_abbrev(int(soldier.rank)), soldier.surname,
-			Game.rank_title(rank).to_upper()]
-	promotion_prompt_label.text = "CHOOSE A SPECIALTY"
+	# The title carries the rank they finished the mission on; the prompt names
+	# the specific promotion this choice belongs to, which are different
+	# whenever someone jumps two ranks in one mission.
+	promotion_title_label.text = Game.soldier_label(soldier)
+	promotion_role_label.text = _promotion_role_text(soldier)
+	promotion_prompt_label.text = "PROMOTED TO %s - CHOOSE A SPECIALTY" % \
+			Game.rank_title(rank).to_upper()
 	var buttons: Array[Button] = [promotion_a_button, promotion_b_button]
 	for i in buttons.size():
 		var perk: String = choices[i]
