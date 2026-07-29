@@ -81,6 +81,11 @@ const STRUCTURE_OFFSETS := {
 }
 const ROCK_SCALE := Vector2(2, 2)
 
+# Tithe caches reuse a scrap pile, tinted so they never read as terrain.
+const CACHE_TEXTURE := preload(
+		"res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage_2.png")
+const CACHE_TINT := Color(1.25, 0.85, 0.55)
+
 const MOVE_STEP_TIME := 0.16
 const TRACER_TIME := 0.09
 const AI_BEAT := 0.12
@@ -146,11 +151,14 @@ var smokes_left := SMOKE_CHARGES
 # Live smoke: cell -> player turns remaining.
 var smoke: Dictionary = {}
 var _smoke_puff_accum := 0.0
+# Objective caches: [{cell, sprite, destroyed}]
+var caches: Array = []
 
 @onready var board: Board = $Board
 @onready var camera: Camera2D = $Camera
 @onready var entities_node: Node2D = $Entities
 @onready var turn_banner: Label = $UI/TurnBanner
+@onready var objective_label: Label = $UI/ObjectiveLabel
 @onready var end_turn_button: Button = $UI/EndTurnButton
 @onready var overwatch_button: Button = $UI/OverwatchButton
 @onready var burst_button: Button = $UI/BurstButton
@@ -159,6 +167,7 @@ var _smoke_puff_accum := 0.0
 @onready var reload_button: Button = $UI/ReloadButton
 @onready var face_button: Button = $UI/FaceButton
 @onready var danger_button: Button = $UI/DangerButton
+@onready var demolish_button: Button = $UI/DemolishButton
 @onready var frag_button: Button = $UI/FragButton
 @onready var smoke_button: Button = $UI/SmokeButton
 @onready var unit_panel: PanelContainer = $UI/UnitPanel
@@ -178,6 +187,7 @@ func _ready() -> void:
 	_rng.randomize()
 	Engine.time_scale = 1.0  # a reload mid-hit-stop must never persist
 	Levels.validate_all()  # push_error-based, so it reports in release too
+	_apply_cmdline_level()
 	level = Game.data()
 	board.set_level(level)
 	_fit_camera()
@@ -187,6 +197,7 @@ func _ready() -> void:
 	_spawn_props()
 	for s: Dictionary in level.structures:
 		_spawn_structure(s)
+	_spawn_caches()
 	for spawn: Vector2i in level.get("lead_spawns", []):
 		_spawn_unit(Unit.Kind.TEAM_LEAD, spawn)
 	for spawn: Vector2i in level.get("gunner_spawns", []):
@@ -210,6 +221,9 @@ func _ready() -> void:
 	auto_button.toggled.connect(_on_fire_button_toggled.bind(FireMode.AUTO))
 	suppress_button.toggled.connect(_on_fire_button_toggled.bind(FireMode.SUPPRESS))
 	reload_button.pressed.connect(_try_reload)
+	demolish_button.pressed.connect(_try_demolish.bind(Board.NO_CELL))
+	# Only levels with something to blow up show the button at all.
+	demolish_button.visible = not caches.is_empty()
 	frag_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.THROW_FRAG))
 	smoke_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.THROW_SMOKE))
 	_sync_throw_buttons()
@@ -223,6 +237,7 @@ func _ready() -> void:
 			level_buttons[i].pressed.connect(_go_to_level.bind(i))
 		else:
 			level_buttons[i].visible = false
+	_refresh_objectives()
 	show_banner("LEVEL %d - %s" % [Game.current_level + 1, level.name])
 	player_turn_ready_msec = Time.get_ticks_msec()
 	print("[ThinShot] level %d '%s', player turn 1 begins" % [
@@ -232,6 +247,17 @@ func _ready() -> void:
 	# (ANIMATING just means the player is already acting - still their turn).
 	if state == State.PLAYER_TURN or state == State.ANIMATING:
 		show_banner("DESERT SCOUTS' TURN")
+
+
+## Boot straight into a level: `godot --path . -- --level 2`. Everything after
+## the bare `--` is ours. Exists so a headless run can smoke-test a level other
+## than the first one, which is otherwise only reachable by playing to it.
+func _apply_cmdline_level() -> void:
+	var args := OS.get_cmdline_user_args()
+	for i in args.size():
+		if args[i] == "--level" and i + 1 < args.size():
+			Game.select_level(int(args[i + 1]) - 1)
+			return
 
 
 ## Center the level on screen and zoom so it fits, leaving headroom for
@@ -505,6 +531,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("throw_smoke"):
 		_try_throw(AimMode.THROW_SMOKE)
 		return
+	if event.is_action_pressed("demolish"):
+		_try_demolish()
+		return
 	if event.is_action_pressed("face"):
 		_try_face()
 		return
@@ -550,6 +579,10 @@ func _handle_click(cell: Vector2i) -> void:
 		if clicked != null and clicked.team == Unit.TEAM_GOBLIN \
 				and board.attack_cells.has(cell):
 			_fire_selected_at(clicked)
+			return
+		# Clicking a cache in reach sets charges on it.
+		if not _cache_at(cell).is_empty() and _can_demolish(selected, cell):
+			_try_demolish(cell)
 			return
 		if board.move_dests.has(cell):
 			do_move(selected, cell)
@@ -612,6 +645,7 @@ func deselect() -> void:
 		selected = null
 	_set_fire_mode(_default_fire_mode(selected))
 	board.clear_highlights()
+	_refresh_objectives()  # nothing selected, so no cache is in reach
 	_update_unit_panel()
 
 
@@ -955,6 +989,7 @@ func _refresh_highlights() -> void:
 	# Even with no moves or targets, the unit stays selected: overwatch (W)
 	# is always a legal order for a unit that has not attacked.
 	board.set_highlights(moves, _free_dests(moves), attacks)
+	_refresh_objectives()  # which caches are in reach depends on the selection
 	_update_hover(board.global_to_cell(get_global_mouse_position()))
 
 
@@ -1053,6 +1088,11 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 	unit.stop_walking()
 	unit.moved = true
 	state = prev_state
+	# Walking is itself an objective action on an extraction map, so the win
+	# condition has to be re-tested the moment a scout stops moving.
+	_refresh_objectives()
+	if check_game_over():
+		return
 	if prev_state == State.PLAYER_TURN:
 		_refresh_danger()
 		_refresh_watch_cells()
@@ -1116,6 +1156,185 @@ func do_suppressive_fire(attacker: Unit, target: Unit) -> void:
 
 func _enemy_team_of(unit: Unit) -> int:
 	return Unit.TEAM_GOBLIN if unit.team == Unit.TEAM_SCOUT else Unit.TEAM_SCOUT
+
+
+# -------------------------------------------------------------- objectives --
+# Levels state what winning means rather than assuming a body count. The list
+# is ordered and finished front to back, so a level can ask the squad to do a
+# job and then get back out again.
+
+
+func _objectives() -> Array:
+	return level.get("objectives", [{"kind": "eliminate"}])
+
+
+func _objective_complete(index: int) -> bool:
+	var obj: Dictionary = _objectives()[index]
+	match obj.get("kind", ""):
+		"eliminate":
+			return living_units(Unit.TEAM_GOBLIN).is_empty()
+		"destroy":
+			return caches_left() == 0
+		"extract":
+			# Only counts once the earlier jobs are done, so a squad cannot
+			# simply walk off the map at turn one.
+			for i in index:
+				if not _objective_complete(i):
+					return false
+			var zone: Array = obj.get("cells", [])
+			for scout in living_units(Unit.TEAM_SCOUT):
+				if not zone.has(scout.cell):
+					return false
+			return true
+	return false
+
+
+func _all_objectives_complete() -> bool:
+	for i in _objectives().size():
+		if not _objective_complete(i):
+			return false
+	return true
+
+
+## The objective the squad is actually working right now: the first unfinished
+## one. Returns -1 when they are all done.
+func _active_objective() -> int:
+	for i in _objectives().size():
+		if not _objective_complete(i):
+			return i
+	return -1
+
+
+func caches_left() -> int:
+	var n := 0
+	for cache: Dictionary in caches:
+		if not cache.destroyed:
+			n += 1
+	return n
+
+
+## Caches are objective markers and nothing else - they do not block movement
+## or sight, so no pathing or LOS behaviour changes on a level that has them.
+func _spawn_caches() -> void:
+	for obj: Dictionary in _objectives():
+		if obj.get("kind", "") != "destroy":
+			continue
+		for cell: Vector2i in obj.get("cells", []):
+			var sprite := _spawn_prop(
+					CACHE_TEXTURE, JUNK_OFFSET, cell)
+			sprite.modulate = CACHE_TINT
+			caches.append({"cell": cell, "sprite": sprite, "destroyed": false})
+
+
+## Cache cells still standing, each mapped to whether the selected scout could
+## demolish it right now - which is what the Board draws the bright rim from.
+func _cache_highlight() -> Dictionary:
+	var cells := {}
+	for cache: Dictionary in caches:
+		if not cache.destroyed:
+			cells[cache.cell] = _can_demolish(selected, cache.cell)
+	return cells
+
+
+func _refresh_objectives() -> void:
+	var active := _active_objective()
+	var extract_zone := {}
+	var armed := false
+	for i in _objectives().size():
+		var obj: Dictionary = _objectives()[i]
+		if obj.get("kind", "") != "extract":
+			continue
+		for cell: Vector2i in obj.get("cells", []):
+			extract_zone[cell] = true
+		# The zone only lights up once it is the live objective.
+		armed = active == i
+	board.set_objectives(_cache_highlight(), extract_zone, armed)
+	_update_objective_label()
+
+
+func _update_objective_label() -> void:
+	var active := _active_objective()
+	if active < 0:
+		objective_label.text = ""
+		return
+	var obj: Dictionary = _objectives()[active]
+	var text: String = obj.get("label", "")
+	match obj.get("kind", ""):
+		"eliminate":
+			if text.is_empty():
+				text = "DESTROY THE RUST CHOIR"
+			text += "   %d LEFT" % living_units(Unit.TEAM_GOBLIN).size()
+		"destroy":
+			var total: int = obj.get("cells", []).size()
+			text += "   %d/%d" % [total - caches_left(), total]
+		"extract":
+			var zone: Array = obj.get("cells", [])
+			var home := 0
+			for scout in living_units(Unit.TEAM_SCOUT):
+				if zone.has(scout.cell):
+					home += 1
+			text += "   %d/%d ABOARD" % [home, living_units(Unit.TEAM_SCOUT).size()]
+	objective_label.text = text
+
+
+## A scout can demolish a cache it is standing on or beside, as long as it has
+## not already acted. No ammunition involved - it is a charge, not a shot.
+func _can_demolish(unit: Unit, cell: Vector2i) -> bool:
+	return unit != null and unit.team == Unit.TEAM_SCOUT and not unit.acted \
+			and Board.manhattan(unit.cell, cell) <= 1
+
+
+func _cache_at(cell: Vector2i) -> Dictionary:
+	for cache: Dictionary in caches:
+		if not cache.destroyed and cache.cell == cell:
+			return cache
+	return {}
+
+
+## Demolish the one adjacent cache, or the only one in reach if the player hit
+## the key instead of clicking a specific pile.
+func _try_demolish(cell := Board.NO_CELL) -> void:
+	if state != State.PLAYER_TURN or selected == null:
+		return
+	var cache := _cache_at(cell) if cell != Board.NO_CELL else {}
+	if cache.is_empty():
+		for candidate: Dictionary in caches:
+			if not candidate.destroyed and _can_demolish(selected, candidate.cell):
+				cache = candidate
+				break
+	if cache.is_empty() or not _can_demolish(selected, cache.cell):
+		return
+	do_demolish(selected, cache)
+
+
+func do_demolish(scout: Unit, cache: Dictionary) -> void:
+	var prev_state := state
+	state = State.ANIMATING
+	board.clear_highlights()
+	var pos: Vector2 = board.cell_to_global(cache.cell)
+	scout.set_facing((pos - scout.position).normalized())
+	print("[ThinShot] scout at %s demolishes cache %s" % [scout.cell, cache.cell])
+	await scout.play_reload()  # doubles as the setting-charges beat
+	cache.destroyed = true
+	var sprite: Sprite2D = cache.sprite
+	if is_instance_valid(sprite):
+		sprite.queue_free()
+	Sfx.play("explosion")
+	fx_air.explosion(pos + Vector2(0, -20))
+	fx_ground.scorch(pos)
+	_screen_shake(2.6)
+	_camera_kick((pos - scout.position).normalized())
+	await _hit_stop(0.25, 0.09)
+	scout.set_done(true)
+	if scout == selected:
+		deselect()
+	state = prev_state
+	_refresh_objectives()
+	if check_game_over():
+		return
+	if prev_state == State.PLAYER_TURN:
+		_refresh_highlights()
+		_update_unit_panel()
 
 
 # ---------------------------------------------------------------- ordnance --
@@ -1545,6 +1764,7 @@ func end_player_turn() -> void:
 	reload_button.disabled = true
 	face_button.disabled = true
 	danger_button.disabled = true
+	demolish_button.disabled = true
 	frag_button.disabled = true
 	smoke_button.disabled = true
 	# Goblins refresh at the start of THEIR turn (expires last turn's
@@ -1573,6 +1793,7 @@ func end_player_turn() -> void:
 	reload_button.disabled = false
 	face_button.disabled = false
 	danger_button.disabled = false
+	demolish_button.disabled = false
 	_sync_throw_buttons()  # respects charges rather than blanket-enabling
 	# Smoke thrown last turn has now covered the enemy turn it was meant to
 	# cover, so it burns off as control comes back.
@@ -1582,6 +1803,7 @@ func end_player_turn() -> void:
 	player_turn_ready_msec = Time.get_ticks_msec()
 	_refresh_danger()
 	_refresh_watch_cells()
+	_refresh_objectives()
 	_update_unit_panel()
 
 
@@ -1770,6 +1992,7 @@ func _on_unit_died(unit: Unit) -> void:
 	Sfx.play("unit_death")
 	fx_ground.stain(unit.position)
 	_puff_on_landing(unit)
+	_refresh_objectives()  # the remaining-goblin count and extract tally move
 	check_game_over()
 
 
@@ -1784,11 +2007,13 @@ func _puff_on_landing(unit: Unit) -> void:
 func check_game_over() -> bool:
 	if state == State.GAME_OVER:
 		return true
-	if living_units(Unit.TEAM_GOBLIN).is_empty():
-		_show_game_over("DESERT SCOUTS WIN", true)
-		return true
+	# Losing is unconditional and checked first: no objective saves a squad
+	# that is already dead.
 	if living_units(Unit.TEAM_SCOUT).is_empty():
 		_show_game_over("THE CHOIR SINGS ON", false)
+		return true
+	if _all_objectives_complete():
+		_show_game_over("DESERT SCOUTS WIN", true)
 		return true
 	return false
 
@@ -1796,6 +2021,8 @@ func check_game_over() -> bool:
 func _show_game_over(text: String, won: bool) -> void:
 	state = State.GAME_OVER
 	last_result_won = won
+	print("[ThinShot] level %d over on turn %d: %s" % [
+			Game.current_level + 1, turn_number, "WON" if won else "LOST"])
 	if won and Game.is_last_level():
 		text = "CAMPAIGN COMPLETE - THE WASTES FALL SILENT"
 	result_label.text = text

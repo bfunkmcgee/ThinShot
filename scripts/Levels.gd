@@ -1,6 +1,18 @@
 class_name Levels
 
-## Static campaign data. Map legend:
+## Static campaign data.
+##
+## Each level carries an ordered "objectives" list; a level with none defaults
+## to wiping out the Choir, which is what the first one does. Objectives are
+## completed in order, and the level is won when the last one is:
+##   {"kind": "eliminate"}                       - kill every goblin
+##   {"kind": "destroy", "cells": [...]}         - demolish every tithe cache
+##   {"kind": "extract", "cells": [...]}         - every surviving scout to the
+##                                                 zone, and only once every
+##                                                 earlier objective is done
+## Losing is unchanged and unconditional: the squad dies, you lose.
+##
+## Map legend:
 ##   '.' open sand          '#' rock (blocks move + LOS)
 ##   'W' mud-brick wall (blocks move + LOS)
 ##   'j' rusted junk (partial cover: unwalkable, shots pass at half damage)
@@ -95,6 +107,16 @@ const LEVELS: Array[Dictionary] = [
 			{"kind": "hut_1", "anchor": Vector2i(13, 2), "size": Vector2i(2, 2)},
 			{"kind": "tent", "anchor": Vector2i(13, 6), "size": Vector2i(2, 2)},
 		],
+		# The tithe itself. Three caches spread corner to corner behind the
+		# barricades, so clearing the yard is the only way to reach them all -
+		# and a body count no longer ends the level.
+		"objectives": [
+			{
+				"kind": "destroy",
+				"label": "BURN THE TITHE CACHES",
+				"cells": [Vector2i(12, 1), Vector2i(14, 4), Vector2i(12, 8)],
+			},
+		],
 		"zone_seed": 21,
 		"shade_seed": 34,
 		"zone_thresholds": [-0.5, -0.2],
@@ -142,6 +164,25 @@ const LEVELS: Array[Dictionary] = [
 			{"kind": "fortress", "anchor": Vector2i(12, 1), "size": Vector2i(4, 4)},
 			{"kind": "hut_1", "anchor": Vector2i(2, 1), "size": Vector2i(2, 2)},
 			{"kind": "hut_2", "anchor": Vector2i(2, 6), "size": Vector2i(2, 2)},
+		],
+		# A raid, not a massacre: blow the magazines at opposite ends of the
+		# compound, then walk everyone back out the way they came in. The
+		# extraction zone is the ground the squad started on, so the level
+		# ends where it began and the last stretch is a fighting withdrawal.
+		"objectives": [
+			{
+				"kind": "destroy",
+				"label": "BLOW THE MAGAZINES",
+				"cells": [Vector2i(11, 1), Vector2i(14, 6)],
+			},
+			{
+				"kind": "extract",
+				"label": "EXTRACT THE SQUAD",
+				"cells": [
+					Vector2i(0, 2), Vector2i(0, 3), Vector2i(0, 4),
+					Vector2i(0, 5), Vector2i(0, 6), Vector2i(0, 7),
+				],
+			},
 		],
 		"zone_seed": 42,
 		"shade_seed": 55,
@@ -236,4 +277,47 @@ static func _validate(index: int) -> bool:
 	for spawn: Vector2i in spawns:
 		ok = _check(visited.has(spawn),
 				"%s: spawn %s unreachable from %s" % [label, spawn, start]) and ok
+	ok = _validate_objectives(data, label, walkable, visited, seen_spawn) and ok
+	return ok
+
+
+## The squad size an extraction zone has to be able to hold. Every scout still
+## alive has to fit inside it at once, so a zone smaller than the whole squad
+## would make the level unwinnable on a no-casualty run.
+static func squad_size(data: Dictionary) -> int:
+	return data.scout_spawns.size() + data.get("lead_spawns", []).size() \
+			+ data.get("gunner_spawns", []).size()
+
+
+static func _validate_objectives(data: Dictionary, label: String,
+		walkable: Callable, visited: Dictionary, spawns: Dictionary) -> bool:
+	var ok := true
+	var objectives: Array = data.get("objectives", [])
+	var seen_cell := {}
+	for obj: Dictionary in objectives:
+		var kind: String = obj.get("kind", "")
+		ok = _check(kind == "eliminate" or kind == "destroy" or kind == "extract",
+				"%s: unknown objective kind '%s'" % [label, kind]) and ok
+		if kind == "eliminate":
+			continue
+		var cells: Array = obj.get("cells", [])
+		ok = _check(not cells.is_empty(),
+				"%s: '%s' objective needs cells" % [label, kind]) and ok
+		for cell: Vector2i in cells:
+			ok = _check(walkable.call(cell),
+					"%s: objective cell %s not walkable" % [label, cell]) and ok
+			ok = _check(visited.has(cell),
+					"%s: objective cell %s unreachable" % [label, cell]) and ok
+			ok = _check(not seen_cell.has(cell),
+					"%s: objective cell %s used twice" % [label, cell]) and ok
+			seen_cell[cell] = true
+			# A cache sitting under a starting unit reads as a bug even
+			# though nothing about it actually breaks.
+			if kind == "destroy":
+				ok = _check(not spawns.has(cell),
+						"%s: cache %s sits on a spawn" % [label, cell]) and ok
+		if kind == "extract":
+			ok = _check(cells.size() >= squad_size(data),
+					"%s: extraction zone holds %d, squad is %d" % [
+							label, cells.size(), squad_size(data)]) and ok
 	return ok

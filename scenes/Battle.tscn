@@ -28,6 +28,29 @@ text = "DESERT SCOUTS' TURN"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="ObjectiveLabel" type="Label" parent="UI"]
+anchor_right = 1.0
+offset_top = 40.0
+offset_bottom = 64.0
+theme_override_colors/font_color = Color(1, 0.78, 0.4, 1)
+theme_override_font_sizes/font_size = 15
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DemolishButton" type="Button" parent="UI"]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -333.0
+offset_top = -124.0
+offset_right = -238.0
+offset_bottom = -76.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 13
+text = "Demolish (X)"
+
 [node name="FaceButton" type="Button" parent="UI"]
 anchor_left = 1.0
 anchor_top = 1.0

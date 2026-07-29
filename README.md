@@ -68,10 +68,22 @@ Team Lead (six tiles out-reaches him, and four damage drops him in one), break
 line of sight and make him choose between shooting and repositioning, or eat a
 scout's worth of damage crossing his lane.
 
-A three-level desert campaign on 16×10 isometric maps: **Dry Wash** (open
-skirmish), **The Scrapline** (the Choir's junkyard), and **Outpost 7** (fortress
-assault). Your scouts are elite — tougher, faster, longer-ranged — but the
-Choir has numbers and holds the ground.
+A three-level desert campaign on 16×10 isometric maps, and **each one asks for
+something different**:
+
+1. **Dry Wash** — open skirmish. Kill every goblin. The teaching level.
+2. **The Scrapline** — a raid. **Burn three tithe caches** spread corner to
+   corner behind the barricades. A body count does not end this one; you can
+   win with goblins still standing, and you can wipe them out and still not be
+   finished.
+3. **Outpost 7** — a raid with a way out. **Blow both magazines** at opposite
+   ends of the compound, *then* **walk the whole squad back to the extraction
+   zone** on the west edge. The zone stays shut until the charges go off, so
+   the last stretch is a fighting withdrawal across ground you already crossed
+   once — with whatever the Choir has left chasing you.
+
+Your scouts are elite — tougher, faster, longer-ranged — but the Choir has
+numbers and holds the ground.
 
 ## Controls
 
@@ -92,6 +104,9 @@ Choir has numbers and holds the ground.
   (highlights turn amber). Requires a firing position.
 - **S** or the **Suppress** button — arm the machinegunner's suppressive fire
   (highlights turn blue). Deals no damage; pins the target and its neighbours.
+- **X** or the **Demolish** button — set charges on a tithe cache the selected
+  scout is standing on or beside (the orange piles). Costs the attack, needs
+  no ammunition. Caches in reach get a bright rim.
 - **G** or the **Frag** button — throw a fragmentation grenade, then **click
   the tile to land it on**: the five cells it will catch light up orange
   before you commit. Four tiles of throw range, needs line of sight.
@@ -119,6 +134,15 @@ Choir has numbers and holds the ground.
 - **Rocks, brick walls, and buildings block movement *and* line of sight.**
 - **Rusted junk is partial cover**: you can't stand on it, but shots pass over
   it at **half damage** (the aim line turns amber). Cacti are decoration.
+- **The objective, not the body count, decides the level.** A banner under the
+  turn indicator always says what the squad is there to do and how far along it
+  is. Objectives complete **in order** — Outpost 7's extraction zone is inert
+  until both magazines are down, so you cannot simply walk off the map. Losing
+  is the one thing that never changes: if the squad dies, you lose, whatever
+  the objective said.
+- **Extraction takes everyone who is still alive.** You pick the moment; a
+  scout left behind means the zone is not full and the level does not end. If
+  one dies on the way, the requirement shrinks with the squad.
 - Winning advances to the next level; losing retries the current one.
 - **Facing matters.** Every unit covers a 135° front arc, drawn as a wedge at
   its feet. Cover only protects against shots arriving inside that arc — a
@@ -169,10 +193,13 @@ Choir has numbers and holds the ground.
 2. `git clone <this-repo>` and open `project.godot` in Godot (or `godot .`).
 3. Press **F5**.
 
-Headless smoke test (parse/boot check, exit code 0 = healthy):
+Headless smoke test (parse/boot check, exit code 0 = healthy). Godot exits 0
+even when a scene fails to compile, so grep the output for `SCRIPT ERROR`
+rather than trusting the exit code alone:
 
 ```
-godot --headless --path . --quit
+godot --headless --path . --quit-after 200
+godot --headless --path . --quit-after 200 -- --level 2   # boot straight into a level
 ```
 
 ## Project layout

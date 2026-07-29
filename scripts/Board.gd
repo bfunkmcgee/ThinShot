@@ -86,6 +86,17 @@ const BLAST_EDGE := Color(1.0, 0.85, 0.6, 0.75)
 const SMOKE_FILL := Color(0.74, 0.72, 0.68, 0.50)
 const SMOKE_EDGE := Color(0.84, 0.83, 0.80, 0.30)
 
+# Mission objectives. Caches pulse so they read as things to act on rather
+# than scenery; the extraction zone goes flat green and only lights up once
+# it is actually open.
+const CACHE_FILL := Color(0.95, 0.35, 0.12, 0.30)
+const CACHE_EDGE := Color(1.0, 0.66, 0.26, 0.95)
+const CACHE_REACH_EDGE := Color(1.0, 0.95, 0.55, 1.0)
+const EXTRACT_FILL := Color(0.35, 0.9, 0.45, 0.16)
+const EXTRACT_EDGE := Color(0.5, 1.0, 0.6, 0.55)
+const EXTRACT_ARMED_FILL := Color(0.4, 1.0, 0.5, 0.30)
+const EXTRACT_ARMED_EDGE := Color(0.7, 1.0, 0.8, 0.95)
+
 const WATCH_FILL := Color(1.0, 0.72, 0.28, 0.10)
 const WATCH_HATCH := Color(1.0, 0.72, 0.28, 0.26)
 const WATCH_FILL_ALLY := Color(0.45, 0.92, 0.5, 0.10)
@@ -122,6 +133,13 @@ var aim_covered := false
 var aim_flanking := false
 var fire_mode := 0  # mirrors Battle.FireMode; tints the attack highlights
 # Cells covered by overwatch arcs: cell -> true if the watcher is hostile.
+# Objectives. cache_cells maps an intact cache cell -> true if a selected
+# scout is close enough to demolish it this turn.
+var cache_cells: Dictionary = {}
+var extract_cells: Dictionary = {}
+var extract_armed := false
+var _pulse := 0.0
+
 # Live smoke: blocks line of sight for both sides but never movement.
 var smoke_cells: Dictionary = {}
 # Preview footprint while a grenade is being aimed; true = frag, false = smoke.
@@ -162,6 +180,20 @@ func set_watch_cells(cells: Dictionary) -> void:
 
 func set_danger(cells: Dictionary) -> void:
 	danger_cells = cells
+	queue_redraw()
+
+
+func set_objectives(caches: Dictionary, extracts: Dictionary, armed: bool) -> void:
+	cache_cells = caches
+	extract_cells = extracts
+	extract_armed = armed
+	set_process(not caches.is_empty() or not extracts.is_empty())
+	queue_redraw()
+
+
+## Objective markers breathe so they stay findable on a busy board.
+func _process(delta: float) -> void:
+	_pulse = fmod(_pulse + delta * 2.2, TAU)
 	queue_redraw()
 
 
@@ -462,6 +494,27 @@ func _draw() -> void:
 		var ring := s.duplicate()
 		ring.append(ring[0])
 		draw_polyline(ring, SMOKE_EDGE, 2.0, true)
+	# Objectives sit above smoke and below the move/attack overlays: they are
+	# where you are going, not what you can do this instant.
+	var breath := 0.5 + 0.5 * sin(_pulse)
+	for cell: Vector2i in extract_cells:
+		var e := _diamond(cell)
+		draw_colored_polygon(e, EXTRACT_ARMED_FILL if extract_armed else EXTRACT_FILL)
+		var e_ring := e.duplicate()
+		e_ring.append(e_ring[0])
+		if extract_armed:
+			draw_polyline(e_ring, EXTRACT_ARMED_EDGE.lerp(EXTRACT_EDGE, breath), 2.5, true)
+		else:
+			draw_polyline(e_ring, EXTRACT_EDGE, 1.5, true)
+	for cell: Vector2i in cache_cells:
+		var in_reach: bool = cache_cells[cell]
+		var k := _diamond(cell)
+		draw_colored_polygon(k, CACHE_FILL)
+		var k_ring := k.duplicate()
+		k_ring.append(k_ring[0])
+		var edge := CACHE_REACH_EDGE if in_reach else CACHE_EDGE
+		draw_polyline(k_ring, edge.lerp(CACHE_FILL, breath * 0.6),
+				3.0 if in_reach else 2.0, true)
 	for cell: Vector2i in danger_cells:
 		var d := _diamond(cell)
 		draw_colored_polygon(d, DANGER_FILL)
