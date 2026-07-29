@@ -172,6 +172,7 @@ var caches: Array = []
 @onready var smoke_button: Button = $UI/SmokeButton
 @onready var unit_panel: PanelContainer = $UI/UnitPanel
 @onready var panel_name_label: Label = $UI/UnitPanel/Margin/Rows/NameLabel
+@onready var panel_progress_label: Label = $UI/UnitPanel/Margin/Rows/ProgressLabel
 @onready var panel_hp_label: Label = $UI/UnitPanel/Margin/Rows/HpLabel
 @onready var panel_stats_label: Label = $UI/UnitPanel/Margin/Rows/StatsLabel
 @onready var panel_status_label: Label = $UI/UnitPanel/Margin/Rows/StatusLabel
@@ -181,6 +182,12 @@ var caches: Array = []
 @onready var level_1_button: Button = $UI/GameOver/Level1Button
 @onready var level_2_button: Button = $UI/GameOver/Level2Button
 @onready var level_3_button: Button = $UI/GameOver/Level3Button
+@onready var debrief_label: Label = $UI/GameOver/DebriefLabel
+@onready var promotion_panel: ColorRect = $UI/Promotion
+@onready var promotion_title_label: Label = $UI/Promotion/TitleLabel
+@onready var promotion_prompt_label: Label = $UI/Promotion/PromptLabel
+@onready var promotion_a_button: Button = $UI/Promotion/PerkAButton
+@onready var promotion_b_button: Button = $UI/Promotion/PerkBButton
 
 
 func _ready() -> void:
@@ -189,6 +196,10 @@ func _ready() -> void:
 	Levels.validate_all()  # push_error-based, so it reports in release too
 	_apply_cmdline_level()
 	level = Game.data()
+	# Bring the squad up to strength (replacing anyone lost) and snapshot it,
+	# so a failed mission can be rolled back wholesale.
+	Game.ensure_roster(level)
+	Game.begin_mission()
 	board.set_level(level)
 	_fit_camera()
 	_setup_fx_layers()
@@ -198,12 +209,9 @@ func _ready() -> void:
 	for s: Dictionary in level.structures:
 		_spawn_structure(s)
 	_spawn_caches()
-	for spawn: Vector2i in level.get("lead_spawns", []):
-		_spawn_unit(Unit.Kind.TEAM_LEAD, spawn)
-	for spawn: Vector2i in level.get("gunner_spawns", []):
-		_spawn_unit(Unit.Kind.MACHINEGUNNER, spawn)
-	for spawn: Vector2i in level.scout_spawns:
-		_spawn_unit(Unit.Kind.SCOUT, spawn)
+	_spawn_squad(Unit.Kind.TEAM_LEAD, level.get("lead_spawns", []))
+	_spawn_squad(Unit.Kind.MACHINEGUNNER, level.get("gunner_spawns", []))
+	_spawn_squad(Unit.Kind.SCOUT, level.scout_spawns)
 	for spawn: Vector2i in level.goblin_spawns:
 		_spawn_unit(Unit.Kind.GOBLIN, spawn)
 	for spawn: Vector2i in level.get("smg_spawns", []):
@@ -229,6 +237,8 @@ func _ready() -> void:
 	_sync_throw_buttons()
 	danger_button.toggled.connect(_on_danger_button_toggled)
 	restart_button.pressed.connect(_on_restart)
+	promotion_a_button.pressed.connect(_on_promotion_chosen.bind(0))
+	promotion_b_button.pressed.connect(_on_promotion_chosen.bind(1))
 	# Hotkeys/buttons cover the first 3 levels; extend the level_N input
 	# actions and this button row alongside any new Levels.LEVELS entries.
 	var level_buttons: Array[Button] = [level_1_button, level_2_button, level_3_button]
@@ -455,12 +465,25 @@ func _spawn_structure(s: Dictionary) -> void:
 		})
 
 
-func _spawn_unit(kind: Unit.Kind, spawn_cell: Vector2i) -> void:
+## `soldier` is the roster entry for a named scout, or {} for the Choir.
+func _spawn_unit(kind: Unit.Kind, spawn_cell: Vector2i, soldier := {}) -> void:
 	var unit: Unit = UNIT_SCENE.instantiate()
 	entities_node.add_child(unit)
 	unit.setup(kind, spawn_cell)
+	if not soldier.is_empty():
+		# Strictly after setup(), which assigns every stat from scratch.
+		unit.apply_progression(soldier)
 	unit.position = board.cell_to_global(spawn_cell)
 	unit.died.connect(_on_unit_died)
+
+
+## Walk a level's spawn list for one scout role alongside the roster slots for
+## that role, so the same soldier lands in the same job every mission.
+func _spawn_squad(kind: Unit.Kind, spawns: Array) -> void:
+	var soldiers := Game.soldiers_of_kind(kind)
+	for i in spawns.size():
+		var soldier: Dictionary = soldiers[i] if i < soldiers.size() else {}
+		_spawn_unit(kind, spawns[i], soldier)
 
 
 func living_units(team: int) -> Array[Unit]:
@@ -533,6 +556,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("demolish"):
 		_try_demolish()
+		return
+	if event.is_action_pressed("hustle"):
+		_try_hustle()
 		return
 	if event.is_action_pressed("face"):
 		_try_face()
@@ -736,6 +762,7 @@ func _update_unit_panel() -> void:
 		return
 	unit_panel.visible = true
 	panel_name_label.text = unit.display_name()
+	panel_progress_label.text = _progress_text(unit)
 	panel_hp_label.text = "HP %d / %d" % [unit.hp, unit.max_hp]
 	panel_stats_label.text = "Move %d  Rng %d  Dmg %d  Acc %d%%%s" % [
 			unit.move_range, unit.attack_range, unit.damage, unit.accuracy,
@@ -1158,6 +1185,50 @@ func _enemy_team_of(unit: Unit) -> int:
 	return Unit.TEAM_GOBLIN if unit.team == Unit.TEAM_SCOUT else Unit.TEAM_SCOUT
 
 
+# ------------------------------------------------------------- progression --
+# XP is credited at the damage sites rather than from the died signal, which
+# only carries the victim. Everything funnels through two call sites, and both
+# already have the attacker in scope.
+
+
+## Credit a kill, if a named soldier earned it against the Choir. Guards both
+## directions: goblins earn nothing, and a frag that catches your own scout is
+## not an achievement.
+func _credit_kill(killer: Unit, victim: Unit) -> void:
+	if killer == null or killer.soldier_id == 0:
+		return
+	if victim.team != Unit.TEAM_GOBLIN or killer.team != Unit.TEAM_SCOUT:
+		return
+	Game.award(killer.soldier_id, Game.XP_KILL)
+	print("[ThinShot]   %s credited a kill (+%d xp)" % [
+			killer.display_name(), Game.XP_KILL])
+
+
+## Squad ordnance is shared, so a grenade charge is too. Bumps the squad's
+## frag count for a Grenadier-style perk later if one is ever added.
+func _award_xp(unit: Unit, amount: int, reason: String) -> void:
+	if unit == null or unit.soldier_id == 0:
+		return
+	Game.award(unit.soldier_id, amount)
+	print("[ThinShot]   %s +%d xp (%s)" % [unit.display_name(), amount, reason])
+
+
+## Hustle: give up the shot to move a second time. Reuses do_move untouched -
+## all it does is hand the move back and spend the attack instead.
+func _try_hustle() -> void:
+	if state != State.PLAYER_TURN or selected == null:
+		return
+	if not selected.has_perk("hustle") or selected.acted or not selected.moved:
+		return
+	selected.moved = false
+	selected.acted = true
+	Sfx.play("select", -3.0, 0.0)
+	print("[ThinShot] %s hustles - second move, no shot" % selected.display_name())
+	_set_fire_mode(_default_fire_mode(selected))
+	_refresh_highlights()
+	_update_unit_panel()
+
+
 # -------------------------------------------------------------- objectives --
 # Levels state what winning means rather than assuming a body count. The list
 # is ordered and finished front to back, so a level can ask the squad to do a
@@ -1316,6 +1387,7 @@ func do_demolish(scout: Unit, cache: Dictionary) -> void:
 	print("[ThinShot] scout at %s demolishes cache %s" % [scout.cell, cache.cell])
 	await scout.play_reload()  # doubles as the setting-charges beat
 	cache.destroyed = true
+	_award_xp(scout, Game.XP_CACHE, "cache")
 	var sprite: Sprite2D = cache.sprite
 	if is_instance_valid(sprite):
 		sprite.queue_free()
@@ -1441,6 +1513,10 @@ func do_throw_frag(thrower: Unit, cell: Vector2i) -> void:
 		var away := (unit.position - center).normalized()
 		fx_air.blood_mist(unit.position + Vector2(0, -36), away,
 				unit.hp <= FRAG_DAMAGE)
+		# Credited before the damage lands, while the victim is still alive to
+		# be inspected. _credit_kill ignores friendly fire.
+		if unit.hp <= FRAG_DAMAGE:
+			_credit_kill(thrower, unit)
 		unit.take_damage(FRAG_DAMAGE, away)
 	print("[ThinShot]   frag caught %d unit(s)" % caught.size())
 	_finish_throw(thrower, prev_state)
@@ -1605,6 +1681,8 @@ func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0) -> void:
 	fx_air.blood_mist(chest, dir, lethal)
 	fx_ground.blood_spray(chest, target.position.y, dir, lethal)
 	_screen_shake(1.6 if lethal else 1.0)
+	if lethal:
+		_credit_kill(attacker, target)
 	target.take_damage(dmg, dir)
 	# A hit from outside the front arc knocks the target off overwatch.
 	if flanking and target.is_alive() and target.overwatching:
@@ -1625,7 +1703,8 @@ func hit_chance(attacker: Unit, target: Unit, accuracy_mod := 0) -> int:
 		chance += FLANK_ACCURACY
 	var dist := Board.manhattan(attacker.cell, target.cell)
 	var comfortable: int = attacker.attack_range / 2
-	if dist > comfortable:
+	# A Marksman has shot at that range enough times for it to stop mattering.
+	if dist > comfortable and not attacker.has_perk("marksman"):
 		chance -= (dist - comfortable) * LONG_SHOT_PENALTY
 	return clampi(chance, 20, 99)
 
@@ -1989,6 +2068,11 @@ func _best_watch_sector(goblin: Unit, scouts: Array[Unit]) -> int:
 # --- Win / lose --------------------------------------------------------------
 
 func _on_unit_died(unit: Unit) -> void:
+	if unit.soldier_id != 0:
+		# Provisional: abort_mission() puts them back if the mission is lost
+		# and retried, so only a won mission makes a death permanent.
+		Game.mark_dead(unit.soldier_id)
+		print("[ThinShot] %s is down" % unit.display_name())
 	Sfx.play("unit_death")
 	fx_ground.stain(unit.position)
 	_puff_on_landing(unit)
@@ -2023,9 +2107,19 @@ func _show_game_over(text: String, won: bool) -> void:
 	last_result_won = won
 	print("[ThinShot] level %d over on turn %d: %s" % [
 			Game.current_level + 1, turn_number, "WON" if won else "LOST"])
+	if won:
+		# Walking off the map is worth something on its own.
+		for scout in living_units(Unit.TEAM_SCOUT):
+			_award_xp(scout, Game.XP_SURVIVE, "survived")
+		Game.commit_mission()
+	else:
+		# Nothing earned in a failed attempt sticks, so retrying cannot be
+		# farmed for XP - and the fallen are un-killed along with it.
+		Game.abort_mission()
 	if won and Game.is_last_level():
 		text = "CAMPAIGN COMPLETE - THE WASTES FALL SILENT"
 	result_label.text = text
+	debrief_label.text = _debrief_text(won)
 	if not won:
 		restart_button.text = "Retry"
 	elif Game.is_last_level():
@@ -2034,17 +2128,96 @@ func _show_game_over(text: String, won: bool) -> void:
 		restart_button.text = "Next Level"
 	game_over_panel.visible = true
 	Sfx.play("win" if won else "lose", 0.0, 0.0)
+	# Perk choices are taken first: the promotion panel covers the game-over
+	# buttons until the queue is empty, so nobody can click Next Level past a
+	# pick they were owed.
+	_advance_promotions()
+
+
+## The panel's second row: role for anyone, plus rank progress and earned
+## specialties for a named soldier.
+func _progress_text(unit: Unit) -> String:
+	if unit.soldier_id == 0:
+		return unit.role_name()
+	var soldier := Game.soldier_by_id(unit.soldier_id)
+	var xp: int = int(soldier.get("xp", 0))
+	var parts: Array[String] = [unit.role_name()]
+	var to_next := Game.xp_to_next(xp)
+	parts.append("%d xp" % xp if to_next < 0 else "%d xp (+%d)" % [xp, to_next])
+	for perk: String in unit.perks:
+		parts.append(str(Game.PERKS[perk].name))
+	return "  ".join(parts)
+
+
+## Who earned what, so a win reads as more than a banner.
+func _debrief_text(won: bool) -> String:
+	if not won:
+		return "NOTHING EARNED - THE ATTEMPT DOES NOT COUNT"
+	var lines: Array[String] = []
+	for soldier: Dictionary in Game.roster:
+		var gained: int = int(Game.mission_xp.get(int(soldier.id), 0))
+		if not bool(soldier.alive):
+			lines.append("%s - KILLED IN ACTION" % soldier.surname)
+		elif gained > 0:
+			lines.append("%s %s  +%d xp" % [
+					Game.rank_abbrev(int(soldier.rank)), soldier.surname, gained])
+		else:
+			lines.append("%s %s" % [
+					Game.rank_abbrev(int(soldier.rank)), soldier.surname])
+	return "\n".join(lines)
+
+
+## Show the next queued perk choice, or hand control back to the game-over
+## panel once every promotion has been spent.
+func _advance_promotions() -> void:
+	if Game.pending_promotions.is_empty():
+		promotion_panel.visible = false
+		return
+	var promotion: Dictionary = Game.pending_promotions[0]
+	var soldier := Game.soldier_by_id(int(promotion.id))
+	if soldier.is_empty():
+		Game.pending_promotions.pop_front()
+		_advance_promotions()
+		return
+	var rank := int(promotion.rank)
+	var choices: Array = Game.PERK_RANKS[rank]
+	promotion_title_label.text = "%s %s - %s" % [
+			Game.rank_abbrev(int(soldier.rank)), soldier.surname,
+			Game.rank_title(rank).to_upper()]
+	promotion_prompt_label.text = "CHOOSE A SPECIALTY"
+	var buttons: Array[Button] = [promotion_a_button, promotion_b_button]
+	for i in buttons.size():
+		var perk: String = choices[i]
+		var info: Dictionary = Game.PERKS[perk]
+		buttons[i].text = "%s\n%s" % [str(info.name).to_upper(), info.blurb]
+	promotion_panel.visible = true
+
+
+func _on_promotion_chosen(slot: int) -> void:
+	if Game.pending_promotions.is_empty():
+		return
+	var promotion: Dictionary = Game.pending_promotions.pop_front()
+	var choices: Array = Game.PERK_RANKS[int(promotion.rank)]
+	Game.choose_perk(int(promotion.id), choices[slot])
+	debrief_label.text = _debrief_text(true)
+	_advance_promotions()
 
 
 func _on_restart() -> void:
 	Engine.time_scale = 1.0  # never carry a hit-stop across a reload
 	if last_result_won:
-		Game.select_level(0 if Game.is_last_level() else Game.current_level + 1)
+		if Game.is_last_level():
+			# The campaign loops, so the squad starts over with it.
+			Game.reset_roster()
+			Game.select_level(0)
+		else:
+			Game.select_level(Game.current_level + 1)
 	get_tree().reload_current_scene()
 
 
 func _go_to_level(index: int) -> void:
 	Engine.time_scale = 1.0
+	Game.abort_mission()  # jumping away mid-mission banks nothing
 	Game.select_level(index)
 	get_tree().reload_current_scene()
 

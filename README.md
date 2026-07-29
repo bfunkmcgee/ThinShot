@@ -85,6 +85,44 @@ something different**:
 Your scouts are elite — tougher, faster, longer-ranged — but the Choir has
 numbers and holds the ground.
 
+## The squad
+
+The five soldiers are **named, and they are the same five from one mission to
+the next**. They earn ranks, they specialise, and **when one falls they are
+gone** — a raw recruit fills the slot next mission and everything that soldier
+had earned goes with them.
+
+| Rank | XP | Gains |
+|---|---|---|
+| Scout | 0 | — |
+| Corporal | 6 | +3 acc, +1 HP, **choose a specialty** |
+| Sergeant | 14 | +3 acc, +1 HP |
+| Staff Sergeant | 26 | +3 acc, +1 HP, **choose a specialty** |
+| Master Sergeant | 40 | +3 acc, +1 HP |
+
+Rank gains are cumulative, and accuracy is capped at 95% — nobody ever becomes
+a sure thing. Because of the cap the machinegunner (78%) gains far more from
+rank than the team lead (92%), so the squad evens out as it matures.
+
+**XP:** 3 a kill, 4 a demolished cache, 3 for walking off the map alive.
+
+**Specialties**, chosen at Corporal and again at Staff Sergeant:
+
+- **Marksman** — shots past half range stop losing accuracy. Turns a scout into
+  something that can answer the Cantor.
+- **Sprinter** — +1 tile of movement, permanently.
+- **Sentinel** — overwatch covers 180° instead of 135°.
+- **Hustle** — **V**: give up the shot to move a second time. The extraction
+  run on Outpost 7 is exactly what it is for.
+
+Rank shows as chevrons beside a soldier's HP pips, and the info panel carries
+their name, XP, and specialties.
+
+**A failed mission counts for nothing.** XP earned in an attempt you lose is
+rolled back when you retry, and so are the casualties — so you can never farm a
+level, and a wipe costs you the attempt rather than the squad. Finishing the
+campaign and playing again starts you with five fresh recruits.
+
 ## Controls
 
 - **Left-click** — select a scout / move to a yellow-highlighted tile / shoot a
@@ -104,6 +142,8 @@ numbers and holds the ground.
   (highlights turn amber). Requires a firing position.
 - **S** or the **Suppress** button — arm the machinegunner's suppressive fire
   (highlights turn blue). Deals no damage; pins the target and its neighbours.
+- **V** — **Hustle** (Staff Sergeant specialty only): give up this soldier's
+  shot to move a second time.
 - **X** or the **Demolish** button — set charges on a tithe cache the selected
   scout is standing on or beside (the orange piles). Costs the attack, needs
   no ammunition. Caches in reach get a bright rim.
@@ -213,7 +253,7 @@ scripts/
   Board.gd        # grid: iso math, BFS, LOS/cover traces, tile/highlight drawing
   Unit.gd         # combatant: stats, animation state machine, damage, pips
   Levels.gd       # campaign data: maps, spawns, structures + boot validator
-  Game.gd         # autoload: current level across scene reloads
+  Game.gd         # autoload: campaign roster, ranks, perks, level progress
   Sfx.gd          # autoload: pooled sound playback
   HitFx.gd        # one-shot code-drawn muzzle flash / impact ring
 tools/            # asset generators/measurers (SFX synth, muzzle scanner)

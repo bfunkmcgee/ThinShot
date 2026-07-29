@@ -406,6 +406,15 @@ const AMMO_Y := PIP_Y + 8.0
 const AMMO_FULL := Color("c9a227")
 const AMMO_EMPTY := Color(0.18, 0.14, 0.06, 0.7)
 const AMMO_OUT := Color("ff5a3c")
+# Rank chevrons, stacked upward beside the HP pips. Small enough to read as
+# insignia rather than as another gameplay marker.
+const RANK_COLOR := Color("ffd98a")
+const RANK_GAP := 4.0   # from the left edge of the pip row
+const RANK_W := 6.0     # how far the chevron reaches left
+const RANK_H := 4.0     # how far it rises
+const RANK_T := 2.0     # stroke thickness
+const RANK_STEP := 5.0  # vertical pitch between chevrons
+
 const SUPPRESSED_COLOR := Color("8fb8d8")
 const RING_COLOR := Color("ffd94a")        # player selection
 const ENEMY_RING_COLOR := Color("ff5a3c")  # AI unit currently acting
@@ -435,6 +444,13 @@ var damage := 1
 var accuracy := 90  # base percent chance to hit before modifiers
 var mag_size := 0  # 0 means unlimited ammo (goblins)
 var ammo := 0
+
+# Campaign identity, stamped on by apply_progression() from the Game roster.
+# Goblins never carry any: soldier_id 0 means "anonymous".
+var soldier_id := 0
+var surname := ""
+var rank := 0
+var perks: Array = []
 
 var hp := 3
 var cell := Vector2i.ZERO
@@ -658,6 +674,31 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 	anim_time = float((p_cell.x * 7 + p_cell.y * 13) % 9) / IDLE_FPS
 
 
+## Stamp a campaign soldier onto a freshly-setup unit: name, rank, perks, and
+## the stats those have earned. MUST run after setup(), which assigns every
+## stat from scratch - and note setup() derives hp and ammo from max_hp and
+## mag_size at its tail, so anything that moves those has to re-derive them or
+## a promoted soldier deploys already wounded.
+func apply_progression(soldier: Dictionary) -> void:
+	soldier_id = int(soldier.id)
+	surname = str(soldier.surname)
+	rank = int(soldier.rank)
+	perks = (soldier.perks as Array).duplicate()
+	accuracy = mini(accuracy + rank * Game.ACCURACY_PER_RANK, Game.ACCURACY_CAP)
+	max_hp += rank * Game.HP_PER_RANK
+	if has_perk("sprinter"):
+		move_range += 1
+	if has_perk("sentinel"):
+		arc_half = 2  # 180 degrees of overwatch instead of 135
+	hp = max_hp
+	ammo = mag_size
+	queue_redraw()
+
+
+func has_perk(perk: String) -> bool:
+	return perks.has(perk)
+
+
 static func _load_dir_frames(base: String) -> Array:
 	var result: Array = []
 	for dir_name in DIR_NAMES:
@@ -816,8 +857,9 @@ func can_suppress() -> bool:
 	return kind == Kind.MACHINEGUNNER
 
 
-func display_name() -> String:
-	match kind:
+## The role a kind fills, with no reference to who is filling it.
+static func kind_role_name(p_kind: Kind) -> String:
+	match p_kind:
 		Kind.TEAM_LEAD:
 			return "Scout Team Lead"
 		Kind.MACHINEGUNNER:
@@ -833,6 +875,18 @@ func display_name() -> String:
 		Kind.GOBLIN_REVOLVER:
 			return "Rust Choir Novice"
 	return "Desert Scout"
+
+
+## Named soldiers answer to their name; the Choir stays anonymous.
+func display_name() -> String:
+	if surname.is_empty():
+		return kind_role_name(kind)
+	var abbrev := Game.rank_abbrev(rank)
+	return surname if abbrev.is_empty() else "%s %s" % [abbrev, surname]
+
+
+func role_name() -> String:
+	return kind_role_name(kind)
 
 
 ## Enter/leave overwatch: rifle raises and stays up, marker above the pips.
@@ -1158,6 +1212,17 @@ func _draw() -> void:
 		var rect := Rect2(Vector2(start_x + i * (PIP_SIZE.x + PIP_GAP), PIP_Y), PIP_SIZE)
 		draw_rect(rect, PIP_FULL if i < hp else PIP_EMPTY)
 		draw_rect(rect, Color(0, 0, 0, 0.5), false, 1.0)
+	if rank > 0:
+		# Rank chevrons stacked just left of the HP row. Everything else drawn
+		# up here (the overwatch diamond, the suppression and acting chevrons)
+		# is centred on x = 0, so the flank is always clear.
+		var rx := start_x - RANK_GAP
+		for i in rank:
+			var ry := PIP_Y + PIP_SIZE.y * 0.5 - i * RANK_STEP
+			draw_colored_polygon(PackedVector2Array([
+				Vector2(rx, ry), Vector2(rx - RANK_W, ry - RANK_H),
+				Vector2(rx - RANK_W, ry - RANK_H + RANK_T), Vector2(rx, ry + RANK_T),
+			]), RANK_COLOR)
 	if mag_size > 0:
 		var ammo_width := mag_size * AMMO_SIZE.x + (mag_size - 1) * AMMO_GAP
 		var ammo_x := -ammo_width / 2.0

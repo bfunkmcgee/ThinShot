@@ -189,6 +189,12 @@ theme_override_colors/font_color = Color(0.96, 0.9, 0.72, 1)
 theme_override_font_sizes/font_size = 19
 text = "Desert Scout"
 
+[node name="ProgressLabel" type="Label" parent="UI/UnitPanel/Margin/Rows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.72, 0.55, 1)
+theme_override_font_sizes/font_size = 13
+text = "Desert Scout"
+
 [node name="HpLabel" type="Label" parent="UI/UnitPanel/Margin/Rows"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
@@ -236,6 +242,21 @@ visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0, 0, 0, 0.62)
+
+[node name="DebriefLabel" type="Label" parent="UI/GameOver"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -260.0
+offset_right = 300.0
+offset_bottom = -120.0
+theme_override_colors/font_color = Color(0.82, 0.78, 0.62, 1)
+theme_override_font_sizes/font_size = 16
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 2
 
 [node name="ResultLabel" type="Label" parent="UI/GameOver"]
 anchor_right = 1.0
@@ -297,3 +318,65 @@ offset_bottom = 152.0
 focus_mode = 0
 theme_override_font_sizes/font_size = 17
 text = "Level 3"
+
+[node name="Promotion" type="ColorRect" parent="UI"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.04, 0.03, 0.02, 0.9)
+
+[node name="TitleLabel" type="Label" parent="UI/Promotion"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -170.0
+offset_right = 400.0
+offset_bottom = -110.0
+theme_override_colors/font_color = Color(1, 0.85, 0.5, 1)
+theme_override_font_sizes/font_size = 38
+text = "PROMOTION"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PromptLabel" type="Label" parent="UI/Promotion"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -100.0
+offset_right = 400.0
+offset_bottom = -70.0
+theme_override_colors/font_color = Color(0.86, 0.82, 0.68, 1)
+theme_override_font_sizes/font_size = 18
+text = "CHOOSE A SPECIALTY"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PerkAButton" type="Button" parent="UI/Promotion"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -440.0
+offset_top = -20.0
+offset_right = -20.0
+offset_bottom = 100.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 16
+text = "PERK A"
+
+[node name="PerkBButton" type="Button" parent="UI/Promotion"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 20.0
+offset_top = -20.0
+offset_right = 440.0
+offset_bottom = 100.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 16
+text = "PERK B"
