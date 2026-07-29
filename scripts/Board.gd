@@ -707,12 +707,23 @@ func _draw() -> void:
 		draw_colored_polygon(_diamond(cell), attack_color)
 	# Grenade footprint under the cursor, outlined so the exact cells that
 	# will be caught are unambiguous before the throw is committed.
+	# blast_cells maps cell -> damage. A frag falls off toward the corners, so
+	# the softer ring is drawn dimmer and thinner-edged; smoke has no falloff
+	# and stays uniform.
+	var peak := 1
+	for cell: Vector2i in blast_cells:
+		peak = maxi(peak, int(blast_cells[cell]))
 	for cell: Vector2i in blast_cells:
 		var b := _diamond(cell)
-		draw_colored_polygon(b, BLAST_FRAG_HL if blast_is_frag else BLAST_SMOKE_HL)
+		var col := BLAST_FRAG_HL if blast_is_frag else BLAST_SMOKE_HL
+		var core := not blast_is_frag or int(blast_cells[cell]) >= peak
+		if not core:
+			col.a *= 0.45
+		draw_colored_polygon(b, col)
 		var edge := b.duplicate()
 		edge.append(edge[0])
-		draw_polyline(edge, BLAST_EDGE, 1.5, true)
+		draw_polyline(edge, BLAST_EDGE if core else Color(BLAST_EDGE, 0.45),
+				2.0 if core else 1.0, true)
 	if hover_cell != NO_CELL:
 		if attack_cells.has(hover_cell):
 			var hl := ATTACK_HOVER_HL

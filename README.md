@@ -236,8 +236,20 @@ campaign and playing again starts you with five fresh recruits.
   **3×3 square** around where they land, **always connect** (no hit roll), and
   **cover does not stop them** — lobbing onto the scrap the Choir is hiding behind is
   the entire point. A blast will not reach through a wall.
-  - **Frag** deals 3 to everything in the footprint. That kills a Novice or a
-    Skirmisher outright and leaves a Chorister, Raider, or Cantor on 1.
+  - **Frag** falls off from the centre — **3 down the cross, 2 on the four
+    corners**:
+
+    ```
+    2 3 2
+    3 3 3
+    2 3 2
+    ```
+
+    A 3 kills a Novice or a Skirmisher outright and leaves a Chorister, Raider
+    or Cantor on 1; a corner 2 still finishes a Novice but only wounds the
+    rest. So the blast has an axis worth lining up, and the soft ring is
+    exactly where a hurried throw catches your own squad. The preview draws
+    the corners dimmer, and the panel shows the two numbers while you aim.
   - **Smoke** blocks line of sight through those cells — for **both sides**,
     including yours. It stands for the rest of the turn you threw it and the
     whole enemy turn that follows, then burns off. Throw it, walk the rest of

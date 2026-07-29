@@ -117,6 +117,7 @@ const THROW_RANGE := 4       # tiles from the thrower, needs line of sight
 # Half-width of the square a grenade covers: 1 gives the 3x3 footprint.
 const BLAST_RADIUS := 1
 const FRAG_DAMAGE := 3       # no hit roll and cover does not stop it
+const FRAG_FALLOFF := 1      # lost per step out, so the four corners take 2
 # Turns of smoke, counted down at the start of each player turn. One means the
 # cloud stands for the rest of the turn it was thrown and all of the enemy
 # turn that follows - long enough to cross under, not long enough to camp.
@@ -792,7 +793,8 @@ func _update_unit_panel() -> void:
 			unit.move_range, unit.attack_range, unit.damage, unit.accuracy,
 			"  Ammo %d/%d" % [unit.ammo, unit.mag_size] if unit.mag_size > 0 else ""]
 	if aim_mode == AimMode.THROW_FRAG and unit == selected:
-		panel_status_label.text = "PICK FRAG TARGET"
+		panel_status_label.text = "PICK FRAG TARGET - %d CROSS / %d CORNERS" % [
+				FRAG_DAMAGE, maxi(FRAG_DAMAGE - FRAG_FALLOFF, 1)]
 		panel_status_label.modulate = Color("ff8a3c")
 		return
 	if aim_mode == AimMode.THROW_SMOKE and unit == selected:
@@ -1492,17 +1494,26 @@ func do_demolish(scout: Unit, cache: Dictionary) -> void:
 # on the field - and the only thing that touches more than one cell at once.
 
 
-## The footprint a grenade covers: the full square around where it lands,
-## diagonals included - nine cells at BLAST_RADIUS 1. Blockers are excluded,
-## so a blast never reaches into a wall and smoke never sits inside one.
-## Shared by both grenades, so frag and smoke always cover the same shape.
+## The footprint a grenade covers, as cell -> damage: the full square around
+## where it lands, diagonals included - nine cells at BLAST_RADIUS 1.
+##
+## Force falls off with distance from the burst, so the cross takes the full
+## FRAG_DAMAGE and the corners, a step further out, take one less. That gives
+## the blast an axis worth aiming rather than a uniform blob, and puts the
+## softer edge exactly where a careless throw catches your own squad.
+##
+## Blockers are excluded, so a blast never reaches into a wall and smoke never
+## sits inside one. Shared by both grenades, so the shape can never diverge -
+## smoke simply ignores the values.
 func _blast_cells_at(cell: Vector2i) -> Dictionary:
-	var cells := {cell: true}
+	var cells := {}
 	for dy in range(-BLAST_RADIUS, BLAST_RADIUS + 1):
 		for dx in range(-BLAST_RADIUS, BLAST_RADIUS + 1):
 			var nxt := cell + Vector2i(dx, dy)
-			if board.in_bounds(nxt) and not board.is_blocker(nxt):
-				cells[nxt] = true
+			if not board.in_bounds(nxt) or board.is_blocker(nxt):
+				continue
+			var steps := absi(dx) + absi(dy)
+			cells[nxt] = maxi(FRAG_DAMAGE - maxi(steps - 1, 0) * FRAG_FALLOFF, 1)
 	return cells
 
 
@@ -1592,14 +1603,17 @@ func do_throw_frag(thrower: Unit, cell: Vector2i) -> void:
 		if blast.has(unit.cell):
 			caught.append(unit)
 	for unit in caught:
+		# How hard it hit depends on where the unit was standing in the blast.
+		var dmg: int = int(blast[unit.cell])
 		var away := (unit.position - center).normalized()
-		fx_air.blood_mist(unit.position + Vector2(0, -36), away,
-				unit.hp <= FRAG_DAMAGE)
+		fx_air.blood_mist(unit.position + Vector2(0, -36), away, unit.hp <= dmg)
 		# Credited before the damage lands, while the victim is still alive to
 		# be inspected. _credit_kill ignores friendly fire.
-		if unit.hp <= FRAG_DAMAGE:
+		if unit.hp <= dmg:
 			_credit_kill(thrower, unit)
-		unit.take_damage(FRAG_DAMAGE, away)
+		unit.take_damage(dmg, away)
+		print("[ThinShot]   frag hits %s at %s for %d" % [
+				unit.display_name(), unit.cell, dmg])
 	print("[ThinShot]   frag caught %d unit(s)" % caught.size())
 	_finish_throw(thrower, prev_state)
 
