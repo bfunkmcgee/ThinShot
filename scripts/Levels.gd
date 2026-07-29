@@ -109,12 +109,14 @@ const LEVELS: Array[Dictionary] = [
 		],
 		# The tithe itself. Three caches spread corner to corner behind the
 		# barricades, so clearing the yard is the only way to reach them all -
-		# and a body count no longer ends the level.
+		# and a body count no longer ends the level. All three sit clear of the
+		# hut and tent sprites, which are tall enough to paint over a cell
+		# several rows in front of their own footprint.
 		"objectives": [
 			{
 				"kind": "destroy",
 				"label": "BURN THE TITHE CACHES",
-				"cells": [Vector2i(12, 1), Vector2i(14, 4), Vector2i(12, 8)],
+				"cells": [Vector2i(15, 1), Vector2i(14, 4), Vector2i(12, 8)],
 			},
 		],
 		"zone_seed": 21,
@@ -165,15 +167,19 @@ const LEVELS: Array[Dictionary] = [
 			{"kind": "hut_1", "anchor": Vector2i(2, 1), "size": Vector2i(2, 2)},
 			{"kind": "hut_2", "anchor": Vector2i(2, 6), "size": Vector2i(2, 2)},
 		],
-		# A raid, not a massacre: blow the magazines at opposite ends of the
-		# compound, then walk everyone back out the way they came in. The
-		# extraction zone is the ground the squad started on, so the level
-		# ends where it began and the last stretch is a fighting withdrawal.
+		# A raid, not a massacre: blow the magazines, then walk everyone back
+		# out the way they came in. The extraction zone is the ground the squad
+		# started on, so the level ends where it began and the last stretch is
+		# a fighting withdrawal.
+		# The fortress sprite is 512px square and swallows most of the northern
+		# compound, so the western magazine sits at (10,4) rather than deeper
+		# in - close behind the west-gate defenders and the Cantor, which makes
+		# it something to fight toward rather than something to hunt for.
 		"objectives": [
 			{
 				"kind": "destroy",
 				"label": "BLOW THE MAGAZINES",
-				"cells": [Vector2i(11, 1), Vector2i(14, 6)],
+				"cells": [Vector2i(10, 4), Vector2i(14, 6)],
 			},
 			{
 				"kind": "extract",

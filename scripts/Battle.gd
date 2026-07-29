@@ -84,7 +84,9 @@ const ROCK_SCALE := Vector2(2, 2)
 # Tithe caches reuse a scrap pile, tinted so they never read as terrain.
 const CACHE_TEXTURE := preload(
 		"res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage_2.png")
-const CACHE_TINT := Color(1.25, 0.85, 0.55)
+# Strong enough that a cache never reads as one more scrap pile on maps that
+# are already strewn with them. The beacon above it does the rest.
+const CACHE_TINT := Color(1.7, 1.0, 0.45)
 
 const MOVE_STEP_TIME := 0.16
 const TRACER_TIME := 0.09
@@ -145,6 +147,7 @@ var structure_frames: Dictionary = {}
 var fx_ground: Fx = null
 var fx_air: Fx = null
 var fx_glow: Fx = null
+var objective_marks: ObjectiveMarks = null
 # Squad ordnance, shared across all five soldiers and spent for the battle.
 var frags_left := FRAG_CHARGES
 var smokes_left := SMOKE_CHARGES
@@ -311,6 +314,8 @@ func _setup_fx_layers() -> void:
 	fx_glow.material = glow_material
 	fx_glow.z_index = 15
 	add_child(fx_glow)
+	objective_marks = ObjectiveMarks.new()
+	add_child(objective_marks)
 	# Steady desert wind across the board, plus the occasional gust.
 	fx_air.set_ambient(_board_world_rect().grow(90.0), 26, Vector2(-34.0, 11.0))
 
@@ -1319,6 +1324,14 @@ func _refresh_objectives() -> void:
 		# The zone only lights up once it is the live objective.
 		armed = active == i
 	board.set_objectives(_cache_highlight(), extract_zone, armed)
+	# Beacons only over what still needs doing: intact caches, or the
+	# extraction zone once it is actually open.
+	var beacons: Array[Vector2] = []
+	for cache: Dictionary in caches:
+		if not cache.destroyed:
+			beacons.append(board.cell_to_global(cache.cell))
+	if objective_marks != null:
+		objective_marks.set_marks(beacons)
 	_update_objective_label()
 
 
