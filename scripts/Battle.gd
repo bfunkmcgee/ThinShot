@@ -186,6 +186,14 @@ var caches: Array = []
 @onready var level_2_button: Button = $UI/GameOver/Level2Button
 @onready var level_3_button: Button = $UI/GameOver/Level3Button
 @onready var debrief_label: Label = $UI/GameOver/DebriefLabel
+@onready var narrative_label: Label = $UI/GameOver/NarrativeLabel
+@onready var briefing_panel: ColorRect = $UI/Briefing
+@onready var briefing_mission_label: Label = $UI/Briefing/MissionLabel
+@onready var briefing_title_label: Label = $UI/Briefing/TitleLabel
+@onready var briefing_fiction_label: Label = $UI/Briefing/FictionLabel
+@onready var briefing_body_label: Label = $UI/Briefing/BodyLabel
+@onready var briefing_orders_label: Label = $UI/Briefing/OrdersLabel
+@onready var briefing_begin_button: Button = $UI/Briefing/BeginButton
 @onready var promotion_panel: ColorRect = $UI/Promotion
 @onready var promotion_title_label: Label = $UI/Promotion/TitleLabel
 @onready var promotion_role_label: Label = $UI/Promotion/RoleLabel
@@ -243,6 +251,7 @@ func _ready() -> void:
 	restart_button.pressed.connect(_on_restart)
 	promotion_a_button.pressed.connect(_on_promotion_chosen.bind(0))
 	promotion_b_button.pressed.connect(_on_promotion_chosen.bind(1))
+	briefing_begin_button.pressed.connect(_dismiss_briefing)
 	# Hotkeys/buttons cover the first 3 levels; extend the level_N input
 	# actions and this button row alongside any new Levels.LEVELS entries.
 	var level_buttons: Array[Button] = [level_1_button, level_2_button, level_3_button]
@@ -252,6 +261,7 @@ func _ready() -> void:
 		else:
 			level_buttons[i].visible = false
 	_refresh_objectives()
+	_show_briefing()
 	show_banner("LEVEL %d - %s" % [Game.current_level + 1, level.name])
 	player_turn_ready_msec = Time.get_ticks_msec()
 	print("[ThinShot] level %d '%s', player turn 1 begins" % [
@@ -529,6 +539,10 @@ func _free_dests(reachable: Dictionary) -> Dictionary:
 # --- Player input ------------------------------------------------------------
 
 func _unhandled_input(event: InputEvent) -> void:
+	# The briefing eats mouse input by being a Control, but keyboard actions
+	# would otherwise reach the board behind it.
+	if briefing_panel.visible:
+		return
 	if state != State.PLAYER_TURN:
 		return
 	if event is InputEventMouseMotion:
@@ -2131,6 +2145,8 @@ func _show_game_over(text: String, won: bool) -> void:
 	if won and Game.is_last_level():
 		text = "CAMPAIGN COMPLETE - THE WASTES FALL SILENT"
 	result_label.text = text
+	# The story beat only lands on a win - a failed attempt is not part of it.
+	narrative_label.text = str(level.get("debrief", "")) if won else ""
 	debrief_label.text = _debrief_text(won)
 	if not won:
 		restart_button.text = "Retry"
@@ -2179,6 +2195,34 @@ func _debrief_text(won: bool) -> String:
 		else:
 			lines.append(who)
 	return "\n".join(lines)
+
+
+# -------------------------------------------------------------- narrative --
+# The three missions are one story: a border contact, the discovery of what
+# the Choir is really carrying, and a raid to take it away again. The briefing
+# sets the situation, the debrief pays it off and points at the next mission.
+
+
+func _show_briefing() -> void:
+	var body: String = level.get("briefing", "")
+	if body.is_empty():
+		briefing_panel.visible = false
+		return
+	briefing_mission_label.text = "MISSION %d OF %d" % [
+			Game.current_level + 1, Levels.LEVELS.size()]
+	briefing_title_label.text = str(level.name)
+	briefing_fiction_label.text = str(level.get("fiction", ""))
+	briefing_body_label.text = body
+	briefing_orders_label.text = "ORDERS:  %s" % level.get("orders", "")
+	briefing_panel.visible = true
+
+
+func _dismiss_briefing() -> void:
+	briefing_panel.visible = false
+	# The turn banner has been sitting behind the briefing this whole time.
+	if state == State.PLAYER_TURN:
+		show_banner("DESERT SCOUTS' TURN")
+		player_turn_ready_msec = Time.get_ticks_msec()
 
 
 ## The unit still standing on the board for a roster soldier, if any. Only

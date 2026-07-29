@@ -12,6 +12,17 @@ class_name Levels
 ##                                                 earlier objective is done
 ## Losing is unchanged and unconditional: the squad dies, you lose.
 ##
+## Each level also carries the campaign's narrative beats:
+##   "briefing" - the situation, shown before the first turn
+##   "orders"   - the one-line task, shown under the briefing
+##   "debrief"  - the payoff, shown on a win; it is what sets up the next
+##                mission, so the three read as one story rather than three
+##                skirmishes. The arc is deliberately carried by the objective
+##                kinds themselves: eliminate (nothing else to be done yet),
+##                destroy (the cargo turns out to matter more than the
+##                carriers), destroy-then-extract (deny it and withdraw,
+##                because the place cannot be held).
+##
 ## Map legend:
 ##   '.' open sand          '#' rock (blocks move + LOS)
 ##   'W' mud-brick wall (blocks move + LOS)
@@ -29,6 +40,9 @@ const LEVELS: Array[Dictionary] = [
 		# gunner's suppression something worth pinning.
 		"name": "DRY WASH",
 		"fiction": "The dry riverbed where the Rust Choir first crossed into scout territory.",
+		"briefing": "The Choir has never crossed the wash before. This morning they did - in daylight, in numbers, and they did not stop to loot the crossing.\n\nCommand wants them off scout ground. That is the whole order.",
+		"orders": "CLEAR THE WASH",
+		"debrief": "They were not raiding.\n\nEvery body on the wash was carrying the same load: scrap, sorted and tallied, bundled for transport. Nobody carries a tally into a raid.\n\nThey were hauling it somewhere, and they were late. Follow the route back.",
 		"size": Vector2i(16, 10),
 		"map": [
 			"..p.##.....##...",
@@ -73,6 +87,9 @@ const LEVELS: Array[Dictionary] = [
 		# ground the machinegunner exists for.
 		"name": "THE SCRAPLINE",
 		"fiction": "The Choir's scrap-tithe yard - tribute junk sung into rows.",
+		"briefing": "The route ends in a yard the Choir calls the Scrapline: rows of tribute stacked and sung over, waiting to move on.\n\nKilling collectors changes nothing. There are always more collectors. The tithe is what matters.",
+		"orders": "BURN THE TITHE CACHES",
+		"debrief": "The caches were not scrap.\n\nPrimers. Casings. Barrel stock. Machined, not scavenged - and every crate struck with the same depot mark. One of ours, taken off the maps eleven years ago.\n\nThe Choir is not scavenging the desert. It is stripping Outpost 7, and it is arming itself with what we left behind.",
 		"size": Vector2i(16, 10),
 		"map": [
 			".p....j..p.j....",
@@ -132,6 +149,9 @@ const LEVELS: Array[Dictionary] = [
 		# the gun up before anyone steps into a gateway.
 		"name": "OUTPOST 7",
 		"fiction": "The old desert command, now the Choir's hive. The scouts go in at dawn.",
+		"briefing": "Outpost 7 was ours. The Choir lives in it now, and every round it has fired at you came out of our own magazines.\n\nYou cannot hold the place. There are not enough of you, and there never were. So you will not try.\n\nGo in at dawn. Come back out.",
+		"orders": "BLOW THE MAGAZINES, THEN EXTRACT",
+		"debrief": "The magazines are gone, and with them the only thing that ever made the Choir more than a rabble with knives.\n\nThey will be out there tomorrow. They will still outnumber you. But they will be singing over scrap again - the way they were, before somebody left them a war to find.\n\nTake the squad home.",
 		"size": Vector2i(16, 10),
 		"map": [
 			".p......WWWWWWWW",

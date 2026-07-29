@@ -243,29 +243,40 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0, 0, 0, 0.62)
 
-[node name="DebriefLabel" type="Label" parent="UI/GameOver"]
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -300.0
-offset_top = -260.0
-offset_right = 300.0
-offset_bottom = -120.0
-theme_override_colors/font_color = Color(0.82, 0.78, 0.62, 1)
-theme_override_font_sizes/font_size = 16
-text = ""
-horizontal_alignment = 1
-vertical_alignment = 2
-
 [node name="ResultLabel" type="Label" parent="UI/GameOver"]
 anchor_right = 1.0
-anchor_bottom = 1.0
-offset_bottom = -80.0
-theme_override_font_sizes/font_size = 56
+offset_top = 18.0
+offset_bottom = 74.0
+theme_override_font_sizes/font_size = 40
 text = "RESULT"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="NarrativeLabel" type="Label" parent="UI/GameOver"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -400.0
+offset_top = 84.0
+offset_right = 400.0
+offset_bottom = 282.0
+theme_override_colors/font_color = Color(0.88, 0.84, 0.72, 1)
+theme_override_font_sizes/font_size = 17
+text = ""
+autowrap_mode = 3
+horizontal_alignment = 1
+
+[node name="DebriefLabel" type="Label" parent="UI/GameOver"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -340.0
+offset_top = 290.0
+offset_right = 340.0
+offset_bottom = 400.0
+theme_override_colors/font_color = Color(0.7, 0.82, 0.9, 1)
+theme_override_font_sizes/font_size = 15
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 2
 
 [node name="RestartButton" type="Button" parent="UI/GameOver"]
 anchor_left = 0.5
@@ -318,6 +329,78 @@ offset_bottom = 152.0
 focus_mode = 0
 theme_override_font_sizes/font_size = 17
 text = "Level 3"
+
+[node name="Briefing" type="ColorRect" parent="UI"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.03, 0.025, 0.02, 0.93)
+
+[node name="MissionLabel" type="Label" parent="UI/Briefing"]
+anchor_right = 1.0
+offset_top = 96.0
+offset_bottom = 124.0
+theme_override_colors/font_color = Color(0.72, 0.66, 0.5, 1)
+theme_override_font_sizes/font_size = 17
+text = "MISSION 1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TitleLabel" type="Label" parent="UI/Briefing"]
+anchor_right = 1.0
+offset_top = 128.0
+offset_bottom = 186.0
+theme_override_colors/font_color = Color(1, 0.85, 0.5, 1)
+theme_override_font_sizes/font_size = 46
+text = "DRY WASH"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="FictionLabel" type="Label" parent="UI/Briefing"]
+anchor_right = 1.0
+offset_top = 190.0
+offset_bottom = 216.0
+theme_override_colors/font_color = Color(0.62, 0.86, 0.95, 1)
+theme_override_font_sizes/font_size = 16
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BodyLabel" type="Label" parent="UI/Briefing"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -380.0
+offset_top = 250.0
+offset_right = 380.0
+offset_bottom = 450.0
+theme_override_colors/font_color = Color(0.88, 0.84, 0.72, 1)
+theme_override_font_sizes/font_size = 18
+text = ""
+autowrap_mode = 3
+horizontal_alignment = 1
+
+[node name="OrdersLabel" type="Label" parent="UI/Briefing"]
+anchor_right = 1.0
+offset_top = 468.0
+offset_bottom = 500.0
+theme_override_colors/font_color = Color(1, 0.62, 0.24, 1)
+theme_override_font_sizes/font_size = 22
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BeginButton" type="Button" parent="UI/Briefing"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -110.0
+offset_top = -152.0
+offset_right = 110.0
+offset_bottom = -104.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+text = "Move Out"
 
 [node name="Promotion" type="ColorRect" parent="UI"]
 visible = false

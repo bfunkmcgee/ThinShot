@@ -68,8 +68,23 @@ Team Lead (six tiles out-reaches him, and four damage drops him in one), break
 line of sight and make him choose between shooting and repositioning, or eat a
 scout's worth of damage crossing his lane.
 
-A three-level desert campaign on 16×10 isometric maps, and **each one asks for
-something different**:
+A three-level desert campaign on 16×10 isometric maps. It is one story told in
+three missions, and **the objectives are how it is told** — each mission opens
+with a briefing and closes on a debrief that sets up the next:
+
+1. A border contact. The Choir has crossed the wash for the first time, and
+   command wants them off scout ground. You kill them because there is nothing
+   else to be done yet — but the bodies are carrying sorted, tallied scrap, and
+   nobody carries a tally into a raid.
+2. You follow the route to the yard where the tithe is stacked. Killing
+   collectors changes nothing; the tithe is what matters. Burn it — and find
+   that it was never scrap. Machined ordnance, every crate struck with a depot
+   mark of your own army's, off the maps for eleven years.
+3. That depot is Outpost 7, and the Choir lives in it. Every round fired at you
+   came out of your own magazines. You cannot hold the place, so you do not try:
+   blow the magazines and walk the squad back out.
+
+Which is why each map asks for something different:
 
 1. **Dry Wash** — open skirmish. Kill every goblin. The teaching level.
 2. **The Scrapline** — a raid. **Burn three tithe caches** spread corner to
@@ -174,6 +189,9 @@ campaign and playing again starts you with five fresh recruits.
 - **Rocks, brick walls, and buildings block movement *and* line of sight.**
 - **Rusted junk is partial cover**: you can't stand on it, but shots pass over
   it at **half damage** (the aim line turns amber). Cacti are decoration.
+- Every mission opens on a **briefing** — situation, then orders — and a won
+  mission closes on a **debrief** that points at the next one. A lost attempt
+  gets no debrief; it is not part of the story.
 - **The objective, not the body count, decides the level.** A banner under the
   turn indicator always says what the squad is there to do and how far along it
   is. Objectives complete **in order** — Outpost 7's extraction zone is inert
@@ -252,7 +270,8 @@ scripts/
   Battle.gd       # controller: turn state machine, input, AI, campaign flow
   Board.gd        # grid: iso math, BFS, LOS/cover traces, tile/highlight drawing
   Unit.gd         # combatant: stats, animation state machine, damage, pips
-  Levels.gd       # campaign data: maps, spawns, structures + boot validator
+  Levels.gd       # campaign data: maps, spawns, objectives, story + validator
+  ObjectiveMarks.gd # beacons over objectives, above every unit and structure
   Game.gd         # autoload: campaign roster, ranks, perks, level progress
   Sfx.gd          # autoload: pooled sound playback
   HitFx.gd        # one-shot code-drawn muzzle flash / impact ring
