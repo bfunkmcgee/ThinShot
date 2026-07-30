@@ -69,9 +69,13 @@ Team Lead (six tiles out-reaches him, and four damage drops him in one), break
 line of sight and make him choose between shooting and repositioning, or eat a
 scout's worth of damage crossing his lane.
 
-A three-level desert campaign on 16×10 isometric maps. It is one story told in
-three missions, and **the objectives are how it is told** — each mission opens
-with a briefing and closes on a debrief that sets up the next:
+Six missions across two operations, on 16×10 isometric maps. It is one story,
+and **the objectives are how it is told** — each mission opens with a briefing
+and closes on a debrief that sets up the next.
+
+### Operation Dry Choir
+
+Push the Choir off scout ground, and find out what they are carrying.
 
 1. A border contact. The Choir has crossed the wash for the first time, and
    command wants them off scout ground. You kill them because there is nothing
@@ -85,6 +89,23 @@ with a briefing and closes on a debrief that sets up the next:
    came out of your own magazines. You cannot hold the place, so you do not try:
    blow the magazines and walk the squad back out.
 
+### Operation Second Verse
+
+The magazines at Outpost 7 were already light. Find out who took the rest.
+
+4. **The Long Haul** — a Choir column still walking, two days after you were
+   told they were finished. **Burn its load**, strung out across ground with
+   almost nothing on it to hide behind. What they were hauling turns out to be
+   water, which means they are supplying something a long way out.
+5. **The Cistern** — the only water east for a day, walled and held. You
+   cannot go round it and you could not hold it, so you **break through and
+   out the far side**: no caches, no body count, just get the squad through.
+   Past it every track runs together into one.
+6. **The Choirmaster** — a bowl in the rock with the whole Choir standing in
+   it, because somebody down there has been keeping them together. **Leave
+   nobody singing.** The first operation taught that killing them changed
+   nothing; this is the one time it does.
+
 Which is why each map asks for something different:
 
 1. **Dry Wash** — open skirmish. Kill every goblin. The teaching level.
@@ -97,6 +118,10 @@ Which is why each map asks for something different:
    zone** on the west edge. The zone stays shut until the charges go off, so
    the last stretch is a fighting withdrawal across ground you already crossed
    once — with whatever the Choir has left chasing you.
+
+The Choir gets heavier as you go — 9 goblins on Dry Wash, 13 in the bowl at the
+end — but so does your squad, and by the second operation your veterans have
+specialties.
 
 Your scouts are elite — tougher, faster, longer-ranged — but the Choir has
 numbers and holds the ground.
@@ -140,11 +165,9 @@ If the Team Lead falls, the senior surviving soldier takes over as the one you
 walk around as — nobody is replaced until the operation is over, so somebody
 always has to.
 
-There is **one operation today**, *Dry Choir*, and it is the three missions
-below. The structure is built for more: an operation is a name, a biome, and a
-list of missions, so a second one is data. Biomes are plumbed and every value
-currently resolves to the desert set, since there is one floor tilesheet in the
-project — see `ASSETS.md`.
+Biomes are plumbed and every value currently resolves to the desert set, since
+there is one floor tilesheet in the project — see `ASSETS.md`. Both operations
+are desert, so nothing looks wrong yet.
 
 ## The squad
 

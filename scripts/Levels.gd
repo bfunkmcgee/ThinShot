@@ -244,6 +244,156 @@ const LEVELS: Array[Dictionary] = [
 		"shade_seed": 55,
 		"zone_thresholds": [-0.12, 0.22],
 	},
+	# --- OPERATION SECOND VERSE -------------------------------------------
+	{
+		# Caught in the open, and that is the whole map: almost no cover, three
+		# loads strung out east, and a long walk to reach any of them. The
+		# first mission where the cover rules bite by their absence - there is
+		# very little to hug and the ground between is bare.
+		"name": "THE LONG HAUL",
+		"fiction": "Open ground west of the wash, where a Choir column was still walking two days after the outpost burned.",
+		"briefing": "You were told the Choir was finished. Here they are in daylight, walking a load west.\n\nThe magazines at Outpost 7 were light when you blew them. This is why. Something went out ahead of the raid, and it is still going.",
+		"orders": "BURN THE COLUMN'S LOAD",
+		"debrief": "Water.\n\nNot ordnance - drums of water, tallied and roped and hauled by hand across forty miles of nothing.\n\nThe Choir is not arming a war any more. It is supplying something. And whatever it is sits far enough out that a drink is worth a column.",
+		"size": Vector2i(16, 10),
+		"map": [
+			"..p......j......",
+			".....j..........",
+			"...........j....",
+			"..j.............",
+			"......dd........",
+			".#..........j...",
+			".........dd.....",
+			"....j...........",
+			"..........j.....",
+			"...p.......j....",
+		],
+		"scout_spawns": [Vector2i(1, 2), Vector2i(1, 7), Vector2i(2, 4)],
+		"lead_spawns": [Vector2i(0, 5)],
+		"gunner_spawns": [Vector2i(2, 5)],
+		# The column is strung out rather than dug in - they were walking, not
+		# waiting - so they arrive at the fight in ones and twos.
+		"goblin_spawns": [
+			Vector2i(12, 1), Vector2i(13, 4), Vector2i(12, 7), Vector2i(14, 2),
+		],
+		"smg_spawns": [Vector2i(11, 5)],
+		"smg_alt_spawns": [Vector2i(11, 3), Vector2i(13, 6)],
+		"novice_spawns": [Vector2i(15, 1), Vector2i(15, 5), Vector2i(15, 8)],
+		"bolt_spawns": [Vector2i(14, 7)],
+		"structures": [],
+		"objectives": [
+			{
+				"kind": "destroy",
+				"label": "BURN THE LOAD",
+				"prop": "crates",
+				"cells": [Vector2i(13, 2), Vector2i(12, 4), Vector2i(13, 8)],
+			},
+		],
+		"zone_seed": 5,
+		"shade_seed": 61,
+		"zone_thresholds": [-0.20, 0.18],
+	},
+	{
+		# A breakthrough, which no mission has asked for yet. The cistern wall
+		# runs the height of the map with two gaps, the extraction zone is the
+		# far edge, and there is nothing to destroy - the only way to finish is
+		# to get the whole squad through and out the other side.
+		"name": "THE CISTERN",
+		"fiction": "A walled water point on the old survey line, and the only way east for a day in either direction.",
+		"briefing": "The column's tallies all name the same place: a cistern on the survey line, walled and held.\n\nIt is the only water east of here, which is why they hold it and why you cannot go around it.\n\nGet the squad through. Do not stop to take it - you could not hold it either.",
+		"orders": "BREAK THROUGH TO THE EAST",
+		"debrief": "Past the cistern the tracks stop scattering.\n\nEvery path east of the water runs together into one, beaten flat and wide by more feet than the Choir has ever put in one place.\n\nSomething is gathering them. Follow it in.",
+		"size": Vector2i(16, 10),
+		"map": [
+			"..p...WWW.......",
+			"......W...j.....",
+			"...j..W.........",
+			"......W....j....",
+			"..........dd....",
+			"......W.........",
+			"...j..W....j....",
+			"......W.........",
+			"..p...WWW..j....",
+			"...........p....",
+		],
+		"scout_spawns": [Vector2i(1, 2), Vector2i(1, 7), Vector2i(2, 4)],
+		"lead_spawns": [Vector2i(0, 5)],
+		"gunner_spawns": [Vector2i(2, 5)],
+		# Held at the two gaps in the wall - y4 through the middle, y9 around
+		# the southern end - with the rest waiting in the ground beyond.
+		"goblin_spawns": [
+			Vector2i(7, 3), Vector2i(7, 5), Vector2i(9, 1), Vector2i(9, 8),
+			Vector2i(12, 1),
+		],
+		"smg_spawns": [Vector2i(8, 4)],
+		"smg_alt_spawns": [Vector2i(10, 2), Vector2i(10, 6)],
+		"novice_spawns": [Vector2i(13, 3), Vector2i(13, 6), Vector2i(12, 9)],
+		"bolt_spawns": [Vector2i(14, 4)],
+		"structures": [
+			{"kind": "hut_1", "anchor": Vector2i(13, 0), "size": Vector2i(2, 2)},
+		],
+		# No caches, no killing quota: the whole objective is the far edge, so
+		# the squad has to be pushed through rather than fought to a standstill.
+		"objectives": [
+			{
+				"kind": "extract",
+				"label": "GET THE SQUAD THROUGH",
+				"cells": [
+					Vector2i(15, 2), Vector2i(15, 3), Vector2i(15, 4),
+					Vector2i(15, 5), Vector2i(15, 6), Vector2i(15, 7),
+				],
+			},
+		],
+		"zone_seed": 28,
+		"shade_seed": 12,
+		"zone_thresholds": [-0.40, 0.05],
+	},
+	{
+		# A bowl in the rock with cover through the middle of it, and the whole
+		# Choir standing in it. Back to elimination, which is the point: the
+		# first operation taught that killing them changed nothing, and this is
+		# the one time it does.
+		"name": "THE CHOIRMASTER",
+		"fiction": "Where every track east of the cistern ends, and the singing is loudest.",
+		"briefing": "The tracks end in a bowl in the rock, and the Choir is in it. All of it, and more of it than you have seen in one place.\n\nThey did not gather themselves. Somebody down there is keeping them, and while they are kept there will always be another column.\n\nNo caches this time. No withdrawal. Finish it.",
+		"orders": "DESTROY THE RUST CHOIR",
+		"debrief": "It is over, and it is quiet, and there is nothing left down there to sing.\n\nWhoever held them together held them here, and held them to the last one. The Choir will be scavengers again by the next dry season - scattered, starving, and nobody's army.\n\nBring the squad home.",
+		"size": Vector2i(16, 10),
+		"map": [
+			"....##......##..",
+			"...#....j....#..",
+			".......j........",
+			"..j.......j.....",
+			".....dd.....j...",
+			"........j.......",
+			"...j.......dd...",
+			"......j.........",
+			"...#....j....#..",
+			"....##......##..",
+		],
+		"scout_spawns": [Vector2i(1, 2), Vector2i(1, 7), Vector2i(2, 4)],
+		"lead_spawns": [Vector2i(0, 5)],
+		"gunner_spawns": [Vector2i(2, 5)],
+		# The largest force in the campaign, and the only one that does not
+		# have somewhere else to be.
+		"goblin_spawns": [
+			Vector2i(11, 1), Vector2i(12, 3), Vector2i(11, 7), Vector2i(12, 5),
+			Vector2i(10, 2),
+		],
+		"smg_spawns": [Vector2i(9, 4), Vector2i(9, 6)],
+		"smg_alt_spawns": [Vector2i(10, 5), Vector2i(13, 4)],
+		"novice_spawns": [Vector2i(14, 2), Vector2i(14, 6), Vector2i(15, 4)],
+		"bolt_spawns": [Vector2i(14, 8)],
+		"structures": [
+			{"kind": "tent", "anchor": Vector2i(10, 8), "size": Vector2i(2, 2)},
+		],
+		"objectives": [
+			{"kind": "eliminate", "label": "LEAVE NOBODY SINGING"},
+		],
+		"zone_seed": 77,
+		"shade_seed": 34,
+		"zone_thresholds": [-0.05, 0.30],
+	},
 ]
 
 ## The operations the campaign is made of. `missions` are indices into LEVELS,
@@ -257,6 +407,12 @@ const OPERATIONS: Array[Dictionary] = [
 		"biome": "desert",
 		"summary": "Push the Rust Choir back off scout ground, and find out what they are carrying.",
 		"missions": [0, 1, 2],
+	},
+	{
+		"name": "OPERATION SECOND VERSE",
+		"biome": "desert",
+		"summary": "The magazines at Outpost 7 were already light. Find out who took the rest.",
+		"missions": [3, 4, 5],
 	},
 ]
 

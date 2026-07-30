@@ -2779,12 +2779,15 @@ func _dismiss_briefing() -> void:
 ## and hand back.
 func _on_restart() -> void:
 	if last_result_won:
+		# Asked before advancing: advance_mission() winds the operation pointer
+		# back to zero when the campaign loops, so afterwards there is no way
+		# left to tell a fresh campaign from the first operation of any other.
+		var campaign_over := Game.is_last_level()
 		# Advancing decides where the squad wakes up: another tent if the
 		# operation has missions left, the garrison if it does not.
-		var went_home := Game.advance_mission()
-		if went_home and Game.is_last_operation() and Game.current_operation == 0:
-			# The campaign looped, so the squad starts over with it.
-			Game.reset_roster()
+		Game.advance_mission()
+		if campaign_over:
+			Game.reset_roster()  # the campaign looped; the squad starts over
 	else:
 		# A lost mission is retried from the same camp it was launched from.
 		Game.in_the_field = Game.mission_number() > 1
