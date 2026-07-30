@@ -22,6 +22,10 @@ var _next_id := 1
 var pending_promotions: Array = []
 # Per-soldier XP earned this mission, for the debrief: id -> int.
 var mission_xp: Dictionary = {}
+# Who fell this mission. The roster keeps its dead forever now, so the debrief
+# needs to know which of them to read out rather than listing every casualty
+# the campaign has ever taken.
+var mission_dead: Dictionary = {}
 
 var _rng := RandomNumberGenerator.new()
 
@@ -176,10 +180,23 @@ func _recruit(kind: int) -> Dictionary:
 	return soldier
 
 
-## Bring the roster up to the strength this level's spawns ask for. Squad
-## composition stays level-defined rather than hard-coded to five: any kind the
-## level wants more of than we have living soldiers for gets fresh recruits,
-## which is also how the dead are replaced.
+## Every soldier of a kind the campaign has ever fielded, the fallen included.
+func _ever_of_kind(kind: int) -> int:
+	var n := 0
+	for soldier: Dictionary in roster:
+		if int(soldier.kind) == kind:
+			n += 1
+	return n
+
+
+## Form the squad the first time, and grow it only if a level asks for more of
+## a role than the campaign has ever fielded.
+##
+## The dead count against that quota, so **they are never replaced** - lose a
+## scout and you assault the next map one scout down, for good. There is no
+## risk of the campaign stranding itself at zero soldiers: losing every scout
+## loses the mission, and a lost mission is rolled back wholesale, so a won
+## mission always leaves at least one of them standing.
 func ensure_roster(level_data: Dictionary) -> void:
 	var wanted := {
 		Unit.Kind.TEAM_LEAD: level_data.get("lead_spawns", []).size(),
@@ -187,8 +204,7 @@ func ensure_roster(level_data: Dictionary) -> void:
 		Unit.Kind.SCOUT: level_data.scout_spawns.size(),
 	}
 	for kind: int in wanted:
-		var have := soldiers_of_kind(kind).size()
-		for i in maxi(int(wanted[kind]) - have, 0):
+		for i in maxi(int(wanted[kind]) - _ever_of_kind(kind), 0):
 			var soldier := _recruit(kind)
 			print("[ThinShot] new recruit: %s (%s)" % [
 					soldier.surname, Unit.kind_role_name(kind)])
@@ -219,6 +235,7 @@ func begin_mission() -> void:
 	_snapshot = _deep_copy(roster)
 	pending_promotions.clear()
 	mission_xp.clear()
+	mission_dead.clear()
 
 
 func award(id: int, amount: int) -> void:
@@ -233,6 +250,7 @@ func mark_dead(id: int) -> void:
 	var soldier := soldier_by_id(id)
 	if not soldier.is_empty():
 		soldier.alive = false
+		mission_dead[id] = true
 
 
 ## Mission won: keep the XP, promote whoever earned it, and queue the perk
@@ -264,6 +282,7 @@ func abort_mission() -> void:
 	roster = _deep_copy(_snapshot)
 	pending_promotions.clear()
 	mission_xp.clear()
+	mission_dead.clear()
 
 
 func choose_perk(id: int, perk: String) -> void:

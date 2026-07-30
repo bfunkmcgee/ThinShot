@@ -104,8 +104,13 @@ numbers and holds the ground.
 
 The five soldiers are **named, and they are the same five from one mission to
 the next**. They earn ranks, they specialise, and **when one falls they are
-gone** — a raw recruit fills the slot next mission and everything that soldier
-had earned goes with them.
+gone for the campaign** — nobody replaces them. Lose a scout on Dry Wash and
+you assault The Scrapline four strong, with one fewer rifle for every fight
+that follows.
+
+Everything else resets between missions: **survivors deploy at full HP, with
+full magazines, and the squad's grenades are restocked**. Attrition costs you
+soldiers, never a wounded start.
 
 | Rank | XP | Gains |
 |---|---|---|
@@ -135,7 +140,9 @@ their name, XP, and specialties.
 
 **A failed mission counts for nothing.** XP earned in an attempt you lose is
 rolled back when you retry, and so are the casualties — so you can never farm a
-level, and a wipe costs you the attempt rather than the squad. Finishing the
+level, and a wipe costs you the attempt rather than the squad. That is also why
+the campaign can never strand itself: losing every scout loses the mission, so
+a mission you *win* always leaves at least one of them standing. Finishing the
 campaign and playing again starts you with five fresh recruits.
 
 ## Controls

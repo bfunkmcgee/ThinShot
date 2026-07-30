@@ -276,8 +276,6 @@ func _ready() -> void:
 	await get_tree().create_timer(1.1).timeout
 	# Swap to the turn banner unless the enemy turn or game over owns it
 	# (ANIMATING just means the player is already acting - still their turn).
-	if state == State.PLAYER_TURN or state == State.ANIMATING:
-		show_banner("DESERT SCOUTS' TURN")
 ## Boot straight into a level: `godot --path . -- --level 2`. Everything after
 ## the bare `--` is ours. Exists so a headless run can smoke-test a level other
 ## than the first one, which is otherwise only reachable by playing to it.
@@ -502,9 +500,14 @@ func _spawn_unit(kind: Unit.Kind, spawn_cell: Vector2i, soldier := {}) -> void:
 ## that role, so the same soldier lands in the same job every mission.
 func _spawn_squad(kind: Unit.Kind, spawns: Array) -> void:
 	var soldiers := Game.soldiers_of_kind(kind)
-	for i in spawns.size():
-		var soldier: Dictionary = soldiers[i] if i < soldiers.size() else {}
-		_spawn_unit(kind, spawns[i], soldier)
+	# Only as many bodies as there are soldiers left alive to fill them. A
+	# spawn point with nobody to stand on it simply goes unused - deploying an
+	# anonymous unit there would quietly undo permadeath.
+	for i in mini(spawns.size(), soldiers.size()):
+		_spawn_unit(kind, spawns[i], soldiers[i])
+	if soldiers.size() < spawns.size():
+		print("[ThinShot] %s deploys %d of %d - the rest were lost" % [
+				Unit.kind_role_name(kind), soldiers.size(), spawns.size()])
 
 
 func living_units(team: int) -> Array[Unit]:
@@ -2296,7 +2299,12 @@ func _debrief_text(won: bool) -> String:
 		return "NOTHING EARNED - THE ATTEMPT DOES NOT COUNT"
 	var lines: Array[String] = []
 	for soldier: Dictionary in Game.roster:
-		var gained: int = int(Game.mission_xp.get(int(soldier.id), 0))
+		var id: int = int(soldier.id)
+		# The roster keeps its dead permanently, so only the squad that
+		# deployed is read out - earlier casualties are not re-reported.
+		if not bool(soldier.alive) and not Game.mission_dead.has(id):
+			continue
+		var gained: int = int(Game.mission_xp.get(id, 0))
 		# The role goes on every line: a list of five surnames tells you
 		# nothing about who you actually lost.
 		var who := "%s, %s" % [Game.soldier_label(soldier),
