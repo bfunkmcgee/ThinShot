@@ -1,0 +1,469 @@
+{
+  "group_id": "54bd7c5a-760e-4ab0-91df-2ef90c90b4c9",
+  "states": [
+    {
+      "character": {
+        "id": "0f09f02c-925d-4030-b2c6-585e6c85cadf",
+        "name": "A prisoner wearing a torn",
+        "prompt": "A prisoner wearing a torn beat up desert camo military uniform and no shoes",
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-07-30T03:35:00.196546+00:00"
+      },
+      "folder": "A_prisoner_wearing_a_torn",
+      "frames": {
+        "rotations": {
+          "south": "A_prisoner_wearing_a_torn/rotations/south.png",
+          "south-east": "A_prisoner_wearing_a_torn/rotations/south-east.png",
+          "east": "A_prisoner_wearing_a_torn/rotations/east.png",
+          "north-east": "A_prisoner_wearing_a_torn/rotations/north-east.png",
+          "north": "A_prisoner_wearing_a_torn/rotations/north.png",
+          "north-west": "A_prisoner_wearing_a_torn/rotations/north-west.png",
+          "west": "A_prisoner_wearing_a_torn/rotations/west.png",
+          "south-west": "A_prisoner_wearing_a_torn/rotations/south-west.png"
+        },
+        "animations": {
+          "The_prisoner_takes_a_hesitant_trembling_step_forwa": {
+            "north": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north/frame_008.png"
+            ],
+            "west": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/west/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/west/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/west/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/west/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/west/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/west/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/west/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/west/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/west/frame_008.png"
+            ],
+            "south-east": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-east/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-east/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-east/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-east/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-east/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-east/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-east/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-east/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-east/frame_008.png"
+            ],
+            "north-west": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-west/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-west/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-west/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-west/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-west/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-west/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-west/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-west/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-west/frame_008.png"
+            ],
+            "east": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/east/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/east/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/east/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/east/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/east/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/east/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/east/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/east/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/east/frame_008.png"
+            ],
+            "south": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south/frame_008.png"
+            ],
+            "south-west": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-west/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-west/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-west/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-west/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-west/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-west/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-west/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-west/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/south-west/frame_008.png"
+            ],
+            "north-east": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-east/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-east/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-east/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-east/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-east/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-east/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-east/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-east/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_takes_a_hesitant_trembling_step_forwa/north-east/frame_008.png"
+            ]
+          },
+          "The_prisoner_stands_in_place_shifting_their_weight": {
+            "south": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_in_place_shifting_their_weight/south/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_in_place_shifting_their_weight/south/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_in_place_shifting_their_weight/south/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_in_place_shifting_their_weight/south/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_in_place_shifting_their_weight/south/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_in_place_shifting_their_weight/south/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_in_place_shifting_their_weight/south/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_in_place_shifting_their_weight/south/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_in_place_shifting_their_weight/south/frame_008.png"
+            ]
+          },
+          "collapsing_legs_buckling_and_body_falling_limply_t": {
+            "north": [
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north/frame_008.png"
+            ],
+            "north-east": [
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-east/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-east/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-east/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-east/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-east/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-east/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-east/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-east/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-east/frame_008.png"
+            ],
+            "south": [
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south/frame_008.png"
+            ],
+            "west": [
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/west/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/west/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/west/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/west/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/west/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/west/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/west/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/west/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/west/frame_008.png"
+            ],
+            "north-west": [
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-west/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-west/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-west/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-west/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-west/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-west/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-west/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-west/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/north-west/frame_008.png"
+            ],
+            "south-west": [
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-west/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-west/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-west/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-west/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-west/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-west/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-west/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-west/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-west/frame_008.png"
+            ],
+            "south-east": [
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-east/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-east/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-east/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-east/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-east/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-east/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-east/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-east/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/south-east/frame_008.png"
+            ],
+            "east": [
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/east/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/east/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/east/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/east/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/east/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/east/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/east/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/east/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/collapsing_legs_buckling_and_body_falling_limply_t/east/frame_008.png"
+            ]
+          },
+          "The_prisoner_stands_with_a_slight_unsteady_sway_th": {
+            "south-west": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-west/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-west/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-west/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-west/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-west/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-west/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-west/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-west/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-west/frame_008.png"
+            ],
+            "north-west": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-west/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-west/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-west/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-west/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-west/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-west/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-west/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-west/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-west/frame_008.png"
+            ],
+            "west": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/west/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/west/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/west/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/west/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/west/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/west/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/west/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/west/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/west/frame_008.png"
+            ],
+            "south": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south/frame_008.png"
+            ],
+            "east": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/east/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/east/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/east/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/east/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/east/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/east/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/east/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/east/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/east/frame_008.png"
+            ],
+            "south-east": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-east/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-east/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-east/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-east/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-east/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-east/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-east/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-east/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/south-east/frame_008.png"
+            ],
+            "north": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north/frame_008.png"
+            ],
+            "north-east": [
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-east/frame_000.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-east/frame_001.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-east/frame_002.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-east/frame_003.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-east/frame_004.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-east/frame_005.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-east/frame_006.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-east/frame_007.png",
+              "A_prisoner_wearing_a_torn/animations/The_prisoner_stands_with_a_slight_unsteady_sway_th/north-east/frame_008.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "b219fbfb-a508-4c25-944c-7fbdeb59f0ba",
+        "name": "Sitting on the groun",
+        "prompt": "A prisoner wearing a torn beat up desert camo military uniform and no shoes",
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-07-30T12:31:48.025571+00:00"
+      },
+      "folder": "Sitting_on_the_groun",
+      "frames": {
+        "rotations": {
+          "south": "Sitting_on_the_groun/rotations/south.png",
+          "south-east": "Sitting_on_the_groun/rotations/south-east.png",
+          "east": "Sitting_on_the_groun/rotations/east.png",
+          "north-east": "Sitting_on_the_groun/rotations/north-east.png",
+          "north": "Sitting_on_the_groun/rotations/north.png",
+          "north-west": "Sitting_on_the_groun/rotations/north-west.png",
+          "west": "Sitting_on_the_groun/rotations/west.png",
+          "south-west": "Sitting_on_the_groun/rotations/south-west.png"
+        },
+        "animations": {
+          "cower": {
+            "south-west": [
+              "Sitting_on_the_groun/animations/cower/south-west/frame_000.png",
+              "Sitting_on_the_groun/animations/cower/south-west/frame_001.png",
+              "Sitting_on_the_groun/animations/cower/south-west/frame_002.png",
+              "Sitting_on_the_groun/animations/cower/south-west/frame_003.png",
+              "Sitting_on_the_groun/animations/cower/south-west/frame_004.png",
+              "Sitting_on_the_groun/animations/cower/south-west/frame_005.png",
+              "Sitting_on_the_groun/animations/cower/south-west/frame_006.png",
+              "Sitting_on_the_groun/animations/cower/south-west/frame_007.png",
+              "Sitting_on_the_groun/animations/cower/south-west/frame_008.png"
+            ],
+            "east": [
+              "Sitting_on_the_groun/animations/cower/east/frame_000.png",
+              "Sitting_on_the_groun/animations/cower/east/frame_001.png",
+              "Sitting_on_the_groun/animations/cower/east/frame_002.png",
+              "Sitting_on_the_groun/animations/cower/east/frame_003.png",
+              "Sitting_on_the_groun/animations/cower/east/frame_004.png",
+              "Sitting_on_the_groun/animations/cower/east/frame_005.png",
+              "Sitting_on_the_groun/animations/cower/east/frame_006.png",
+              "Sitting_on_the_groun/animations/cower/east/frame_007.png",
+              "Sitting_on_the_groun/animations/cower/east/frame_008.png"
+            ],
+            "north": [
+              "Sitting_on_the_groun/animations/cower/north/frame_000.png",
+              "Sitting_on_the_groun/animations/cower/north/frame_001.png",
+              "Sitting_on_the_groun/animations/cower/north/frame_002.png",
+              "Sitting_on_the_groun/animations/cower/north/frame_003.png",
+              "Sitting_on_the_groun/animations/cower/north/frame_004.png",
+              "Sitting_on_the_groun/animations/cower/north/frame_005.png",
+              "Sitting_on_the_groun/animations/cower/north/frame_006.png",
+              "Sitting_on_the_groun/animations/cower/north/frame_007.png",
+              "Sitting_on_the_groun/animations/cower/north/frame_008.png"
+            ],
+            "south-east": [
+              "Sitting_on_the_groun/animations/cower/south-east/frame_000.png",
+              "Sitting_on_the_groun/animations/cower/south-east/frame_001.png",
+              "Sitting_on_the_groun/animations/cower/south-east/frame_002.png",
+              "Sitting_on_the_groun/animations/cower/south-east/frame_003.png",
+              "Sitting_on_the_groun/animations/cower/south-east/frame_004.png",
+              "Sitting_on_the_groun/animations/cower/south-east/frame_005.png",
+              "Sitting_on_the_groun/animations/cower/south-east/frame_006.png",
+              "Sitting_on_the_groun/animations/cower/south-east/frame_007.png",
+              "Sitting_on_the_groun/animations/cower/south-east/frame_008.png"
+            ],
+            "north-west": [
+              "Sitting_on_the_groun/animations/cower/north-west/frame_000.png",
+              "Sitting_on_the_groun/animations/cower/north-west/frame_001.png",
+              "Sitting_on_the_groun/animations/cower/north-west/frame_002.png",
+              "Sitting_on_the_groun/animations/cower/north-west/frame_003.png",
+              "Sitting_on_the_groun/animations/cower/north-west/frame_004.png",
+              "Sitting_on_the_groun/animations/cower/north-west/frame_005.png",
+              "Sitting_on_the_groun/animations/cower/north-west/frame_006.png",
+              "Sitting_on_the_groun/animations/cower/north-west/frame_007.png",
+              "Sitting_on_the_groun/animations/cower/north-west/frame_008.png"
+            ],
+            "south": [
+              "Sitting_on_the_groun/animations/cower/south/frame_000.png",
+              "Sitting_on_the_groun/animations/cower/south/frame_001.png",
+              "Sitting_on_the_groun/animations/cower/south/frame_002.png",
+              "Sitting_on_the_groun/animations/cower/south/frame_003.png",
+              "Sitting_on_the_groun/animations/cower/south/frame_004.png",
+              "Sitting_on_the_groun/animations/cower/south/frame_005.png",
+              "Sitting_on_the_groun/animations/cower/south/frame_006.png",
+              "Sitting_on_the_groun/animations/cower/south/frame_007.png",
+              "Sitting_on_the_groun/animations/cower/south/frame_008.png"
+            ],
+            "north-east": [
+              "Sitting_on_the_groun/animations/cower/north-east/frame_000.png",
+              "Sitting_on_the_groun/animations/cower/north-east/frame_001.png",
+              "Sitting_on_the_groun/animations/cower/north-east/frame_002.png",
+              "Sitting_on_the_groun/animations/cower/north-east/frame_003.png",
+              "Sitting_on_the_groun/animations/cower/north-east/frame_004.png",
+              "Sitting_on_the_groun/animations/cower/north-east/frame_005.png",
+              "Sitting_on_the_groun/animations/cower/north-east/frame_006.png",
+              "Sitting_on_the_groun/animations/cower/north-east/frame_007.png",
+              "Sitting_on_the_groun/animations/cower/north-east/frame_008.png"
+            ],
+            "west": [
+              "Sitting_on_the_groun/animations/cower/west/frame_000.png",
+              "Sitting_on_the_groun/animations/cower/west/frame_001.png",
+              "Sitting_on_the_groun/animations/cower/west/frame_002.png",
+              "Sitting_on_the_groun/animations/cower/west/frame_003.png",
+              "Sitting_on_the_groun/animations/cower/west/frame_004.png",
+              "Sitting_on_the_groun/animations/cower/west/frame_005.png",
+              "Sitting_on_the_groun/animations/cower/west/frame_006.png",
+              "Sitting_on_the_groun/animations/cower/west/frame_007.png",
+              "Sitting_on_the_groun/animations/cower/west/frame_008.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "9602dc20-c805-4312-8fe7-e4ece0bb2d50",
+        "name": "unconscious laying s",
+        "prompt": "A prisoner wearing a torn beat up desert camo military uniform and no shoes",
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-07-30T12:34:19.351569+00:00"
+      },
+      "folder": "unconscious_laying_s",
+      "frames": {
+        "rotations": {
+          "south": "unconscious_laying_s/rotations/south.png",
+          "south-east": "unconscious_laying_s/rotations/south-east.png",
+          "east": "unconscious_laying_s/rotations/east.png",
+          "north-east": "unconscious_laying_s/rotations/north-east.png",
+          "north": "unconscious_laying_s/rotations/north.png",
+          "north-west": "unconscious_laying_s/rotations/north-west.png",
+          "west": "unconscious_laying_s/rotations/west.png",
+          "south-west": "unconscious_laying_s/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-07-30T16:56:19.054442"
+}

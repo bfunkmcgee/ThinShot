@@ -89,12 +89,12 @@ Push the Choir off scout ground, and find out what they are carrying.
    that it was never scrap. Machined ordnance, every crate struck with a depot
    mark of your own army's, off the maps for eleven years.
 3. That depot is Outpost 7, and the Choir lives in it. Every round fired at you
-   came out of your own magazines. You cannot hold the place, so you do not try:
-   blow the magazines and walk the squad back out.
+   came out of your own stores. You cannot hold the place, so you do not try:
+   blow the two ammo dumps and walk the squad back out.
 
 ### Operation Second Verse
 
-The magazines at Outpost 7 were already light. Find out who took the rest.
+The ammo dumps at Outpost 7 were already light. Find out who took the rest.
 
 4. **The Long Haul** — a Choir column still walking, two days after you were
    told they were finished. **Burn its load**, strung out across ground with
@@ -112,11 +112,14 @@ The magazines at Outpost 7 were already light. Find out who took the rest.
 Which is why each map asks for something different:
 
 1. **Dry Wash** — open skirmish. Kill every goblin. The teaching level.
-2. **The Scrapline** — a raid. **Burn three tithe caches** spread corner to
-   corner behind the barricades, and **drop the relay mast** in the corridor
-   between them. A body count does not end this one; you can win with goblins
-   still standing, and you can wipe them out and still not be finished.
-3. **Outpost 7** — a raid with a way out. **Blow both magazines** at opposite
+2. **The Scrapline** — a raid on the yard where the tithe is stacked. **Burn
+   three caches** spread corner to corner behind the barricades, and **drop the
+   relay mast** that calls the rest of the Choir down on anyone who walks in. A
+   body count does not end this one; you can win with goblins still standing,
+   and you can wipe them out and still not be finished. The crates turn out to
+   hold machined ordnance — and the mast carries the same depot mark, which is
+   what points you at Outpost 7.
+3. **Outpost 7** — a raid with a way out. **Blow both ammo dumps** at opposite
    ends of the compound, *then* **walk the whole squad back to the extraction
    zone** on the west edge. The zone stays shut until the charges go off, so
    the last stretch is a fighting withdrawal across ground you already crossed
@@ -307,7 +310,7 @@ campaign and playing again starts you with five fresh recruits.
 - **The objective, not the body count, decides the level.** A banner under the
   turn indicator always says what the squad is there to do and how far along it
   is. Objectives complete **in order** — Outpost 7's extraction zone is inert
-  until both magazines are down, so you cannot simply walk off the map. Losing
+  until both ammo dumps are down, so you cannot simply walk off the map. Losing
   is the one thing that never changes: if the squad dies, you lose, whatever
   the objective said.
 - **Extraction takes everyone who is still alive.** You pick the moment; a

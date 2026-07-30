@@ -85,6 +85,11 @@ const LEVELS: Array[Dictionary] = [
 		# way across - the backstop rather than the opening problem.
 		"bolt_spawns": [Vector2i(15, 4)],
 		"structures": [],
+		# Stated rather than left to default, so the banner on screen reads the
+		# same words as the orders in the briefing.
+		"objectives": [
+			{"kind": "eliminate", "label": "CLEAR THE WASH"},
+		],
 		"zone_seed": 7,
 		"shade_seed": 13,
 		"zone_thresholds": [-0.12, 0.22],
@@ -98,9 +103,9 @@ const LEVELS: Array[Dictionary] = [
 		# ground the machinegunner exists for.
 		"name": "THE SCRAPLINE",
 		"fiction": "The Choir's scrap-tithe yard - tribute junk sung into rows.",
-		"briefing": "The route ends in a yard the Choir calls the Scrapline: rows of tribute stacked and sung over, waiting to move on.\n\nKilling collectors changes nothing. There are always more collectors. The tithe is what matters.",
-		"orders": "BURN THE TITHE CACHES",
-		"debrief": "The caches were not scrap.\n\nPrimers. Casings. Barrel stock. Machined, not scavenged - and every crate struck with the same depot mark. One of ours, taken off the maps eleven years ago.\n\nThe Choir is not scavenging the desert. It is stripping Outpost 7, and it is arming itself with what we left behind.",
+		"briefing": "The route ends in a yard the Choir calls the Scrapline: rows of tribute stacked and sung over, waiting to move on.\n\nKilling collectors changes nothing. There are always more collectors. The tithe is what matters.\n\nThere is a mast over the yard as well - scrap aerials wired up a pole - and it is how the Scrapline calls the rest of the Choir down on anyone who walks in. Put it down too.",
+		"orders": "BURN THE CACHES, DROP THE RELAY",
+		"debrief": "The caches were not scrap.\n\nPrimers. Casings. Barrel stock. Machined, not scavenged - and every crate struck with the same depot mark. One of ours, taken off the maps eleven years ago.\n\nThe mast carried it too, stamped into the base plate. They no more built that than they milled the casings.\n\nThe Choir is not scavenging the desert. It is stripping Outpost 7, and arming itself with what we left behind.",
 		"size": Vector2i(16, 10),
 		# Scrap thins out toward the west rather than stopping dead at the
 		# outer barricade: the squad deploys onto ground it can bound through
@@ -174,9 +179,9 @@ const LEVELS: Array[Dictionary] = [
 		# the gun up before anyone steps into a gateway.
 		"name": "OUTPOST 7",
 		"fiction": "The old desert command, now the Choir's hive. The scouts go in at dawn.",
-		"briefing": "Outpost 7 was ours. The Choir lives in it now, and every round it has fired at you came out of our own magazines.\n\nYou cannot hold the place. There are not enough of you, and there never were. So you will not try.\n\nGo in at dawn. Come back out.",
-		"orders": "BLOW THE MAGAZINES, THEN EXTRACT",
-		"debrief": "The magazines are gone, and with them the only thing that ever made the Choir more than a rabble with knives.\n\nThey will be out there tomorrow. They will still outnumber you. But they will be singing over scrap again - the way they were, before somebody left them a war to find.\n\nTake the squad home.",
+		"briefing": "Outpost 7 was ours. The Choir lives in it now, and every round it has fired at you came out of our own stores.\n\nTwo ammunition dumps are still standing in there, and they are the reason the Choir is worth anything at all.\n\nYou cannot hold the place. There are not enough of you, and there never were. So you will not try. Go in at dawn, and come back out.",
+		"orders": "BLOW THE AMMO DUMPS, THEN EXTRACT",
+		"debrief": "The dumps are gone, and with them the only thing that ever made the Choir more than a rabble with knives.\n\nThey will be out there tomorrow. They will still outnumber you. But they will be singing over scrap again - the way they were, before somebody left them a war to find.\n\nTake the squad home.",
 		"size": Vector2i(16, 10),
 		# Scrap in the staging ground west of the compound, so the squad has
 		# something to bound between on the approach instead of crossing bare
@@ -216,18 +221,18 @@ const LEVELS: Array[Dictionary] = [
 			{"kind": "hut_1", "anchor": Vector2i(2, 1), "size": Vector2i(2, 2)},
 			{"kind": "hut_2", "anchor": Vector2i(2, 6), "size": Vector2i(2, 2)},
 		],
-		# A raid, not a massacre: blow the magazines, then walk everyone back
+		# A raid, not a massacre: blow the ammo dumps, then walk everyone back
 		# out the way they came in. The extraction zone is the ground the squad
 		# started on, so the level ends where it began and the last stretch is
 		# a fighting withdrawal.
 		# The fortress sprite is 512px square and swallows most of the northern
-		# compound, so the western magazine sits at (10,4) rather than deeper
+		# compound, so the western dump sits at (10,4) rather than deeper
 		# in - close behind the west-gate defenders and the Cantor, which makes
 		# it something to fight toward rather than something to hunt for.
 		"objectives": [
 			{
 				"kind": "destroy",
-				"label": "BLOW THE MAGAZINES",
+				"label": "BLOW THE AMMO DUMPS",
 				"prop": "crates",
 				"cells": [Vector2i(10, 4), Vector2i(14, 6)],
 			},
@@ -252,7 +257,7 @@ const LEVELS: Array[Dictionary] = [
 		# very little to hug and the ground between is bare.
 		"name": "THE LONG HAUL",
 		"fiction": "Open ground west of the wash, where a Choir column was still walking two days after the outpost burned.",
-		"briefing": "You were told the Choir was finished. Here they are in daylight, walking a load west.\n\nThe magazines at Outpost 7 were light when you blew them. This is why. Something went out ahead of the raid, and it is still going.",
+		"briefing": "You were told the Choir was finished. Here they are in daylight, walking a load west.\n\nThe ammo dumps at Outpost 7 were light when you blew them. This is why. Something went out ahead of the raid, and it is still going.",
 		"orders": "BURN THE COLUMN'S LOAD",
 		"debrief": "Water.\n\nNot ordnance - drums of water, tallied and roped and hauled by hand across forty miles of nothing.\n\nThe Choir is not arming a war any more. It is supplying something. And whatever it is sits far enough out that a drink is worth a column.",
 		"size": Vector2i(16, 10),
@@ -284,7 +289,7 @@ const LEVELS: Array[Dictionary] = [
 		"objectives": [
 			{
 				"kind": "destroy",
-				"label": "BURN THE LOAD",
+				"label": "BURN THE COLUMN'S LOAD",
 				"prop": "crates",
 				"cells": [Vector2i(13, 2), Vector2i(12, 4), Vector2i(13, 8)],
 			},
@@ -356,7 +361,7 @@ const LEVELS: Array[Dictionary] = [
 		"name": "THE CHOIRMASTER",
 		"fiction": "Where every track east of the cistern ends, and the singing is loudest.",
 		"briefing": "The tracks end in a bowl in the rock, and the Choir is in it. All of it, and more of it than you have seen in one place.\n\nThey did not gather themselves. Somebody down there is keeping them, and while they are kept there will always be another column.\n\nNo caches this time. No withdrawal. Finish it.",
-		"orders": "DESTROY THE RUST CHOIR",
+		"orders": "LEAVE NOBODY SINGING",
 		"debrief": "It is over, and it is quiet, and there is nothing left down there to sing.\n\nWhoever held them together held them here, and held them to the last one. The Choir will be scavengers again by the next dry season - scattered, starving, and nobody's army.\n\nBring the squad home.",
 		"size": Vector2i(16, 10),
 		"map": [
@@ -411,7 +416,7 @@ const OPERATIONS: Array[Dictionary] = [
 	{
 		"name": "OPERATION SECOND VERSE",
 		"biome": "desert",
-		"summary": "The magazines at Outpost 7 were already light. Find out who took the rest.",
+		"summary": "The ammo dumps at Outpost 7 were already light. Find out who took the rest.",
 		"missions": [3, 4, 5],
 	},
 ]
