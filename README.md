@@ -153,7 +153,8 @@ using:
 - **Your squad** stand around the camp. Walk up to one to read their record —
   rank, XP, specialties — and if they earned a promotion on the last mission,
   **you choose their specialty here**, face to face, rather than on a screen
-  that interrupts the debrief.
+  that interrupts the debrief. **Standing clear of everyone selects yourself**,
+  which is how you take your own promotion.
 - **The stores tent** holds the squad's ordnance. Four pieces between them,
   split however you like: four frags and no smoke, one and three, or the 2/2
   the squad carried before there was anywhere to change it.
@@ -161,9 +162,9 @@ using:
 - **The assignment post** — garrison only — signs on replacements for anyone
   lost, green: no rank, no specialty, nothing the squad lost with them.
 
-If the Team Lead falls, the senior surviving soldier takes over as the one you
-walk around as — nobody is replaced until the operation is over, so somebody
-always has to.
+Who you walk around as follows the chain of command: **the Team Lead, then the
+machinegunner, then a rifleman**, and within a role the senior survivor. Nobody
+is replaced until the operation is over, so somebody always has to take it.
 
 Biomes are plumbed and every value currently resolves to the desert set, since
 there is one floor tilesheet in the project — see `ASSETS.md`. Both operations

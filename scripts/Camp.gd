@@ -228,20 +228,31 @@ func _spawn_structure(s: Dictionary) -> void:
 # -------------------------------------------------------------------- squad --
 
 
-## Who the player walks around as. The Team Lead by default, but permadeath
-## never replaces anyone, so fall back to the senior survivor rather than
-## leaving the camp with nobody in it.
+## Who the player walks around as: the chain of command, in order. Nobody is
+## replaced until the operation is over, so the camp has to cope with the Team
+## Lead being dead - the machinegunner takes it, then a rifleman, and within a
+## role the senior survivor.
+const AVATAR_ORDER: Array[int] = [
+	Unit.Kind.TEAM_LEAD, Unit.Kind.MACHINEGUNNER, Unit.Kind.SCOUT,
+]
+
+
 func _avatar_soldier() -> Dictionary:
-	var leads := Game.soldiers_of_kind(Unit.Kind.TEAM_LEAD)
-	if not leads.is_empty():
-		return leads[0]
-	var best := {}
-	for soldier: Dictionary in Game.roster:
-		if not bool(soldier.alive):
+	for kind: int in AVATAR_ORDER:
+		var of_kind := Game.soldiers_of_kind(kind)
+		if of_kind.is_empty():
 			continue
-		if best.is_empty() or int(soldier.rank) > int(best.rank):
-			best = soldier
-	return best
+		var best: Dictionary = of_kind[0]
+		for soldier: Dictionary in of_kind:
+			if int(soldier.rank) > int(best.rank):
+				best = soldier
+		return best
+	# Belt and braces: anyone still standing, if the roster ever holds a role
+	# the order above does not name.
+	for soldier: Dictionary in Game.roster:
+		if bool(soldier.alive):
+			return soldier
+	return {}
 
 
 func _make_unit(soldier: Dictionary, cell: Vector2i) -> Unit:
@@ -393,6 +404,19 @@ func _follow_camera() -> void:
 # ------------------------------------------------------------- interaction --
 
 
+## Your own record, as a fixture. You cannot walk up to yourself, so standing
+## clear of everything else selects you - without which a promotion earned by
+## whoever the player is walking around as could never be spent at all.
+func _self_fixture() -> Dictionary:
+	if player == null or player.soldier_id == 0:
+		return {}
+	return {
+		"kind": "soldier", "cell": player.cell, "pos": player.position,
+		"label": Game.soldier_label(Game.soldier_by_id(player.soldier_id)),
+		"id": player.soldier_id, "is_self": true,
+	}
+
+
 func _nearest_fixture() -> Dictionary:
 	var best := {}
 	var best_d := INTERACT_RANGE
@@ -401,16 +425,20 @@ func _nearest_fixture() -> Dictionary:
 		if d < best_d:
 			best_d = d
 			best = fixture
-	return best
+	# Nothing else in reach: you are what is selected.
+	return _self_fixture() if best.is_empty() else best
 
 
 func _prompt_for(fixture: Dictionary) -> String:
 	match fixture.kind:
 		"soldier":
+			var mine: bool = bool(fixture.get("is_self", false))
 			for promotion: Dictionary in Game.pending_promotions:
 				if int(promotion.id) == int(fixture.id):
-					return "E  -  promote %s" % fixture.label
-			return "E  -  speak to %s" % fixture.label
+					return "E  -  take your own promotion" if mine \
+							else "E  -  promote %s" % fixture.label
+			return "E  -  your record (%s)" % fixture.label if mine \
+					else "E  -  speak to %s" % fixture.label
 		"briefing":
 			return "E  -  orders and deploy"
 		"stores":
