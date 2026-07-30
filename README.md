@@ -88,9 +88,9 @@ Which is why each map asks for something different:
 
 1. **Dry Wash** — open skirmish. Kill every goblin. The teaching level.
 2. **The Scrapline** — a raid. **Burn three tithe caches** spread corner to
-   corner behind the barricades. A body count does not end this one; you can
-   win with goblins still standing, and you can wipe them out and still not be
-   finished.
+   corner behind the barricades, and **drop the relay mast** in the corridor
+   between them. A body count does not end this one; you can win with goblins
+   still standing, and you can wipe them out and still not be finished.
 3. **Outpost 7** — a raid with a way out. **Blow both magazines** at opposite
    ends of the compound, *then* **walk the whole squad back to the extraction
    zone** on the west edge. The zone stays shut until the charges go off, so
@@ -166,9 +166,12 @@ campaign and playing again starts you with five fresh recruits.
   (highlights turn blue). Deals no damage; pins the target and its neighbours.
 - **V** — **Hustle** (Staff Sergeant specialty only): give up this soldier's
   shot to move a second time.
-- **X** or the **Demolish** button — set charges on a tithe cache the selected
-  scout is standing on or beside (the orange piles). Costs the attack, needs
-  no ammunition. Caches in reach get a bright rim.
+- **X** or the **Demolish** button — set charges on an objective the selected
+  scout is standing on or beside. Costs the attack, needs no ammunition.
+  Targets in reach get a bright rim, and a beacon floats over any still
+  standing. **Ammo crates** go up in one charge; the **relay mast** takes two —
+  the first buckles it, and it stands there leaning and sparking until somebody
+  comes back to finish it.
 - **G** or the **Frag** button — throw a fragmentation grenade, then **click
   the tile to land it on**: the five cells it will catch light up orange
   before you commit. Four tiles of throw range, needs line of sight.
@@ -214,6 +217,11 @@ campaign and playing again starts you with five fresh recruits.
   corner or the end of a wall run, and *not* against the middle of an unbroken
   wall — the next section of the same wall is still in the way. Hovering a
   target shows `PEEK` when the shot is one.
+- **Fuel drums are cover that can be turned into a weapon.** They behave like
+  junk — you can't stand on them, you can shoot over them — until a blast
+  reaches one. Then it goes up with a frag's force, **and its blast sets off
+  the next drum along**, so a line of them is a fuse. Each drum burns exactly
+  once. They catch your own scouts as readily as the Choir.
 - Cacti are decoration.
 - Every mission opens on a **briefing** — situation, then orders — and a won
   mission closes on a **debrief** that points at the next one. A lost attempt

@@ -24,9 +24,13 @@ worth more than a fourth goblin.
 
 ## Tier 1 — fixes something currently faked (do these first)
 
+> **Done:** #1 ammo crates, #6 comms mast and #7 fuel drum are generated and
+> wired in. They live under `assets/sprites/Environment/Desert/Props/`, each as
+> a standing pose, one or more destruction animations, and a wreck.
+
 | # | Asset | Buys | Code |
 |---|---|---|---|
-| 1 | **Supply cache / ammo crate** — 48×48, plus a **blown-open variant** | Tithe caches currently reuse a *tinted scrap pile* on maps deliberately covered in scrap piles. That is why they were hard to find. A real crate fixes the confusion at its source, and a wrecked variant means a demolished cache leaves a mark instead of vanishing. | drop-in |
+| ~~1~~ | ~~**Supply cache / ammo crate**~~ — **done** | Tithe caches were a *tinted scrap pile* on maps covered in scrap piles, which is why they were hard to find. Now a real crate pile that plays its own 13-frame detonation and leaves wreckage behind. | shipped |
 | 2 | **Gate** — 68×68, matching the wall set: **closed / open / blown** | The Scrapline's "gates" and Outpost 7's entrances are just *gaps in the wall*. A real gate makes them read as entrances, and unlocks **breaching**: a closed gate blocks movement until someone demolishes it, so the map has doors you have to open under fire. | small |
 | 3 | **Sandbag emplacement / low wall** — 48×48 prop or 68×68 in eight facings, ideally **intact / battered / destroyed** | Cover is now adjacency-based with half and full tiers, so *what* you hug matters — but the only half cover in the game is scrap piles, and the only full cover is rock and brick. Purpose-built emplacements are the missing middle, and the three states would unlock **destructible cover**, letting suppressing fire and frags degrade a position instead of leaving it identical all mission. | drop-in for the prop, medium for the states |
 | 4 | **Compound floor tilesheet** — 515×386, concrete or flagstone | Outpost 7's interior is the same sand as the open desert, so the fortress does not read as *built*. A second sheet makes interiors feel like somewhere else. | small |
@@ -36,8 +40,8 @@ worth more than a fourth goblin.
 | # | Asset | Buys | Code |
 |---|---|---|---|
 | 5 | **Civilian / prisoner** — unit format, but only needs `idle`, `walk`, `cower`, `to_dead` | **Rescue and escort objectives.** Reach them, then get them to the extraction zone alive. Slots straight into the objective list next to `destroy` and `extract`. | medium |
-| 6 | **Comms mast / radio set** — 168×168 structure | "Destroy the transmitter", "hold the relay for N turns". A tall silhouette also gives maps a landmark to navigate by. | small |
-| 7 | **Fuel drum / gas cylinder** — 48×48 + scorched variant | **Chain explosions.** Shoot or frag one and it detonates, so the battlefield has hazards you can turn on the Choir. Reuses the existing blast code. | small |
+| ~~6~~ | ~~**Comms mast / radio set**~~ — **done** | "SILENCE THE RELAY" on The Scrapline. Its three states made it the first **two-charge** objective: one charge buckles it into a leaning, sparking wreck, the second brings it down. | shipped |
+| ~~7~~ | ~~**Fuel drum**~~ — **done** | Cover until a blast reaches it, then it detonates with a frag's force **and sets off the next drum along**. A line of them is a fuse. | shipped |
 | 8 | **Vehicle wreck** — 168×168, 2×2 | A big multi-cell cover piece to fight around, and visual proof the desert had a war in it — which is exactly the campaign's story. | drop-in |
 | 9 | **Extraction marker** — 48×48 signal panel or smoke pot | The extraction zone is tinted tiles. A physical marker makes the last objective a *place* rather than a colour. | drop-in |
 

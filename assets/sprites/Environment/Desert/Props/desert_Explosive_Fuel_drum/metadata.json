@@ -1,0 +1,64 @@
+{
+  "group_id": "78d8e795-264a-4f35-bf17-33306725f51c",
+  "objects": [
+    {
+      "id": "471b86e1-2e03-4ed5-a756-ba15847b3d6a",
+      "name": null,
+      "prompt": "desert Explosive Fuel drum",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {
+        "The_rusty_metal_barrel_begins_to_bulge_and_crack_a": {
+          "directions": {
+            "unknown": {
+              "frames": [
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_000.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_001.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_002.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_003.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_004.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_005.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_006.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_007.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_008.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_009.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_010.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_011.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_012.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_013.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_014.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_015.png",
+                "animations/The_rusty_metal_barrel_begins_to_bulge_and_crack_a/unknown/frame_016.png"
+              ],
+              "frame_count": 17
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "3772e3ab-4111-45b1-b1f6-f7e420f476d5",
+      "name": "Barrel remnants afte",
+      "prompt": "desert Explosive Fuel drum",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-07-30T03:01:05.598636"
+}

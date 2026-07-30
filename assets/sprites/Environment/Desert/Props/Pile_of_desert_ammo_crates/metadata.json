@@ -1,0 +1,60 @@
+{
+  "group_id": "587a94a9-40d2-4e62-ae58-6ef0289299a2",
+  "objects": [
+    {
+      "id": "bcdb35ec-5149-459a-9690-6ebf13c26bf3",
+      "name": null,
+      "prompt": "Pile of desert ammo crates",
+      "size": {
+        "width": 96,
+        "height": 96
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {
+        "The_wooden_ammo_boxes_shudder_violently_as_cracks": {
+          "directions": {
+            "unknown": {
+              "frames": [
+                "animations/The_wooden_ammo_boxes_shudder_violently_as_cracks/unknown/frame_000.png",
+                "animations/The_wooden_ammo_boxes_shudder_violently_as_cracks/unknown/frame_001.png",
+                "animations/The_wooden_ammo_boxes_shudder_violently_as_cracks/unknown/frame_002.png",
+                "animations/The_wooden_ammo_boxes_shudder_violently_as_cracks/unknown/frame_003.png",
+                "animations/The_wooden_ammo_boxes_shudder_violently_as_cracks/unknown/frame_004.png",
+                "animations/The_wooden_ammo_boxes_shudder_violently_as_cracks/unknown/frame_005.png",
+                "animations/The_wooden_ammo_boxes_shudder_violently_as_cracks/unknown/frame_006.png",
+                "animations/The_wooden_ammo_boxes_shudder_violently_as_cracks/unknown/frame_007.png",
+                "animations/The_wooden_ammo_boxes_shudder_violently_as_cracks/unknown/frame_008.png",
+                "animations/The_wooden_ammo_boxes_shudder_violently_as_cracks/unknown/frame_009.png",
+                "animations/The_wooden_ammo_boxes_shudder_violently_as_cracks/unknown/frame_010.png",
+                "animations/The_wooden_ammo_boxes_shudder_violently_as_cracks/unknown/frame_011.png",
+                "animations/The_wooden_ammo_boxes_shudder_violently_as_cracks/unknown/frame_012.png"
+              ],
+              "frame_count": 13
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "b7c8812b-5806-488d-a5b4-188ea58b2358",
+      "name": "crates are unrecogni",
+      "prompt": "Pile of desert ammo crates",
+      "size": {
+        "width": 96,
+        "height": 96
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-07-30T03:01:01.860855"
+}

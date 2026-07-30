@@ -1,0 +1,126 @@
+{
+  "group_id": "a8e031e4-60cb-481c-81a6-15036e79bd13",
+  "objects": [
+    {
+      "id": "c5c79103-d316-4f2f-aac8-0664654b34e1",
+      "name": null,
+      "prompt": "Desert Comms mast",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {
+        "The_radio_tower_stands_firmly_in_the_desert_as_the": {
+          "directions": {
+            "unknown": {
+              "frames": [
+                "animations/The_radio_tower_stands_firmly_in_the_desert_as_the/unknown/frame_000.png",
+                "animations/The_radio_tower_stands_firmly_in_the_desert_as_the/unknown/frame_001.png",
+                "animations/The_radio_tower_stands_firmly_in_the_desert_as_the/unknown/frame_002.png",
+                "animations/The_radio_tower_stands_firmly_in_the_desert_as_the/unknown/frame_003.png",
+                "animations/The_radio_tower_stands_firmly_in_the_desert_as_the/unknown/frame_004.png",
+                "animations/The_radio_tower_stands_firmly_in_the_desert_as_the/unknown/frame_005.png",
+                "animations/The_radio_tower_stands_firmly_in_the_desert_as_the/unknown/frame_006.png",
+                "animations/The_radio_tower_stands_firmly_in_the_desert_as_the/unknown/frame_007.png",
+                "animations/The_radio_tower_stands_firmly_in_the_desert_as_the/unknown/frame_008.png"
+              ],
+              "frame_count": 9
+            }
+          }
+        },
+        "As_the_communication_tower_stands_intact_a_series": {
+          "directions": {
+            "unknown": {
+              "frames": [
+                "animations/As_the_communication_tower_stands_intact_a_series/unknown/frame_000.png",
+                "animations/As_the_communication_tower_stands_intact_a_series/unknown/frame_001.png",
+                "animations/As_the_communication_tower_stands_intact_a_series/unknown/frame_002.png",
+                "animations/As_the_communication_tower_stands_intact_a_series/unknown/frame_003.png",
+                "animations/As_the_communication_tower_stands_intact_a_series/unknown/frame_004.png",
+                "animations/As_the_communication_tower_stands_intact_a_series/unknown/frame_005.png",
+                "animations/As_the_communication_tower_stands_intact_a_series/unknown/frame_006.png",
+                "animations/As_the_communication_tower_stands_intact_a_series/unknown/frame_007.png",
+                "animations/As_the_communication_tower_stands_intact_a_series/unknown/frame_008.png"
+              ],
+              "frame_count": 9
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "23a9ad14-053d-45a8-b5c8-b95a886d7087",
+      "name": "Destroyed",
+      "prompt": "Desert Comms mast",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {
+        "The_radio_tower_flickers_to_life_with_its_central": {
+          "directions": {
+            "unknown": {
+              "frames": [
+                "animations/The_radio_tower_flickers_to_life_with_its_central/unknown/frame_000.png",
+                "animations/The_radio_tower_flickers_to_life_with_its_central/unknown/frame_001.png",
+                "animations/The_radio_tower_flickers_to_life_with_its_central/unknown/frame_002.png",
+                "animations/The_radio_tower_flickers_to_life_with_its_central/unknown/frame_003.png",
+                "animations/The_radio_tower_flickers_to_life_with_its_central/unknown/frame_004.png",
+                "animations/The_radio_tower_flickers_to_life_with_its_central/unknown/frame_005.png",
+                "animations/The_radio_tower_flickers_to_life_with_its_central/unknown/frame_006.png",
+                "animations/The_radio_tower_flickers_to_life_with_its_central/unknown/frame_007.png",
+                "animations/The_radio_tower_flickers_to_life_with_its_central/unknown/frame_008.png"
+              ],
+              "frame_count": 9
+            }
+          }
+        },
+        "The_radio_antenna_shudders_violently_as_a_sudden": {
+          "directions": {
+            "unknown": {
+              "frames": [
+                "animations/The_radio_antenna_shudders_violently_as_a_sudden/unknown/frame_000.png",
+                "animations/The_radio_antenna_shudders_violently_as_a_sudden/unknown/frame_001.png",
+                "animations/The_radio_antenna_shudders_violently_as_a_sudden/unknown/frame_002.png",
+                "animations/The_radio_antenna_shudders_violently_as_a_sudden/unknown/frame_003.png",
+                "animations/The_radio_antenna_shudders_violently_as_a_sudden/unknown/frame_004.png",
+                "animations/The_radio_antenna_shudders_violently_as_a_sudden/unknown/frame_005.png",
+                "animations/The_radio_antenna_shudders_violently_as_a_sudden/unknown/frame_006.png",
+                "animations/The_radio_antenna_shudders_violently_as_a_sudden/unknown/frame_007.png",
+                "animations/The_radio_antenna_shudders_violently_as_a_sudden/unknown/frame_008.png"
+              ],
+              "frame_count": 9
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "a4f50082-64df-4122-a7d8-4cc6d6705283",
+      "name": "Completely destroyed",
+      "prompt": "Desert Comms mast",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-07-30T03:01:15.039017"
+}

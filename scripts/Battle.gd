@@ -81,12 +81,42 @@ const STRUCTURE_OFFSETS := {
 }
 const ROCK_SCALE := Vector2(2, 2)
 
-# Tithe caches reuse a scrap pile, tinted so they never read as terrain.
-const CACHE_TEXTURE := preload(
-		"res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage_2.png")
-# Strong enough that a cache never reads as one more scrap pile on maps that
-# are already strewn with them. The beacon above it does the rest.
-const CACHE_TINT := Color(1.7, 1.0, 0.45)
+const PROP_ROOT := "res://assets/sprites/Environment/Desert/Props"
+
+# Objective props. Each has a standing pose, an optional idle loop, one or more
+# one-shot destruction stages, and the wreck it leaves behind. The number of
+# stages IS the number of charges it takes to put down - crates go in one, the
+# relay mast takes two because it buckles before it falls.
+#
+# Ground offsets are measured from opaque bounds so each prop's base sits on
+# the cell centre, matching the rocks and junk.
+const TARGET_PROPS := {
+	"crates": {
+		"dir": PROP_ROOT + "/Pile_of_desert_ammo_crates",
+		"body": "Pile_of_desert_ammo_crates",
+		"idles": [],
+		"stages": ["normal_to_destroyed"],
+		"offset": Vector2(0, -37),
+	},
+	"mast": {
+		"dir": PROP_ROOT + "/Desert_Comms_mast",
+		"body": "Desert_Comms_mast",
+		# One idle per surviving state: upright, then leaning and sparking.
+		"idles": ["normal_idle", "broken_idle"],
+		"stages": ["normal_to_broken", "broken_to_destroyed"],
+		"offset": Vector2(0, -69),
+	},
+}
+const PROP_FPS := 14.0  # one-shot destruction playback
+
+const DRUM_DIR := PROP_ROOT + "/desert_Explosive_Fuel_drum"
+const DRUM_STILL := preload(
+		PROP_ROOT + "/desert_Explosive_Fuel_drum/desert_Explosive_Fuel_drum/rotations/unknown.png")
+const DRUM_WRECK := preload(
+		PROP_ROOT + "/desert_Explosive_Fuel_drum/destroyed_state/rotations/unknown.png")
+const DRUM_OFFSET := Vector2(0, -22)
+# A drum going up hits as hard as a frag at its centre and reaches as far.
+const DRUM_DAMAGE := 3
 
 const MOVE_STEP_TIME := 0.16
 const TRACER_TIME := 0.09
@@ -160,8 +190,10 @@ var smokes_left := SMOKE_CHARGES
 # Live smoke: cell -> player turns remaining.
 var smoke: Dictionary = {}
 var _smoke_puff_accum := 0.0
-# Objective caches: [{cell, sprite, destroyed}]
+# Objective props: [{cell, obj, kind, art, sprite, stage, destroyed, anim}]
 var caches: Array = []
+# Fuel drums by cell: {sprite, spent}. Cover until something sets them off.
+var drums: Dictionary = {}
 
 @onready var board: Board = $Board
 @onready var camera: Camera2D = $Camera
@@ -369,6 +401,11 @@ func _spawn_props() -> void:
 				"j":
 					_spawn_prop(JUNK_TEXTURES[(x * 11 + y * 17) % JUNK_TEXTURES.size()],
 							JUNK_OFFSET, cell)
+				"d":
+					drums[cell] = {
+						"sprite": _spawn_prop(DRUM_STILL, DRUM_OFFSET, cell),
+						"spent": false,
+					}
 				"p":
 					var plant := _spawn_prop(
 							PLANT_TEXTURES[(x * 5 + y * 23) % PLANT_TEXTURES.size()],
@@ -428,17 +465,26 @@ func _wall_texture_for(kind: String) -> Texture2D:
 ## breeze loop beside it at <dir>/animations/<name>/unknown/frame_NNN.png.
 ## The animation folder is named after the prompt that generated it, so we
 ## scan for whatever is there instead of hardcoding the name.
+## frame_000.png, frame_001.png ... from a folder, until they run out.
+static func _load_frame_run(base: String) -> Array[Texture2D]:
+	var frames: Array[Texture2D] = []
+	var i := 0
+	while true:
+		var path := "%s/frame_%03d.png" % [base, i]
+		if not ResourceLoader.exists(path):
+			break
+		frames.append(load(path))
+		i += 1
+	return frames
+
+
 static func _load_structure_frames(dir: String) -> Array[Texture2D]:
 	var frames: Array[Texture2D] = []
 	var anim_root := dir + "/animations"
 	var da := DirAccess.open(anim_root)
 	if da != null:
 		for sub in da.get_directories():
-			var base := "%s/%s/unknown" % [anim_root, sub]
-			var i := 0
-			while ResourceLoader.exists("%s/frame_%03d.png" % [base, i]):
-				frames.append(load("%s/frame_%03d.png" % [base, i]))
-				i += 1
+			frames = _load_frame_run("%s/%s/unknown" % [anim_root, sub])
 			if not frames.is_empty():
 				break
 	if frames.is_empty():
@@ -1319,7 +1365,7 @@ func _objective_complete(index: int) -> bool:
 		"eliminate":
 			return living_units(Unit.TEAM_GOBLIN).is_empty()
 		"destroy":
-			return caches_left() == 0
+			return _targets_left(index) == 0
 		"extract":
 			# Only counts once the earlier jobs are done, so a squad cannot
 			# simply walk off the map at turn one.
@@ -1350,25 +1396,94 @@ func _active_objective() -> int:
 	return -1
 
 
-func caches_left() -> int:
+## Targets still standing for one objective. Counted per objective rather than
+## globally, so a level can ask for two different things at once.
+func _targets_left(index: int) -> int:
 	var n := 0
-	for cache: Dictionary in caches:
-		if not cache.destroyed:
+	for target: Dictionary in caches:
+		if int(target.obj) == index and not target.destroyed:
 			n += 1
 	return n
 
 
-## Caches are objective markers and nothing else - they do not block movement
-## or sight, so no pathing or LOS behaviour changes on a level that has them.
+## An animation folder anywhere one level under a prop's directory. The mast
+## keeps its upright loop under its own folder and its damaged loop under
+## broken_state/, so searching beats hard-coding which state owns which.
+static func _find_prop_anim(dir: String, anim: String) -> Array[Texture2D]:
+	var da := DirAccess.open(dir)
+	if da == null:
+		return []
+	for sub in da.get_directories():
+		var frames := _load_frame_run("%s/%s/animations/%s/unknown" % [dir, sub, anim])
+		if not frames.is_empty():
+			return frames
+	return []
+
+
+static func _load_still(path: String) -> Texture2D:
+	return load(path) if ResourceLoader.exists(path) else null
+
+
+func _load_target_art(kind: String) -> Dictionary:
+	var spec: Dictionary = TARGET_PROPS[kind]
+	var dir: String = spec.dir
+	var art := {
+		"still": _load_still("%s/%s/rotations/unknown.png" % [dir, spec.body]),
+		"wreck": _load_still("%s/destroyed_state/rotations/unknown.png" % dir),
+		"idles": [] as Array,
+		"stages": [] as Array,
+		"offset": spec.offset,
+	}
+	for name: String in spec.idles:
+		art.idles.append(_find_prop_anim(dir, name))
+	for name: String in spec.stages:
+		art.stages.append(_find_prop_anim(dir, name))
+	if art.stages.is_empty() or art.still == null:
+		push_error("[ThinShot] objective prop '%s' has no art at %s" % [kind, dir])
+	return art
+
+
+## Objective props are markers and nothing else - they do not block movement or
+## sight, so no pathing or LOS behaviour changes on a level that has them.
 func _spawn_caches() -> void:
-	for obj: Dictionary in _objectives():
+	for i in _objectives().size():
+		var obj: Dictionary = _objectives()[i]
 		if obj.get("kind", "") != "destroy":
 			continue
+		var kind: String = obj.get("prop", "crates")
+		var art := _load_target_art(kind)
 		for cell: Vector2i in obj.get("cells", []):
-			var sprite := _spawn_prop(
-					CACHE_TEXTURE, JUNK_OFFSET, cell)
-			sprite.modulate = CACHE_TINT
-			caches.append({"cell": cell, "sprite": sprite, "destroyed": false})
+			var sprite := _spawn_prop(art.still, art.offset, cell)
+			var target := {
+				"cell": cell, "obj": i, "kind": kind, "art": art,
+				"sprite": sprite, "stage": 0, "destroyed": false, "anim": null,
+			}
+			_set_target_idle(target)
+			caches.append(target)
+
+
+## Point the prop at the idle loop for its current state, if it has one. States
+## with no loop simply hold their pose.
+func _set_target_idle(target: Dictionary) -> void:
+	var art: Dictionary = target.art
+	var stage: int = int(target.stage)
+	var idles: Array = art.idles
+	var frames: Array = idles[stage] if stage < idles.size() else []
+	if frames.is_empty():
+		if target.anim != null:
+			_animated_props.erase(target.anim)
+			target.anim = null
+		return
+	if target.anim == null:
+		target.anim = {
+			"sprite": target.sprite, "frames": frames,
+			"phase": float((target.cell.x * 5 + target.cell.y * 11) % 9) / STRUCTURE_FPS,
+			"frame": -1,
+		}
+		_animated_props.append(target.anim)
+	else:
+		target.anim.frames = frames
+		target.anim.frame = -1
 
 
 ## Cache cells still standing, each mapped to whether the selected scout could
@@ -1419,7 +1534,7 @@ func _update_objective_label() -> void:
 			text += "   %d LEFT" % living_units(Unit.TEAM_GOBLIN).size()
 		"destroy":
 			var total: int = obj.get("cells", []).size()
-			text += "   %d/%d" % [total - caches_left(), total]
+			text += "   %d/%d" % [total - _targets_left(active), total]
 		"extract":
 			var zone: Array = obj.get("cells", [])
 			var home := 0
@@ -1460,25 +1575,53 @@ func _try_demolish(cell := Board.NO_CELL) -> void:
 	do_demolish(selected, cache)
 
 
+## Play a prop's one-shot destruction stage through, frame by frame.
+func _play_prop_stage(target: Dictionary, frames: Array) -> void:
+	var sprite: Sprite2D = target.sprite
+	if frames.is_empty() or not is_instance_valid(sprite):
+		return
+	for frame: Texture2D in frames:
+		sprite.texture = frame
+		await get_tree().create_timer(1.0 / PROP_FPS).timeout
+		if not is_instance_valid(sprite):
+			return
+
+
 func do_demolish(scout: Unit, cache: Dictionary) -> void:
 	var prev_state := state
 	state = State.ANIMATING
 	board.clear_highlights()
 	var pos: Vector2 = board.cell_to_global(cache.cell)
+	var art: Dictionary = cache.art
+	var stage: int = int(cache.stage)
+	var last: bool = stage + 1 >= (art.stages as Array).size()
 	scout.set_facing((pos - scout.position).normalized())
-	print("[ThinShot] scout at %s demolishes cache %s" % [scout.cell, cache.cell])
+	print("[ThinShot] scout at %s sets charges on the %s at %s (stage %d/%d)" % [
+			scout.cell, cache.kind, cache.cell, stage + 1, (art.stages as Array).size()])
 	await scout.play_reload()  # doubles as the setting-charges beat
-	cache.destroyed = true
-	_award_xp(scout, Game.XP_CACHE, "cache")
-	var sprite: Sprite2D = cache.sprite
-	if is_instance_valid(sprite):
-		sprite.queue_free()
+	# The prop comes apart a stage at a time, so a two-stage target visibly
+	# buckles before it goes down and the second charge is obviously needed.
+	if cache.anim != null:
+		_animated_props.erase(cache.anim)
+		cache.anim = null
 	Sfx.play("explosion")
 	fx_air.explosion(pos + Vector2(0, -20))
 	fx_ground.scorch(pos)
 	_screen_shake(2.6)
 	_camera_kick((pos - scout.position).normalized())
 	await _hit_stop(0.25, 0.09)
+	await _play_prop_stage(cache, art.stages[stage])
+	cache.stage = stage + 1
+	if last:
+		cache.destroyed = true
+		# Wreckage stays on the board - a razed objective should read as razed
+		# rather than simply vanishing.
+		var sprite: Sprite2D = cache.sprite
+		if is_instance_valid(sprite) and art.wreck != null:
+			sprite.texture = art.wreck
+	else:
+		_set_target_idle(cache)
+	_award_xp(scout, Game.XP_CACHE, "demolition")
 	scout.set_done(true)
 	if scout == selected:
 		deselect()
@@ -1518,6 +1661,49 @@ func _blast_cells_at(cell: Vector2i) -> Dictionary:
 			var steps := absi(dx) + absi(dy)
 			cells[nxt] = maxi(FRAG_DAMAGE - maxi(steps - 1, 0) * FRAG_FALLOFF, 1)
 	return cells
+
+
+## Set off every fuel drum inside a blast, and every drum those blasts reach,
+## until the fire runs out of fuel. Returns the combined damage map, keeping
+## the harshest value any single blast dealt to each cell.
+##
+## Each drum is spent exactly once, which is what stops two adjacent drums
+## setting each other off forever.
+func _detonate_drums(blast: Dictionary) -> Dictionary:
+	var combined := blast.duplicate()
+	var queue: Array[Vector2i] = []
+	for cell: Vector2i in blast:
+		if drums.has(cell) and not drums[cell].spent:
+			queue.append(cell)
+	while not queue.is_empty():
+		var cell: Vector2i = queue.pop_front()
+		var drum: Dictionary = drums[cell]
+		if drum.spent:
+			continue
+		drum.spent = true
+		var pos := board.cell_to_global(cell)
+		print("[ThinShot]   fuel drum at %s goes up" % cell)
+		Sfx.play("explosion")
+		fx_air.explosion(pos + Vector2(0, -18))
+		fx_ground.scorch(pos)
+		_screen_shake(2.2)
+		var sprite: Sprite2D = drum.sprite
+		if is_instance_valid(sprite):
+			var frames := _find_prop_anim(DRUM_DIR, "normal_to_destroyed")
+			await _play_prop_stage({"sprite": sprite}, frames)
+			if is_instance_valid(sprite):
+				sprite.texture = DRUM_WRECK
+		# Its own blast, which may reach the next drum along.
+		var spread := _blast_cells_at(cell)
+		for hit: Vector2i in spread:
+			var dmg: int = int(spread[hit])
+			if hit == cell:
+				dmg = DRUM_DAMAGE
+			if int(combined.get(hit, 0)) < dmg:
+				combined[hit] = dmg
+			if drums.has(hit) and not drums[hit].spent:
+				queue.append(hit)
+	return combined
 
 
 ## A grenade can be released at any cell in range that the thrower can see and
@@ -1605,6 +1791,14 @@ func do_throw_frag(thrower: Unit, cell: Vector2i) -> void:
 	for unit in living_units(Unit.TEAM_GOBLIN) + living_units(Unit.TEAM_SCOUT):
 		if blast.has(unit.cell):
 			caught.append(unit)
+	# Anything flammable inside the footprint goes up too, and its own blast
+	# can reach the next drum along - so a line of them is a fuse.
+	blast = await _detonate_drums(blast)
+	var caught2: Array[Unit] = []
+	for unit in living_units(Unit.TEAM_GOBLIN) + living_units(Unit.TEAM_SCOUT):
+		if blast.has(unit.cell) and not caught.has(unit):
+			caught2.append(unit)
+	caught.append_array(caught2)
 	for unit in caught:
 		# How hard it hit depends on where the unit was standing in the blast.
 		var dmg: int = int(blast[unit.cell])

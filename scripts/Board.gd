@@ -275,7 +275,9 @@ func set_level(data: Dictionary) -> void:
 			var ch: String = map_rows[y][x]
 			if ch == "#" or ch == "W" or _structure_cells.has(cell):
 				row.append(CellKind.BLOCK)
-			elif ch == "j":
+			elif ch == "j" or ch == "d":
+				# A fuel drum is cover you can shoot over, exactly like junk -
+				# right up until somebody sets it off.
 				row.append(CellKind.COVER)
 			else:
 				row.append(CellKind.OPEN)

@@ -24,6 +24,7 @@ class_name Levels
 ##                because the place cannot be held).
 ##
 ## Map legend:
+##   'd' fuel drum (cover like junk, but detonates when caught in a blast)
 ##   '.' open sand          '#' rock (blocks move + LOS)
 ##   'W' mud-brick wall (blocks move + LOS)
 ##   'j' rusted junk (partial cover: unwalkable, shots pass at half damage)
@@ -47,7 +48,7 @@ const LEVELS: Array[Dictionary] = [
 		"map": [
 			"..p.##.....##...",
 			"....##...p.##...",
-			"......j.........",
+			"......j..dd.....",
 			"..........j.....",
 			".......jj....j..",
 			".......jj....j..",
@@ -95,8 +96,8 @@ const LEVELS: Array[Dictionary] = [
 			".p....j..p.j....",
 			"......j.........",
 			"...j..j....j....",
-			"...........j....",
-			"......j....j....",
+			".........d.j....",
+			"......j..d.j....",
 			"....j.j.........",
 			"......j....j....",
 			"...j.......j....",
@@ -133,7 +134,17 @@ const LEVELS: Array[Dictionary] = [
 			{
 				"kind": "destroy",
 				"label": "BURN THE TITHE CACHES",
+				"prop": "crates",
 				"cells": [Vector2i(15, 1), Vector2i(14, 4), Vector2i(12, 8)],
+			},
+			# How the yard calls for help. Two charges to put down, and it
+			# stands in the open corridor between the barricades, so silencing
+			# it means crossing the ground the machinegunner exists to cover.
+			{
+				"kind": "destroy",
+				"label": "SILENCE THE RELAY",
+				"prop": "mast",
+				"cells": [Vector2i(10, 4)],
 			},
 		],
 		"zone_seed": 21,
@@ -160,7 +171,7 @@ const LEVELS: Array[Dictionary] = [
 			".....#..W.......",
 			"....j...........",
 			"......j.W.......",
-			"........W.......",
+			"........W...dd..",
 			".........WW.WW.W",
 			"....p.j.........",
 			".......p........",
@@ -199,6 +210,7 @@ const LEVELS: Array[Dictionary] = [
 			{
 				"kind": "destroy",
 				"label": "BLOW THE MAGAZINES",
+				"prop": "crates",
 				"cells": [Vector2i(10, 4), Vector2i(14, 6)],
 			},
 			{
@@ -216,7 +228,7 @@ const LEVELS: Array[Dictionary] = [
 	},
 ]
 
-const LEGAL_CHARS := ".#Wjp"
+const LEGAL_CHARS := ".#Wjpd"
 
 
 ## Validates every level. push_error-based so it also reports in release
