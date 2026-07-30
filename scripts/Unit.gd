@@ -501,6 +501,12 @@ var dead_frames: Array[Texture2D] = SCOUT_DEAD_FRAMES
 var idle_alt_frames: Array = SCOUT_IDLE_ALT_FRAMES
 var hurt_frames: Array = SCOUT_HURT_FRAMES
 var reload_frames: Array = SCOUT_RELOAD_FRAMES
+# What this unit's shadow looks like on the ground it is standing on. Set by
+# whoever spawns it; the defaults are the desert's, so a Unit dropped into a
+# scene with no opinion still looks right. Kept as plain colours rather than a
+# Board lookup so Unit stays free of any reference to the board it is on.
+var shadow_color := SHADOW_COLOR
+var corpse_shadow_color := CORPSE_SHADOW_COLOR
 var facing_sector := 2  # south
 var arc_half := ARC_HALF_SECTORS
 var arc_preview_sector := -1  # >= 0 while the player is aiming an arc
@@ -1255,7 +1261,7 @@ func _draw_shadow() -> void:
 	draw_set_transform(SHADOW_OFFSET, 0.0, Vector2(1.0, SHADOW_SQUASH))
 	draw_circle(Vector2.ZERO,
 			CORPSE_SHADOW_RADIUS if dead else SHADOW_RADIUS,
-			CORPSE_SHADOW_COLOR if dead else SHADOW_COLOR)
+			corpse_shadow_color if dead else shadow_color)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 

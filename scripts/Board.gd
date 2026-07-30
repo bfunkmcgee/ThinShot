@@ -37,6 +37,65 @@ const FLOOR_SHEETS := {
 }
 const DEFAULT_FLOOR := "desert"
 
+## How each ground reads, and what the air over it does to everything standing
+## on it. Without this every board is lit like the desert one: the dust shader
+## warm-shifts props toward sand and hazes them toward a tan horizon, which is
+## right on cracked desert and actively wrong on burnt grey ash.
+##
+## Derived from each sheet's measured mean colour rather than picked by eye:
+##   tint  - (channel / mean channel)^0.2, normalised to preserve luminance, so
+##           props are nudged toward the ground's hue and no further. Reproduces
+##           the hand-tuned desert value to two decimals, which is why the
+##           recipe is trusted for the other three.
+##   haze  - the ground desaturated 30% and lifted 25% toward white: the far
+##           edge of the board sits back into its own atmosphere, not sand's.
+##   shadow / shadow_gain - shadows are the ground darkened, and the gain keeps
+##           them equally READABLE rather than equally dark. Ash is luminance
+##           100 against desert's 147, so the same alpha would nearly vanish.
+##   accent / spacing - the flatter a sheet's base tiles, the louder a rare
+##           feature tile shouts. Ash's calm slots measure contrast 9 against
+##           its accent's 44, so it scatters sparsest and desert densest.
+##           The SPACING is the knob that actually bites at 16x10: with a
+##           minimum of 2 cells between accents a board that size saturates at
+##           4-8 of them and the rate never gets to bind at all. The rate is
+##           kept per-sheet regardless, because it is what governs a bigger map.
+const FLOOR_MOODS := {
+	"desert": {
+		"tint": Vector3(1.04, 0.99, 0.90),
+		"haze": Vector3(0.80, 0.71, 0.55),
+		"shadow": Color(0.16, 0.10, 0.06),
+		"shadow_gain": 1.00,
+		"accent": 0.07,
+		"spacing": 2,
+	},
+	"salt": {
+		"tint": Vector3(1.01, 1.00, 0.98),
+		"haze": Vector3(0.72, 0.70, 0.67),
+		"shadow": Color(0.13, 0.12, 0.11),
+		"shadow_gain": 0.96,
+		"accent": 0.06,
+		"spacing": 2,
+	},
+	"ash": {
+		# Neutral grey ground wants no hue push at all - only the desaturation
+		# and the haze, both of which stay grey.
+		"tint": Vector3(1.00, 1.00, 1.00),
+		"haze": Vector3(0.50, 0.49, 0.49),
+		"shadow": Color(0.08, 0.08, 0.08),
+		"shadow_gain": 1.50,
+		"accent": 0.04,
+		"spacing": 4,
+	},
+	"compound": {
+		"tint": Vector3(1.01, 1.00, 0.97),
+		"haze": Vector3(0.68, 0.66, 0.62),
+		"shadow": Color(0.12, 0.11, 0.10),
+		"shadow_gain": 1.08,
+		"accent": 0.05,
+		"spacing": 3,
+	},
+}
+
 # Measured source regions in the floor sheet: 128x60 diamond faces on a
 # 129px stride, rows at y 34/163/292. The plant tile (index 6) is 6px
 # taller; its extra height hangs above the diamond when drawn.
@@ -87,6 +146,7 @@ const ZONE_FAMILIES: Array = [
 # light cracks, craters pock the heavy hardpan.
 const ZONE_ACCENTS: Array[int] = [6, 7, 4]
 
+## Fallback for a floor with no mood entry. Live rates come from FLOOR_MOODS.
 const ACCENT_CHANCE := 0.07
 const ACCENT_MIN_SPACING := 2  # Chebyshev cells between any two accents
 
@@ -188,9 +248,18 @@ var tile_cache: Array = []
 # same sand as the desert outside it.
 var _floor_sheet: Texture2D = FLOOR_SHEETS[DEFAULT_FLOOR]
 var _floor_regions: Array[Rect2] = TILE_REGIONS
+var _floor_accent := ACCENT_CHANCE
+var _floor_spacing := ACCENT_MIN_SPACING
 var _inset_rect := Rect2i()
 var _inset_sheet: Texture2D = null
 var _inset_regions: Array[Rect2] = TILE_REGIONS
+var _inset_accent := ACCENT_CHANCE
+var _inset_spacing := ACCENT_MIN_SPACING
+# The air over this board. Follows the MAIN floor even on a level with an
+# inset: a compound courtyard inside a desert outpost is still a desert
+# afternoon, and hazing half the props toward concrete would split the place
+# in two rather than reading as one location.
+var _mood: Dictionary = FLOOR_MOODS[DEFAULT_FLOOR]
 
 # cell -> came_from cell, for every cell the selected unit can route
 # THROUGH. Paths are reconstructed from this.
@@ -363,17 +432,44 @@ func set_level(data: Dictionary) -> void:
 	var floor_name := _resolve_floor(data.get("floor", DEFAULT_FLOOR))
 	_floor_sheet = FLOOR_SHEETS[floor_name]
 	_floor_regions = SHEET_REGIONS[floor_name]
+	_mood = floor_mood_of(floor_name)
+	_floor_accent = float(_mood.get("accent", ACCENT_CHANCE))
+	_floor_spacing = int(_mood.get("spacing", ACCENT_MIN_SPACING))
 	_inset_sheet = null
 	_inset_rect = Rect2i()
+	_inset_accent = _floor_accent
+	_inset_spacing = _floor_spacing
 	var inset: Dictionary = data.get("floor_inset", {})
 	if not inset.is_empty():
 		var inset_name := _resolve_floor(inset.get("floor", DEFAULT_FLOOR))
 		_inset_rect = inset.get("rect", Rect2i())
 		_inset_sheet = FLOOR_SHEETS[inset_name]
 		_inset_regions = SHEET_REGIONS[inset_name]
+		_inset_accent = float(floor_mood_of(inset_name).get("accent", ACCENT_CHANCE))
+		_inset_spacing = int(floor_mood_of(inset_name).get("spacing", ACCENT_MIN_SPACING))
 	var thresholds: Array = data.get("zone_thresholds", [-0.12, 0.22])
 	_build_tile_cache(data.get("zone_seed", 7), data.get("shade_seed", 13), thresholds)
 	queue_redraw()
+
+
+## The air over a named ground. A sheet with no entry inherits the desert's,
+## which is what the whole game looked like before moods existed.
+static func floor_mood_of(name: String) -> Dictionary:
+	return FLOOR_MOODS.get(name, FLOOR_MOODS[DEFAULT_FLOOR])
+
+
+## What this board is currently lit like. Scenery reads it to tint itself.
+func floor_mood() -> Dictionary:
+	return _mood
+
+
+## A ground-appropriate shadow at the caller's own strength. Callers keep their
+## own alphas - a corpse still pools darker than a rock - and this scales all of
+## them together so shadows stay equally readable on pale salt and dark ash.
+func shadow_tone(alpha: float) -> Color:
+	var tone: Color = _mood.get("shadow", SHADOW_COLOR)
+	tone.a = clampf(alpha * float(_mood.get("shadow_gain", 1.0)), 0.0, 1.0)
+	return tone
 
 
 ## A floor name, or the desert fallback if the level asks for one we lack.
@@ -668,11 +764,22 @@ func _build_tile_cache(zone_seed: int, shade_seed: int, thresholds: Array) -> vo
 			var zone: int = 0 if n < thresholds[0] else (1 if n < thresholds[1] else 2)
 			var family: Array = ZONE_FAMILIES[zone]
 			var variant: int = family[int(_hash01(cell, 1) * family.size()) % family.size()]
+			# Which sheet this cell comes off has to be settled before the
+			# accent roll, because the scatter rate belongs to the sheet.
+			var sheet := _floor_sheet
+			var regions := _floor_regions
+			var accent_rate := _floor_accent
+			var accent_gap := _floor_spacing
+			if _inset_sheet != null and _inset_rect.has_point(cell):
+				sheet = _inset_sheet
+				regions = _inset_regions
+				accent_rate = _inset_accent
+				accent_gap = _inset_spacing
 			if map_char(cell) == "." and not is_structure(cell) \
-					and _hash01(cell, 2) < ACCENT_CHANCE:
+					and _hash01(cell, 2) < accent_rate:
 				var clear := true
 				for placed in accent_cells:
-					if maxi(absi(placed.x - x), absi(placed.y - y)) <= ACCENT_MIN_SPACING:
+					if maxi(absi(placed.x - x), absi(placed.y - y)) <= accent_gap:
 						clear = false
 						break
 				if clear:
@@ -682,11 +789,6 @@ func _build_tile_cache(zone_seed: int, shade_seed: int, thresholds: Array) -> vo
 			var shade := 0.94 + 0.06 * (shade_noise.get_noise_2d(cell.x, cell.y) * 0.5 + 0.5)
 			var shadow: float = DIAMOND_SHADOW if is_structure(cell) \
 					else SHADOW_RADII.get(map_char(cell), 0.0)
-			var sheet := _floor_sheet
-			var regions := _floor_regions
-			if _inset_sheet != null and _inset_rect.has_point(cell):
-				sheet = _inset_sheet
-				regions = _inset_regions
 			row.append({
 				"sheet": sheet,
 				"region": regions[variant],
@@ -731,17 +833,18 @@ func _draw() -> void:
 				var shape := PackedVector2Array()
 				for point in _diamond(Vector2i(x, y)):
 					shape.append(center + (point - cell_to_local(Vector2i(x, y))) * 0.88)
-				draw_colored_polygon(shape, SHADOW_COLOR)
+				draw_colored_polygon(shape, shadow_tone(SHADOW_COLOR.a))
 			else:
 				draw_set_transform(center, 0.0, Vector2(1.0, SHADOW_SQUASH))
-				draw_circle(Vector2.ZERO, radius, SHADOW_COLOR)
+				draw_circle(Vector2.ZERO, radius, shadow_tone(SHADOW_COLOR.a))
 				draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	# Objective props are not map characters, so they get their contact shadow
 	# from here instead of from the tile cache.
 	for cell: Vector2i in prop_shadows:
 		var centre := cell_to_local(cell) + SHADOW_OFFSET
 		draw_set_transform(centre, 0.0, Vector2(1.0, SHADOW_SQUASH))
-		draw_circle(Vector2.ZERO, float(prop_shadows[cell]), SHADOW_COLOR)
+		draw_circle(Vector2.ZERO, float(prop_shadows[cell]),
+				shadow_tone(SHADOW_COLOR.a))
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	# Smoke is world, not overlay: it goes down with the props so every
 	# gameplay marking still reads on top of it.

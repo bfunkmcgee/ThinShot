@@ -177,8 +177,13 @@ func _dust_material(cell: Vector2i) -> ShaderMaterial:
 	var depth := 1.0 - float(cell.x + cell.y) / float(span)
 	var band := clampi(int(depth * float(HAZE_BANDS)), 0, HAZE_BANDS - 1)
 	if not _dust_materials.has(band):
+		# The camp dresses itself from the operation's biome, so its air has to
+		# follow the same ground its floor does.
+		var mood := board.floor_mood()
 		var mat := ShaderMaterial.new()
 		mat.shader = PROP_DUST
+		mat.set_shader_parameter("tint", mood.tint)
+		mat.set_shader_parameter("haze_color", mood.haze)
 		mat.set_shader_parameter("haze",
 				HAZE_MAX * (float(band) + 0.5) / float(HAZE_BANDS))
 		_dust_materials[band] = mat
@@ -290,6 +295,8 @@ func _make_unit(soldier: Dictionary, cell: Vector2i) -> Unit:
 	unit.apply_progression(soldier)
 	# Off duty: no pips, no wedge, no rank flashes - just a person and a shadow.
 	unit.show_combat_hud = false
+	unit.shadow_color = board.shadow_tone(Unit.SHADOW_COLOR.a)
+	unit.corpse_shadow_color = board.shadow_tone(Unit.CORPSE_SHADOW_COLOR.a)
 	unit.position = board.cell_to_global(cell)
 	unit.queue_redraw()
 	return unit

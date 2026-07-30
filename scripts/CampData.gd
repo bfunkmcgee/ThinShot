@@ -86,10 +86,11 @@ const FIELD_SPOTS := {
 
 
 ## The map for whichever camp the squad is in, with the biome's floor
-## character applied. The map itself does not change with biome yet - only the
-## tile family and shading - because there is one floor sheet in the project.
+## character applied: its tilesheet, tile family and shading. The map layout
+## itself is the same wherever the squad pitches up.
 static func map_for(in_field: bool, biome: Dictionary) -> Dictionary:
 	var base: Dictionary = (FIELD if in_field else GARRISON).duplicate(true)
+	base.floor = biome.get("floor", "desert")
 	base.zone_seed = int(biome.get("floor_seed", 91))
 	base.shade_seed = int(biome.get("shade_seed", 17))
 	base.zone_thresholds = biome.get("thresholds", [-0.30, 0.10])

@@ -521,13 +521,21 @@ func _spawn_props() -> void:
 ## One dust material per depth band, built on demand and shared. Farther back
 ## on the board means more haze, which is what stops the far edge competing
 ## with the fight in front of it.
+##
+## The tint and haze colour come from the ground being fought on. The shader's
+## own defaults are the desert's, so leaving them alone would warm-shift every
+## prop toward sand and fade the far edge to tan on burnt ash - which is the
+## collage this shader exists to prevent, just in a different direction.
 func _dust_material(cell: Vector2i) -> ShaderMaterial:
 	var span := maxi(board.size.x + board.size.y - 2, 1)
 	var depth := 1.0 - float(cell.x + cell.y) / float(span)  # 1 at the far corner
 	var band := clampi(int(depth * float(HAZE_BANDS)), 0, HAZE_BANDS - 1)
 	if not _dust_materials.has(band):
+		var mood := board.floor_mood()
 		var mat := ShaderMaterial.new()
 		mat.shader = PROP_DUST
+		mat.set_shader_parameter("tint", mood.tint)
+		mat.set_shader_parameter("haze_color", mood.haze)
 		mat.set_shader_parameter("haze",
 				HAZE_MAX * (float(band) + 0.5) / float(HAZE_BANDS))
 		_dust_materials[band] = mat
@@ -674,6 +682,8 @@ func _spawn_unit(kind: Unit.Kind, spawn_cell: Vector2i, soldier := {}) -> void:
 		# Strictly after setup(), which assigns every stat from scratch.
 		unit.apply_progression(soldier)
 	unit.position = board.cell_to_global(spawn_cell)
+	unit.shadow_color = board.shadow_tone(Unit.SHADOW_COLOR.a)
+	unit.corpse_shadow_color = board.shadow_tone(Unit.CORPSE_SHADOW_COLOR.a)
 	unit.died.connect(_on_unit_died)
 
 
