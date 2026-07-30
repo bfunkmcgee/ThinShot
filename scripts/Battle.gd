@@ -91,12 +91,19 @@ const PROP_ROOT := "res://assets/sprites/Environment/Desert/Props"
 # Ground offsets are measured from opaque bounds so each prop's base sits on
 # the cell centre, matching the rocks and junk.
 const TARGET_PROPS := {
+	# The crates are drawn at 96px against the 48px the junk props use, so at
+	# the shared 2x they came out roughly two tiles wide and towered over the
+	# squad. Drawn 1:1 the pile stands a little taller than a soldier, which is
+	# what a stack of crates should look like.
 	"crates": {
 		"dir": PROP_ROOT + "/Pile_of_desert_ammo_crates",
 		"body": "Pile_of_desert_ammo_crates",
 		"idles": [],
 		"stages": ["normal_to_destroyed"],
+		# Sprite2D applies offset before scale, so this anchor holds at any size.
 		"offset": Vector2(0, -37),
+		"scale": 1.0,
+		"shadow": 20.0,
 	},
 	"mast": {
 		"dir": PROP_ROOT + "/Desert_Comms_mast",
@@ -105,6 +112,8 @@ const TARGET_PROPS := {
 		"idles": ["normal_idle", "broken_idle"],
 		"stages": ["normal_to_broken", "broken_to_destroyed"],
 		"offset": Vector2(0, -69),
+		"scale": 2.0,
+		"shadow": 16.0,
 	},
 }
 const PROP_FPS := 14.0  # one-shot destruction playback
@@ -203,6 +212,8 @@ var _smoke_puff_accum := 0.0
 var caches: Array = []
 # Fuel drums by cell: {sprite, spent}. Cover until something sets them off.
 var drums: Dictionary = {}
+# Contact shadows for objective props, handed to the Board once they exist.
+var _prop_shadows: Dictionary = {}
 # The gunner currently laying down sustained fire, and where he is working.
 var _suppressor: Unit = null
 var _suppress_point := Vector2.ZERO
@@ -273,6 +284,7 @@ func _ready() -> void:
 	for s: Dictionary in level.structures:
 		_spawn_structure(s)
 	_spawn_caches()
+	board.prop_shadows = _prop_shadows
 	_spawn_squad(Unit.Kind.TEAM_LEAD, level.get("lead_spawns", []))
 	_spawn_squad(Unit.Kind.MACHINEGUNNER, level.get("gunner_spawns", []))
 	_spawn_squad(Unit.Kind.SCOUT, level.scout_spawns)
@@ -435,11 +447,14 @@ func _spawn_props() -> void:
 					_spawn_prop(_wall_texture_for(kind), WALL_OFFSETS[kind], cell)
 
 
-func _spawn_prop(texture: Texture2D, offset: Vector2, cell: Vector2i) -> Sprite2D:
+func _spawn_prop(texture: Texture2D, offset: Vector2, cell: Vector2i,
+		scale := 0.0) -> Sprite2D:
 	var prop := Sprite2D.new()
 	prop.texture = texture
 	prop.offset = offset
-	prop.scale = ROCK_SCALE
+	# Most props are drawn at 48px and doubled; anything authored larger says
+	# so, or it would tower over the squad.
+	prop.scale = ROCK_SCALE if scale <= 0.0 else Vector2(scale, scale)
 	prop.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	prop.position = board.cell_to_global(cell)
 	entities_node.add_child(prop)
@@ -1529,6 +1544,8 @@ func _load_target_art(kind: String) -> Dictionary:
 		"idles": [] as Array,
 		"stages": [] as Array,
 		"offset": spec.offset,
+		"scale": float(spec.get("scale", 2.0)),
+		"shadow": float(spec.get("shadow", 18.0)),
 	}
 	for name: String in spec.idles:
 		art.idles.append(_find_prop_anim(dir, name))
@@ -1549,7 +1566,8 @@ func _spawn_caches() -> void:
 		var kind: String = obj.get("prop", "crates")
 		var art := _load_target_art(kind)
 		for cell: Vector2i in obj.get("cells", []):
-			var sprite := _spawn_prop(art.still, art.offset, cell)
+			var sprite := _spawn_prop(art.still, art.offset, cell, art.scale)
+			_prop_shadows[cell] = art.shadow
 			var target := {
 				"cell": cell, "obj": i, "kind": kind, "art": art,
 				"sprite": sprite, "stage": 0, "destroyed": false, "anim": null,
@@ -1616,29 +1634,36 @@ func _refresh_objectives() -> void:
 	_update_objective_label()
 
 
+## Every outstanding job, not just the first. A level can ask for two things at
+## once, and showing only one of them makes the other look like scenery.
 func _update_objective_label() -> void:
-	var active := _active_objective()
-	if active < 0:
-		objective_label.text = ""
-		return
-	var obj: Dictionary = _objectives()[active]
-	var text: String = obj.get("label", "")
-	match obj.get("kind", ""):
-		"eliminate":
-			if text.is_empty():
-				text = "DESTROY THE RUST CHOIR"
-			text += "   %d LEFT" % living_units(Unit.TEAM_GOBLIN).size()
-		"destroy":
-			var total: int = obj.get("cells", []).size()
-			text += "   %d/%d" % [total - _targets_left(active), total]
-		"extract":
-			var zone: Array = obj.get("cells", [])
-			var home := 0
-			for scout in living_units(Unit.TEAM_SCOUT):
-				if zone.has(scout.cell):
-					home += 1
-			text += "   %d/%d ABOARD" % [home, living_units(Unit.TEAM_SCOUT).size()]
-	objective_label.text = text
+	var parts: Array[String] = []
+	for i in _objectives().size():
+		if _objective_complete(i):
+			continue
+		var obj: Dictionary = _objectives()[i]
+		var text: String = obj.get("label", "")
+		match obj.get("kind", ""):
+			"eliminate":
+				if text.is_empty():
+					text = "DESTROY THE RUST CHOIR"
+				text += " %d LEFT" % living_units(Unit.TEAM_GOBLIN).size()
+			"destroy":
+				var total: int = obj.get("cells", []).size()
+				text += " %d/%d" % [total - _targets_left(i), total]
+			"extract":
+				var zone: Array = obj.get("cells", [])
+				var home := 0
+				for scout in living_units(Unit.TEAM_SCOUT):
+					if zone.has(scout.cell):
+						home += 1
+				text += " %d/%d ABOARD" % [home, living_units(Unit.TEAM_SCOUT).size()]
+				# The zone is inert until the earlier jobs are done, so say so
+				# rather than showing a target that cannot be met yet.
+				if i != _active_objective():
+					text = "THEN " + text
+		parts.append(text)
+	objective_label.text = "     ".join(parts)
 
 
 ## A scout can demolish a cache it is standing on or beside, as long as it has

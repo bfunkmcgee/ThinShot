@@ -55,7 +55,7 @@ const SHADOW_SQUASH := 0.469  # TILE_H / TILE_W
 const SHADOW_OFFSET := Vector2(3, 2)
 const SHADOW_COLOR := Color(0.16, 0.10, 0.06, 0.24)
 const DIAMOND_SHADOW := -1.0
-const SHADOW_RADII := {"#": 22.0, "j": 20.0, "p": 12.0, "W": DIAMOND_SHADOW}
+const SHADOW_RADII := {"#": 22.0, "j": 20.0, "p": 12.0, "d": 15.0, "W": DIAMOND_SHADOW}
 
 const GRID_LINE := Color(0.35, 0.27, 0.15, 0.25)
 const MOVE_HL := Color(0.95, 0.85, 0.3, 0.35)
@@ -154,6 +154,11 @@ var fire_mode := 0  # mirrors Battle.FireMode; tints the attack highlights
 # reachable cells that have cover at all.
 var cover_focus := NO_CELL
 var cover_dests: Dictionary = {}
+
+# Contact shadows for props that are not map characters. Objective targets are
+# spawned from the objective list rather than a map char, so without this they
+# sit on the sand with nothing under them and read as pasted on.
+var prop_shadows: Dictionary = {}
 
 var cache_cells: Dictionary = {}
 var extract_cells: Dictionary = {}
@@ -631,6 +636,13 @@ func _draw() -> void:
 				draw_set_transform(center, 0.0, Vector2(1.0, SHADOW_SQUASH))
 				draw_circle(Vector2.ZERO, radius, SHADOW_COLOR)
 				draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	# Objective props are not map characters, so they get their contact shadow
+	# from here instead of from the tile cache.
+	for cell: Vector2i in prop_shadows:
+		var centre := cell_to_local(cell) + SHADOW_OFFSET
+		draw_set_transform(centre, 0.0, Vector2(1.0, SHADOW_SQUASH))
+		draw_circle(Vector2.ZERO, float(prop_shadows[cell]), SHADOW_COLOR)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	# Smoke is world, not overlay: it goes down with the props so every
 	# gameplay marking still reads on top of it.
 	for cell: Vector2i in smoke_cells:
