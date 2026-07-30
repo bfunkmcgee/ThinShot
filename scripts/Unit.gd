@@ -1015,9 +1015,10 @@ func is_alive() -> bool:
 	return hp > 0
 
 
-## Pinned down by incoming fire: shoots worse and cannot set overwatch.
-## Set to 2 so it survives the decrement at the start of the target's own
-## next turn and actually costs them that turn.
+## Pinned down by incoming fire: shoots worse, cannot set overwatch, and
+## cannot leave the spot it is standing on. Set to 2 so it survives the
+## decrement at the start of the target's own next turn and actually costs
+## them that turn.
 func suppress() -> void:
 	suppression = 2
 	queue_redraw()
@@ -1025,6 +1026,12 @@ func suppress() -> void:
 
 func is_suppressed() -> bool:
 	return suppression > 0
+
+
+## Being pinned means exactly that: heads down, nobody moves. This is what
+## makes suppressing fire area denial rather than a worse way to shoot.
+func can_move() -> bool:
+	return not is_suppressed()
 
 
 func has_ammo(rounds := 1) -> bool:

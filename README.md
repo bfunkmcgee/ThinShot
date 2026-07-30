@@ -35,8 +35,9 @@ A five-soldier squad, each with a job:
   lightest option is a two-round burst, and **full auto (A)** walks four rounds
   across a target at reduced accuracy. On top of those he has an ability no one
   else does — **suppressive fire (S)**: three rounds put down *around* a
-  target rather than into it. No damage and no hit roll, but it **pins that
-  goblin and every goblin beside it**. Six rounds in the belt, and he is the
+  target rather than into it. No damage and no hit roll, but **everything
+  within two tiles is pinned — it cannot move at all next turn**, shoots 25%
+  worse, and cannot set overwatch. Six rounds in the belt, and he is the
   slowest soldier on the field.
 - **Desert Scouts** ×3 — the fast, accurate line. Single shots, or a braced
   burst when they hold still.
@@ -163,7 +164,8 @@ campaign and playing again starts you with five fresh recruits.
 - **A** or the **Auto** button — arm the machinegunner's four-round full auto
   (highlights turn amber). Requires a firing position.
 - **S** or the **Suppress** button — arm the machinegunner's suppressive fire
-  (highlights turn blue). Deals no damage; pins the target and its neighbours.
+  (highlights turn blue). Hovering a target draws the beaten zone and counts
+  how many goblins it would pin.
 - **V** — **Hustle** (Staff Sergeant specialty only): give up this soldier's
   shot to move a second time.
 - **X** or the **Demolish** button — set charges on an objective the selected
@@ -273,6 +275,17 @@ campaign and playing again starts you with five fresh recruits.
   - **A frag catches your own scouts too**, and a 3×3 is wide enough that it
     will if you are careless. The preview shows exactly which tiles are in it,
     and that warning is the whole safety rail.
+- **Suppression pins.** A pinned unit **cannot move at all** on its next
+  activation, shoots 25% worse, and cannot go on overwatch. That is the point:
+  suppressive fire deals no damage and never will, so what you are buying is a
+  turn in which those goblins do not get to close, flank, or take ground. It
+  catches everything within **two tiles** of the aim point — the panel counts
+  how many before you fire, and the beaten zone is drawn on the board.
+- **The gun keeps working.** Once it is down, the machinegunner holds his
+  stance and fires volleys into that ground for the whole enemy turn, until the
+  pin expires. The rounds are spent when you fire it; the sustained fire costs
+  nothing further and resolves nothing — it is there so you can *see* what is
+  holding them down.
 - **Suppression** is the machinegunner's alone. A pinned unit shoots 25% worse
   and cannot go on overwatch until the turn after, and wears a steel chevron.
   Pinning two goblins costs you the damage you'd have dealt to one — that

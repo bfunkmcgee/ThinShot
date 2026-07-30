@@ -137,6 +137,15 @@ const BURST_ROUNDS := 2
 const AUTO_ROUNDS := 4
 const AUTO_ACCURACY := -15  # per-round penalty for walking the gun
 const SUPPRESS_ROUNDS := 3
+# Manhattan radius of the beaten zone. Wide on purpose: it deals no damage, so
+# its whole value is how much ground it shuts down at once.
+const SUPPRESS_RADIUS := 2
+# Sustained fire while the pin holds. Two rounds close together, then a long
+# pause, so it reads as volleys. Well under the shot volume - it runs for a
+# whole enemy turn and must sit behind the action, not on top of it.
+const SUSTAIN_ROUND_GAP := 0.12
+const SUSTAIN_VOLLEY_GAP := 1.45
+const SUSTAIN_VOLUME := -13.0
 
 # Thrown ordnance - the squad's edge, and the one thing the Choir has no
 # answer to. Carried as a shared pool rather than per soldier, so the decision
@@ -194,6 +203,11 @@ var _smoke_puff_accum := 0.0
 var caches: Array = []
 # Fuel drums by cell: {sprite, spent}. Cover until something sets them off.
 var drums: Dictionary = {}
+# The gunner currently laying down sustained fire, and where he is working.
+var _suppressor: Unit = null
+var _suppress_point := Vector2.ZERO
+var _suppress_timer := 0.0
+var _suppress_in_volley := 0
 
 @onready var board: Board = $Board
 @onready var camera: Camera2D = $Camera
@@ -859,7 +873,13 @@ func _update_unit_panel() -> void:
 	if unit.team == Unit.TEAM_GOBLIN and selected != null \
 			and board.attack_cells.has(unit.cell):
 		if fire_mode == FireMode.SUPPRESS:
-			panel_status_label.text = "x%d SUPPRESS - NO DAMAGE, PINS AREA" % SUPPRESS_ROUNDS
+			var caught := 0
+			for goblin in living_units(Unit.TEAM_GOBLIN):
+				if Board.manhattan(goblin.cell, unit.cell) <= SUPPRESS_RADIUS:
+					caught += 1
+			panel_status_label.text = \
+					"SUPPRESS - NO DAMAGE - PINS %d: NO MOVE, -%d%% TO HIT" % [
+							caught, SUPPRESSION_ACCURACY]
 			panel_status_label.modulate = Unit.SUPPRESSED_COLOR
 			return
 		var flanking := _is_flanking(selected, unit)
@@ -900,7 +920,7 @@ func _update_unit_panel() -> void:
 				panel_status_label.modulate = Color("ff7a2a")
 		return
 	if unit.is_suppressed():
-		panel_status_label.text = "SUPPRESSED"
+		panel_status_label.text = "PINNED - CANNOT MOVE"
 		panel_status_label.modulate = Unit.SUPPRESSED_COLOR
 		return
 	if unit.mag_size > 0 and unit.ammo == 0:
@@ -1112,7 +1132,7 @@ func _refresh_highlights() -> void:
 		board.clear_highlights()
 		return
 	var moves := {}
-	if not selected.moved:
+	if not selected.moved and selected.can_move():
 		moves = board.flood_fill(selected.cell, selected.move_range,
 				_blocked_for_team.bind(selected.team))
 	var attacks: Array[Vector2i] = []
@@ -1170,15 +1190,22 @@ func _update_hover(cell: Vector2i) -> void:
 	var aim_from := Board.NO_CELL
 	var aim_covered := false
 	var aim_flanking := false
+	# The beaten zone suppressive fire would shut down, previewed the same way
+	# a grenade previews its footprint - it is a wide area and the player has
+	# no way to judge it otherwise.
+	var beaten := {}
 	if selected != null and cell != Board.NO_CELL:
 		if board.move_dests.has(cell):
 			path = board.reconstruct_path(board.move_cells, cell)
 		elif board.attack_cells.has(cell):
 			var target := unit_at(cell)
 			aim_from = selected.cell
+			if fire_mode == FireMode.SUPPRESS:
+				beaten = _suppress_zone(cell)
 			aim_flanking = target != null and _is_flanking(selected, target)
 			aim_covered = target != null \
 					and effective_cover(selected, target) != Board.CoverLevel.NONE
+	board.set_blast_cells(beaten, false)
 	board.set_hover(cell, path, aim_from, aim_covered, aim_flanking)
 	# Hovering somewhere you could move to previews the cover you would have
 	# standing there; otherwise the overlay stays on the unit's own tile.
@@ -1282,15 +1309,18 @@ func do_suppressive_fire(attacker: Unit, target: Unit) -> void:
 		if i > 0:
 			await get_tree().create_timer(AUTO_GAP).timeout
 		await _fire_suppression_round(attacker, target)
-	# Pin the target and anything hostile beside it.
+	# Pin everything hostile inside the beaten zone.
 	var pinned: Array[Vector2i] = []
 	for unit in living_units(_enemy_team_of(attacker)):
-		if Board.manhattan(unit.cell, target.cell) <= 1:
+		if Board.manhattan(unit.cell, target.cell) <= SUPPRESS_RADIUS:
 			unit.suppress()
 			pinned.append(unit.cell)
 	print("[ThinShot]   pinned %s" % [pinned])
-	await get_tree().create_timer(LOWER_TIME).timeout
-	attacker.lower_rifle()
+	# The gun does not stop. It keeps working the same ground until the
+	# gunner's next turn, which is exactly as long as the pin lasts - so the
+	# effect is visible on screen for its whole duration instead of being a
+	# status icon nobody notices.
+	_begin_sustained_fire(attacker, target.position)
 	attacker.set_done(true)
 	if attacker == selected:
 		deselect()
@@ -1299,6 +1329,72 @@ func do_suppressive_fire(attacker: Unit, target: Unit) -> void:
 		_refresh_danger()
 		_refresh_watch_cells()
 		_update_unit_panel()
+
+
+## Every cell a burst of suppressing fire would pin, as a diamond of
+## SUPPRESS_RADIUS around the aim point. Solid cells are dropped - the rounds
+## go over the ground, not through a wall.
+func _suppress_zone(centre: Vector2i) -> Dictionary:
+	var zone := {}
+	for dy in range(-SUPPRESS_RADIUS, SUPPRESS_RADIUS + 1):
+		var w := SUPPRESS_RADIUS - absi(dy)
+		for dx in range(-w, w + 1):
+			var cell: Vector2i = centre + Vector2i(dx, dy)
+			if board.in_bounds(cell) and not board.is_blocker(cell):
+				zone[cell] = 1
+	return zone
+
+
+## Keep the gun talking. The gunner holds his stance and works the same ground
+## in short volleys for as long as the pin is on, which is what makes
+## suppression legible: you can see the fire that is keeping their heads down.
+## Purely presentational - the ammunition was already spent, and no further
+## rounds are rolled or resolved.
+func _begin_sustained_fire(gunner: Unit, at: Vector2) -> void:
+	_suppressor = gunner
+	_suppress_point = at
+	_suppress_timer = SUSTAIN_VOLLEY_GAP
+	_suppress_in_volley = 0
+
+
+func _end_sustained_fire() -> void:
+	if _suppressor == null:
+		return
+	if is_instance_valid(_suppressor) and _suppressor.is_alive():
+		_suppressor.lower_rifle()
+	_suppressor = null
+
+
+func _sustain_suppression(delta: float) -> void:
+	if _suppressor == null:
+		return
+	if not is_instance_valid(_suppressor) or not _suppressor.is_alive():
+		_suppressor = null
+		return
+	_suppress_timer -= delta
+	if _suppress_timer > 0.0:
+		return
+	# Rounds come in twos with a long pause between, so it reads as volleys
+	# rather than a metronome.
+	if _suppress_in_volley == 0:
+		_suppress_in_volley = 1
+		_suppress_timer = SUSTAIN_ROUND_GAP
+	else:
+		_suppress_in_volley = 0
+		_suppress_timer = SUSTAIN_VOLLEY_GAP
+	var muzzle := _suppressor.muzzle_point()
+	var scatter := Vector2(_rng.randf_range(-26, 26), _rng.randf_range(-14, 14))
+	var strike := _suppress_point + Vector2(0, -18) + scatter
+	var dir := (strike - muzzle).normalized()
+	_suppressor.recoil(dir)
+	Sfx.play("shot", SUSTAIN_VOLUME)
+	HitFx.spawn(fx_glow, muzzle, HitFx.Kind.MUZZLE)
+	HitFx.spawn_tracer(fx_glow, muzzle, strike, TRACER_TIME)
+	fx_glow.muzzle(muzzle, dir)
+	fx_air.smoke_plume(muzzle, dir)
+	fx_ground.casing(muzzle, dir)
+	fx_ground.footstep(strike + Vector2(0, 20), 1.0)
+	fx_ground.bullet_hole(strike + Vector2(0, 20), dir)
 
 
 func _enemy_team_of(unit: Unit) -> int:
@@ -2205,6 +2301,8 @@ func end_player_turn() -> void:
 	# Smoke thrown last turn has now covered the enemy turn it was meant to
 	# cover, so it burns off as control comes back.
 	_tick_smoke()
+	# The pin expires as the goblins refresh, so the gun stops with it.
+	_end_sustained_fire()
 	show_banner("DESERT SCOUTS' TURN")
 	state = State.PLAYER_TURN
 	player_turn_ready_msec = Time.get_ticks_msec()
@@ -2240,7 +2338,9 @@ func run_enemy_turn() -> void:
 			await _ai_fire(goblin, _nearest(goblin.cell, shootable))
 		else:
 			var moved_now := false
-			if not reloaded:  # working the bolt already spent the move
+			# Working the bolt already spent the move, and a pinned goblin
+			# holds where it is - it can still shoot from there, badly.
+			if not reloaded and goblin.can_move():
 				var target := _nearest(goblin.cell, scouts)
 				var reach := board.flood_fill(goblin.cell, goblin.move_range,
 						_blocked_for_team.bind(goblin.team))
@@ -2639,6 +2739,7 @@ func _process(delta: float) -> void:
 	_sway_plants()
 	_animate_structures()
 	_boil_smoke(delta)
+	_sustain_suppression(delta)
 
 
 ## Keep live smoke moving. The Board draws the flat footprint for clarity;
