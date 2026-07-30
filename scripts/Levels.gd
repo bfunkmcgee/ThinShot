@@ -354,6 +354,62 @@ const LEVELS: Array[Dictionary] = [
 		"zone_thresholds": [-0.40, 0.05],
 	},
 	{
+		# The rescue. Two objectives that pull in opposite directions: the
+		# prisoners are held deep east, the way out is the west edge you came
+		# in by, and a freed prisoner walks at move 4 with no weapon. So the
+		# mission is a long reach followed by a longer walk back, with the
+		# squad's own guns as the only thing making that walk survivable.
+		"name": "THE HOLDING PENS",
+		"fiction": "A wire pen behind the Choir's line, and the reason they have been hauling water across forty miles of nothing.",
+		"briefing": "The water was not for them.\n\nBehind the Choir's line there is a pen, and in it are the people they have been keeping alive - surveyors off the old line, by the look of the tallies.\n\nThat is what the column was for. Go and get them.\n\nA freed prisoner has no weapon and cannot be shot at, but they walk at their own pace and they walk the whole way back. Reaching them is the easy half.",
+		"orders": "REACH THE PRISONERS, THEN WALK THEM OUT",
+		"debrief": "Surveyors. Taken off the line eleven years ago, when Outpost 7 came off the maps, and kept alive ever since because somebody down there wanted the maps in their heads.\n\nThey knew where every dump and cistern on the survey line was. That is how the Choir found them all.\n\nAnd they say the one who asked the questions is still out there, at the end of the tracks.",
+		"size": Vector2i(16, 10),
+		"map": [
+			"..p.......WWWWWW",
+			".....j....W.....",
+			"...j......W.....",
+			".......j..W.....",
+			"....dd..........",
+			"...j......W.....",
+			".........jW.....",
+			"......j...W.....",
+			"...p......WWWWWW",
+			".....j..........",
+		],
+		"scout_spawns": [Vector2i(1, 2), Vector2i(1, 7), Vector2i(2, 4)],
+		"lead_spawns": [Vector2i(0, 5)],
+		"gunner_spawns": [Vector2i(2, 5)],
+		# The pen is behind a wire line with one way through, at (10,4).
+		"prisoner_spawns": [Vector2i(13, 3), Vector2i(13, 6)],
+		"goblin_spawns": [
+			Vector2i(9, 2), Vector2i(9, 5), Vector2i(11, 1), Vector2i(11, 7),
+		],
+		# The one way through the wire is (10,4), and it is held.
+		"smg_spawns": [Vector2i(10, 4)],
+		"smg_alt_spawns": [Vector2i(8, 4), Vector2i(12, 5)],
+		"novice_spawns": [Vector2i(15, 1), Vector2i(15, 7), Vector2i(14, 4)],
+		"bolt_spawns": [Vector2i(12, 2)],
+		"structures": [
+			{"kind": "tent", "anchor": Vector2i(6, 1), "size": Vector2i(2, 2)},
+		],
+		"objectives": [
+			{"kind": "rescue", "label": "REACH THE PRISONERS"},
+			{
+				"kind": "extract",
+				"label": "WALK THEM OUT",
+				"cells": [
+					Vector2i(0, 2), Vector2i(0, 3), Vector2i(0, 4),
+					Vector2i(0, 5), Vector2i(0, 6), Vector2i(0, 7),
+					Vector2i(1, 4), Vector2i(1, 5),
+				],
+			},
+		],
+		"zone_seed": 66,
+		"shade_seed": 40,
+		"zone_thresholds": [-0.25, 0.14],
+	},
+	{
 		# A bowl in the rock with cover through the middle of it, and the whole
 		# Choir standing in it. Back to elimination, which is the point: the
 		# first operation taught that killing them changed nothing, and this is
@@ -417,7 +473,10 @@ const OPERATIONS: Array[Dictionary] = [
 		"name": "OPERATION SECOND VERSE",
 		"biome": "desert",
 		"summary": "The ammo dumps at Outpost 7 were already light. Find out who took the rest.",
-		"missions": [3, 4, 5],
+		# Four rather than three: the rescue sits between the cistern and the
+		# gathering, because the water the column was hauling only makes sense
+		# once you find who it was being hauled to.
+		"missions": [3, 4, 5, 6],
 	},
 ]
 
@@ -510,7 +569,8 @@ static func _validate(index: int) -> bool:
 	var spawns: Array = data.scout_spawns + data.get("lead_spawns", []) \
 			+ data.get("gunner_spawns", []) + data.goblin_spawns \
 			+ data.get("smg_spawns", []) + data.get("smg_alt_spawns", []) \
-			+ data.get("novice_spawns", []) + data.get("bolt_spawns", [])
+			+ data.get("novice_spawns", []) + data.get("bolt_spawns", []) \
+			+ data.get("prisoner_spawns", [])
 	var seen_spawn := {}
 	for spawn: Vector2i in spawns:
 		ok = _check(walkable.call(spawn), "%s: spawn %s not walkable" % [label, spawn]) and ok
@@ -550,8 +610,14 @@ static func _validate_objectives(data: Dictionary, label: String,
 	var seen_cell := {}
 	for obj: Dictionary in objectives:
 		var kind: String = obj.get("kind", "")
-		ok = _check(kind == "eliminate" or kind == "destroy" or kind == "extract",
+		ok = _check(kind == "eliminate" or kind == "destroy" or kind == "extract"
+				or kind == "rescue",
 				"%s: unknown objective kind '%s'" % [label, kind]) and ok
+		if kind == "rescue":
+			# The prisoners are the objective, so the level has to hold some.
+			ok = _check(not data.get("prisoner_spawns", []).is_empty(),
+					"%s: rescue objective with no prisoner_spawns" % label) and ok
+			continue
 		if kind == "eliminate":
 			continue
 		var cells: Array = obj.get("cells", [])
@@ -571,7 +637,11 @@ static func _validate_objectives(data: Dictionary, label: String,
 				ok = _check(not spawns.has(cell),
 						"%s: cache %s sits on a spawn" % [label, cell]) and ok
 		if kind == "extract":
-			ok = _check(cells.size() >= squad_size(data),
-					"%s: extraction zone holds %d, squad is %d" % [
-							label, cells.size(), squad_size(data)]) and ok
+			# Everyone who has to be standing in it at once - the squad, plus
+			# any prisoner walking out with them.
+			var needed: int = squad_size(data) \
+					+ int(data.get("prisoner_spawns", []).size())
+			ok = _check(cells.size() >= needed,
+					"%s: extraction zone holds %d, needs %d" % [
+							label, cells.size(), needed]) and ok
 	return ok

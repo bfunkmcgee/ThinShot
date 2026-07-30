@@ -14,6 +14,9 @@ const TEAM_GOBLIN := 1
 enum Kind {
 	SCOUT, TEAM_LEAD, MACHINEGUNNER,
 	GOBLIN, GOBLIN_SMG, GOBLIN_SMG_ALT, GOBLIN_REVOLVER, GOBLIN_BOLT,
+	# Not a soldier. Carries no weapon, is never shot at, and until somebody
+	# reaches them, does not move either.
+	CIVILIAN,
 }
 
 const LEAD_ROOT := "res://assets/sprites/Scout_TeamLead"
@@ -22,6 +25,7 @@ const SMG_ROOT := "res://assets/sprites/Goblin_SMG"
 const REV_ROOT := "res://assets/sprites/Goblin_revolver"
 const SMGA_ROOT := "res://assets/sprites/Goblin_SMG_alt"
 const BOLT_ROOT := "res://assets/sprites/Goblin_BoltRifle"
+const CIVILIAN_ROOT := "res://assets/sprites/Civilian"
 
 # Directional pixel-art frames, indexed by 45-degree compass sector of the
 # screen-space facing vector: 0=E, 1=SE, 2=S, 3=SW, 4=W, 5=NW, 6=N, 7=NE.
@@ -255,6 +259,23 @@ static var BOLT_HURT_FRAMES: Array = _load_dir_frames(
 		BOLT_ROOT + "/Goblin_BoltRifle/animations/standing_idle_damage")
 static var BOLT_RELOAD_FRAMES: Array = _load_dir_frames(
 		BOLT_ROOT + "/Goblin_BoltRifle/animations/standing_idle_reload")
+
+# The prisoner. Two poses that matter: huddled where the Choir left them, and
+# on their feet once somebody has reached them. free() swaps between the sets.
+static var CIVILIAN_COWER_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		CIVILIAN_ROOT + "/Cower_stance/rotations")
+static var CIVILIAN_COWER_IDLE: Array = _load_dir_frames(
+		CIVILIAN_ROOT + "/Cower_stance/animations/cower_idle")
+static var CIVILIAN_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		CIVILIAN_ROOT + "/Civilian/rotations")
+static var CIVILIAN_IDLE_FRAMES: Array = _load_dir_frames(
+		CIVILIAN_ROOT + "/Civilian/animations/standing_idle")
+static var CIVILIAN_WALK_FRAMES: Array = _load_dir_frames(
+		CIVILIAN_ROOT + "/Civilian/animations/standing_idle_walk")
+static var CIVILIAN_DEATH_FRAMES: Array = _load_dir_frames(
+		CIVILIAN_ROOT + "/Civilian/animations/standing_idle_to_dead")
+static var CIVILIAN_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		CIVILIAN_ROOT + "/Dead_stance/rotations")
 
 # Visual-only randomness (which idle variation plays). Never read back into
 # game state, mirroring Sfx and Fx.
@@ -503,6 +524,9 @@ var cover_level := 0
 # off this. Outside a battle a unit is a person standing in a camp, and all of
 # it is noise; only the contact shadow survives.
 var show_combat_hud := true
+# A prisoner nobody has reached yet: rooted where the Choir left them, and
+# huddled rather than standing. free() ends it.
+var captive := false
 var _body_tween: Tween = null
 var _marker_tween: Tween = null
 
@@ -518,8 +542,11 @@ func _ready() -> void:
 
 func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 	kind = p_kind
+	# Civilians count as yours: they walk out with the squad, and the Choir
+	# never shoots at them (is_combatant keeps them off the AI's target list).
 	team = TEAM_SCOUT if kind == Kind.SCOUT or kind == Kind.TEAM_LEAD \
-			or kind == Kind.MACHINEGUNNER else TEAM_GOBLIN
+			or kind == Kind.MACHINEGUNNER or kind == Kind.CIVILIAN \
+			else TEAM_GOBLIN
 	cell = p_cell
 	match kind:
 		Kind.SCOUT:
@@ -665,6 +692,28 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			idle_alt_frames = REV_IDLE_ALT_FRAMES
 			hurt_frames = REV_HURT_FRAMES
 			reload_frames = REV_RELOAD_FRAMES
+		Kind.CIVILIAN:
+			# Carries nothing and shoots nothing. Starts huddled where the
+			# Choir left them; release() puts them on their feet.
+			max_hp = 4
+			move_range = 4
+			attack_range = 0
+			damage = 0
+			accuracy = 0
+			captive = true
+			frames = CIVILIAN_COWER_FRAMES
+			aim_frames = CIVILIAN_COWER_FRAMES
+			walk_frames = CIVILIAN_WALK_FRAMES
+			idle_frames = CIVILIAN_COWER_IDLE
+			# Every set has to be 8 entries long even where it will never play:
+			# _current_cycle() indexes by facing sector without checking.
+			raise_frames = CIVILIAN_COWER_IDLE
+			aim_idle_frames = CIVILIAN_COWER_IDLE
+			death_frames = CIVILIAN_DEATH_FRAMES
+			dead_frames = CIVILIAN_DEAD_FRAMES
+			idle_alt_frames = CIVILIAN_COWER_IDLE
+			hurt_frames = CIVILIAN_COWER_IDLE
+			reload_frames = CIVILIAN_COWER_IDLE
 		Kind.GOBLIN:
 			max_hp = 4
 			move_range = 4
@@ -888,6 +937,35 @@ func overwatch_rounds() -> int:
 	return OVERWATCH_VOLLEY if kind == Kind.MACHINEGUNNER else 1
 
 
+## Someone who fights. A prisoner is on your side and walks out with you, but
+## is never shot at, never shoots, and never counts toward a squad wipe.
+func is_combatant() -> bool:
+	return kind != Kind.CIVILIAN
+
+
+## Reached. They get up off the floor and can walk out with the squad.
+## Not named free() - that is Object's, and shadowing it deletes the node.
+func release() -> void:
+	if not captive:
+		return
+	captive = false
+	frames = CIVILIAN_FRAMES
+	aim_frames = CIVILIAN_FRAMES
+	idle_frames = CIVILIAN_IDLE_FRAMES
+	aim_idle_frames = CIVILIAN_IDLE_FRAMES
+	idle_alt_frames = CIVILIAN_IDLE_FRAMES
+	raise_frames = CIVILIAN_IDLE_FRAMES
+	hurt_frames = CIVILIAN_IDLE_FRAMES
+	reload_frames = CIVILIAN_IDLE_FRAMES
+	_set_anim(Anim.IDLE)
+	queue_redraw()
+
+
+## Being pinned means exactly that, and so does being tied up.
+func can_move_freely() -> bool:
+	return can_move() and not captive
+
+
 ## The role a kind fills, with no reference to who is filling it.
 static func kind_role_name(p_kind: Kind) -> String:
 	match p_kind:
@@ -905,6 +983,8 @@ static func kind_role_name(p_kind: Kind) -> String:
 			return "Rust Choir Cantor"
 		Kind.GOBLIN_REVOLVER:
 			return "Rust Choir Novice"
+		Kind.CIVILIAN:
+			return "Prisoner"
 	return "Desert Scout"
 
 

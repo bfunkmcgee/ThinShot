@@ -300,6 +300,8 @@ func _ready() -> void:
 		_spawn_unit(Unit.Kind.GOBLIN_REVOLVER, spawn)
 	for spawn: Vector2i in level.get("bolt_spawns", []):
 		_spawn_unit(Unit.Kind.GOBLIN_BOLT, spawn)
+	for spawn: Vector2i in level.get("prisoner_spawns", []):
+		_spawn_unit(Unit.Kind.CIVILIAN, spawn)
 	end_turn_button.pressed.connect(end_player_turn)
 	overwatch_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.OVERWATCH))
 	face_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.FACE))
@@ -602,6 +604,48 @@ func _spawn_squad(kind: Unit.Kind, spawns: Array) -> void:
 				Unit.kind_role_name(kind), soldiers.size(), spawns.size()])
 
 
+## Living units of a team that actually fight. The prisoner is on your side and
+## walks out with the squad, but the Choir never shoots at them and losing every
+## soldier is a wipe whether or not they are still standing.
+func living_soldiers(team: int) -> Array[Unit]:
+	var result: Array[Unit] = []
+	for unit in living_units(team):
+		if unit.is_combatant():
+			result.append(unit)
+	return result
+
+
+## A soldier finishing a move beside a prisoner cuts them loose. No action, no
+## button: reaching them IS the rescue, which keeps the objective about crossing
+## the ground rather than remembering to press something once you are there.
+func _free_reached_captives(mover: Unit) -> void:
+	if not mover.is_combatant() or mover.team != Unit.TEAM_SCOUT:
+		return
+	for prisoner in captives():
+		if Board.manhattan(mover.cell, prisoner.cell) > 1:
+			continue
+		prisoner.release()
+		prisoner.set_facing((mover.position - prisoner.position).normalized())
+		# They have not moved yet this turn, so they can walk the moment they
+		# are up rather than standing there for a full round.
+		prisoner.start_turn()
+		Sfx.play("select", 0.0, 0.0)
+		_award_xp(mover, Game.XP_RESCUE, "cut a prisoner loose")
+		show_banner("PRISONER FREED")
+		print("[ThinShot] %s reaches the prisoner at %s" % [
+				mover.display_name(), prisoner.cell])
+		_refresh_objectives()
+
+
+## Every prisoner still waiting to be reached.
+func captives() -> Array[Unit]:
+	var result: Array[Unit] = []
+	for unit in living_units(Unit.TEAM_SCOUT):
+		if unit.captive:
+			result.append(unit)
+	return result
+
+
 func living_units(team: int) -> Array[Unit]:
 	var result: Array[Unit] = []
 	for child in entities_node.get_children():
@@ -818,7 +862,8 @@ func _rounds_for(mode: FireMode) -> int:
 
 
 func _can_use_mode(unit: Unit, mode: FireMode) -> bool:
-	if unit == null or unit.acted or not unit.has_ammo(_rounds_for(mode)):
+	if unit == null or unit.acted or not _armed(unit) \
+			or not unit.has_ammo(_rounds_for(mode)):
 		return false
 	match mode:
 		FireMode.BURST:
@@ -865,11 +910,21 @@ func _on_fire_button_toggled(pressed: bool, mode: FireMode) -> void:
 	_sync_fire_buttons()  # the request may have been refused
 
 
+## Someone who can shoot, throw or demolish. A prisoner walks out with you and
+## nothing more - and mag_size 0 means "unlimited" everywhere else, so without
+## this they would inherit every weapon action by default.
+func _armed(unit: Unit) -> bool:
+	return unit.is_combatant()
+
+
 ## Select the next living scout that can still act, wrapping in spawn order.
+## A prisoner joins the rotation only once freed - and only to be walked out.
 func _cycle_unit() -> void:
 	var ready: Array[Unit] = []
 	for scout in living_units(Unit.TEAM_SCOUT):
-		if not scout.acted:
+		if scout.captive:
+			continue
+		if not scout.acted and (_armed(scout) or not scout.moved):
 			ready.append(scout)
 	if ready.is_empty():
 		return
@@ -1039,7 +1094,8 @@ func _try_overwatch() -> void:
 		_cancel_aim()
 		return
 	if state != State.PLAYER_TURN or selected == null or selected.acted \
-			or not selected.has_ammo() or selected.is_suppressed():
+			or not _armed(selected) or not selected.has_ammo() \
+			or selected.is_suppressed():
 		return
 	aim_mode = AimMode.OVERWATCH
 	_sync_aim_buttons()
@@ -1193,7 +1249,7 @@ func _refresh_highlights() -> void:
 		board.clear_highlights()
 		return
 	var moves := {}
-	if not selected.moved and selected.can_move():
+	if not selected.moved and selected.can_move_freely():
 		moves = board.flood_fill(selected.cell, selected.move_range,
 				_blocked_for_team.bind(selected.team))
 	var attacks: Array[Vector2i] = []
@@ -1332,6 +1388,7 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 			unit.start_walking()
 	unit.stop_walking()
 	unit.moved = true
+	_free_reached_captives(unit)
 	state = prev_state
 	# Walking is itself an objective action on an extraction map, so the win
 	# condition has to be re-tested the moment a scout stops moving.
@@ -1533,6 +1590,10 @@ func _objective_complete(index: int) -> bool:
 			return living_units(Unit.TEAM_GOBLIN).is_empty()
 		"destroy":
 			return _targets_left(index) == 0
+		"rescue":
+			# Reaching them is the whole objective; walking them out is the
+			# extract objective's job.
+			return captives().is_empty()
 		"extract":
 			# Only counts once the earlier jobs are done, so a squad cannot
 			# simply walk off the map at turn one.
@@ -1685,6 +1746,10 @@ func _refresh_objectives() -> void:
 	for cache: Dictionary in caches:
 		if not cache.destroyed:
 			beacons.append(board.cell_to_global(cache.cell))
+	# A prisoner huddled among scenery is exactly as findable as a cache was
+	# before it got a beacon, which is to say not.
+	for prisoner in captives():
+		beacons.append(prisoner.position)
 	if objective_marks != null:
 		objective_marks.set_marks(beacons)
 	_update_objective_label()
@@ -1707,6 +1772,9 @@ func _update_objective_label() -> void:
 			"destroy":
 				var total: int = obj.get("cells", []).size()
 				text += " %d/%d" % [total - _targets_left(i), total]
+			"rescue":
+				var held: int = level.get("prisoner_spawns", []).size()
+				text += " %d/%d" % [held - captives().size(), held]
 			"extract":
 				var zone: Array = obj.get("cells", [])
 				var home := 0
@@ -1739,7 +1807,7 @@ func _cache_at(cell: Vector2i) -> Dictionary:
 ## Demolish the one adjacent cache, or the only one in reach if the player hit
 ## the key instead of clicking a specific pile.
 func _try_demolish(cell := Board.NO_CELL) -> void:
-	if state != State.PLAYER_TURN or selected == null:
+	if state != State.PLAYER_TURN or selected == null or not _armed(selected):
 		return
 	var cache := _cache_at(cell) if cell != Board.NO_CELL else {}
 	if cache.is_empty():
@@ -1962,7 +2030,7 @@ func _try_throw(mode: AimMode) -> void:
 		_cancel_aim()
 		return
 	if state != State.PLAYER_TURN or selected == null or selected.acted \
-			or _charges_for(mode) <= 0:
+			or not _armed(selected) or _charges_for(mode) <= 0:
 		return
 	aim_mode = mode
 	_sync_aim_buttons()
@@ -2035,7 +2103,10 @@ func do_throw_frag(thrower: Unit, cell: Vector2i) -> void:
 func _apply_blast(blast: Dictionary, center: Vector2, source: Unit, what: String) -> void:
 	var caught: Array[Unit] = []
 	for unit in living_units(Unit.TEAM_GOBLIN) + living_units(Unit.TEAM_SCOUT):
-		if blast.has(unit.cell):
+		# Prisoners come through a blast untouched. Being able to frag the
+		# person you came to rescue is the kind of thing that turns a rescue
+		# into a chore, and the Choir wants them alive anyway.
+		if blast.has(unit.cell) and unit.is_combatant():
 			caught.append(unit)
 	for unit in caught:
 		var dmg: int = int(blast[unit.cell])
@@ -2392,6 +2463,8 @@ func _is_peeking(attacker: Unit, target: Unit) -> bool:
 ## the mover inside their covered arc.
 func _overwatchers_against(mover: Unit) -> Array[Unit]:
 	var result: Array[Unit] = []
+	if not mover.is_combatant():
+		return result  # nobody wastes a reaction shot on the prisoner
 	for child in entities_node.get_children():
 		var watcher := child as Unit
 		if watcher == null or not watcher.is_alive() or not watcher.overwatching:
@@ -2478,7 +2551,7 @@ func run_enemy_turn() -> void:
 	for goblin in squad:
 		if not is_instance_valid(goblin) or not goblin.is_alive():
 			continue
-		var scouts := living_units(Unit.TEAM_SCOUT)
+		var scouts := living_soldiers(Unit.TEAM_SCOUT)
 		if scouts.is_empty():
 			return
 		acted += 1
@@ -2508,7 +2581,8 @@ func run_enemy_turn() -> void:
 				moved_now = board.in_bounds(dest) and dest != goblin.cell
 				if moved_now:
 					await do_move(goblin, dest)
-			shootable = _shootable_from(goblin.cell, goblin.attack_range, living_units(Unit.TEAM_SCOUT))
+			shootable = _shootable_from(goblin.cell, goblin.attack_range,
+					living_soldiers(Unit.TEAM_SCOUT))
 			var shoots := goblin.is_alive() and goblin.has_ammo() and not shootable.is_empty()
 			print("[ThinShot]   goblin %d/%d %s %s -> %s%s" % [
 					acted, squad.size(), "reloads at" if reloaded else "moves",
@@ -2689,7 +2763,9 @@ func check_game_over() -> bool:
 		return true
 	# Losing is unconditional and checked first: no objective saves a squad
 	# that is already dead.
-	if living_units(Unit.TEAM_SCOUT).is_empty():
+	# A wipe is every soldier down. A prisoner left standing alone is not a
+	# squad, and cannot finish anything.
+	if living_soldiers(Unit.TEAM_SCOUT).is_empty():
 		_show_game_over("THE CHOIR SINGS ON", false)
 		return true
 	if _all_objectives_complete():
@@ -2704,8 +2780,9 @@ func _show_game_over(text: String, won: bool) -> void:
 	print("[ThinShot] level %d over on turn %d: %s" % [
 			Game.current_level + 1, turn_number, "WON" if won else "LOST"])
 	if won:
-		# Walking off the map is worth something on its own.
-		for scout in living_units(Unit.TEAM_SCOUT):
+		# Walking off the map is worth something on its own - to the soldiers
+		# who did the walking. The people they carried out are not on the roster.
+		for scout in living_soldiers(Unit.TEAM_SCOUT):
 			_award_xp(scout, Game.XP_SURVIVE, "survived")
 		Game.commit_mission()
 	else:

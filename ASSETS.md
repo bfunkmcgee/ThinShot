@@ -39,7 +39,8 @@ worth more than a fourth goblin.
 
 | # | Asset | Buys | Code |
 |---|---|---|---|
-| 5 | **Civilian / prisoner** — unit format, but only needs `idle`, `walk`, `cower`, `to_dead` | **Rescue and escort objectives.** Reach them, then get them to the extraction zone alive. Slots straight into the objective list next to `destroy` and `extract`. | medium |
+| ~~5~~ | ~~**Civilian / prisoner**~~ — **done** | The `rescue` objective, and THE HOLDING PENS built on it. Ending a move beside one cuts them loose; the cower set swaps to the standing set and they walk out with the squad, counting for the extraction. | shipped |
+| 5b | **Wire fence / pen** — 48×48 post-and-wire, half-cover tier, plus a gate variant | The pen on THE HOLDING PENS is drawn with the same rock walls as everything else, so the one place in the campaign that is a *prison* reads as terrain. Wire would also be the first half-cover you can see through, which is a different tactical object from a rock. | small |
 | ~~6~~ | ~~**Comms mast / radio set**~~ — **done** | "SILENCE THE RELAY" on The Scrapline. Its three states made it the first **two-charge** objective: one charge buckles it into a leaning, sparking wreck, the second brings it down. | shipped |
 | ~~7~~ | ~~**Fuel drum**~~ — **done** | Cover until a blast reaches it, then it detonates with a frag's force **and sets off the next drum along**. A line of them is a fuse. | shipped |
 | 8 | **Vehicle wreck** — 168×168, 2×2 | A big multi-cell cover piece to fight around, and visual proof the desert had a war in it — which is exactly the campaign's story. | drop-in |

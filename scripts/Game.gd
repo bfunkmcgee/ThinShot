@@ -95,6 +95,7 @@ const PERKS := {
 
 const XP_KILL := 3
 const XP_CACHE := 4
+const XP_RESCUE := 4
 const XP_SURVIVE := 3
 
 const SURNAMES: Array[String] = [

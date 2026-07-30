@@ -72,7 +72,7 @@ Team Lead (six tiles out-reaches him, and four damage drops him in one), break
 line of sight and make him choose between shooting and repositioning, or eat a
 scout's worth of damage crossing his lane.
 
-Six missions across two operations, on 16×10 isometric maps. It is one story,
+Seven missions across two operations, on 16×10 isometric maps. It is one story,
 and **the objectives are how it is told** — each mission opens with a briefing
 and closes on a debrief that sets up the next.
 
@@ -104,7 +104,10 @@ The ammo dumps at Outpost 7 were already light. Find out who took the rest.
    cannot go round it and you could not hold it, so you **break through and
    out the far side**: no caches, no body count, just get the squad through.
    Past it every track runs together into one.
-6. **The Choirmaster** — a bowl in the rock with the whole Choir standing in
+6. **The Holding Pens** — the water was never for the Choir. Behind their line
+   is a wire pen with surveyors in it, kept alive for eleven years because
+   somebody wanted the maps in their heads. **Reach them, then walk them out.**
+7. **The Choirmaster** — a bowl in the rock with the whole Choir standing in
    it, because somebody down there has been keeping them together. **Leave
    nobody singing.** The first operation taught that killing them changed
    nothing; this is the one time it does.
@@ -124,6 +127,13 @@ Which is why each map asks for something different:
    zone** on the west edge. The zone stays shut until the charges go off, so
    the last stretch is a fighting withdrawal across ground you already crossed
    once — with whatever the Choir has left chasing you.
+4. **The Holding Pens** — a rescue. The pen has **one gate**, and it is held.
+   Ending a move next to a prisoner cuts them loose — there is no button, and
+   reaching them *is* the rescue. Freed, they get up, keep their own slower
+   pace, and count for the extraction like anyone else: the zone will not open
+   until all of them are aboard. They carry nothing and cannot shoot, throw or
+   set charges, and the Choir will not fire on them or catch them in a blast —
+   which makes the walk home a problem of tempo rather than of covering fire.
 
 The Choir gets heavier as you go — 9 goblins on Dry Wash, 13 in the bowl at the
 end — but so does your squad, and by the second operation your veterans have
@@ -315,7 +325,14 @@ campaign and playing again starts you with five fresh recruits.
   the objective said.
 - **Extraction takes everyone who is still alive.** You pick the moment; a
   scout left behind means the zone is not full and the level does not end. If
-  one dies on the way, the requirement shrinks with the squad.
+  one dies on the way, the requirement shrinks with the squad — and anyone you
+  freed on the way in counts too.
+- **A rescue is over when you reach them, not when you free them.** Ending a
+  move next to a prisoner cuts them loose; there is no action to spend and no
+  button to remember. From there they are yours to walk out: slower than a
+  scout, unarmed, and untouchable — the Choir never fires on them and a blast
+  goes round them. Losing every soldier is still a wipe whether or not a
+  prisoner is left standing.
 - Winning advances to the next level; losing retries the current one.
 - **Facing matters.** Every unit covers a 135° front arc, drawn as a wedge at
   its feet. Cover only protects against shots arriving inside that arc — a
