@@ -127,7 +127,11 @@ Which is why each map asks for something different:
    zone** on the west edge. The zone stays shut until the charges go off, so
    the last stretch is a fighting withdrawal across ground you already crossed
    once — with whatever the Choir has left chasing you.
-4. **The Holding Pens** — a rescue. The pen has **one gate**, and it is held.
+4. **The Holding Pens** — a rescue behind **barbed wire**, which is the only
+   thing on the board that stops movement and nothing else: you can see the
+   prisoners from your start line and shoot the guards straight through the
+   fence, but the only way in is **one gate**, dug in behind sandbags. Prep by
+   fire, breach, walk back out the same hole carrying people.
    Ending a move next to a prisoner cuts them loose — there is no button, and
    reaching them *is* the rescue. Freed, they get up, keep their own slower
    pace, and count for the extraction like anyone else: the zone will not open
@@ -288,10 +292,19 @@ campaign and playing again starts you with five fresh recruits.
   cover from a direction when the tile next to them that way is something to
   get behind — so pressing up against a wall is a decision, and the ground
   between two walls is a route.
-  - **Half cover** — rusted junk. Shots pass over it at **half damage**, both
-    ways. You can shoot over it freely.
+  - **Half cover** — rusted junk, sandbags, the Choir's stacked ordnance, and
+    fuel drums. Shots pass over it at **half damage**, both ways. You can shoot
+    over it freely. The four behave identically and differ only in what they
+    tell you about the ground: junk is cover nobody put there, sandbags are
+    cover somebody *dug*, crates are the Choir's, and a drum is all three right
+    up until it goes off.
   - **Full cover** — rock, brick wall, building. **Half damage *and* 25% harder
     to hit**, and it blocks sight both ways.
+  - **Barbed wire is not cover at all.** It is the one thing on the board that
+    stops movement and *nothing else*: sight and fire cross it freely, and
+    standing against it is standing in the open. A wire line divides ground
+    without dividing fire, which is what makes the gate in it worth fighting
+    over — see The Holding Pens.
   - One wall covers a **135° wedge**; an inside corner covers most of the
     field. **Facing still decides it** — caught with your back to a wall you
     are not behind it, so a flanking shot ignores cover entirely, and the free
@@ -442,7 +455,7 @@ tools/            # asset generators/measurers (SFX synth, muzzle scanner)
 assets/audio/     # 11 generated retro SFX
 assets/sprites/
   Scout/, Goblin/ # 8-direction idle/walk/aim/aim-idle/death sets + dead stances
-  Environment/    # rocks, rusted junk, cacti, brick walls, huts, tent, fortress
+  Environment/    # rocks, junk, cacti, sandbags, wire, walls, huts, props
 assets/Tiles/     # desert floor tileset (10 x 128x60 diamond variants)
 ```
 

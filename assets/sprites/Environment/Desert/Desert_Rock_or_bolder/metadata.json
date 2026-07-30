@@ -12,11 +12,116 @@
       "directions": 1,
       "view": "low top-down",
       "rotations": {
-        "unknown": "rotations/unknown.png"
+        "unknown": "Rock_1.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "4f22a6c0-e2ba-45a3-9242-a498c11b197a",
+      "name": null,
+      "prompt": "Desert Rock or bolder",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Rock_2.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "18d12220-4411-496f-a388-691750582ac8",
+      "name": null,
+      "prompt": "Desert Rock or bolder",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Rock_3.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "5d4457bd-82d9-4316-8152-60e76c5cb6d0",
+      "name": null,
+      "prompt": "Desert Rock or bolder",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Rock_4.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "eaef5f08-d496-4878-b1e2-6216cc42ca5e",
+      "name": null,
+      "prompt": "Desert Rock or bolder",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Rock_5.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "c4202c1c-fbe1-4cf1-a812-15380a3b33cb",
+      "name": null,
+      "prompt": "Desert Rock or bolder",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Rock_6.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "1702f1ca-6581-4b88-9bca-3782536e1573",
+      "name": null,
+      "prompt": "Desert Rock or bolder",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Rock_7.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "1dc5e9db-71fa-4336-b2ba-97863adc0bd2",
+      "name": null,
+      "prompt": "Desert Rock or bolder",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Rock_8.png"
       },
       "animations": {}
     }
   ],
   "export_version": "1.0",
-  "export_date": "2026-07-26T21:25:28.911332"
+  "export_date": "2026-07-30T00:00:00.000000"
 }

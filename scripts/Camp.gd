@@ -20,6 +20,11 @@ const ROCK_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_1.png"),
 	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_2.png"),
 	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_3.png"),
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_4.png"),
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_5.png"),
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_6.png"),
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_7.png"),
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_8.png"),
 ]
 const JUNK_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage.png"),
@@ -40,6 +45,22 @@ const WALL_TEX_JUNCTION := preload(
 		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/north.png")
 const CRATE_TEXTURE := preload(
 		"res://assets/sprites/Environment/Desert/Props/Pile_of_desert_ammo_crates/Pile_of_desert_ammo_crates/rotations/unknown.png")
+# Loose crates for the stores, as opposed to the assignment post's stacked
+# pile. Single crates read as "opened and worked out of" - which is what a
+# quartermaster's ground looks like, and what you walk up to here to do.
+const STORES_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/sprites/Environment/Desert/desert_ammo_crates/Desert_ammo_crate.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_ammo_crates/Desert_ammo_crate_1.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_ammo_crates/Desert_ammo_crate_2.png"),
+]
+# The briefing table is the one fixture that differs between the two camps, and
+# it is the clearest thing on the ground saying which one you are standing in:
+# the garrison has a trestle command table with the radio permanently on it, the
+# field camp has whatever folds flat enough to carry to the next mission.
+const BRIEFING_TEX_GARRISON := preload(
+		"res://assets/sprites/Environment/Desert/Props/Briefing_table/Briefing_table_garrison/rotations/unknown.png")
+const BRIEFING_TEX_FIELD := preload(
+		"res://assets/sprites/Environment/Desert/Props/Briefing_table/Briefing_table_field/rotations/unknown.png")
 const STRUCTURE_ROOT := "res://assets/sprites/Environment/Desert/Structures"
 const STRUCTURE_DIRS := {
 	"hut_1": STRUCTURE_ROOT + "/desert_hut/Desert_hut",
@@ -55,6 +76,13 @@ const JUNK_OFFSET := Vector2(0, -20)
 const PLANT_OFFSET := Vector2(0, -17)
 const WALL_OFFSET := Vector2(0, -15)
 const CRATE_OFFSET := Vector2(0, -37)
+# Authored at 72px; like the pile and the tables, drawn 1:1.
+const STORES_OFFSET := Vector2(0, -23)
+# Measured from opaque bounds like every other prop: the painted feet land on
+# the cell centre, sunk a pixel so nothing floats. Both tables are authored at
+# 96px, so like the crates they are drawn 1:1 rather than at PROP_SCALE.
+const BRIEFING_OFFSET_GARRISON := Vector2(0, -46)
+const BRIEFING_OFFSET_FIELD := Vector2(0, -40)
 const PROP_SCALE := Vector2(2, 2)
 const HAZE_BANDS := 5
 const HAZE_MAX := 0.20
@@ -305,6 +333,13 @@ func _build_fixtures() -> void:
 		"pos": board.cell_to_global(spots.stores),
 		"label": "the stores tent", "id": 0,
 	})
+	# The stores had nothing on the ground at all - you walked up to an empty
+	# patch of sand and a prompt appeared. Variant keyed off the cell so the
+	# two camps do not put out the same crate.
+	_spawn_prop(
+			STORES_TEXTURES[(spots.stores.x * 5 + spots.stores.y * 3)
+					% STORES_TEXTURES.size()],
+			STORES_OFFSET, spots.stores, Vector2.ONE)
 	# Replacements are a garrison thing. Out on operation the squad fights
 	# with whoever walked away from the last mission.
 	var post: Vector2i = spots.recruit
@@ -315,8 +350,12 @@ func _build_fixtures() -> void:
 			"label": "the assignment post", "id": 0,
 		})
 		_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, post, Vector2.ONE)
-	# A marker so the briefing table reads as a place rather than bare ground.
-	_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, spots.briefing, Vector2.ONE)
+	# The table itself, so the fixture is the thing it is named after rather than
+	# a crate standing in for one.
+	_spawn_prop(
+			BRIEFING_TEX_FIELD if in_field else BRIEFING_TEX_GARRISON,
+			BRIEFING_OFFSET_FIELD if in_field else BRIEFING_OFFSET_GARRISON,
+			spots.briefing, Vector2.ONE)
 
 
 # ----------------------------------------------------------------- movement --

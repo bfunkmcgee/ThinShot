@@ -17,6 +17,7 @@ class_name Levels
 ## completed in order, and the level is won when the last one is:
 ##   {"kind": "eliminate"}                       - kill every goblin
 ##   {"kind": "destroy", "cells": [...]}         - demolish every tithe cache
+##   {"kind": "rescue"}                          - reach every prisoner
 ##   {"kind": "extract", "cells": [...]}         - every surviving scout to the
 ##                                                 zone, and only once every
 ##                                                 earlier objective is done
@@ -34,11 +35,23 @@ class_name Levels
 ##                because the place cannot be held).
 ##
 ## Map legend:
-##   'd' fuel drum (cover like junk, but detonates when caught in a blast)
 ##   '.' open sand          '#' rock (blocks move + LOS)
 ##   'W' mud-brick wall (blocks move + LOS)
-##   'j' rusted junk (partial cover: unwalkable, shots pass at half damage)
 ##   'p' plant (pure decoration, walkable)
+##
+##   Half cover - unwalkable, shots pass at half damage. Three glyphs that
+##   behave identically and say different things about who was here:
+##   'j' rusted junk (nobody put it there)
+##   's' sandbags (somebody dug in here)
+##   'c' the Choir's stacked ordnance (their ground, not yours). Keep these off
+##       any map with a 'destroy' objective - crates you must burn and crates
+##       you merely hide behind must not share a board.
+##   'd' fuel drum (half cover too, but detonates when caught in a blast)
+##
+##   '=' barbed wire: stops movement and NOTHING else. Shots and sight cross it
+##       freely and it gives cover to nobody. It is the only thing on the board
+##       that divides ground without also dividing fire, which is what makes a
+##       gate in it worth fighting over.
 ## Structure footprints overlay their cells as full blockers.
 
 const LEVELS: Array[Dictionary] = [
@@ -191,9 +204,9 @@ const LEVELS: Array[Dictionary] = [
 			".p...j..WWWWWWWW",
 			"....j.p.W.......",
 			".....#..W.......",
-			"...j.#..W.......",
+			"...j.#.sW.......",
 			"....j...........",
-			"......j.W.......",
+			"......jsW.......",
 			"........W...dd..",
 			".........WW.WW.W",
 			"..j.p.j.........",
@@ -245,6 +258,15 @@ const LEVELS: Array[Dictionary] = [
 				],
 			},
 		],
+		# Desert outside the wall, concrete inside it. The inset is the
+		# courtyard east of the west wall and north of the south wall, so the
+		# staging ground the squad crosses is still open sand and the fortress
+		# finally reads as something that was built rather than camped in.
+		"floor": "desert",
+		# Down to and including the south wall line, so the two south gateways
+		# at (11,7) and (14,7) are already concrete underfoot - breaching one
+		# puts you on the compound floor rather than on sand inside a wall.
+		"floor_inset": {"floor": "compound", "rect": Rect2i(9, 0, 7, 8)},
 		"zone_seed": 42,
 		"shade_seed": 55,
 		"zone_thresholds": [-0.12, 0.22],
@@ -294,6 +316,9 @@ const LEVELS: Array[Dictionary] = [
 				"cells": [Vector2i(13, 2), Vector2i(12, 4), Vector2i(13, 8)],
 			},
 		],
+		# The mission whose point is bare ground with nothing to hug, walked
+		# across forty miles of nothing - so it is fought on the salt pan.
+		"floor": "salt",
 		"zone_seed": 5,
 		"shade_seed": 61,
 		"zone_thresholds": [-0.20, 0.18],
@@ -312,10 +337,10 @@ const LEVELS: Array[Dictionary] = [
 		"map": [
 			"..p...WWW.......",
 			"......W...j.....",
-			"...j..W.........",
-			"......W....j....",
+			"...j..W..c......",
+			".....sW....j....",
 			"..........dd....",
-			"......W.........",
+			".....sW.........",
 			"...j..W....j....",
 			"......W.........",
 			"..p...WWW..j....",
@@ -349,6 +374,9 @@ const LEVELS: Array[Dictionary] = [
 				],
 			},
 		],
+		# Still on the salt, one day further east: the cistern is the only
+		# water on the survey line, and a dried pan is why that is true.
+		"floor": "salt",
 		"zone_seed": 28,
 		"shade_seed": 12,
 		"zone_thresholds": [-0.40, 0.05],
@@ -361,20 +389,25 @@ const LEVELS: Array[Dictionary] = [
 		# squad's own guns as the only thing making that walk survivable.
 		"name": "THE HOLDING PENS",
 		"fiction": "A wire pen behind the Choir's line, and the reason they have been hauling water across forty miles of nothing.",
-		"briefing": "The water was not for them.\n\nBehind the Choir's line there is a pen, and in it are the people they have been keeping alive - surveyors off the old line, by the look of the tallies.\n\nThat is what the column was for. Go and get them.\n\nA freed prisoner has no weapon and cannot be shot at, but they walk at their own pace and they walk the whole way back. Reaching them is the easy half.",
+		"briefing": "The water was not for them.\n\nBehind the Choir's line there is a pen, and in it are the people they have been keeping alive - surveyors off the old line, by the look of the tallies.\n\nThat is what the column was for. Go and get them.\n\nThe pen is wire. You will see them long before you reach them and every gun in there will see you coming - wire stops a boot and nothing else. There is one gate, and they have dug in behind it.\n\nA freed prisoner has no weapon and cannot be shot at, but they walk at their own pace and they walk the whole way back out through that same gate. Reaching them is the easy half.",
 		"orders": "REACH THE PRISONERS, THEN WALK THEM OUT",
 		"debrief": "Surveyors. Taken off the line eleven years ago, when Outpost 7 came off the maps, and kept alive ever since because somebody down there wanted the maps in their heads.\n\nThey knew where every dump and cistern on the survey line was. That is how the Choir found them all.\n\nAnd they say the one who asked the questions is still out there, at the end of the tracks.",
 		"size": Vector2i(16, 10),
+		# The pen is wire, not wall, and that is the whole map. You can see
+		# the prisoners from the start line and shoot the guards through the
+		# fence without setting foot inside - but the only way through is the
+		# gate at (10,4), and it is dug in behind sandbags. Prep by fire,
+		# breach, then come back out the same hole carrying people.
 		"map": [
-			"..p.......WWWWWW",
-			".....j....W.....",
-			"...j......W.....",
-			".......j..W.....",
+			"..p.......======",
+			".....j....=.....",
+			"...j......=..c..",
+			".......js.=.....",
 			"....dd..........",
-			"...j......W.....",
-			".........jW.....",
-			"......j...W.....",
-			"...p......WWWWWW",
+			"...j....s.=.....",
+			".........j=...c.",
+			"......j...=.....",
+			"...p......======",
 			".....j..........",
 		],
 		"scout_spawns": [Vector2i(1, 2), Vector2i(1, 7), Vector2i(2, 4)],
@@ -424,11 +457,11 @@ const LEVELS: Array[Dictionary] = [
 			"....##......##..",
 			"...#....j....#..",
 			".......j........",
-			"..j.......j.....",
+			"..j...c...j.....",
 			".....dd.....j...",
 			"........j.......",
 			"...j.......dd...",
-			"......j.........",
+			"......j..c......",
 			"...#....j....#..",
 			"....##......##..",
 		],
@@ -451,6 +484,10 @@ const LEVELS: Array[Dictionary] = [
 		"objectives": [
 			{"kind": "eliminate", "label": "LEAVE NOBODY SINGING"},
 		],
+		# The end of every track, and the one map that is not desert or pan:
+		# burnt ground, because the Choir has been gathering and burning here
+		# long enough to leave the bowl black.
+		"floor": "ash",
 		"zone_seed": 77,
 		"shade_seed": 34,
 		"zone_thresholds": [-0.05, 0.30],
@@ -459,9 +496,8 @@ const LEVELS: Array[Dictionary] = [
 
 ## The operations the campaign is made of. `missions` are indices into LEVELS,
 ## so mission data stays exactly where it was. `biome` is what the field camp
-## between those missions dresses itself as - it is plumbed through now and
-## every value still resolves to the desert set until the other tilesheets
-## exist, at which point this is the only line that changes.
+## between those missions dresses itself as, and each one now names its own
+## floor tilesheet in BIOMES.
 const OPERATIONS: Array[Dictionary] = [
 	{
 		"name": "OPERATION DRY CHOIR",
@@ -481,29 +517,32 @@ const OPERATIONS: Array[Dictionary] = [
 ]
 
 ## Biome dressing for the field camp. One entry per biome an operation can
-## name; every one resolves to the desert set for now.
+## name; `floor` is the tilesheet in Board.FLOOR_SHEETS the camp stands on.
 const BIOMES := {
 	"desert": {
 		"label": "DESERT",
+		"floor": "desert",
 		"floor_seed": 91,
 		"shade_seed": 17,
 		"thresholds": [-0.30, 0.10],
 	},
 	"salt": {
 		"label": "SALT FLAT",
+		"floor": "salt",
 		"floor_seed": 44,
 		"shade_seed": 8,
 		"thresholds": [-0.55, -0.15],
 	},
 	"ash": {
 		"label": "ASH",
+		"floor": "ash",
 		"floor_seed": 63,
 		"shade_seed": 29,
 		"thresholds": [0.05, 0.35],
 	},
 }
 
-const LEGAL_CHARS := ".#Wjpd"
+const LEGAL_CHARS := ".#Wjpdsc="
 
 
 ## Validates every level. push_error-based so it also reports in release
@@ -592,6 +631,29 @@ static func _validate(index: int) -> bool:
 		ok = _check(visited.has(spawn),
 				"%s: spawn %s unreachable from %s" % [label, spawn, start]) and ok
 	ok = _validate_objectives(data, label, walkable, visited, seen_spawn) and ok
+	ok = _validate_floor(data, label, grid) and ok
+	return ok
+
+
+## A level may name the ground it is fought on, and optionally a second sheet
+## for an inset of the board. A typo would silently fall back to desert at
+## load, so it is caught here instead.
+static func _validate_floor(data: Dictionary, label: String, grid: Vector2i) -> bool:
+	var ok := true
+	var floor_name: String = data.get("floor", Board.DEFAULT_FLOOR)
+	ok = _check(Board.FLOOR_SHEETS.has(floor_name),
+			"%s: unknown floor '%s'" % [label, floor_name]) and ok
+	var inset: Dictionary = data.get("floor_inset", {})
+	if inset.is_empty():
+		return ok
+	var inset_name: String = inset.get("floor", Board.DEFAULT_FLOOR)
+	ok = _check(Board.FLOOR_SHEETS.has(inset_name),
+			"%s: unknown floor_inset floor '%s'" % [label, inset_name]) and ok
+	var rect: Rect2i = inset.get("rect", Rect2i())
+	ok = _check(rect.size.x > 0 and rect.size.y > 0,
+			"%s: floor_inset rect is empty" % label) and ok
+	ok = _check(Rect2i(Vector2i.ZERO, grid).encloses(rect),
+			"%s: floor_inset rect %s outside the board" % [label, rect]) and ok
 	return ok
 
 
@@ -608,6 +670,21 @@ static func _validate_objectives(data: Dictionary, label: String,
 	var ok := true
 	var objectives: Array = data.get("objectives", [])
 	var seen_cell := {}
+	# Scenery must never impersonate an objective. The Choir's crate stacks
+	# ('c') and the demolition targets are both stacked ordnance, so a map that
+	# asks you to burn crates cannot also be dressed with crates you can only
+	# hide behind - you would be reading art to guess at the objective.
+	var has_destroy := false
+	for obj: Dictionary in objectives:
+		if obj.get("kind", "") == "destroy":
+			has_destroy = true
+	if has_destroy:
+		for row: String in data.map:
+			ok = _check(not row.contains("c"),
+					"%s: 'c' crate scenery on a map with a destroy objective"
+					% label) and ok
+			if not ok:
+				break
 	for obj: Dictionary in objectives:
 		var kind: String = obj.get("kind", "")
 		ok = _check(kind == "eliminate" or kind == "destroy" or kind == "extract"

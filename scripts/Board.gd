@@ -9,14 +9,33 @@ const TILE_W := 128
 const TILE_H := 60
 
 ## What a cell means for movement and shooting.
+##
+## WIRE is the odd one out and the reason this is an enum rather than two
+## booleans: it stops you walking but does nothing else. You can see across it,
+## shoot across it, and it gives no cover to anyone standing beside it - a line
+## on the map that only movement respects. Everything else that stops a boot
+## also stops a bullet or slows one down.
 enum CellKind {
 	OPEN,   # walkable, no LOS effect ('.', 'p')
 	BLOCK,  # impassable, blocks LOS ('#', 'W', structure footprints)
-	COVER,  # impassable, LOS passes at half damage ('j')
+	COVER,  # impassable, LOS passes at half damage ('j', 's', 'c', 'd')
+	WIRE,   # impassable, no LOS effect, no cover ('=')
 }
 
-const FLOOR_SHEET := preload(
-		"res://assets/Tiles/Environments/Desert/Cracked_Desert_floor.png")
+## One sheet per kind of ground a level can be fought on. Every sheet is the
+## same ten-tile grid in the same slot order, so a level picks its ground with
+## a single name and nothing else about the board changes.
+const FLOOR_SHEETS := {
+	"desert": preload(
+			"res://assets/Tiles/Environments/Desert/Cracked_Desert_floor.png"),
+	"salt": preload(
+			"res://assets/Tiles/Environments/Salt/Salt_flat_floor.png"),
+	"ash": preload(
+			"res://assets/Tiles/Environments/Ash/Ash_burnt_floor.png"),
+	"compound": preload(
+			"res://assets/Tiles/Environments/Compound/Compound_floor.png"),
+}
+const DEFAULT_FLOOR := "desert"
 
 # Measured source regions in the floor sheet: 128x60 diamond faces on a
 # 129px stride, rows at y 34/163/292. The plant tile (index 6) is 6px
@@ -33,6 +52,29 @@ const TILE_REGIONS: Array[Rect2] = [
 	Rect2(0, 292, 128, 60),   # 8 sandy waves
 	Rect2(129, 292, 128, 60), # 9 sandy cracks
 ]
+
+# The desert sheet's plant tuft is the one tile drawn taller than its diamond.
+# The later sheets are uniform, so their accents sit inside the diamond and
+# every region is the same 128x60 face.
+const TILE_REGIONS_FLAT: Array[Rect2] = [
+	Rect2(0, 34, 128, 60),    # 0 zone B base
+	Rect2(129, 34, 128, 60),  # 1 zone B base
+	Rect2(258, 34, 128, 60),  # 2 zone B base
+	Rect2(387, 34, 128, 60),  # 3 zone C base
+	Rect2(0, 163, 128, 60),   # 4 zone C accent
+	Rect2(129, 163, 128, 60), # 5 zone C base
+	Rect2(258, 163, 128, 60), # 6 zone A accent
+	Rect2(387, 163, 128, 60), # 7 zone B accent
+	Rect2(0, 292, 128, 60),   # 8 zone A base
+	Rect2(129, 292, 128, 60), # 9 zone A base
+]
+
+const SHEET_REGIONS := {
+	"desert": TILE_REGIONS,
+	"salt": TILE_REGIONS_FLAT,
+	"ash": TILE_REGIONS_FLAT,
+	"compound": TILE_REGIONS_FLAT,
+}
 
 # Tile families by terrain zone (indices into TILE_REGIONS), carved out of
 # the map by smooth noise so neighboring cells read as one terrain patch.
@@ -55,7 +97,12 @@ const SHADOW_SQUASH := 0.469  # TILE_H / TILE_W
 const SHADOW_OFFSET := Vector2(3, 2)
 const SHADOW_COLOR := Color(0.16, 0.10, 0.06, 0.24)
 const DIAMOND_SHADOW := -1.0
-const SHADOW_RADII := {"#": 22.0, "j": 20.0, "p": 12.0, "d": 15.0, "W": DIAMOND_SHADOW}
+const SHADOW_RADII := {
+	"#": 22.0, "j": 20.0, "p": 12.0, "d": 15.0, "s": 18.0, "c": 20.0,
+	# Wire throws almost nothing - a row of posts and some thread.
+	"=": 11.0,
+	"W": DIAMOND_SHADOW,
+}
 
 const GRID_LINE := Color(0.35, 0.27, 0.15, 0.25)
 const MOVE_HL := Color(0.95, 0.85, 0.3, 0.35)
@@ -134,6 +181,16 @@ var _structure_cells: Dictionary = {}     # Vector2i -> true
 
 # Per-cell render info ({region, flip, shade}) built by set_level.
 var tile_cache: Array = []
+
+# Which ground this level is fought on, resolved by set_level(). A level may
+# also name an inset - the ground inside a compound wall, say - which is drawn
+# from a second sheet so a fortress interior reads as built rather than as the
+# same sand as the desert outside it.
+var _floor_sheet: Texture2D = FLOOR_SHEETS[DEFAULT_FLOOR]
+var _floor_regions: Array[Rect2] = TILE_REGIONS
+var _inset_rect := Rect2i()
+var _inset_sheet: Texture2D = null
+var _inset_regions: Array[Rect2] = TILE_REGIONS
 
 # cell -> came_from cell, for every cell the selected unit can route
 # THROUGH. Paths are reconstructed from this.
@@ -292,16 +349,40 @@ func set_level(data: Dictionary) -> void:
 			var ch: String = map_rows[y][x]
 			if ch == "#" or ch == "W" or _structure_cells.has(cell):
 				row.append(CellKind.BLOCK)
-			elif ch == "j" or ch == "d":
+			elif ch == "=":
+				row.append(CellKind.WIRE)
+			elif ch == "j" or ch == "d" or ch == "s" or ch == "c":
 				# A fuel drum is cover you can shoot over, exactly like junk -
-				# right up until somebody sets it off.
+				# right up until somebody sets it off. Sandbags and the Choir's
+				# own crate stacks are the same tier; what differs is that
+				# somebody built them there on purpose.
 				row.append(CellKind.COVER)
 			else:
 				row.append(CellKind.OPEN)
 		_kind.append(row)
+	var floor_name := _resolve_floor(data.get("floor", DEFAULT_FLOOR))
+	_floor_sheet = FLOOR_SHEETS[floor_name]
+	_floor_regions = SHEET_REGIONS[floor_name]
+	_inset_sheet = null
+	_inset_rect = Rect2i()
+	var inset: Dictionary = data.get("floor_inset", {})
+	if not inset.is_empty():
+		var inset_name := _resolve_floor(inset.get("floor", DEFAULT_FLOOR))
+		_inset_rect = inset.get("rect", Rect2i())
+		_inset_sheet = FLOOR_SHEETS[inset_name]
+		_inset_regions = SHEET_REGIONS[inset_name]
 	var thresholds: Array = data.get("zone_thresholds", [-0.12, 0.22])
 	_build_tile_cache(data.get("zone_seed", 7), data.get("shade_seed", 13), thresholds)
 	queue_redraw()
+
+
+## A floor name, or the desert fallback if the level asks for one we lack.
+func _resolve_floor(name: String) -> String:
+	if FLOOR_SHEETS.has(name):
+		return name
+	push_error("[Board] unknown floor '%s', falling back to %s"
+			% [name, DEFAULT_FLOOR])
+	return DEFAULT_FLOOR
 
 
 ## Diamond center of a cell, in Board-local pixels (2:1 isometric projection).
@@ -601,8 +682,14 @@ func _build_tile_cache(zone_seed: int, shade_seed: int, thresholds: Array) -> vo
 			var shade := 0.94 + 0.06 * (shade_noise.get_noise_2d(cell.x, cell.y) * 0.5 + 0.5)
 			var shadow: float = DIAMOND_SHADOW if is_structure(cell) \
 					else SHADOW_RADII.get(map_char(cell), 0.0)
+			var sheet := _floor_sheet
+			var regions := _floor_regions
+			if _inset_sheet != null and _inset_rect.has_point(cell):
+				sheet = _inset_sheet
+				regions = _inset_regions
 			row.append({
-				"region": TILE_REGIONS[variant],
+				"sheet": sheet,
+				"region": regions[variant],
 				"flip": _hash01(cell, 3) < 0.5,
 				"shade": Color(shade, shade, shade),
 				"shadow": shadow,
@@ -626,7 +713,7 @@ func _draw() -> void:
 			if info.flip:
 				# Mirror around the tile's vertical center line.
 				draw_set_transform(Vector2(2.0 * c.x, 0.0), 0.0, Vector2(-1, 1))
-			draw_texture_rect_region(FLOOR_SHEET, dest, region, info.shade)
+			draw_texture_rect_region(info.sheet, dest, region, info.shade)
 			if info.flip:
 				draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 			if show_grid:

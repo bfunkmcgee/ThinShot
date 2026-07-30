@@ -1,0 +1,52 @@
+{
+  "group_id": null,
+  "objects": [
+    {
+      "id": "35ef22fb-1d3b-4bc4-a9b0-73066bb25610",
+      "name": null,
+      "prompt": "Desert ammo crate",
+      "size": {
+        "width": 72,
+        "height": 72
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_ammo_crate.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "386d740d-87a9-43d5-9428-34960b66a47c",
+      "name": null,
+      "prompt": "Desert ammo crate",
+      "size": {
+        "width": 72,
+        "height": 72
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_ammo_crate_1.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "18cd9f50-3222-42ca-808b-da130d22eb25",
+      "name": null,
+      "prompt": "Desert ammo crate",
+      "size": {
+        "width": 72,
+        "height": 72
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_ammo_crate_2.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-07-30T00:00:00.000000"
+}

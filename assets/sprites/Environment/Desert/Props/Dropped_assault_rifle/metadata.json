@@ -1,0 +1,29 @@
+{
+  "group_id": null,
+  "objects": [
+    {
+      "id": "d1d2bddc-6709-4e78-9e86-89c11884b015",
+      "name": null,
+      "prompt": "A fantasy style Assault rifle",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 8,
+      "view": "low top-down",
+      "rotations": {
+        "east": "rotations/east.png",
+        "west": "rotations/west.png",
+        "north": "rotations/north.png",
+        "south": "rotations/south.png",
+        "north-east": "rotations/north-east.png",
+        "north-west": "rotations/north-west.png",
+        "south-east": "rotations/south-east.png",
+        "south-west": "rotations/south-west.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-07-30T00:00:00.000000"
+}

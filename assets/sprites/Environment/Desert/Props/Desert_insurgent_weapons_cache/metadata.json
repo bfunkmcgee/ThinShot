@@ -1,0 +1,133 @@
+{
+  "group_id": null,
+  "objects": [
+    {
+      "id": "212af595-3347-4bd6-a4bc-9d5ad6e2f072",
+      "name": null,
+      "prompt": "Desert insurgent weapons cache",
+      "size": {
+        "width": 80,
+        "height": 80
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_insurgent_weapons_cache/rotations/unknown.png"
+      },
+      "animations": {
+        "normal_idle": {
+          "directions": {
+            "unknown": {
+              "frames": [
+                "Desert_insurgent_weapons_cache/animations/normal_idle/unknown/frame_000.png",
+                "Desert_insurgent_weapons_cache/animations/normal_idle/unknown/frame_001.png",
+                "Desert_insurgent_weapons_cache/animations/normal_idle/unknown/frame_002.png",
+                "Desert_insurgent_weapons_cache/animations/normal_idle/unknown/frame_003.png",
+                "Desert_insurgent_weapons_cache/animations/normal_idle/unknown/frame_004.png",
+                "Desert_insurgent_weapons_cache/animations/normal_idle/unknown/frame_005.png",
+                "Desert_insurgent_weapons_cache/animations/normal_idle/unknown/frame_006.png",
+                "Desert_insurgent_weapons_cache/animations/normal_idle/unknown/frame_007.png",
+                "Desert_insurgent_weapons_cache/animations/normal_idle/unknown/frame_008.png"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "1c67b160-2fbd-451c-8901-8d6ad235afff",
+      "name": null,
+      "prompt": "Desert insurgent weapons cache",
+      "size": {
+        "width": 80,
+        "height": 80
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_insurgent_weapons_cache_1/rotations/unknown.png"
+      },
+      "animations": {
+        "normal_idle": {
+          "directions": {
+            "unknown": {
+              "frames": [
+                "Desert_insurgent_weapons_cache_1/animations/normal_idle/unknown/frame_000.png",
+                "Desert_insurgent_weapons_cache_1/animations/normal_idle/unknown/frame_001.png",
+                "Desert_insurgent_weapons_cache_1/animations/normal_idle/unknown/frame_002.png",
+                "Desert_insurgent_weapons_cache_1/animations/normal_idle/unknown/frame_003.png",
+                "Desert_insurgent_weapons_cache_1/animations/normal_idle/unknown/frame_004.png",
+                "Desert_insurgent_weapons_cache_1/animations/normal_idle/unknown/frame_005.png",
+                "Desert_insurgent_weapons_cache_1/animations/normal_idle/unknown/frame_006.png",
+                "Desert_insurgent_weapons_cache_1/animations/normal_idle/unknown/frame_007.png",
+                "Desert_insurgent_weapons_cache_1/animations/normal_idle/unknown/frame_008.png"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "c49a2ece-bd38-4d34-bca0-5a8e087d18f3",
+      "name": null,
+      "prompt": "Desert insurgent weapons cache",
+      "size": {
+        "width": 80,
+        "height": 80
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_insurgent_weapons_cache_2/rotations/unknown.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "85bbf8ef-3ce1-43cf-9f57-97e8872e44ea",
+      "name": null,
+      "prompt": "Desert insurgent weapons cache",
+      "size": {
+        "width": 80,
+        "height": 80
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_insurgent_weapons_cache_3/rotations/unknown.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "fdef7cd7-4483-4dc0-a05b-869c902f8a59",
+      "name": null,
+      "prompt": "Desert insurgent weapons cache",
+      "size": {
+        "width": 80,
+        "height": 80
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_insurgent_weapons_cache_4/rotations/unknown.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "557f9d69-068c-4e29-ac76-638ef812f770",
+      "name": null,
+      "prompt": "Desert insurgent weapons cache",
+      "size": {
+        "width": 80,
+        "height": 80
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_insurgent_weapons_cache_5/rotations/unknown.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-07-30T00:00:00.000000"
+}

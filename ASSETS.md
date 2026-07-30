@@ -32,15 +32,17 @@ worth more than a fourth goblin.
 |---|---|---|---|
 | ~~1~~ | ~~**Supply cache / ammo crate**~~ — **done** | Tithe caches were a *tinted scrap pile* on maps covered in scrap piles, which is why they were hard to find. Now a real crate pile that plays its own 13-frame detonation and leaves wreckage behind. | shipped |
 | 2 | **Gate** — 68×68, matching the wall set: **closed / open / blown** | The Scrapline's "gates" and Outpost 7's entrances are just *gaps in the wall*. A real gate makes them read as entrances, and unlocks **breaching**: a closed gate blocks movement until someone demolishes it, so the map has doors you have to open under fire. | small |
-| 3 | **Sandbag emplacement / low wall** — 48×48 prop or 68×68 in eight facings, ideally **intact / battered / destroyed** | Cover is now adjacency-based with half and full tiers, so *what* you hug matters — but the only half cover in the game is scrap piles, and the only full cover is rock and brick. Purpose-built emplacements are the missing middle, and the three states would unlock **destructible cover**, letting suppressing fire and frags degrade a position instead of leaving it identical all mission. | drop-in for the prop, medium for the states |
-| 4 | **Compound floor tilesheet** — 515×386, concrete or flagstone | Outpost 7's interior is the same sand as the open desert, so the fortress does not read as *built*. A second sheet makes interiors feel like somewhere else. | small |
+| 3 | **Sandbags — battered / destroyed states** (the intact prop is **done**, see 5c) | The prop shipped and the Choir's prepared positions now read as prepared. What is still missing is the *states*: two more 56×56 poses would unlock **destructible cover**, letting suppressing fire and frags degrade a position over a mission instead of leaving it identical to the end. Cover is adjacency-based, so this is a per-cell tier downgrade rather than new geometry. | medium |
+| ~~4~~ | ~~**Compound floor tilesheet**~~ — **done** | Outpost 7's interior was the same sand as the open desert, so the fortress did not read as *built*. Now weathered concrete hardstanding, drawn only inside the wall via the level's `floor_inset`, so the staging ground outside stays sand and breaching a gate puts you on concrete. | shipped |
 
 ## Tier 2 — new mission types
 
 | # | Asset | Buys | Code |
 |---|---|---|---|
 | ~~5~~ | ~~**Civilian / prisoner**~~ — **done** | The `rescue` objective, and THE HOLDING PENS built on it. Ending a move beside one cuts them loose; the cower set swaps to the standing set and they walk out with the squad, counting for the extraction. | shipped |
-| 5b | **Wire fence / pen** — 48×48 post-and-wire, half-cover tier, plus a gate variant | The pen on THE HOLDING PENS is drawn with the same rock walls as everything else, so the one place in the campaign that is a *prison* reads as terrain. Wire would also be the first half-cover you can see through, which is a different tactical object from a rock. | small |
+| ~~5b~~ | ~~**Wire fence / pen**~~ — **done** | Better than asked for. Wire became its own cell kind (`'='`): it stops movement and *nothing else* — sight and fire cross it freely, and it shields nobody. The pen on THE HOLDING PENS is now the only enclosure in the game you can shoot into before you can walk into, which turns its one gate into the whole mission. | shipped |
+| ~~5c~~ | ~~**Sandbags**~~ — **done** | `'s'`: mechanically identical to junk, tonally opposite. Junk is half cover nobody put there; sandbags are half cover somebody *dug*, so the Choir's prepared positions now read as prepared — the outpost gate, the cistern gap, the pen gate. | shipped |
+| ~~5d~~ | ~~**Dropped assault rifle**~~ — **done** | Its eight rotations exist to lie pointing somewhere. A fallen scout leaves their rifle on the cell they died on, facing the way they last faced. Only your own dead — eleven goblin rifles would be litter, five soldiers is a squad. | shipped |
 | ~~6~~ | ~~**Comms mast / radio set**~~ — **done** | "SILENCE THE RELAY" on The Scrapline. Its three states made it the first **two-charge** objective: one charge buckles it into a leaning, sparking wreck, the second brings it down. | shipped |
 | ~~7~~ | ~~**Fuel drum**~~ — **done** | Cover until a blast reaches it, then it detonates with a frag's force **and sets off the next drum along**. A line of them is a fuse. | shipped |
 | 8 | **Vehicle wreck** — 168×168, 2×2 | A big multi-cell cover piece to fight around, and visual proof the desert had a war in it — which is exactly the campaign's story. | drop-in |
@@ -60,7 +62,7 @@ worth more than a fourth goblin.
 
 | # | Asset | Buys | Code |
 |---|---|---|---|
-| 15 | **Two more floor tilesheets** — 515×386 each. Suggested: **salt flat** (pale, glaring) and **ash / burnt ground** | The single biggest immersion win per asset. Every map is currently the same sand. Levels already carry `zone_seed`, `shade_seed` and `zone_thresholds` — add a sheet field and each mission can look like a different place. | small |
+| ~~15~~ | ~~**Two more floor tilesheets**~~ — **done** | Salt flat and ash are generated, wired and assigned: THE LONG HAUL and THE CISTERN are fought on the pan, THE CHOIRMASTER on burnt ground. Levels now carry a `floor` name alongside `zone_seed`, `shade_seed` and `zone_thresholds`, so re-skinning a mission is one line. | shipped |
 | 16 | **Track / road tiles** — 3–4 diamonds in the same sheet layout | The campaign's story is literally *follow the route back*. A visible road makes that legible on the map. | small |
 | 17 | **Dead scrub, bones, tyre ruts, scorch decals** — 48×48 each, 4–6 of them | Cheap density. The prop scatter system already places these deterministically by cell. | drop-in |
 | 18 | **Choir totems / banners** — 48×48, ideally with a 9-frame sway | The Rust Choir is a *cult* and nothing on the map says so. Territorial markers around the Scrapline would sell it. | drop-in |
@@ -74,15 +76,31 @@ worth more than a fourth goblin.
 
 ---
 
-# Generating the two floor tilesheets
+# Floor tilesheets
+
+Four sheets exist now, all on the same grid and all interchangeable:
+
+```
+assets/Tiles/Environments/Desert/Cracked_Desert_floor.png    "desert"
+assets/Tiles/Environments/Salt/Salt_flat_floor.png           "salt"
+assets/Tiles/Environments/Ash/Ash_burnt_floor.png            "ash"
+assets/Tiles/Environments/Compound/Compound_floor.png        "compound"
+```
+
+A level picks one by name with `"floor": "salt"`, and may name a second for a
+rectangle of the board with
+`"floor_inset": {"floor": "compound", "rect": Rect2i(9, 0, 7, 8)}` — that is
+how Outpost 7 is sand outside its wall and concrete inside it. A biome in
+`BIOMES` names the sheet the field camp stands on. Unknown names fall back to
+desert and are caught by `Levels.validate_all()`; `tools/check_floor_sheets.gd`
+checks every sheet against the region table that reads it.
 
 ## What the code needs
 
-The desert sheet is a **4 columns × 3 rows grid of 129×129 cells**, with a
-**128×60 isometric diamond centred in each cell** (10 of the 12 cells used).
-That is a normal tileset export — **you do not need to hit exact pixel
-offsets.** Generate the same kind of sheet and I will measure the regions and
-wire them up.
+Each sheet is a **4 columns × 3 rows grid of 129×129 cells**, with a **128×60
+isometric diamond centred in each cell** (10 of the 12 cells used). The desert
+sheet's plant tuft (index 6) is 6px taller and hangs above its diamond; the
+three later sheets are uniform 128×60 and use `Board.TILE_REGIONS_FLAT`.
 
 What *does* matter is the ten tiles' **roles**. The board sorts them into three
 terrain zones by smooth noise, so neighbouring cells read as one patch of

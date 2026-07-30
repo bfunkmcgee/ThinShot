@@ -18,6 +18,11 @@ const ROCK_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_1.png"),
 	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_2.png"),
 	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_3.png"),
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_4.png"),
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_5.png"),
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_6.png"),
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_7.png"),
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_8.png"),
 ]
 const JUNK_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage.png"),
@@ -56,6 +61,31 @@ const WALL_TEX_JUNCTION := preload(
 		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/north.png")
 const WALL_TEX_CAP := preload(
 		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/east.png")
+# Wire reads the same four ways a wall does, from its own rotation set.
+const WIRE_ROOT := "res://assets/sprites/Environment/Desert/Walls/desert_barbed_wire/rotations/"
+const WIRE_TEXTURES := {
+	"x_run": preload(WIRE_ROOT + "south-west.png"),
+	"y_run": preload(WIRE_ROOT + "south-east.png"),
+	"junction": preload(WIRE_ROOT + "north.png"),
+	"cap": preload(WIRE_ROOT + "east.png"),
+}
+# Cover somebody built on purpose, as opposed to junk they left behind.
+const SANDBAG_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/sprites/Environment/Desert/desert_sandbags/Desert_Sandbags.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_sandbags/Desert_Sandbags_1.png"),
+]
+# The Choir's own stacked ordnance. Deliberately kept off the maps that have
+# demolition objectives on them: crates you must burn and crates you merely
+# hide behind should never be on the same board.
+const CHOIR_CACHE_ROOT := "res://assets/sprites/Environment/Desert/Props/Desert_insurgent_weapons_cache/"
+const CHOIR_CACHE_TEXTURES: Array[Texture2D] = [
+	preload(CHOIR_CACHE_ROOT + "Desert_insurgent_weapons_cache/rotations/unknown.png"),
+	preload(CHOIR_CACHE_ROOT + "Desert_insurgent_weapons_cache_1/rotations/unknown.png"),
+	preload(CHOIR_CACHE_ROOT + "Desert_insurgent_weapons_cache_2/rotations/unknown.png"),
+	preload(CHOIR_CACHE_ROOT + "Desert_insurgent_weapons_cache_3/rotations/unknown.png"),
+	preload(CHOIR_CACHE_ROOT + "Desert_insurgent_weapons_cache_4/rotations/unknown.png"),
+	preload(CHOIR_CACHE_ROOT + "Desert_insurgent_weapons_cache_5/rotations/unknown.png"),
+]
 const STRUCTURE_ROOT := "res://assets/sprites/Environment/Desert/Structures"
 const STRUCTURE_DIRS := {
 	"hut_1": STRUCTURE_ROOT + "/desert_hut/Desert_hut",
@@ -75,6 +105,35 @@ const WALL_OFFSETS := {
 	"x_run": Vector2(0, -15), "y_run": Vector2(0, -15),
 	"junction": Vector2(0, -9), "cap": Vector2(0, -11),
 }
+# Same 14px sink as the brick wall, measured off wire's own opaque bounds -
+# its canvas is 97px where the wall's is 68, so the numbers differ but the
+# base lands on the same front vertex.
+const WIRE_OFFSETS := {
+	"x_run": Vector2(0, -10), "y_run": Vector2(0, -10),
+	"junction": Vector2(0, -4), "cap": Vector2(0, -17),
+}
+const SANDBAG_OFFSET := Vector2(0, -22)
+# A rifle lying where its owner fell, in the direction they were last facing.
+# Sector order matches Unit.DIR_NAMES. Anchored on the painted centre rather
+# than a base, because it is flat on the ground and has no base.
+const RIFLE_ROOT := "res://assets/sprites/Environment/Desert/Props/Dropped_assault_rifle/rotations/"
+const RIFLE_TEXTURES: Array[Texture2D] = [
+	preload(RIFLE_ROOT + "east.png"),
+	preload(RIFLE_ROOT + "south-east.png"),
+	preload(RIFLE_ROOT + "south.png"),
+	preload(RIFLE_ROOT + "south-west.png"),
+	preload(RIFLE_ROOT + "west.png"),
+	preload(RIFLE_ROOT + "north-west.png"),
+	preload(RIFLE_ROOT + "north.png"),
+	preload(RIFLE_ROOT + "north-east.png"),
+]
+const RIFLE_OFFSET := Vector2(0, -1)
+# Far enough off the body that both read, close enough that they are obviously
+# the same event.
+const RIFLE_DROP := Vector2(0, 10)
+# Authored at 80px, so drawn 1:1 - at 2x a crate stack would be wider than the
+# tile it sits on.
+const CHOIR_CACHE_OFFSET := Vector2(0, -30)
 const STRUCTURE_OFFSETS := {
 	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33),
 	"tent": Vector2(0, -33), "fortress": Vector2(0, -55),
@@ -443,9 +502,20 @@ func _spawn_props() -> void:
 						"base_x": plant.position.x,
 						"phase": float((x * 7 + y * 13) % 16) / 16.0 * TAU,
 					})
+				"s":
+					_spawn_prop(
+							SANDBAG_TEXTURES[(x * 3 + y * 19) % SANDBAG_TEXTURES.size()],
+							SANDBAG_OFFSET, cell)
+				"c":
+					_spawn_prop(
+							CHOIR_CACHE_TEXTURES[(x * 13 + y * 7) % CHOIR_CACHE_TEXTURES.size()],
+							CHOIR_CACHE_OFFSET, cell, 1.0)
 				"W":
 					var kind := _wall_kind(cell)
 					_spawn_prop(_wall_texture_for(kind), WALL_OFFSETS[kind], cell)
+				"=":
+					var run := _wire_kind(cell)
+					_spawn_prop(WIRE_TEXTURES[run], WIRE_OFFSETS[run], cell)
 
 
 ## One dust material per depth band, built on demand and shared. Farther back
@@ -488,6 +558,23 @@ func _wall_connects(cell: Vector2i) -> bool:
 func _wall_kind(cell: Vector2i) -> String:
 	var has_x := _wall_connects(cell + Vector2i(1, 0)) or _wall_connects(cell + Vector2i(-1, 0))
 	var has_y := _wall_connects(cell + Vector2i(0, 1)) or _wall_connects(cell + Vector2i(0, -1))
+	if has_x and has_y:
+		return "junction"
+	if has_x:
+		return "x_run"
+	if has_y:
+		return "y_run"
+	return "cap"
+
+
+## Wire runs read exactly like wall runs, but only wire continues a wire fence.
+## A fence meeting a building has to cap off there rather than pretend the
+## brick is more of the same.
+func _wire_kind(cell: Vector2i) -> String:
+	var has_x := board.map_char(cell + Vector2i(1, 0)) == "=" \
+			or board.map_char(cell + Vector2i(-1, 0)) == "="
+	var has_y := board.map_char(cell + Vector2i(0, 1)) == "=" \
+			or board.map_char(cell + Vector2i(0, -1)) == "="
 	if has_x and has_y:
 		return "junction"
 	if has_x:
@@ -2745,9 +2832,23 @@ func _on_unit_died(unit: Unit) -> void:
 		print("[ThinShot] %s is down" % unit.display_name())
 	Sfx.play("unit_death")
 	fx_ground.stain(unit.position)
+	_drop_rifle(unit)
 	_puff_on_landing(unit)
 	_refresh_objectives()  # the remaining-goblin count and extract tally move
 	check_game_over()
+
+
+## Only your own dead leave a rifle. The Choir loses eleven bodies on a bad
+## map and eleven rifles would be litter; five soldiers is a squad, and the
+## mark one of them leaves should still be there ten turns later when you
+## walk back past it. Prisoners carried nothing to drop.
+func _drop_rifle(unit: Unit) -> void:
+	if unit.team != Unit.TEAM_SCOUT or not unit.is_combatant():
+		return
+	var rifle := _spawn_prop(RIFLE_TEXTURES[unit.facing_sector], RIFLE_OFFSET, unit.cell)
+	# Nudged toward the camera so it clears the body it fell from. Entities are
+	# y-sorted, so that also puts it in front rather than under.
+	rifle.position += RIFLE_DROP
 
 
 ## Dust kicked up when the falling body actually hits the ground, rather
@@ -3003,3 +3104,4 @@ func show_banner(text: String) -> void:
 	tween.tween_property(turn_banner, "modulate:a", 1.0, 0.2)
 	tween.parallel().tween_property(turn_banner, "scale", Vector2.ONE, 0.25) \
 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+

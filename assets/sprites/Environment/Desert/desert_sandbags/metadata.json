@@ -1,0 +1,37 @@
+{
+  "group_id": null,
+  "objects": [
+    {
+      "id": "49b0908b-ac40-4247-a4a5-dc4d372c5639",
+      "name": null,
+      "prompt": "Desert Sandbags",
+      "size": {
+        "width": 56,
+        "height": 56
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_Sandbags.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "31896456-1096-48f6-9bbe-2a111fd0cf53",
+      "name": null,
+      "prompt": "Desert Sandbags",
+      "size": {
+        "width": 56,
+        "height": 56
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_Sandbags_1.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-07-30T00:00:00.000000"
+}
