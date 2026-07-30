@@ -341,8 +341,6 @@ func _ready() -> void:
 	print("[ThinShot] level %d '%s', player turn 1 begins" % [
 			Game.current_level + 1, level.name])
 	await get_tree().create_timer(1.1).timeout
-	# Swap to the turn banner unless the enemy turn or game over owns it
-	# (ANIMATING just means the player is already acting - still their turn).
 ## Boot straight into a level: `godot --path . -- --level 2`. Everything after
 ## the bare `--` is ours. Exists so a headless run can smoke-test a level other
 ## than the first one, which is otherwise only reachable by playing to it.
@@ -736,6 +734,10 @@ func _handle_click(cell: Vector2i) -> void:
 				and board.attack_cells.has(cell):
 			_fire_selected_at(clicked)
 			return
+		# Clicking a drum in range puts a round into it.
+		if _can_shoot_drum(selected, cell):
+			do_shoot_drum(selected, cell)
+			return
 		# Clicking a cache in reach sets charges on it.
 		if not _cache_at(cell).is_empty() and _can_demolish(selected, cell):
 			_try_demolish(cell)
@@ -891,6 +893,23 @@ func _update_unit_panel() -> void:
 		unit_panel.visible = false
 		return
 	unit_panel.visible = true
+	# Hovering a drum you could shoot: say what it would do rather than
+	# describing whichever unit happens to be under the cursor.
+	if selected != null and _can_shoot_drum(selected, hover_cell):
+		var zone := _blast_cells_at(hover_cell)
+		var in_blast := 0
+		for other in living_units(Unit.TEAM_GOBLIN) + living_units(Unit.TEAM_SCOUT):
+			if zone.has(other.cell):
+				in_blast += 1
+		unit_panel.visible = true
+		panel_name_label.text = "Fuel Drum"
+		panel_progress_label.text = "Volatile - one round sets it off"
+		panel_hp_label.text = "%d damage at the centre, %d out" % [
+				DRUM_DAMAGE, maxi(FRAG_DAMAGE - FRAG_FALLOFF, 1)]
+		panel_stats_label.text = "Chains into any drum it reaches"
+		panel_status_label.text = "SHOOT TO DETONATE - CATCHES %d" % in_blast
+		panel_status_label.modulate = Color("ff9a3c")
+		return
 	panel_name_label.text = unit.display_name()
 	panel_progress_label.text = _progress_text(unit)
 	panel_hp_label.text = "HP %d / %d" % [unit.hp, unit.max_hp]
@@ -1185,7 +1204,10 @@ func _refresh_highlights() -> void:
 				attacks.append(enemy.cell)
 	# Even with no moves or targets, the unit stays selected: overwatch (W)
 	# is always a legal order for a unit that has not attacked.
-	board.set_highlights(moves, _free_dests(moves), attacks)
+	var hazards := {}
+	for cell: Vector2i in _drum_targets(selected):
+		hazards[cell] = true
+	board.set_highlights(moves, _free_dests(moves), attacks, hazards)
 	# Mark every reachable tile that offers protection, so the player can see
 	# the route between cover rather than discovering it a tile at a time.
 	var covered := {}
@@ -1237,7 +1259,13 @@ func _update_hover(cell: Vector2i) -> void:
 	# no way to judge it otherwise.
 	var beaten := {}
 	if selected != null and cell != Board.NO_CELL:
-		if board.move_dests.has(cell):
+		if _can_shoot_drum(selected, cell):
+			# Preview what the drum would take with it, the same way a grenade
+			# previews its footprint.
+			aim_from = selected.cell
+			beaten = _blast_cells_at(cell)
+			beaten[cell] = DRUM_DAMAGE
+		elif board.move_dests.has(cell):
 			path = board.reconstruct_path(board.move_cells, cell)
 		elif board.attack_cells.has(cell):
 			var target := unit_at(cell)
@@ -1247,7 +1275,7 @@ func _update_hover(cell: Vector2i) -> void:
 			aim_flanking = target != null and _is_flanking(selected, target)
 			aim_covered = target != null \
 					and effective_cover(selected, target) != Board.CoverLevel.NONE
-	board.set_blast_cells(beaten, false)
+	board.set_blast_cells(beaten, _can_shoot_drum(selected, cell))
 	board.set_hover(cell, path, aim_from, aim_covered, aim_flanking)
 	# Hovering somewhere you could move to previews the cover you would have
 	# standing there; otherwise the overlay stays on the unit's own tile.
@@ -1811,6 +1839,65 @@ func _blast_cells_at(cell: Vector2i) -> Dictionary:
 	return cells
 
 
+## An intact drum a unit could put a round into: in range, and visible.
+func _can_shoot_drum(unit: Unit, cell: Vector2i) -> bool:
+	if unit == null or unit.acted or not unit.has_ammo():
+		return false
+	if not drums.has(cell) or drums[cell].spent:
+		return false
+	return Board.manhattan(unit.cell, cell) <= unit.attack_range \
+			and board.can_engage(unit.cell, cell)
+
+
+## Every intact drum this unit could set off from where it stands.
+func _drum_targets(unit: Unit) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for cell: Vector2i in drums:
+		if _can_shoot_drum(unit, cell):
+			out.append(cell)
+	return out
+
+
+## Put a round into a drum. A fuel drum is a big stationary object at the far
+## end of a rifle, so there is no hit roll - the decision worth making is
+## whether the shot is worth spending, not whether it lands.
+func do_shoot_drum(shooter: Unit, cell: Vector2i) -> void:
+	var prev_state := state
+	state = State.ANIMATING
+	board.clear_highlights()
+	var pos := board.cell_to_global(cell)
+	var muzzle := shooter.muzzle_point()
+	var dir := (pos + Vector2(0, -20) - muzzle).normalized()
+	print("[ThinShot] %s shoots the drum at %s" % [shooter.display_name(), cell])
+	shooter.set_facing(dir)
+	await shooter.raise_rifle()
+	shooter.spend_ammo()
+	shooter.recoil(dir)
+	Sfx.play("shot")
+	HitFx.spawn(fx_glow, muzzle, HitFx.Kind.MUZZLE)
+	HitFx.spawn_tracer(fx_glow, muzzle, pos + Vector2(0, -20), TRACER_TIME)
+	fx_glow.muzzle(muzzle, dir)
+	fx_air.smoke_plume(muzzle, dir)
+	fx_ground.casing(muzzle, dir)
+	_camera_kick(dir)
+	await get_tree().create_timer(TRACER_TIME).timeout
+	# The round is the spark; everything after it is the drum's own doing.
+	var blast := await _detonate_drums({cell: 0})
+	_apply_blast(blast, pos, shooter, "drum")
+	await get_tree().create_timer(LOWER_TIME).timeout
+	shooter.lower_rifle()
+	shooter.set_done(true)
+	if shooter == selected:
+		deselect()
+	if state == State.GAME_OVER:
+		return
+	state = prev_state
+	if prev_state == State.PLAYER_TURN:
+		_refresh_danger()
+		_refresh_watch_cells()
+		_update_unit_panel()
+
+
 ## Set off every fuel drum inside a blast, and every drum those blasts reach,
 ## until the fire runs out of fuel. Returns the combined damage map, keeping
 ## the harshest value any single blast dealt to each cell.
@@ -1934,33 +2021,35 @@ func do_throw_frag(thrower: Unit, cell: Vector2i) -> void:
 	_screen_shake(2.6)
 	_camera_kick((center - thrower.position).normalized())
 	await _hit_stop(0.25, 0.09)
-	# Everyone inside the footprint, both sides. No hit roll, no cover.
+	# Anything flammable inside the footprint goes up too, and its own blast
+	# can reach the next drum along - so a line of them is a fuse.
+	blast = await _detonate_drums(blast)
+	_apply_blast(blast, center, thrower, "frag")
+	_finish_throw(thrower, prev_state)
+
+
+## Hand out a blast's damage. Everything standing in the footprint takes it,
+## both sides, with no hit roll and no cover - how hard depends only on which
+## cell they were caught in. Shared by grenades and by anything that goes up.
+func _apply_blast(blast: Dictionary, center: Vector2, source: Unit, what: String) -> void:
 	var caught: Array[Unit] = []
 	for unit in living_units(Unit.TEAM_GOBLIN) + living_units(Unit.TEAM_SCOUT):
 		if blast.has(unit.cell):
 			caught.append(unit)
-	# Anything flammable inside the footprint goes up too, and its own blast
-	# can reach the next drum along - so a line of them is a fuse.
-	blast = await _detonate_drums(blast)
-	var caught2: Array[Unit] = []
-	for unit in living_units(Unit.TEAM_GOBLIN) + living_units(Unit.TEAM_SCOUT):
-		if blast.has(unit.cell) and not caught.has(unit):
-			caught2.append(unit)
-	caught.append_array(caught2)
 	for unit in caught:
-		# How hard it hit depends on where the unit was standing in the blast.
 		var dmg: int = int(blast[unit.cell])
+		if dmg <= 0:
+			continue
 		var away := (unit.position - center).normalized()
 		fx_air.blood_mist(unit.position + Vector2(0, -36), away, unit.hp <= dmg)
 		# Credited before the damage lands, while the victim is still alive to
 		# be inspected. _credit_kill ignores friendly fire.
 		if unit.hp <= dmg:
-			_credit_kill(thrower, unit)
+			_credit_kill(source, unit)
 		unit.take_damage(dmg, away)
-		print("[ThinShot]   frag hits %s at %s for %d" % [
-				unit.display_name(), unit.cell, dmg])
-	print("[ThinShot]   frag caught %d unit(s)" % caught.size())
-	_finish_throw(thrower, prev_state)
+		print("[ThinShot]   %s hits %s at %s for %d" % [
+				what, unit.display_name(), unit.cell, dmg])
+	print("[ThinShot]   %s caught %d unit(s)" % [what, caught.size()])
 
 
 func do_throw_smoke(thrower: Unit, cell: Vector2i) -> void:

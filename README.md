@@ -220,10 +220,14 @@ campaign and playing again starts you with five fresh recruits.
   wall — the next section of the same wall is still in the way. Hovering a
   target shows `PEEK` when the shot is one.
 - **Fuel drums are cover that can be turned into a weapon.** They behave like
-  junk — you can't stand on them, you can shoot over them — until a blast
-  reaches one. Then it goes up with a frag's force, **and its blast sets off
-  the next drum along**, so a line of them is a fuse. Each drum burns exactly
-  once. They catch your own scouts as readily as the Choir.
+  junk — you can't stand on them, you can shoot over them — until something
+  sets one off. **Click a drum in range to put a round into it** (it lights up
+  orange, and hovering shows the footprint and how many it would catch); a
+  grenade blast will do it too. There is no hit roll: a drum is a big
+  stationary object, so the decision is whether the shot is worth spending,
+  not whether it lands. It goes up with a frag's force, **and its blast sets
+  off the next drum along**, so a line of them is a fuse. Each drum burns
+  exactly once, and they catch your own scouts as readily as the Choir.
 - Cacti are decoration.
 - Every mission opens on a **briefing** — situation, then orders — and a won
   mission closes on a **debrief** that points at the next one. A lost attempt

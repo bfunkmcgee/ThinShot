@@ -100,6 +100,9 @@ const EXTRACT_ARMED_EDGE := Color(0.7, 1.0, 0.8, 0.95)
 # Cover readability. A bar hugging a tile edge means "something to get behind
 # on that side"; a dot in the middle of a reachable tile means "there is cover
 # here somewhere", so a route between covered tiles can be read at a glance.
+const HAZARD_HL := Color(1.0, 0.55, 0.08, 0.42)
+const HAZARD_EDGE := Color(1.0, 0.82, 0.3, 0.95)
+
 const COVER_HALF_PIP := Color(0.55, 0.86, 0.62, 0.95)
 const COVER_FULL_PIP := Color(0.45, 1.0, 0.58, 1.0)
 const COVER_DEST_DOT := Color(0.55, 0.95, 0.65, 0.55)
@@ -160,6 +163,10 @@ var cover_dests: Dictionary = {}
 # sit on the sand with nothing under them and read as pasted on.
 var prop_shadows: Dictionary = {}
 
+# Fuel drums the selected unit could put a round into. Drawn hotter than an
+# attack tile so a hazard never reads as an enemy.
+var hazard_cells: Dictionary = {}
+
 var cache_cells: Dictionary = {}
 var extract_cells: Dictionary = {}
 var extract_armed := false
@@ -178,10 +185,11 @@ var danger_cells: Dictionary = {}
 
 
 func set_highlights(moves: Dictionary, dests: Dictionary,
-		attacks: Array[Vector2i]) -> void:
+		attacks: Array[Vector2i], hazards := {}) -> void:
 	move_cells = moves
 	move_dests = dests
 	attack_cells = attacks
+	hazard_cells = hazards
 	queue_redraw()
 
 
@@ -719,6 +727,12 @@ func _draw() -> void:
 		attack_color = SUPPRESS_HL
 	for cell in attack_cells:
 		draw_colored_polygon(_diamond(cell), attack_color)
+	for cell: Vector2i in hazard_cells:
+		var h := _diamond(cell)
+		draw_colored_polygon(h, HAZARD_HL)
+		var ring := h.duplicate()
+		ring.append(ring[0])
+		draw_polyline(ring, HAZARD_EDGE, 2.0, true)
 	# Grenade footprint under the cursor, outlined so the exact cells that
 	# will be caught are unambiguous before the throw is committed.
 	# blast_cells maps cell -> damage. A frag falls off toward the corners, so
