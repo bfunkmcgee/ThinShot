@@ -92,17 +92,21 @@ const LEVELS: Array[Dictionary] = [
 		"orders": "BURN THE TITHE CACHES",
 		"debrief": "The caches were not scrap.\n\nPrimers. Casings. Barrel stock. Machined, not scavenged - and every crate struck with the same depot mark. One of ours, taken off the maps eleven years ago.\n\nThe Choir is not scavenging the desert. It is stripping Outpost 7, and it is arming itself with what we left behind.",
 		"size": Vector2i(16, 10),
+		# Scrap thins out toward the west rather than stopping dead at the
+		# outer barricade: the squad deploys onto ground it can bound through
+		# instead of a bare apron, and the board stops reading as a packed
+		# right half beside an empty left one.
 		"map": [
-			".p....j..p.j....",
-			"......j.........",
+			".p..j.j..p.j....",
+			"..j...j.........",
 			"...j..j....j....",
-			".........d.j....",
-			"......j..d.j....",
+			".j.......d.j....",
+			"...j..j..d.j....",
 			"....j.j.........",
-			"......j....j....",
+			".j....j....j....",
 			"...j.......j....",
-			"......j....j....",
-			"..p...j..p.j....",
+			"..j...j....j....",
+			"..p.j.j..p.j....",
 		],
 		"scout_spawns": [Vector2i(1, 1), Vector2i(1, 8), Vector2i(2, 5)],
 		"lead_spawns": [Vector2i(0, 4)],
@@ -164,17 +168,21 @@ const LEVELS: Array[Dictionary] = [
 		"orders": "BLOW THE MAGAZINES, THEN EXTRACT",
 		"debrief": "The magazines are gone, and with them the only thing that ever made the Choir more than a rabble with knives.\n\nThey will be out there tomorrow. They will still outnumber you. But they will be singing over scrap again - the way they were, before somebody left them a war to find.\n\nTake the squad home.",
 		"size": Vector2i(16, 10),
+		# Scrap in the staging ground west of the compound, so the squad has
+		# something to bound between on the approach instead of crossing bare
+		# sand - and so the western half is not visually empty beside a
+		# fortress wall.
 		"map": [
-			".p......WWWWWWWW",
-			"......p.W.......",
+			".p...j..WWWWWWWW",
+			"....j.p.W.......",
 			".....#..W.......",
-			".....#..W.......",
+			"...j.#..W.......",
 			"....j...........",
 			"......j.W.......",
 			"........W...dd..",
 			".........WW.WW.W",
-			"....p.j.........",
-			".......p........",
+			"..j.p.j.........",
+			"....j..p........",
 		],
 		"scout_spawns": [Vector2i(0, 2), Vector2i(1, 8), Vector2i(0, 6)],
 		"lead_spawns": [Vector2i(0, 4)],

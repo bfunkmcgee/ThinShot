@@ -81,6 +81,13 @@ const STRUCTURE_OFFSETS := {
 }
 const ROCK_SCALE := Vector2(2, 2)
 
+# Scenery is pulled into one palette by a shared dust shader rather than by
+# re-authoring the art. Haze is quantised into a few depth bands so the whole
+# board needs only a handful of materials instead of one per prop.
+const PROP_DUST := preload("res://assets/shaders/prop_dust.gdshader")
+const HAZE_BANDS := 5
+const HAZE_MAX := 0.20
+
 const PROP_ROOT := "res://assets/sprites/Environment/Desert/Props"
 
 # Objective props. Each has a standing pose, an optional idle loop, one or more
@@ -214,6 +221,8 @@ var caches: Array = []
 var drums: Dictionary = {}
 # Contact shadows for objective props, handed to the Board once they exist.
 var _prop_shadows: Dictionary = {}
+# Dust materials by depth band, shared across every prop in that band.
+var _dust_materials: Dictionary = {}
 # The gunner currently laying down sustained fire, and where he is working.
 var _suppressor: Unit = null
 var _suppress_point := Vector2.ZERO
@@ -447,11 +456,28 @@ func _spawn_props() -> void:
 					_spawn_prop(_wall_texture_for(kind), WALL_OFFSETS[kind], cell)
 
 
+## One dust material per depth band, built on demand and shared. Farther back
+## on the board means more haze, which is what stops the far edge competing
+## with the fight in front of it.
+func _dust_material(cell: Vector2i) -> ShaderMaterial:
+	var span := maxi(board.size.x + board.size.y - 2, 1)
+	var depth := 1.0 - float(cell.x + cell.y) / float(span)  # 1 at the far corner
+	var band := clampi(int(depth * float(HAZE_BANDS)), 0, HAZE_BANDS - 1)
+	if not _dust_materials.has(band):
+		var mat := ShaderMaterial.new()
+		mat.shader = PROP_DUST
+		mat.set_shader_parameter("haze",
+				HAZE_MAX * (float(band) + 0.5) / float(HAZE_BANDS))
+		_dust_materials[band] = mat
+	return _dust_materials[band]
+
+
 func _spawn_prop(texture: Texture2D, offset: Vector2, cell: Vector2i,
 		scale := 0.0) -> Sprite2D:
 	var prop := Sprite2D.new()
 	prop.texture = texture
 	prop.offset = offset
+	prop.material = _dust_material(cell)
 	# Most props are drawn at 48px and doubled; anything authored larger says
 	# so, or it would tower over the squad.
 	prop.scale = ROCK_SCALE if scale <= 0.0 else Vector2(scale, scale)
@@ -544,6 +570,7 @@ func _spawn_structure(s: Dictionary) -> void:
 	spr.texture = frames[0]
 	spr.scale = Vector2(2, 2)
 	spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	spr.material = _dust_material(front)  # same treatment as every other prop
 	spr.offset = STRUCTURE_OFFSETS[s.kind]
 	spr.position = (board.cell_to_global(anchor) + board.cell_to_global(front)) / 2.0 \
 			- root.position
