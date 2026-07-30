@@ -327,7 +327,7 @@ func _ready() -> void:
 	_refresh_objectives()
 	_refresh_watch_cells()  # also settles everyone into whatever cover they spawned in
 	_show_briefing()
-	show_banner("LEVEL %d - %s" % [Game.current_level + 1, level.name])
+	show_banner("%s  -  %s" % [Game.operation().name, level.name])
 	player_turn_ready_msec = Time.get_ticks_msec()
 	print("[ThinShot] level %d '%s', player turn 1 begins" % [
 			Game.current_level + 1, level.name])
@@ -2690,10 +2690,13 @@ func _show_game_over(text: String, won: bool) -> void:
 	# The story beat only lands on a win - a failed attempt is not part of it.
 	narrative_label.text = str(level.get("debrief", "")) if won else ""
 	debrief_label.text = _debrief_text(won)
+	# Where the squad wakes up next is the difference between a tent and home.
 	if not won:
 		restart_button.text = "Back to Camp"
 	elif Game.is_last_level():
 		restart_button.text = "Play Again"
+	elif Game.is_last_of_operation():
+		restart_button.text = "Return to Garrison"
 	else:
 		restart_button.text = "Back to Camp"
 	game_over_panel.visible = true
@@ -2754,8 +2757,8 @@ func _show_briefing() -> void:
 	if body.is_empty():
 		briefing_panel.visible = false
 		return
-	briefing_mission_label.text = "MISSION %d OF %d" % [
-			Game.current_level + 1, Levels.LEVELS.size()]
+	briefing_mission_label.text = "%s  -  MISSION %d OF %d" % [
+			Game.operation().name, Game.mission_number(), Game.mission_count()]
 	briefing_title_label.text = str(level.name)
 	briefing_fiction_label.text = str(level.get("fiction", ""))
 	briefing_body_label.text = body
@@ -2776,12 +2779,15 @@ func _dismiss_briefing() -> void:
 ## and hand back.
 func _on_restart() -> void:
 	if last_result_won:
-		if Game.is_last_level():
-			# The campaign loops, so the squad starts over with it.
+		# Advancing decides where the squad wakes up: another tent if the
+		# operation has missions left, the garrison if it does not.
+		var went_home := Game.advance_mission()
+		if went_home and Game.is_last_operation() and Game.current_operation == 0:
+			# The campaign looped, so the squad starts over with it.
 			Game.reset_roster()
-			Game.select_level(0)
-		else:
-			Game.select_level(Game.current_level + 1)
+	else:
+		# A lost mission is retried from the same camp it was launched from.
+		Game.in_the_field = Game.mission_number() > 1
 	Game.go_to_camp()
 
 

@@ -12,7 +12,15 @@ extends Node
 const CAMP_SCENE := "res://scenes/Camp.tscn"
 const BATTLE_SCENE := "res://scenes/Battle.tscn"
 
+# Where the campaign is. An operation is a run of missions the squad stays out
+# on; current_level is the flat index of the mission being fought, kept because
+# a mission has never needed to know which operation it belongs to.
+var current_operation := 0
 var current_level := 0
+# True while the squad is out on an operation - that is, between its missions
+# rather than back at the garrison. Decides which camp the player walks around
+# and whether replacements are available.
+var in_the_field := false
 
 # Squad ordnance, set at the camp's stores tent. The slots are a fixed budget
 # split between the two grenades, so choosing is a real decision and never an
@@ -104,12 +112,68 @@ func data() -> Dictionary:
 	return Levels.LEVELS[current_level]
 
 
+func operation() -> Dictionary:
+	return Levels.OPERATIONS[clampi(current_operation, 0, Levels.OPERATIONS.size() - 1)]
+
+
+func biome() -> Dictionary:
+	return Levels.BIOMES.get(operation().get("biome", "desert"), Levels.BIOMES.desert)
+
+
+## Which mission of the current operation this is, counting from 1.
+func mission_number() -> int:
+	var missions: Array = operation().missions
+	var at := missions.find(current_level)
+	return (at if at >= 0 else 0) + 1
+
+
+func mission_count() -> int:
+	return (operation().missions as Array).size()
+
+
 func is_last_level() -> bool:
 	return current_level >= Levels.LEVELS.size() - 1
 
 
+## The last mission of the operation the squad is currently out on - the one
+## after which they go home rather than back to a tent.
+func is_last_of_operation() -> bool:
+	var missions: Array = operation().missions
+	return missions.is_empty() or int(missions[missions.size() - 1]) == current_level
+
+
+func is_last_operation() -> bool:
+	return current_operation >= Levels.OPERATIONS.size() - 1
+
+
 func select_level(index: int) -> void:
 	current_level = clampi(index, 0, Levels.LEVELS.size() - 1)
+	# Keep the operation pointer honest when a level is chosen directly, which
+	# the debug level buttons and the --level switch both do.
+	for i in Levels.OPERATIONS.size():
+		if (Levels.OPERATIONS[i].missions as Array).has(current_level):
+			current_operation = i
+			return
+
+
+## Move to the next mission, or home if that was the last of the operation.
+## Returns true when the squad is going back to the garrison.
+func advance_mission() -> bool:
+	var missions: Array = operation().missions
+	var at := missions.find(current_level)
+	if at >= 0 and at + 1 < missions.size():
+		current_level = int(missions[at + 1])
+		in_the_field = true
+		return false
+	# Operation over. Next one, or loop the campaign.
+	if is_last_operation():
+		current_operation = 0
+	else:
+		current_operation += 1
+	var next: Array = operation().missions
+	current_level = int(next[0]) if not next.is_empty() else 0
+	in_the_field = false
+	return true
 
 
 ## Split the slot budget between frags and smoke. Frags are authoritative and
@@ -243,6 +307,44 @@ func ensure_roster(level_data: Dictionary) -> void:
 			var soldier := _recruit(kind)
 			print("[ThinShot] new recruit: %s (%s)" % [
 					soldier.surname, Unit.kind_role_name(kind)])
+
+
+## How many bodies short of a full squad the roster is, by role.
+func vacancies(level_data: Dictionary) -> Dictionary:
+	var wanted := {
+		Unit.Kind.TEAM_LEAD: level_data.get("lead_spawns", []).size(),
+		Unit.Kind.MACHINEGUNNER: level_data.get("gunner_spawns", []).size(),
+		Unit.Kind.SCOUT: level_data.scout_spawns.size(),
+	}
+	var gaps := {}
+	for kind: int in wanted:
+		var short := int(wanted[kind]) - soldiers_of_kind(kind).size()
+		if short > 0:
+			gaps[kind] = short
+	return gaps
+
+
+func vacancy_count(level_data: Dictionary) -> int:
+	var n := 0
+	for kind: int in vacancies(level_data):
+		n += int(vacancies(level_data)[kind])
+	return n
+
+
+## Fill every empty slot with a green recruit. Only the garrison calls this -
+## inside an operation the squad fights short, and that is the whole cost of
+## losing somebody. What a death takes permanently is the rank, the perks and
+## the kills; what it does not take is the campaign.
+func recruit_to_strength(level_data: Dictionary) -> Array:
+	var taken: Array = []
+	var gaps := vacancies(level_data)
+	for kind: int in gaps:
+		for i in int(gaps[kind]):
+			var soldier := _recruit(kind)
+			taken.append(soldier)
+			print("[ThinShot] garrison assigns %s (%s)" % [
+					soldier.surname, Unit.kind_role_name(kind)])
+	return taken
 
 
 func reset_roster() -> void:

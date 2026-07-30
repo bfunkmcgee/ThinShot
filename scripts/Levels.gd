@@ -2,6 +2,16 @@ class_name Levels
 
 ## Static campaign data.
 ##
+## The campaign is a list of OPERATIONS, each a run of missions the squad flies
+## out for and stays out on. Between missions inside an operation they camp in
+## the field; between operations they come back to the garrison, where the
+## dead are finally replaced. An operation names the biome it takes place in,
+## which is what the field camp dresses itself from.
+##
+## LEVELS below is the flat list of every mission in campaign order, which is
+## what a mission actually is; OPERATIONS indexes into it. Keeping the two
+## separate means the mission data never had to move.
+##
 ## Each level carries an ordered "objectives" list; a level with none defaults
 ## to wiping out the Choir, which is what the first one does. Objectives are
 ## completed in order, and the level is won when the last one is:
@@ -235,6 +245,43 @@ const LEVELS: Array[Dictionary] = [
 		"zone_thresholds": [-0.12, 0.22],
 	},
 ]
+
+## The operations the campaign is made of. `missions` are indices into LEVELS,
+## so mission data stays exactly where it was. `biome` is what the field camp
+## between those missions dresses itself as - it is plumbed through now and
+## every value still resolves to the desert set until the other tilesheets
+## exist, at which point this is the only line that changes.
+const OPERATIONS: Array[Dictionary] = [
+	{
+		"name": "OPERATION DRY CHOIR",
+		"biome": "desert",
+		"summary": "Push the Rust Choir back off scout ground, and find out what they are carrying.",
+		"missions": [0, 1, 2],
+	},
+]
+
+## Biome dressing for the field camp. One entry per biome an operation can
+## name; every one resolves to the desert set for now.
+const BIOMES := {
+	"desert": {
+		"label": "DESERT",
+		"floor_seed": 91,
+		"shade_seed": 17,
+		"thresholds": [-0.30, 0.10],
+	},
+	"salt": {
+		"label": "SALT FLAT",
+		"floor_seed": 44,
+		"shade_seed": 8,
+		"thresholds": [-0.55, -0.15],
+	},
+	"ash": {
+		"label": "ASH",
+		"floor_seed": 63,
+		"shade_seed": 29,
+		"thresholds": [0.05, 0.35],
+	},
+}
 
 const LEGAL_CHARS := ".#Wjpd"
 

@@ -101,10 +101,27 @@ Which is why each map asks for something different:
 Your scouts are elite — tougher, faster, longer-ranged — but the Choir has
 numbers and holds the ground.
 
-## Base camp
+## Operations, and the two camps
 
-The campaign opens in camp and returns there between every mission, won or
-lost. It is **real time and directly controlled** — you walk the Scout Team
+The campaign is a series of **operations**, each a run of missions the squad
+flies out for and stays out on. Where they sleep between missions depends on
+where they are in one:
+
+- **The garrison** is home, and where an operation begins and ends. Walls,
+  huts, stores — and **the assignment post**, the only place the dead are
+  replaced.
+- **The field camp** goes up between the missions of a single operation: a
+  tent, some scrap, and open ground in every direction. Same functions, no
+  permanence, and it takes its ground from **the operation's biome**.
+
+**Replacements are a garrison thing.** Lose a scout on the first mission of an
+operation and you fight the rest of it four strong — that is the cost of the
+loss, and it is felt for as long as the operation lasts. Back at the garrison,
+command signs on however many bodies you are short. What a death takes
+permanently is the rank, the specialties and the kills; what it does not take
+is the campaign.
+
+Both camps are **real time and directly controlled** — you walk the Scout Team
 Lead around with **WASD or the arrows**, and press **E** at anything worth
 using:
 
@@ -116,9 +133,18 @@ using:
   split however you like: four frags and no smoke, one and three, or the 2/2
   the squad carried before there was anywhere to change it.
 - **The briefing table** gives the next mission's orders and deploys you.
+- **The assignment post** — garrison only — signs on replacements for anyone
+  lost, green: no rank, no specialty, nothing the squad lost with them.
 
 If the Team Lead falls, the senior surviving soldier takes over as the one you
-walk around as — permadeath never replaces anyone, so somebody always has to.
+walk around as — nobody is replaced until the operation is over, so somebody
+always has to.
+
+There is **one operation today**, *Dry Choir*, and it is the three missions
+below. The structure is built for more: an operation is a name, a biome, and a
+list of missions, so a second one is data. Biomes are plumbed and every value
+currently resolves to the desert set, since there is one floor tilesheet in the
+project — see `ASSETS.md`.
 
 ## The squad
 
@@ -339,7 +365,8 @@ even when a scene fails to compile, so grep the output for `SCRIPT ERROR`
 rather than trusting the exit code alone:
 
 ```
-godot --headless --path . --quit-after 200                        # the camp
+godot --headless --path . --quit-after 200                        # the garrison
+godot --headless --path . --quit-after 200 -- --field             # the field camp
 godot --headless --path . res://scenes/Battle.tscn --quit-after 200
 godot --headless --path . res://scenes/Battle.tscn --quit-after 200 -- --level 2
 ```

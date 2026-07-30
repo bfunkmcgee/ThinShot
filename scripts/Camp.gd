@@ -67,6 +67,7 @@ const ISO_SQUASH := 0.469  # Board.TILE_H / Board.TILE_W
 # How close the player has to stand before a fixture offers itself.
 const INTERACT_RANGE := 74.0
 
+@onready var title_label: Label = $UI/TitleLabel
 @onready var board: Board = $Board
 @onready var camera: Camera2D = $Camera
 @onready var entities: Node2D = $Entities
@@ -80,7 +81,11 @@ const INTERACT_RANGE := 74.0
 @onready var close_button: Button = $UI/Modal/CloseButton
 
 var player: Unit = null
-# [{kind, cell, pos, label, id}] - kind is "soldier" | "briefing" | "stores".
+# Which camp this is, and the layout that goes with it.
+var in_field := false
+var camp: Dictionary = {}
+var spots: Dictionary = {}
+# [{kind, cell, pos, label, id}] - "soldier" | "briefing" | "stores" | "recruit".
 var fixtures: Array = []
 var _focus: Dictionary = {}
 var _dust_materials: Dictionary = {}
@@ -92,8 +97,13 @@ var _choice_args: Array = []
 func _ready() -> void:
 	CampData.validate()
 	Levels.validate_all()
+	# `godot --path . -- --field` drops straight into the field camp, which is
+	# otherwise only reachable by finishing a mission. Mirrors Battle's --level.
+	in_field = Game.in_the_field or OS.get_cmdline_user_args().has("--field")
+	camp = CampData.map_for(in_field, Game.biome())
+	spots = CampData.spots_for(in_field)
 	board.show_grid = false  # a camp is a place, not a tactical grid
-	board.set_level(CampData.CAMP)
+	board.set_level(camp)
 	_spawn_props()
 	# The roster forms here on a fresh campaign, before the first mission ever
 	# runs, so the squad the player meets in camp is the squad that deploys.
@@ -104,12 +114,20 @@ func _ready() -> void:
 	choice_a.pressed.connect(_on_choice.bind(0))
 	choice_b.pressed.connect(_on_choice.bind(1))
 	modal.visible = false
-	subtitle_label.text = "%s  -  next: %s" % [
-			_squad_summary(), Levels.LEVELS[Game.current_level].name]
+	title_label.text = "FIELD CAMP" if in_field else "GARRISON"
+	_refresh_subtitle()
 	_snap_camera()
-	print("[ThinShot] camp: %d soldier(s), next mission %d '%s'" % [
-			Game.roster.size(), Game.current_level + 1,
-			Levels.LEVELS[Game.current_level].name])
+	print("[ThinShot] %s: %d soldier(s), %s mission %d/%d '%s'" % [
+			"field camp" if in_field else "garrison", Game.roster.size(),
+			Game.operation().name, Game.mission_number(), Game.mission_count(),
+			Game.data().name])
+
+
+func _refresh_subtitle() -> void:
+	var op: Dictionary = Game.operation()
+	subtitle_label.text = "%s  -  %s  -  mission %d of %d: %s  -  %s" % [
+			op.name, Game.biome().label, Game.mission_number(),
+			Game.mission_count(), Game.data().name, _squad_summary()]
 
 
 func _squad_summary() -> String:
@@ -178,10 +196,10 @@ func _spawn_props() -> void:
 							PLANT_OFFSET, cell)
 				"W":
 					_spawn_prop(_wall_texture(cell), WALL_OFFSET, cell)
-	for cell: Vector2i in CampData.DRESSING:
+	for cell: Vector2i in spots.dressing:
 		# Crates are authored at 96px against the 48px everything else uses.
 		_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, cell, Vector2.ONE)
-	for s: Dictionary in CampData.CAMP.structures:
+	for s: Dictionary in camp.structures:
 		_spawn_structure(s)
 
 
@@ -243,17 +261,18 @@ func _spawn_squad() -> void:
 	if avatar.is_empty():
 		push_error("[Camp] no living soldier to play as")
 		return
-	player = _make_unit(avatar, CampData.PLAYER_SPAWN)
+	player = _make_unit(avatar, spots.player)
 	player.set_facing(Vector2(0, 1))  # face the camera at rest
 	var slot := 0
+	var squad: Array = spots.squad
 	for soldier: Dictionary in Game.roster:
 		if not bool(soldier.alive) or int(soldier.id) == int(avatar.id):
 			continue
-		if slot >= CampData.SQUAD_SPOTS.size():
+		if slot >= squad.size():
 			break
 		# Distinct cells matter: setup() seeds the idle clock from the cell, so
 		# identical cells would have the whole squad breathing in lockstep.
-		var cell: Vector2i = CampData.SQUAD_SPOTS[slot]
+		var cell: Vector2i = squad[slot]
 		var unit := _make_unit(soldier, cell)
 		unit.set_facing(Vector2(0, 1))
 		fixtures.append({
@@ -266,17 +285,27 @@ func _spawn_squad() -> void:
 
 func _build_fixtures() -> void:
 	fixtures.append({
-		"kind": "briefing", "cell": CampData.BRIEFING_TABLE,
-		"pos": board.cell_to_global(CampData.BRIEFING_TABLE),
+		"kind": "briefing", "cell": spots.briefing,
+		"pos": board.cell_to_global(spots.briefing),
 		"label": "the briefing table", "id": 0,
 	})
 	fixtures.append({
-		"kind": "stores", "cell": CampData.STORES_TENT,
-		"pos": board.cell_to_global(CampData.STORES_TENT),
+		"kind": "stores", "cell": spots.stores,
+		"pos": board.cell_to_global(spots.stores),
 		"label": "the stores tent", "id": 0,
 	})
-	# A marker so the two fixtures read as places rather than bare ground.
-	_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, CampData.BRIEFING_TABLE, Vector2.ONE)
+	# Replacements are a garrison thing. Out on operation the squad fights
+	# with whoever walked away from the last mission.
+	var post: Vector2i = spots.recruit
+	if post.x >= 0:
+		fixtures.append({
+			"kind": "recruit", "cell": post,
+			"pos": board.cell_to_global(post),
+			"label": "the assignment post", "id": 0,
+		})
+		_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, post, Vector2.ONE)
+	# A marker so the briefing table reads as a place rather than bare ground.
+	_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, spots.briefing, Vector2.ONE)
 
 
 # ----------------------------------------------------------------- movement --
@@ -386,6 +415,11 @@ func _prompt_for(fixture: Dictionary) -> String:
 			return "E  -  orders and deploy"
 		"stores":
 			return "E  -  stores: %d frag / %d smoke" % [Game.frags, Game.smokes]
+		"recruit":
+			var short := Game.vacancy_count(Game.data())
+			if short <= 0:
+				return "E  -  assignment post: squad at full strength"
+			return "E  -  assignment post: %d replacement(s) available" % short
 	return ""
 
 
@@ -412,6 +446,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_open_briefing()
 		"stores":
 			_open_stores()
+		"recruit":
+			_open_recruit()
 
 
 # ------------------------------------------------------------------- modal --
@@ -432,8 +468,7 @@ func _close_modal() -> void:
 	modal.visible = false
 	_choice_action = ""
 	_choice_args = []
-	subtitle_label.text = "%s  -  next: %s" % [
-			_squad_summary(), Levels.LEVELS[Game.current_level].name]
+	_refresh_subtitle()
 
 
 func _open_soldier(id: int) -> void:
@@ -483,15 +518,40 @@ func _open_stores() -> void:
 			"MORE FRAGS\nTake one smoke off the rack", "MORE SMOKE\nPut one frag back")
 
 
+## Replacements, garrison only. Filling every gap at once is deliberate: what
+## a death takes permanently is the rank, the perks and the kills, not the
+## campaign - and the squad still fought the rest of the operation short.
+func _open_recruit() -> void:
+	var short := Game.vacancy_count(Game.data())
+	if short <= 0:
+		_choice_action = ""
+		_open_modal("ASSIGNMENT POST",
+				"The squad is at full strength. Nothing to sign for.")
+		return
+	_choice_action = "recruit"
+	_choice_args = []
+	var lines: Array[String] = []
+	for kind: int in Game.vacancies(Game.data()):
+		lines.append("%d x %s" % [int(Game.vacancies(Game.data())[kind]),
+				Unit.kind_role_name(kind)])
+	_open_modal("ASSIGNMENT POST",
+			"Command has bodies to spare, and none of them have done this before.\n\n"
+			+ "Open postings:\n" + "\n".join(lines)
+			+ "\n\nThey arrive green - no rank, no specialty, nothing the squad lost.",
+			"SIGN THEM ON\nBring the squad back to strength", "")
+
+
 func _open_briefing() -> void:
-	var level: Dictionary = Levels.LEVELS[Game.current_level]
+	var level: Dictionary = Game.data()
+	var op: Dictionary = Game.operation()
 	_choice_action = "deploy"
 	_choice_args = []
-	var body := "%s\n\n%s\n\nORDERS:  %s" % [
-			level.get("fiction", ""), level.get("briefing", ""),
-			level.get("orders", "")]
-	_open_modal("MISSION %d - %s" % [Game.current_level + 1, level.name], body,
-			"DEPLOY\nTake the squad out", "")
+	var body := "%s\n\n%s\n\n%s\n\nORDERS:  %s" % [
+			op.get("summary", ""), level.get("fiction", ""),
+			level.get("briefing", ""), level.get("orders", "")]
+	_open_modal("%s  -  MISSION %d OF %d\n%s" % [
+			op.name, Game.mission_number(), Game.mission_count(), level.name],
+			body, "DEPLOY\nTake the squad out", "")
 
 
 func _on_choice(slot: int) -> void:
@@ -511,6 +571,13 @@ func _on_choice(slot: int) -> void:
 		"loadout":
 			Game.set_loadout(Game.frags + (1 if slot == 0 else -1))
 			_open_stores()  # reopen so the numbers update in place
+		"recruit":
+			var taken := Game.recruit_to_strength(Game.data())
+			_close_modal()
+			# Rebuild the camp so the new faces are actually standing in it.
+			get_tree().reload_current_scene()
+			print("[ThinShot] %d replacement(s) signed on" % taken.size())
 		"deploy":
-			print("[ThinShot] deploying to level %d" % (Game.current_level + 1))
+			print("[ThinShot] deploying: %s mission %d/%d" % [
+					Game.operation().name, Game.mission_number(), Game.mission_count()])
 			Game.go_to_battle()
