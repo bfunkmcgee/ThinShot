@@ -73,71 +73,60 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.04, 0.03, 0.02, 0.9)
 
-[node name="TitleLabel" type="Label" parent="UI/Modal"]
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -420.0
-offset_top = -200.0
-offset_right = 420.0
-offset_bottom = -146.0
+[node name="Center" type="CenterContainer" parent="UI/Modal"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = 40.0
+offset_right = -40.0
+offset_bottom = -40.0
+mouse_filter = 2
+
+[node name="Box" type="VBoxContainer" parent="UI/Modal/Center"]
+custom_minimum_size = Vector2(880, 0)
+mouse_filter = 2
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="UI/Modal/Center/Box"]
+layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.5, 1)
 theme_override_font_sizes/font_size = 34
 text = "TITLE"
 horizontal_alignment = 1
-vertical_alignment = 1
+autowrap_mode = 3
 
-[node name="BodyLabel" type="Label" parent="UI/Modal"]
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -400.0
-offset_top = -136.0
-offset_right = 400.0
-offset_bottom = -8.0
+[node name="BodyLabel" type="Label" parent="UI/Modal/Center/Box"]
+layout_mode = 2
 theme_override_colors/font_color = Color(0.88, 0.84, 0.72, 1)
 theme_override_font_sizes/font_size = 17
 text = ""
-autowrap_mode = 3
 horizontal_alignment = 1
+autowrap_mode = 3
 
-[node name="ChoiceAButton" type="Button" parent="UI/Modal"]
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -430.0
-offset_top = 12.0
-offset_right = -10.0
-offset_bottom = 108.0
+[node name="Choices" type="HBoxContainer" parent="UI/Modal/Center/Box"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="ChoiceAButton" type="Button" parent="UI/Modal/Center/Box/Choices"]
+custom_minimum_size = Vector2(420, 84)
+layout_mode = 2
 focus_mode = 0
 theme_override_font_sizes/font_size = 16
 text = "A"
 
-[node name="ChoiceBButton" type="Button" parent="UI/Modal"]
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = 10.0
-offset_top = 12.0
-offset_right = 430.0
-offset_bottom = 108.0
+[node name="ChoiceBButton" type="Button" parent="UI/Modal/Center/Box/Choices"]
+custom_minimum_size = Vector2(420, 84)
+layout_mode = 2
 focus_mode = 0
 theme_override_font_sizes/font_size = 16
 text = "B"
 
-[node name="CloseButton" type="Button" parent="UI/Modal"]
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -90.0
-offset_top = 132.0
-offset_right = 90.0
-offset_bottom = 176.0
+[node name="CloseButton" type="Button" parent="UI/Modal/Center/Box"]
+custom_minimum_size = Vector2(180, 44)
+layout_mode = 2
+size_flags_horizontal = 4
 focus_mode = 0
 theme_override_font_sizes/font_size = 17
 text = "Back"

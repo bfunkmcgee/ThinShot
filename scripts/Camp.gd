@@ -102,11 +102,14 @@ const INTERACT_RANGE := 74.0
 @onready var subtitle_label: Label = $UI/SubtitleLabel
 @onready var prompt_label: Label = $UI/PromptLabel
 @onready var modal: ColorRect = $UI/Modal
-@onready var modal_title: Label = $UI/Modal/TitleLabel
-@onready var modal_body: Label = $UI/Modal/BodyLabel
-@onready var choice_a: Button = $UI/Modal/ChoiceAButton
-@onready var choice_b: Button = $UI/Modal/ChoiceBButton
-@onready var close_button: Button = $UI/Modal/CloseButton
+# Laid out by containers rather than by hand. The panel has to hold anything
+# from a one-line "nothing to sign for" to a full operation briefing, and fixed
+# offsets sized for the short case let the long case draw straight over itself.
+@onready var modal_title: Label = $UI/Modal/Center/Box/TitleLabel
+@onready var modal_body: Label = $UI/Modal/Center/Box/BodyLabel
+@onready var choice_a: Button = $UI/Modal/Center/Box/Choices/ChoiceAButton
+@onready var choice_b: Button = $UI/Modal/Center/Box/Choices/ChoiceBButton
+@onready var close_button: Button = $UI/Modal/Center/Box/CloseButton
 
 var player: Unit = null
 # Which camp this is, and the layout that goes with it.
@@ -655,3 +658,4 @@ func _on_choice(slot: int) -> void:
 			print("[ThinShot] deploying: %s mission %d/%d" % [
 					Game.operation().name, Game.mission_number(), Game.mission_count()])
 			Game.go_to_battle()
+

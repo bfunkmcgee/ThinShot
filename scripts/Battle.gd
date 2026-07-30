@@ -318,12 +318,12 @@ var _suppress_in_volley := 0
 @onready var debrief_label: Label = $UI/GameOver/DebriefLabel
 @onready var narrative_label: Label = $UI/GameOver/NarrativeLabel
 @onready var briefing_panel: ColorRect = $UI/Briefing
-@onready var briefing_mission_label: Label = $UI/Briefing/MissionLabel
-@onready var briefing_title_label: Label = $UI/Briefing/TitleLabel
-@onready var briefing_fiction_label: Label = $UI/Briefing/FictionLabel
-@onready var briefing_body_label: Label = $UI/Briefing/BodyLabel
-@onready var briefing_orders_label: Label = $UI/Briefing/OrdersLabel
-@onready var briefing_begin_button: Button = $UI/Briefing/BeginButton
+@onready var briefing_mission_label: Label = $UI/Briefing/Center/Box/MissionLabel
+@onready var briefing_title_label: Label = $UI/Briefing/Center/Box/TitleLabel
+@onready var briefing_fiction_label: Label = $UI/Briefing/Center/Box/FictionLabel
+@onready var briefing_body_label: Label = $UI/Briefing/Center/Box/BodyLabel
+@onready var briefing_orders_label: Label = $UI/Briefing/Center/Box/OrdersLabel
+@onready var briefing_begin_button: Button = $UI/Briefing/Center/Box/BeginButton
 
 
 func _ready() -> void:
