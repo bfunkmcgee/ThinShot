@@ -275,6 +275,11 @@ const IDLE_ALT_CHANCE := 0.14
 # only reacts inside it.
 const ARC_HALF_SECTORS := 1
 
+# What the machinegunner's overwatch adds over everyone else's: two tiles of
+# reach, and two rounds in the reaction instead of one.
+const OVERWATCH_RANGE_BONUS := 2
+const OVERWATCH_VOLLEY := 2
+
 const WALK_FPS := 18.0
 const IDLE_FPS := 8.0
 const AIM_IDLE_FPS := 8.0
@@ -869,6 +874,18 @@ func can_full_auto() -> bool:
 ## volume of ammunition to keep heads down.
 func can_suppress() -> bool:
 	return kind == Kind.MACHINEGUNNER
+
+
+## The gunner's job on overwatch is covering ground the rest of the squad has
+## to cross, not holding a doorway. His watch reaches further than he can
+## normally shoot, and he answers with a pair of rounds rather than one - which
+## is the difference between a sentry and covering fire.
+func overwatch_range() -> int:
+	return attack_range + (OVERWATCH_RANGE_BONUS if kind == Kind.MACHINEGUNNER else 0)
+
+
+func overwatch_rounds() -> int:
+	return OVERWATCH_VOLLEY if kind == Kind.MACHINEGUNNER else 1
 
 
 ## The role a kind fills, with no reference to who is filling it.

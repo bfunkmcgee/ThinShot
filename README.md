@@ -33,7 +33,10 @@ A five-soldier squad, each with a job:
   two-round magazine, a slower advance, and no burst.
 - **Machinegunner** — area control. No semi-automatic setting at all: his
   lightest option is a two-round burst, and **full auto (A)** walks four rounds
-  across a target at reduced accuracy. On top of those he has an ability no one
+  across a target at reduced accuracy. **His overwatch is not a sentry post**:
+  it reaches **6 tiles rather than his weapon's 4**, and answers with **two
+  rounds instead of one** — so putting him on watch genuinely covers the ground
+  the rest of the squad has to cross. On top of that he has an ability no one
   else does — **suppressive fire (S)**: three rounds put down *around* a
   target rather than into it. No damage and no hit roll, but **everything
   within two tiles is pinned — it cannot move at all next turn**, shoots 25%
@@ -318,7 +321,9 @@ campaign and playing again starts you with five fresh recruits.
   across an enemy's front exposes your flank while advancing into it does not.
 - **Overwatch** works for both sides: an overwatching unit stands with rifle
   raised (amber marker above its HP) and takes one free reaction shot at the
-  first enemy that moves through **the arc it is watching**. Covered ground is
+  first enemy that moves through **the arc it is watching** — except the
+  machinegunner, who watches two tiles further than he can shoot and answers
+  with a pair. The panel names both numbers while you aim the arc. Covered ground is
   hatched on the board: amber for goblin arcs, green for your own. Unfired
   overwatch expires at the owner's next turn.
 - **Grenades** cost the attack, never the move, so a soldier can advance and

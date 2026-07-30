@@ -331,7 +331,8 @@ func _ready() -> void:
 	player_turn_ready_msec = Time.get_ticks_msec()
 	print("[ThinShot] level %d '%s', player turn 1 begins" % [
 			Game.current_level + 1, level.name])
-	await get_tree().create_timer(1.1).timeout
+
+
 ## Boot straight into a level: `godot --path . -- --level 2`. Everything after
 ## the bare `--` is ours. Exists so a headless run can smoke-test a level other
 ## than the first one, which is otherwise only reachable by playing to it.
@@ -907,6 +908,11 @@ func _update_unit_panel() -> void:
 	panel_stats_label.text = "Move %d  Rng %d  Dmg %d  Acc %d%%%s" % [
 			unit.move_range, unit.attack_range, unit.damage, unit.accuracy,
 			"  Ammo %d/%d" % [unit.ammo, unit.mag_size] if unit.mag_size > 0 else ""]
+	if aim_mode == AimMode.OVERWATCH and unit == selected:
+		panel_status_label.text = "AIMING ARC - %d TILES, %d ROUND(S) IN REPLY" % [
+				unit.overwatch_range(), unit.overwatch_rounds()]
+		panel_status_label.modulate = Color("ffb84a")
+		return
 	if aim_mode == AimMode.THROW_FRAG and unit == selected:
 		panel_status_label.text = "PICK FRAG TARGET - %d CROSS / %d CORNERS" % [
 				FRAG_DAMAGE, maxi(FRAG_DAMAGE - FRAG_FALLOFF, 1)]
@@ -984,6 +990,9 @@ func _update_unit_panel() -> void:
 
 
 func _unit_status(unit: Unit) -> String:
+	if unit.overwatching and unit.overwatch_rounds() > 1:
+		return "COVERING - %d TILES, %d ROUNDS" % [
+				unit.overwatch_range(), unit.overwatch_rounds()]
 	var cover := ""
 	if unit.cover_level >= int(Board.CoverLevel.FULL):
 		cover = " - IN FULL COVER"
@@ -1126,7 +1135,7 @@ func _commit_aim(cell: Vector2i) -> void:
 ## Cells an overwatching unit would cover: in range, in arc, with LOS.
 func _overwatch_cells_for(unit: Unit, sector: int) -> Dictionary:
 	var cells := {}
-	var r := unit.attack_range
+	var r := unit.overwatch_range()  # the gunner watches further than he shoots
 	for dy in range(-r, r + 1):
 		var w := r - absi(dy)
 		for dx in range(-w, w + 1):
@@ -1308,8 +1317,9 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 				if not unit.is_alive():
 					break
 				watcher.set_overwatch(false)  # consumed, even if the shot kills
-				print("[ThinShot]   overwatch! %s fires at %s" % [watcher.cell, unit.cell])
-				await _resolve_shot(watcher, unit, false)
+				print("[ThinShot]   overwatch! %s fires %d at %s" % [
+						watcher.cell, watcher.overwatch_rounds(), unit.cell])
+				await _resolve_reaction(watcher, unit)
 			if not unit.is_alive() or state == State.GAME_OVER:
 				if selected == unit:
 					deselect()
@@ -2129,6 +2139,24 @@ func _fire_suppression_round(attacker: Unit, target: Unit) -> void:
 	_screen_shake(0.6)
 
 
+## A reaction shot off overwatch. The rifle is already up, so there is no raise
+## beat - and the gunner answers with a burst, which is what makes his watch
+## read as covering the ground rather than guarding a line.
+func _resolve_reaction(watcher: Unit, target: Unit) -> void:
+	watcher.set_facing((target.position - watcher.position).normalized())
+	for i in watcher.overwatch_rounds():
+		if i > 0:
+			await get_tree().create_timer(BURST_GAP).timeout
+		await _fire_round(watcher, target)
+		# Stop on a kill, a finished battle, or an empty belt rather than
+		# firing rounds that have nowhere to go.
+		if not target.is_alive() or state == State.GAME_OVER \
+				or not watcher.has_ammo():
+			break
+	await get_tree().create_timer(LOWER_TIME).timeout
+	watcher.lower_rifle()
+
+
 ## The shot itself: face, (optionally) raise the rifle via the transition
 ## animation, fire one round, lower. Reaction shots skip the raise -
 ## the rifle is already up from overwatch.
@@ -2370,7 +2398,7 @@ func _overwatchers_against(mover: Unit) -> Array[Unit]:
 			continue
 		if watcher.team == mover.team or not watcher.has_ammo():
 			continue
-		if Board.manhattan(watcher.cell, mover.cell) <= watcher.attack_range \
+		if Board.manhattan(watcher.cell, mover.cell) <= watcher.overwatch_range() \
 				and watcher.covers_sector(Board.sector_from_to(watcher.cell, mover.cell)) \
 				and board.has_line_of_sight(watcher.cell, mover.cell):
 			result.append(watcher)
@@ -2755,7 +2783,10 @@ func _debrief_text(won: bool) -> String:
 func _show_briefing() -> void:
 	var body: String = level.get("briefing", "")
 	if body.is_empty():
+		# No briefing to dismiss, so nothing else will swap the level banner
+		# for the turn banner - do it here.
 		briefing_panel.visible = false
+		show_banner("DESERT SCOUTS' TURN")
 		return
 	briefing_mission_label.text = "%s  -  MISSION %d OF %d" % [
 			Game.operation().name, Game.mission_number(), Game.mission_count()]
