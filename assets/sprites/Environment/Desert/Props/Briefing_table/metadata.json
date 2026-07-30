@@ -1,0 +1,37 @@
+{
+  "group_id": null,
+  "objects": [
+    {
+      "id": "fd020e4a-6c18-4d23-b027-a095d8474c53",
+      "name": null,
+      "prompt": "A permanent military planning table in a desert garrison",
+      "size": {
+        "width": 96,
+        "height": 96
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Briefing_table_garrison/rotations/unknown.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "1a0dd194-11a8-4692-85a5-949c3c88a21a",
+      "name": null,
+      "prompt": "A makeshift folding field table in a desert camp",
+      "size": {
+        "width": 96,
+        "height": 96
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Briefing_table_field/rotations/unknown.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-07-30T00:00:00.000000"
+}
