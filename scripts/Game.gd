@@ -9,7 +9,18 @@ extends Node
 ## Battle maps roster entries onto the level's spawn slots at spawn time and
 ## Unit.apply_progression() stamps the earned stats on.
 
+const CAMP_SCENE := "res://scenes/Camp.tscn"
+const BATTLE_SCENE := "res://scenes/Battle.tscn"
+
 var current_level := 0
+
+# Squad ordnance, set at the camp's stores tent. The slots are a fixed budget
+# split between the two grenades, so choosing is a real decision and never an
+# increase in power - the 2/2 default is exactly what the squad carried before
+# there was anywhere to change it.
+const LOADOUT_SLOTS := 4
+var frags := 2
+var smokes := 2
 
 # Slot-keyed squad. Order within a kind is stable, so soldier 3 of 3 scouts
 # stays the same person from mission to mission.
@@ -99,6 +110,30 @@ func is_last_level() -> bool:
 
 func select_level(index: int) -> void:
 	current_level = clampi(index, 0, Levels.LEVELS.size() - 1)
+
+
+## Split the slot budget between frags and smoke. Frags are authoritative and
+## smoke takes the remainder, so the total can never drift.
+func set_loadout(frag_count: int) -> void:
+	frags = clampi(frag_count, 0, LOADOUT_SLOTS)
+	smokes = LOADOUT_SLOTS - frags
+
+
+# -------------------------------------------------------------- transitions --
+# The first scene changes in the project. Both reset Engine.time_scale: hit-stop
+# scales it globally and binds its restore to the engine singleton rather than
+# to a node, precisely so it survives a reload - which means a transition taken
+# mid-freeze would otherwise hand the next scene to the player in slow motion.
+
+
+func go_to_camp() -> void:
+	Engine.time_scale = 1.0
+	get_tree().change_scene_to_file(CAMP_SCENE)
+
+
+func go_to_battle() -> void:
+	Engine.time_scale = 1.0
+	get_tree().change_scene_to_file(BATTLE_SCENE)
 
 
 # ------------------------------------------------------------------ roster --

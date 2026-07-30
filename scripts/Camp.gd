@@ -1,0 +1,516 @@
+extends Node2D
+
+## The base camp: real time, directly controlled, and the campaign's home.
+##
+## Everything between missions happens here rather than on a game-over overlay.
+## Your squad stand around it, you promote them face to face, you set the
+## grenade loadout at the stores tent, and you deploy from the briefing table.
+##
+## Reuses the battle's pieces wholesale: Board draws the ground (with its grid
+## switched off), Unit is the avatar and the squad (with its combat HUD
+## switched off), and Game holds everything that persists. Nothing here knows
+## about turns.
+
+const UNIT_SCENE := preload("res://scenes/Unit.tscn")
+
+# Ground props. These paths are duplicated from Battle rather than shared: the
+# two scenes are deliberately independent, and a common prop table is a
+# refactor worth doing on its own rather than smuggling into this one.
+const ROCK_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_1.png"),
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_2.png"),
+	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_3.png"),
+]
+const JUNK_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage_1.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage_2.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage_3.png"),
+]
+const PLANT_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_4.png"),
+	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_9.png"),
+]
+const WALL_TEX_X_RUN := preload(
+		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/south-west.png")
+const WALL_TEX_Y_RUN := preload(
+		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/south-east.png")
+const WALL_TEX_JUNCTION := preload(
+		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/north.png")
+const CRATE_TEXTURE := preload(
+		"res://assets/sprites/Environment/Desert/Props/Pile_of_desert_ammo_crates/Pile_of_desert_ammo_crates/rotations/unknown.png")
+const STRUCTURE_ROOT := "res://assets/sprites/Environment/Desert/Structures"
+const STRUCTURE_DIRS := {
+	"hut_1": STRUCTURE_ROOT + "/desert_hut/Desert_hut",
+	"hut_2": STRUCTURE_ROOT + "/desert_hut/Desert_hut_1",
+	"tent": STRUCTURE_ROOT + "/desert_hut/Desert_hut_2",
+}
+const STRUCTURE_OFFSETS := {
+	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33), "tent": Vector2(0, -33),
+}
+const PROP_DUST := preload("res://assets/shaders/prop_dust.gdshader")
+const ROCK_OFFSET := Vector2(0, -18)
+const JUNK_OFFSET := Vector2(0, -20)
+const PLANT_OFFSET := Vector2(0, -17)
+const WALL_OFFSET := Vector2(0, -15)
+const CRATE_OFFSET := Vector2(0, -37)
+const PROP_SCALE := Vector2(2, 2)
+const HAZE_BANDS := 5
+const HAZE_MAX := 0.20
+
+# Walking speed in screen pixels per second along the horizontal. Vertical is
+# squashed to the tile ratio so a step "up" covers the same ground as a step
+# right instead of sprinting across rows.
+const WALK_SPEED := 168.0
+const ISO_SQUASH := 0.469  # Board.TILE_H / Board.TILE_W
+# How close the player has to stand before a fixture offers itself.
+const INTERACT_RANGE := 74.0
+
+@onready var board: Board = $Board
+@onready var camera: Camera2D = $Camera
+@onready var entities: Node2D = $Entities
+@onready var subtitle_label: Label = $UI/SubtitleLabel
+@onready var prompt_label: Label = $UI/PromptLabel
+@onready var modal: ColorRect = $UI/Modal
+@onready var modal_title: Label = $UI/Modal/TitleLabel
+@onready var modal_body: Label = $UI/Modal/BodyLabel
+@onready var choice_a: Button = $UI/Modal/ChoiceAButton
+@onready var choice_b: Button = $UI/Modal/ChoiceBButton
+@onready var close_button: Button = $UI/Modal/CloseButton
+
+var player: Unit = null
+# [{kind, cell, pos, label, id}] - kind is "soldier" | "briefing" | "stores".
+var fixtures: Array = []
+var _focus: Dictionary = {}
+var _dust_materials: Dictionary = {}
+# What the two modal buttons currently mean, set when a panel is opened.
+var _choice_action := ""
+var _choice_args: Array = []
+
+
+func _ready() -> void:
+	CampData.validate()
+	Levels.validate_all()
+	board.show_grid = false  # a camp is a place, not a tactical grid
+	board.set_level(CampData.CAMP)
+	_spawn_props()
+	# The roster forms here on a fresh campaign, before the first mission ever
+	# runs, so the squad the player meets in camp is the squad that deploys.
+	Game.ensure_roster(Game.data())
+	_spawn_squad()
+	_build_fixtures()
+	close_button.pressed.connect(_close_modal)
+	choice_a.pressed.connect(_on_choice.bind(0))
+	choice_b.pressed.connect(_on_choice.bind(1))
+	modal.visible = false
+	subtitle_label.text = "%s  -  next: %s" % [
+			_squad_summary(), Levels.LEVELS[Game.current_level].name]
+	_snap_camera()
+	print("[ThinShot] camp: %d soldier(s), next mission %d '%s'" % [
+			Game.roster.size(), Game.current_level + 1,
+			Levels.LEVELS[Game.current_level].name])
+
+
+func _squad_summary() -> String:
+	var alive := 0
+	for soldier: Dictionary in Game.roster:
+		if bool(soldier.alive):
+			alive += 1
+	var pending: int = Game.pending_promotions.size()
+	if pending > 0:
+		return "%d in the squad  -  %d awaiting promotion" % [alive, pending]
+	return "%d in the squad" % alive
+
+
+# ------------------------------------------------------------------ scenery --
+
+
+func _dust_material(cell: Vector2i) -> ShaderMaterial:
+	var span := maxi(board.size.x + board.size.y - 2, 1)
+	var depth := 1.0 - float(cell.x + cell.y) / float(span)
+	var band := clampi(int(depth * float(HAZE_BANDS)), 0, HAZE_BANDS - 1)
+	if not _dust_materials.has(band):
+		var mat := ShaderMaterial.new()
+		mat.shader = PROP_DUST
+		mat.set_shader_parameter("haze",
+				HAZE_MAX * (float(band) + 0.5) / float(HAZE_BANDS))
+		_dust_materials[band] = mat
+	return _dust_materials[band]
+
+
+func _spawn_prop(texture: Texture2D, offset: Vector2, cell: Vector2i,
+		scale := PROP_SCALE) -> Sprite2D:
+	var prop := Sprite2D.new()
+	prop.texture = texture
+	prop.offset = offset
+	prop.scale = scale
+	prop.material = _dust_material(cell)
+	prop.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	prop.position = board.cell_to_global(cell)
+	entities.add_child(prop)
+	return prop
+
+
+func _wall_texture(cell: Vector2i) -> Texture2D:
+	var has_x := board.map_char(cell + Vector2i(1, 0)) == "W" \
+			or board.map_char(cell + Vector2i(-1, 0)) == "W"
+	var has_y := board.map_char(cell + Vector2i(0, 1)) == "W" \
+			or board.map_char(cell + Vector2i(0, -1)) == "W"
+	if has_x and has_y:
+		return WALL_TEX_JUNCTION
+	return WALL_TEX_X_RUN if has_x else WALL_TEX_Y_RUN
+
+
+func _spawn_props() -> void:
+	for y in board.size.y:
+		for x in board.size.x:
+			var cell := Vector2i(x, y)
+			match board.map_char(cell):
+				"#":
+					_spawn_prop(ROCK_TEXTURES[(x * 7 + y * 13) % ROCK_TEXTURES.size()],
+							ROCK_OFFSET, cell)
+				"j":
+					_spawn_prop(JUNK_TEXTURES[(x * 11 + y * 17) % JUNK_TEXTURES.size()],
+							JUNK_OFFSET, cell)
+				"p":
+					_spawn_prop(PLANT_TEXTURES[(x * 5 + y * 23) % PLANT_TEXTURES.size()],
+							PLANT_OFFSET, cell)
+				"W":
+					_spawn_prop(_wall_texture(cell), WALL_OFFSET, cell)
+	for cell: Vector2i in CampData.DRESSING:
+		# Crates are authored at 96px against the 48px everything else uses.
+		_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, cell, Vector2.ONE)
+	for s: Dictionary in CampData.CAMP.structures:
+		_spawn_structure(s)
+
+
+func _spawn_structure(s: Dictionary) -> void:
+	var anchor: Vector2i = s.anchor
+	var size: Vector2i = s.size
+	var front: Vector2i = anchor + size - Vector2i.ONE
+	var still: String = STRUCTURE_DIRS[s.kind] + "/rotations/unknown.png"
+	if not ResourceLoader.exists(still):
+		push_error("[Camp] no art for structure '%s'" % s.kind)
+		return
+	var root := Node2D.new()
+	root.position = board.cell_to_global(front)
+	var spr := Sprite2D.new()
+	spr.texture = load(still)
+	spr.scale = PROP_SCALE
+	spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	spr.material = _dust_material(front)
+	spr.offset = STRUCTURE_OFFSETS[s.kind]
+	spr.position = (board.cell_to_global(anchor) + board.cell_to_global(front)) / 2.0 \
+			- root.position
+	root.add_child(spr)
+	entities.add_child(root)
+
+
+# -------------------------------------------------------------------- squad --
+
+
+## Who the player walks around as. The Team Lead by default, but permadeath
+## never replaces anyone, so fall back to the senior survivor rather than
+## leaving the camp with nobody in it.
+func _avatar_soldier() -> Dictionary:
+	var leads := Game.soldiers_of_kind(Unit.Kind.TEAM_LEAD)
+	if not leads.is_empty():
+		return leads[0]
+	var best := {}
+	for soldier: Dictionary in Game.roster:
+		if not bool(soldier.alive):
+			continue
+		if best.is_empty() or int(soldier.rank) > int(best.rank):
+			best = soldier
+	return best
+
+
+func _make_unit(soldier: Dictionary, cell: Vector2i) -> Unit:
+	var unit: Unit = UNIT_SCENE.instantiate()
+	entities.add_child(unit)
+	unit.setup(int(soldier.get("kind", Unit.Kind.TEAM_LEAD)), cell)
+	unit.apply_progression(soldier)
+	# Off duty: no pips, no wedge, no rank flashes - just a person and a shadow.
+	unit.show_combat_hud = false
+	unit.position = board.cell_to_global(cell)
+	unit.queue_redraw()
+	return unit
+
+
+func _spawn_squad() -> void:
+	var avatar := _avatar_soldier()
+	if avatar.is_empty():
+		push_error("[Camp] no living soldier to play as")
+		return
+	player = _make_unit(avatar, CampData.PLAYER_SPAWN)
+	player.set_facing(Vector2(0, 1))  # face the camera at rest
+	var slot := 0
+	for soldier: Dictionary in Game.roster:
+		if not bool(soldier.alive) or int(soldier.id) == int(avatar.id):
+			continue
+		if slot >= CampData.SQUAD_SPOTS.size():
+			break
+		# Distinct cells matter: setup() seeds the idle clock from the cell, so
+		# identical cells would have the whole squad breathing in lockstep.
+		var cell: Vector2i = CampData.SQUAD_SPOTS[slot]
+		var unit := _make_unit(soldier, cell)
+		unit.set_facing(Vector2(0, 1))
+		fixtures.append({
+			"kind": "soldier", "cell": cell,
+			"pos": board.cell_to_global(cell),
+			"label": Game.soldier_label(soldier), "id": int(soldier.id),
+		})
+		slot += 1
+
+
+func _build_fixtures() -> void:
+	fixtures.append({
+		"kind": "briefing", "cell": CampData.BRIEFING_TABLE,
+		"pos": board.cell_to_global(CampData.BRIEFING_TABLE),
+		"label": "the briefing table", "id": 0,
+	})
+	fixtures.append({
+		"kind": "stores", "cell": CampData.STORES_TENT,
+		"pos": board.cell_to_global(CampData.STORES_TENT),
+		"label": "the stores tent", "id": 0,
+	})
+	# A marker so the two fixtures read as places rather than bare ground.
+	_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, CampData.BRIEFING_TABLE, Vector2.ONE)
+
+
+# ----------------------------------------------------------------- movement --
+
+
+func _walk_input() -> Vector2:
+	return Input.get_vector("walk_left", "walk_right", "walk_up", "walk_down")
+
+
+## Try to move along one axis. Refused if the destination cell is not walkable,
+## so running into a wall slides along it instead of sticking.
+func _try_step(delta_pos: Vector2) -> void:
+	if delta_pos == Vector2.ZERO:
+		return
+	var candidate := player.position + delta_pos
+	var cell := board.global_to_cell(candidate)
+	if not board.in_bounds(cell) or not board.is_walkable(cell):
+		return
+	player.position = candidate
+	player.cell = cell
+
+
+func _process(delta: float) -> void:
+	if player == null:
+		return
+	var dir := Vector2.ZERO if modal.visible else _walk_input()
+	if dir != Vector2.ZERO:
+		var velocity := Vector2(dir.x, dir.y * ISO_SQUASH).normalized() \
+				* WALK_SPEED * Vector2(1.0, ISO_SQUASH)
+		# One axis at a time so a wall only blocks the axis that hits it.
+		_try_step(Vector2(velocity.x * delta, 0.0))
+		_try_step(Vector2(0.0, velocity.y * delta))
+		player.set_facing(velocity)
+		# start_walking() resets the animation clock, so calling it every frame
+		# would freeze the cycle on frame 0.
+		if player.anim != Unit.Anim.WALK:
+			player.start_walking()
+	else:
+		player.stop_walking()
+	_follow_camera()
+	_update_prompt()
+
+
+# ------------------------------------------------------------------ camera --
+
+
+## The camp's extent in world space, used to keep the view inside the walls.
+func _world_rect() -> Rect2:
+	var half_w := Board.TILE_W / 2.0
+	var half_h := Board.TILE_H / 2.0
+	var min_x := (0 - (board.size.y - 1)) * half_w - half_w
+	var max_x := (board.size.x - 1) * half_w + half_w
+	var max_y := (board.size.x - 1 + board.size.y - 1) * half_h + half_h
+	var origin := board.to_global(Vector2(min_x, -half_h))
+	return Rect2(origin, Vector2(max_x - min_x, max_y + half_h))
+
+
+func _clamped_camera(target: Vector2) -> Vector2:
+	var rect := _world_rect()
+	var view := get_viewport_rect().size / camera.zoom
+	var out := target
+	# When the camp is smaller than the view on an axis, centre it instead of
+	# clamping to an inverted range.
+	if rect.size.x <= view.x:
+		out.x = rect.position.x + rect.size.x / 2.0
+	else:
+		out.x = clampf(out.x, rect.position.x + view.x / 2.0,
+				rect.end.x - view.x / 2.0)
+	if rect.size.y <= view.y:
+		out.y = rect.position.y + rect.size.y / 2.0
+	else:
+		out.y = clampf(out.y, rect.position.y + view.y / 2.0,
+				rect.end.y - view.y / 2.0)
+	return out
+
+
+func _snap_camera() -> void:
+	camera.position = _clamped_camera(player.position if player != null else Vector2.ZERO)
+
+
+func _follow_camera() -> void:
+	camera.position = camera.position.lerp(_clamped_camera(player.position), 0.16)
+
+
+# ------------------------------------------------------------- interaction --
+
+
+func _nearest_fixture() -> Dictionary:
+	var best := {}
+	var best_d := INTERACT_RANGE
+	for fixture: Dictionary in fixtures:
+		var d: float = player.position.distance_to(fixture.pos)
+		if d < best_d:
+			best_d = d
+			best = fixture
+	return best
+
+
+func _prompt_for(fixture: Dictionary) -> String:
+	match fixture.kind:
+		"soldier":
+			for promotion: Dictionary in Game.pending_promotions:
+				if int(promotion.id) == int(fixture.id):
+					return "E  -  promote %s" % fixture.label
+			return "E  -  speak to %s" % fixture.label
+		"briefing":
+			return "E  -  orders and deploy"
+		"stores":
+			return "E  -  stores: %d frag / %d smoke" % [Game.frags, Game.smokes]
+	return ""
+
+
+func _update_prompt() -> void:
+	if modal.visible:
+		prompt_label.text = ""
+		return
+	_focus = _nearest_fixture()
+	prompt_label.text = "" if _focus.is_empty() else _prompt_for(_focus)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("cancel") and modal.visible:
+		_close_modal()
+		return
+	if not event.is_action_pressed("interact") or modal.visible:
+		return
+	if _focus.is_empty():
+		return
+	match _focus.kind:
+		"soldier":
+			_open_soldier(int(_focus.id))
+		"briefing":
+			_open_briefing()
+		"stores":
+			_open_stores()
+
+
+# ------------------------------------------------------------------- modal --
+
+
+func _open_modal(title: String, body: String, a := "", b := "") -> void:
+	modal_title.text = title
+	modal_body.text = body
+	choice_a.text = a
+	choice_b.text = b
+	choice_a.visible = not a.is_empty()
+	choice_b.visible = not b.is_empty()
+	modal.visible = true
+	player.stop_walking()
+
+
+func _close_modal() -> void:
+	modal.visible = false
+	_choice_action = ""
+	_choice_args = []
+	subtitle_label.text = "%s  -  next: %s" % [
+			_squad_summary(), Levels.LEVELS[Game.current_level].name]
+
+
+func _open_soldier(id: int) -> void:
+	var soldier := Game.soldier_by_id(id)
+	if soldier.is_empty():
+		return
+	var xp: int = int(soldier.xp)
+	var to_next := Game.xp_to_next(xp)
+	var perks: Array = soldier.perks
+	var lines: Array[String] = [
+		Unit.kind_role_name(int(soldier.kind)),
+		"%s  -  %d xp%s" % [Game.rank_title(int(soldier.rank)), xp,
+				"" if to_next < 0 else "  (%d to the next rank)" % to_next],
+	]
+	if perks.is_empty():
+		lines.append("No specialty yet.")
+	else:
+		var names: Array[String] = []
+		for perk: String in perks:
+			names.append("%s - %s" % [Game.PERKS[perk].name, Game.PERKS[perk].blurb])
+		lines.append_array(names)
+	# A promotion waiting on this soldier turns the record into the choice.
+	for promotion: Dictionary in Game.pending_promotions:
+		if int(promotion.id) != id:
+			continue
+		var rank := int(promotion.rank)
+		var choices: Array = Game.PERK_RANKS[rank]
+		lines.append("")
+		lines.append("PROMOTED TO %s - choose a specialty." % Game.rank_title(rank).to_upper())
+		_choice_action = "perk"
+		_choice_args = [id, rank, choices]
+		var a: Dictionary = Game.PERKS[choices[0]]
+		var b: Dictionary = Game.PERKS[choices[1]]
+		_open_modal(Game.soldier_label(soldier), "\n".join(lines),
+				"%s\n%s" % [str(a.name).to_upper(), a.blurb],
+				"%s\n%s" % [str(b.name).to_upper(), b.blurb])
+		return
+	_open_modal(Game.soldier_label(soldier), "\n".join(lines))
+
+
+func _open_stores() -> void:
+	_choice_action = "loadout"
+	_choice_args = []
+	var body := "The squad carries %d pieces of ordnance between them.\n\n" % Game.LOADOUT_SLOTS \
+			+ "Carrying %d frag and %d smoke." % [Game.frags, Game.smokes]
+	_open_modal("STORES TENT", body,
+			"MORE FRAGS\nTake one smoke off the rack", "MORE SMOKE\nPut one frag back")
+
+
+func _open_briefing() -> void:
+	var level: Dictionary = Levels.LEVELS[Game.current_level]
+	_choice_action = "deploy"
+	_choice_args = []
+	var body := "%s\n\n%s\n\nORDERS:  %s" % [
+			level.get("fiction", ""), level.get("briefing", ""),
+			level.get("orders", "")]
+	_open_modal("MISSION %d - %s" % [Game.current_level + 1, level.name], body,
+			"DEPLOY\nTake the squad out", "")
+
+
+func _on_choice(slot: int) -> void:
+	match _choice_action:
+		"perk":
+			var id: int = int(_choice_args[0])
+			var choices: Array = _choice_args[2]
+			Game.choose_perk(id, choices[slot])
+			# Spend the queued promotion so it is not offered twice.
+			for i in Game.pending_promotions.size():
+				var p: Dictionary = Game.pending_promotions[i]
+				if int(p.id) == id and int(p.rank) == int(_choice_args[1]):
+					Game.pending_promotions.remove_at(i)
+					break
+			_close_modal()
+			_open_soldier(id)
+		"loadout":
+			Game.set_loadout(Game.frags + (1 if slot == 0 else -1))
+			_open_stores()  # reopen so the numbers update in place
+		"deploy":
+			print("[ThinShot] deploying to level %d" % (Game.current_level + 1))
+			Game.go_to_battle()

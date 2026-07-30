@@ -166,8 +166,6 @@ const SUSTAIN_VOLUME := -13.0
 # Thrown ordnance - the squad's edge, and the one thing the Choir has no
 # answer to. Carried as a shared pool rather than per soldier, so the decision
 # is "is this the moment" rather than "which pocket".
-const FRAG_CHARGES := 2
-const SMOKE_CHARGES := 2
 const THROW_RANGE := 4       # tiles from the thrower, needs line of sight
 # Half-width of the square a grenade covers: 1 gives the 3x3 footprint.
 const BLAST_RADIUS := 1
@@ -210,8 +208,9 @@ var fx_air: Fx = null
 var fx_glow: Fx = null
 var objective_marks: ObjectiveMarks = null
 # Squad ordnance, shared across all five soldiers and spent for the battle.
-var frags_left := FRAG_CHARGES
-var smokes_left := SMOKE_CHARGES
+# Set at the camp's stores tent, not here - the split is the player's call.
+var frags_left := Game.frags
+var smokes_left := Game.smokes
 # Live smoke: cell -> player turns remaining.
 var smoke: Dictionary = {}
 var _smoke_puff_accum := 0.0
@@ -266,12 +265,6 @@ var _suppress_in_volley := 0
 @onready var briefing_body_label: Label = $UI/Briefing/BodyLabel
 @onready var briefing_orders_label: Label = $UI/Briefing/OrdersLabel
 @onready var briefing_begin_button: Button = $UI/Briefing/BeginButton
-@onready var promotion_panel: ColorRect = $UI/Promotion
-@onready var promotion_title_label: Label = $UI/Promotion/TitleLabel
-@onready var promotion_role_label: Label = $UI/Promotion/RoleLabel
-@onready var promotion_prompt_label: Label = $UI/Promotion/PromptLabel
-@onready var promotion_a_button: Button = $UI/Promotion/PerkAButton
-@onready var promotion_b_button: Button = $UI/Promotion/PerkBButton
 
 
 func _ready() -> void:
@@ -322,8 +315,6 @@ func _ready() -> void:
 	_sync_throw_buttons()
 	danger_button.toggled.connect(_on_danger_button_toggled)
 	restart_button.pressed.connect(_on_restart)
-	promotion_a_button.pressed.connect(_on_promotion_chosen.bind(0))
-	promotion_b_button.pressed.connect(_on_promotion_chosen.bind(1))
 	briefing_begin_button.pressed.connect(_dismiss_briefing)
 	# Hotkeys/buttons cover the first 3 levels; extend the level_N input
 	# actions and this button row alongside any new Levels.LEVELS entries.
@@ -2700,17 +2691,16 @@ func _show_game_over(text: String, won: bool) -> void:
 	narrative_label.text = str(level.get("debrief", "")) if won else ""
 	debrief_label.text = _debrief_text(won)
 	if not won:
-		restart_button.text = "Retry"
+		restart_button.text = "Back to Camp"
 	elif Game.is_last_level():
 		restart_button.text = "Play Again"
 	else:
-		restart_button.text = "Next Level"
+		restart_button.text = "Back to Camp"
 	game_over_panel.visible = true
 	Sfx.play("win" if won else "lose", 0.0, 0.0)
-	# Perk choices are taken first: the promotion panel covers the game-over
-	# buttons until the queue is empty, so nobody can click Next Level past a
-	# pick they were owed.
-	_advance_promotions()
+	if not Game.pending_promotions.is_empty():
+		debrief_label.text += "\n\n%d PROMOTION(S) TO HAND OUT BACK AT CAMP" % \
+				Game.pending_promotions.size()
 
 
 ## The panel's second row: role for anyone, plus rank progress and earned
@@ -2781,74 +2771,10 @@ func _dismiss_briefing() -> void:
 		player_turn_ready_msec = Time.get_ticks_msec()
 
 
-## The unit still standing on the board for a roster soldier, if any. Only
-## survivors are promoted, so this normally resolves.
-func _unit_for_soldier(id: int) -> Unit:
-	for unit in living_units(Unit.TEAM_SCOUT):
-		if unit.soldier_id == id:
-			return unit
-	return null
-
-
-## Which job this soldier does, and the numbers the choice actually turns on -
-## Sprinter means something very different to a move-3 machinegunner than to a
-## move-5 scout, and without the role on screen there is no way to tell them
-## apart by name.
-func _promotion_role_text(soldier: Dictionary) -> String:
-	var role := Unit.kind_role_name(int(soldier.kind)).to_upper()
-	var unit := _unit_for_soldier(int(soldier.id))
-	if unit == null:
-		return role
-	var parts: Array[String] = [role,
-			"MOVE %d" % unit.move_range,
-			"RNG %d" % unit.attack_range,
-			"ACC %d%%" % unit.accuracy]
-	for perk: String in unit.perks:
-		parts.append(str(Game.PERKS[perk].name).to_upper())
-	return "  -  ".join(parts)
-
-
-## Show the next queued perk choice, or hand control back to the game-over
-## panel once every promotion has been spent.
-func _advance_promotions() -> void:
-	if Game.pending_promotions.is_empty():
-		promotion_panel.visible = false
-		return
-	var promotion: Dictionary = Game.pending_promotions[0]
-	var soldier := Game.soldier_by_id(int(promotion.id))
-	if soldier.is_empty():
-		Game.pending_promotions.pop_front()
-		_advance_promotions()
-		return
-	var rank := int(promotion.rank)
-	var choices: Array = Game.PERK_RANKS[rank]
-	# The title carries the rank they finished the mission on; the prompt names
-	# the specific promotion this choice belongs to, which are different
-	# whenever someone jumps two ranks in one mission.
-	promotion_title_label.text = Game.soldier_label(soldier)
-	promotion_role_label.text = _promotion_role_text(soldier)
-	promotion_prompt_label.text = "PROMOTED TO %s - CHOOSE A SPECIALTY" % \
-			Game.rank_title(rank).to_upper()
-	var buttons: Array[Button] = [promotion_a_button, promotion_b_button]
-	for i in buttons.size():
-		var perk: String = choices[i]
-		var info: Dictionary = Game.PERKS[perk]
-		buttons[i].text = "%s\n%s" % [str(info.name).to_upper(), info.blurb]
-	promotion_panel.visible = true
-
-
-func _on_promotion_chosen(slot: int) -> void:
-	if Game.pending_promotions.is_empty():
-		return
-	var promotion: Dictionary = Game.pending_promotions.pop_front()
-	var choices: Array = Game.PERK_RANKS[int(promotion.rank)]
-	Game.choose_perk(int(promotion.id), choices[slot])
-	debrief_label.text = _debrief_text(true)
-	_advance_promotions()
-
-
+## Leave the battlefield. Promotions earned here are spent back at camp, face
+## to face with the soldier who earned them, so this screen only has to report
+## and hand back.
 func _on_restart() -> void:
-	Engine.time_scale = 1.0  # never carry a hit-stop across a reload
 	if last_result_won:
 		if Game.is_last_level():
 			# The campaign loops, so the squad starts over with it.
@@ -2856,14 +2782,13 @@ func _on_restart() -> void:
 			Game.select_level(0)
 		else:
 			Game.select_level(Game.current_level + 1)
-	get_tree().reload_current_scene()
+	Game.go_to_camp()
 
 
 func _go_to_level(index: int) -> void:
-	Engine.time_scale = 1.0
 	Game.abort_mission()  # jumping away mid-mission banks nothing
 	Game.select_level(index)
-	get_tree().reload_current_scene()
+	Game.go_to_battle()
 
 
 # Fixed offsets keep the shake deterministic and always settle back to zero.

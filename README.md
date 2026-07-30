@@ -101,6 +101,25 @@ Which is why each map asks for something different:
 Your scouts are elite — tougher, faster, longer-ranged — but the Choir has
 numbers and holds the ground.
 
+## Base camp
+
+The campaign opens in camp and returns there between every mission, won or
+lost. It is **real time and directly controlled** — you walk the Scout Team
+Lead around with **WASD or the arrows**, and press **E** at anything worth
+using:
+
+- **Your squad** stand around the camp. Walk up to one to read their record —
+  rank, XP, specialties — and if they earned a promotion on the last mission,
+  **you choose their specialty here**, face to face, rather than on a screen
+  that interrupts the debrief.
+- **The stores tent** holds the squad's ordnance. Four pieces between them,
+  split however you like: four frags and no smoke, one and three, or the 2/2
+  the squad carried before there was anywhere to change it.
+- **The briefing table** gives the next mission's orders and deploys you.
+
+If the Team Lead falls, the senior surviving soldier takes over as the one you
+walk around as — permadeath never replaces anyone, so somebody always has to.
+
 ## The squad
 
 The five soldiers are **named, and they are the same five from one mission to
@@ -320,17 +339,21 @@ even when a scene fails to compile, so grep the output for `SCRIPT ERROR`
 rather than trusting the exit code alone:
 
 ```
-godot --headless --path . --quit-after 200
-godot --headless --path . --quit-after 200 -- --level 2   # boot straight into a level
+godot --headless --path . --quit-after 200                        # the camp
+godot --headless --path . res://scenes/Battle.tscn --quit-after 200
+godot --headless --path . res://scenes/Battle.tscn --quit-after 200 -- --level 2
 ```
 
 ## Project layout
 
 ```
 scenes/
-  Battle.tscn     # main scene: board, camera, y-sorted entities, UI
+  Camp.tscn       # main scene: the real-time base camp between missions
+  Battle.tscn     # a mission: board, camera, y-sorted entities, UI
   Unit.tscn       # one combatant (Node2D + Sprite2D)
 scripts/
+  Camp.gd         # camp: walk controller, follow camera, squad, fixtures
+  CampData.gd     # the camp's map, fixture spots + boot validator
   Battle.gd       # controller: turn state machine, input, AI, campaign flow
   Board.gd        # grid: iso math, BFS, LOS/cover traces, tile/highlight drawing
   Unit.gd         # combatant: stats, animation state machine, damage, pips

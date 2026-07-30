@@ -494,6 +494,10 @@ var sprite_offset := SPRITE_OFFSET
 # Board.CoverLevel of the cell this unit is standing on, as a plain int so
 # Unit stays independent of Board. 0 = none, 1 = half, 2 = full.
 var cover_level := 0
+# Every combat marking - pips, wedge, rank, cover bars, status chevrons - hangs
+# off this. Outside a battle a unit is a person standing in a camp, and all of
+# it is noise; only the contact shadow survives.
+var show_combat_hud := true
 var _body_tween: Tween = null
 var _marker_tween: Tween = null
 
@@ -1232,6 +1236,8 @@ func _draw() -> void:
 	_draw_shadow()
 	if hp <= 0:
 		return  # corpses carry no pips, rings, or markers
+	if not show_combat_hud:
+		return  # walking around camp: a soldier, not a game piece
 	_draw_facing_wedge()
 	if selected:
 		# Ground ellipse at the unit's feet, matching the isometric 2:1 view.

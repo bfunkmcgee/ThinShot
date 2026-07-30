@@ -163,6 +163,10 @@ var cover_dests: Dictionary = {}
 # sit on the sand with nothing under them and read as pasted on.
 var prop_shadows: Dictionary = {}
 
+# The tile outline reads as a tactical grid, which is right in a battle and
+# wrong in a camp you simply walk around.
+var show_grid := true
+
 # Fuel drums the selected unit could put a round into. Drawn hotter than an
 # attack tile so a hazard never reads as an enemy.
 var hazard_cells: Dictionary = {}
@@ -625,9 +629,10 @@ func _draw() -> void:
 			draw_texture_rect_region(FLOOR_SHEET, dest, region, info.shade)
 			if info.flip:
 				draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-			var outline := _diamond(cell)
-			outline.append(outline[0])
-			draw_polyline(outline, GRID_LINE, 1.5, true)
+			if show_grid:
+				var outline := _diamond(cell)
+				outline.append(outline[0])
+				draw_polyline(outline, GRID_LINE, 1.5, true)
 	# Prop shadows sit above the floor but below every gameplay overlay.
 	for y in size.y:
 		for x in size.x:
