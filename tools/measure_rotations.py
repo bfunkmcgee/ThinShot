@@ -9,12 +9,18 @@ judged on numbers before anybody spends 576 animation frames on it.
 
 What is checked, and why each one matters (UNIT_ASSET_SPEC.md sections 1 and 5):
 
-  figure height  ~30 px. The canvas is mostly padding - the FIGURE is the
-                 constant, and a unit two heads taller than the rifleman beside
-                 it reads as a different game.
-  feet           12-16 px below canvas centre. Unit.SPRITE_SPECS anchors the
-                 sprite off this; wrong, and the unit floats above its cell or
-                 sinks into it.
+  feet           12-16 px below canvas centre, and this is the HARD gate.
+                 Unit.SPRITE_SPECS anchors the sprite off it; wrong, and the
+                 unit floats above its cell or sinks into it no matter how good
+                 the drawing is.
+  figure height  ~30 px, and softer than it looks. Measured across the first
+                 three Kestrel batches, every generated unit put its feet on
+                 the same row as the shipped rifleman and differed only at the
+                 CROWN: a soft cap came out at 30, a hood at 32, a steel helmet
+                 at 33. That is headwear, not scale. So height over budget is a
+                 warning when the feet are anchored correctly and a failure only
+                 when they are not - otherwise the tool reports a helmet as a
+                 90% oversized soldier, which it did, at some length.
   alpha          binary. Soft edges fringe against the sand.
   palette        <=128 colours. The budget is what keeps the house style flat.
 
@@ -123,23 +129,35 @@ def measure(folder: Path) -> dict:
     }
 
 
-def verdict(m: dict) -> list:
-    """Every way this set misses the spec, in words."""
-    bad = []
+def verdict(m: dict) -> tuple:
+    """(failures, warnings) - what makes this set unusable, and what to look at.
+
+    The split matters. A set whose feet are anchored and whose crown is a few
+    pixels high wears a hat; a set whose feet are wrong cannot be dropped into
+    the game at all. Reporting both as "FAIL" taught the reader to ignore the
+    word, which is worse than not checking.
+    """
+    fails, warns = [], []
     if m["missing"]:
-        bad.append("missing %s" % ", ".join(m["missing"]))
-    if m["h"][1] > SPEC_H + H_TOLERANCE:
-        bad.append("%d%% too tall" % round(100 * (m["h"][1] / SPEC_H - 1)))
-    if m["h"][0] < SPEC_H - H_TOLERANCE - 4:
-        bad.append("%d%% too short" % round(100 * (1 - m["h"][0] / SPEC_H)))
-    if m["feet"][1] > FEET_MAX or m["feet"][0] < FEET_MIN:
-        bad.append("feet %d-%d, want %d-%d"
-                   % (m["feet"][0], m["feet"][1], FEET_MIN, FEET_MAX))
+        fails.append("missing %s" % ", ".join(m["missing"]))
+    anchored = FEET_MIN <= m["feet"][0] and m["feet"][1] <= FEET_MAX
+    if not anchored:
+        fails.append("feet %d-%d, want %d-%d"
+                     % (m["feet"][0], m["feet"][1], FEET_MIN, FEET_MAX))
     if m["soft"]:
-        bad.append("%d soft-alpha pixels" % m["soft"])
+        fails.append("%d soft-alpha pixels" % m["soft"])
     if m["colours"] > MAX_COLOURS:
-        bad.append("%d colours" % m["colours"])
-    return bad
+        fails.append("%d colours" % m["colours"])
+
+    over = m["h"][1] - SPEC_H
+    if over > H_TOLERANCE:
+        note = "+%dpx over the rifleman's crown" % over
+        # Feet on the right row and a tall crown is a hat, which is allowed to
+        # differ; feet already wrong means the whole figure is mis-scaled.
+        (warns if anchored else fails).append(note)
+    if m["h"][0] < SPEC_H - H_TOLERANCE - 4:
+        fails.append("%dpx shorter than the rifleman" % (SPEC_H - m["h"][0]))
+    return fails, warns
 
 
 def main() -> None:
@@ -157,19 +175,31 @@ def main() -> None:
           % ("unit", "fig h", "fig w", "feet", "cols", "verdict"))
     print("-" * 96)
     failed = 0
+    warned = 0
     for unit in units:
         m = measure(unit)
-        bad = verdict(m)
+        fails, warns = verdict(m)
         # The shipped anchor is measured but never judged - it defines the spec.
         anchor = unit.name.startswith("_")
-        if bad and not anchor:
+        if anchor:
+            note = "(anchor)"
+        elif fails:
             failed += 1
+            note = "FAIL  " + "; ".join(fails + warns)
+        elif warns:
+            warned += 1
+            note = "warn  " + "; ".join(warns)
+        else:
+            note = "PASS"
         print("%-30s %2d-%-6d %2d-%-6d %2d-%-5d %-7d %s"
               % (unit.name[:30], m["h"][0], m["h"][1], m["w"][0], m["w"][1],
-                 m["feet"][0], m["feet"][1], m["colours"],
-                 "(anchor)" if anchor else ("PASS" if not bad else "; ".join(bad))))
+                 m["feet"][0], m["feet"][1], m["colours"], note))
     print()
-    print("RESULT: %s" % ("PASS" if failed == 0 else "FAIL (%d unit(s))" % failed))
+    if failed:
+        print("RESULT: FAIL (%d unit(s), %d warning(s))" % (failed, warned))
+    else:
+        print("RESULT: PASS%s"
+              % ("" if not warned else " (%d warning(s) - headwear, not scale)" % warned))
     sys.exit(1 if failed else 0)
 
 

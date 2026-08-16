@@ -53,8 +53,9 @@ def canvas_of(folder: Path) -> int:
 def unit_block(unit: Path, anchor: Path | None) -> str:
     m = measure(unit)
     is_anchor = unit.name.startswith("_")
-    bad = [] if is_anchor else verdict(m)
-    state = "anchor" if is_anchor else ("pass" if not bad else "flag")
+    fails, warns = ([], []) if is_anchor else verdict(m)
+    state = ("anchor" if is_anchor
+             else ("flag" if fails else ("warn" if warns else "pass")))
     canvas = canvas_of(unit)
 
     cells = []
@@ -80,7 +81,8 @@ def unit_block(unit: Path, anchor: Path | None) -> str:
         '<li>%s alpha</li>' % ("binary" if not m["soft"] else "%d soft" % m["soft"]),
         '<li><b>%d&times;%d</b> canvas</li>' % (canvas, canvas),
     ]
-    tag = ("anchor" if is_anchor else ("on spec" if not bad else "; ".join(bad)))
+    tag = ("anchor" if is_anchor
+           else ("on spec" if not (fails or warns) else "; ".join(fails + warns)))
     title = unit.name.lstrip("_").replace("_", " ")
     return (
         '<article class="unit %s" data-canvas="%d">'
@@ -138,6 +140,8 @@ button:focus-visible{outline:2px solid var(--dust);outline-offset:2px}
   margin:0 0 .9rem}
 .unit.pass{border-left-color:var(--olive)}
 .unit.flag{border-left-color:var(--dust)}
+.unit.warn{border-left-color:var(--slate)}
+.pill.warn{color:var(--slate);border-color:var(--slate)}
 .unit.anchor{border-left-color:var(--slate)}
 .unit h2{margin:0;font-size:1rem;font-weight:650;display:flex;
   align-items:center;gap:.55rem;flex-wrap:wrap}
