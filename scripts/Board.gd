@@ -7,6 +7,13 @@ extends Node2D
 
 const TILE_W := 128
 const TILE_H := 60
+## Texel-density doctrine: the camera never zooms past 1.0, where a floor
+## texel is exactly one screen pixel and the 2x-class props and units land on
+## exact 2x2 pixel blocks. Above 1.0 nearest-neighbour has to invent pixels
+## and every sprite goes lumpy; below it the eighths snap keeps the grid
+## stable. Battle and Camp both clamp to this, so the two scenes share one
+## density and a soldier is the same size on screen at home as in the fight.
+const MAX_ZOOM := 1.0
 
 ## What a cell means for movement and shooting.
 ##
@@ -37,6 +44,15 @@ const FLOOR_SHEETS := {
 }
 const DEFAULT_FLOOR := "desert"
 
+## Connectable road sheets, one per floor that has shipped one. The `.tiles.json`
+## sidecar beside each is an edge-mode set (TileCatalog.load_road_for): sixteen
+## 128x60 faces indexed by which of the cell's four grid edges the road
+## continues across. A floor with no entry simply cannot paint roads yet.
+const ROAD_SHEETS := {
+	"desert": preload(
+			"res://assets/Tiles/Environments/Desert/Desert_road.png"),
+}
+
 ## How each ground reads, and what the air over it does to everything standing
 ## on it. Without this every board is lit like the desert one: the dust shader
 ## warm-shifts props toward sand and hazes them toward a tan horizon, which is
@@ -59,40 +75,83 @@ const DEFAULT_FLOOR := "desert"
 ##           minimum of 2 cells between accents a board that size saturates at
 ##           4-8 of them and the rate never gets to bind at all. The rate is
 ##           kept per-sheet regardless, because it is what governs a bigger map.
+## Distance haze, shared between the floor and everything standing on it. The
+## board's depth is quantised into a few bands so the whole scene needs only a
+## handful of prop materials, and the FloorLayer paints the ground with the
+## same numbers - one atmosphere, not three separately graded populations.
+## Battle and Camp read these rather than keeping their own copies.
+const HAZE_BANDS := 5
+const HAZE_MAX := 0.20
+
 const FLOOR_MOODS := {
 	"desert": {
-		"tint": Vector3(1.04, 0.99, 0.90),
-		"haze": Vector3(0.80, 0.71, 0.55),
-		"shadow": Color(0.16, 0.10, 0.06),
+		# Re-derived 2026-08 for the promoted 18-slot sheet. The muted palette
+		# sits at the same luminance as the old art (lum 146 vs 146, so the
+		# gain holds at 1.00) but carries far less orange: the warm push, the
+		# sand haze and the shadow hue all relax with it. The old hand-tuned
+		# values were (1.04, 0.99, 0.90) / (0.80, 0.71, 0.55) /
+		# (0.16, 0.10, 0.06). tools/derive_floor_mood.gd reprints this block
+		# for any sheet using the same math.
+		"tint": Vector3(1.03, 1.00, 0.95),
+		"haze": Vector3(0.72, 0.67, 0.61),
+		"shadow": Color(0.13, 0.11, 0.09),
 		"shadow_gain": 1.00,
-		"accent": 0.07,
-		"spacing": 2,
-	},
-	"salt": {
-		"tint": Vector3(1.01, 1.00, 0.98),
-		"haze": Vector3(0.72, 0.70, 0.67),
-		"shadow": Color(0.13, 0.12, 0.11),
-		"shadow_gain": 0.96,
 		"accent": 0.06,
 		"spacing": 2,
 	},
-	"ash": {
-		# Neutral grey ground wants no hue push at all - only the desaturation
-		# and the haze, both of which stay grey.
-		"tint": Vector3(1.00, 1.00, 1.00),
-		"haze": Vector3(0.50, 0.49, 0.49),
-		"shadow": Color(0.08, 0.08, 0.08),
-		"shadow_gain": 1.50,
+	"salt": {
+		# Re-derived 2026-08-14 for the promoted 18-slot sheet, taken as the
+		# recipe printed it (like desert/compound; shipped salt already matched
+		# the recipe exactly). The rebuilt pan sits at lum 152.9 vs ref 146.5,
+		# so the gain holds at the recipe 0.96; tint/haze/shadow move a final
+		# digit with the slightly warmer beige mean. Accents back way off: the
+		# new zone0 powder pan is nearly featureless (base contrast 2.8, was
+		# the old sheet's ~5; accent/base ratio 5.19, was 3.0), so the brine
+		# pool and nodules read much louder and want ash-like sparseness. Old
+		# values: (1.01, 1.00, 0.98) / (0.72, 0.70, 0.67) / (0.13, 0.12, 0.11)
+		# / 0.96 / 0.06 / 2. tools/derive_floor_mood.gd reprints this block.
+		"tint": Vector3(1.01, 1.00, 0.99),
+		"haze": Vector3(0.71, 0.70, 0.68),
+		"shadow": Color(0.12, 0.12, 0.11),
+		"shadow_gain": 0.96,
 		"accent": 0.04,
 		"spacing": 4,
 	},
-	"compound": {
-		"tint": Vector3(1.01, 1.00, 0.97),
-		"haze": Vector3(0.68, 0.66, 0.62),
-		"shadow": Color(0.12, 0.11, 0.10),
-		"shadow_gain": 1.08,
+	"ash": {
+		# Re-derived 2026-08 for the promoted 18-slot sheet (lum 103, barely
+		# moved from the old art, so the ground stays a dark bowl). Two
+		# hand-tunings survive on purpose, keeping the cold-dead intent: tint
+		# stays exactly neutral (the recipe printed 1.01 red - that is the new
+		# warm grit bleeding into the mean; the grit may be warm, the AIR
+		# stays cold) and haze keeps the deliberate ~10% burnt-bowl darkening
+		# (recipe printed 0.56, 0.55, 0.55). shadow_gain keeps its in-engine
+		# readability nudge (recipe 1.43; it was 1.44 before). Accent cadence
+		# follows the new sheet: the rebuilt accents shout less over the drift
+		# (ratio 3.15, was 4.6), so they can come slightly denser. Old values:
+		# (1.00, 1.00, 1.00) / (0.50, 0.49, 0.49) / (0.08, 0.08, 0.08) /
+		# 1.50 / 0.04 / 4. tools/derive_floor_mood.gd reprints the raw recipe.
+		"tint": Vector3(1.00, 1.00, 1.00),
+		"haze": Vector3(0.50, 0.50, 0.50),
+		"shadow": Color(0.08, 0.08, 0.08),
+		"shadow_gain": 1.50,
 		"accent": 0.05,
 		"spacing": 3,
+	},
+	"compound": {
+		# Re-derived 2026-08 for the promoted 18-slot sheet, taken as the
+		# recipe printed it (like desert). The rebuilt concrete sits a touch
+		# brighter (lum 139.5 vs ref 146.5), so the gain relaxes to the recipe
+		# 1.05 - the old 1.08 carried a hand-nudge tuned against the previous
+		# art. Accents ease off: the new zone0 poured slabs are much flatter
+		# (accent/base ratio 7.9, was 3.2), so accents read louder and want
+		# more spacing. Old values: (1.01, 1.00, 0.97) / (0.68, 0.66, 0.62) /
+		# (0.12, 0.11, 0.10) / 1.08 / 0.05 / 3.
+		"tint": Vector3(1.01, 1.00, 0.98),
+		"haze": Vector3(0.67, 0.66, 0.64),
+		"shadow": Color(0.11, 0.11, 0.10),
+		"shadow_gain": 1.05,
+		"accent": 0.04,
+		"spacing": 4,
 	},
 }
 
@@ -137,6 +196,7 @@ const SHEET_REGIONS := {
 
 # Tile families by terrain zone (indices into TILE_REGIONS), carved out of
 # the map by smooth noise so neighboring cells read as one terrain patch.
+const ZONE_NOISE_FREQ := 0.17
 const ZONE_FAMILIES: Array = [
 	[8, 9],     # 0: sandy wash
 	[0, 1, 2],  # 1: lightly cracked hardpan
@@ -165,6 +225,10 @@ const SHADOW_RADII := {
 }
 
 const GRID_LINE := Color(0.35, 0.27, 0.15, 0.25)
+# Corner ticks on route-only cells: the quiet remnant of the full lattice,
+# shown exactly where a movement decision is being made.
+const GRID_TICK := Color(0.35, 0.27, 0.15, 0.5)
+const GRID_TICK_LEN := 6.0
 const MOVE_HL := Color(0.95, 0.85, 0.3, 0.35)
 const ATTACK_HL := Color(0.9, 0.2, 0.15, 0.4)
 const DANGER_FILL := Color(0.85, 0.15, 0.1, 0.13)
@@ -248,13 +312,30 @@ var tile_cache: Array = []
 # same sand as the desert outside it.
 var _floor_sheet: Texture2D = FLOOR_SHEETS[DEFAULT_FLOOR]
 var _floor_regions: Array[Rect2] = TILE_REGIONS
+var _floor_name := DEFAULT_FLOOR
 var _floor_accent := ACCENT_CHANCE
 var _floor_spacing := ACCENT_MIN_SPACING
 var _inset_rect := Rect2i()
 var _inset_sheet: Texture2D = null
 var _inset_regions: Array[Rect2] = TILE_REGIONS
+var _inset_name := ""
 var _inset_accent := ACCENT_CHANCE
 var _inset_spacing := ACCENT_MIN_SPACING
+# Sidecar catalogs for the two sheets, when the art pipeline has shipped one
+# ({} otherwise - the current state of every sheet). A catalog swaps the
+# hardcoded family/accent tables for the sheet's own, restricts mirroring to
+# tiles flagged symmetric, and unlocks corner-transition tiles at zone seams.
+var _floor_catalog: Dictionary = {}
+var _inset_catalog: Dictionary = {}
+# Optional per-cell zone override painted by the level ("zone_map" rows of
+# '012.'), consumed by _build_tile_cache; '.' defers to the noise.
+var _zone_map: Array = []
+# Optional road overlay painted by the level ("roads" rows of 'r.'). Purely
+# cosmetic: the tile cache swaps the floor art under an 'r' for the road tile
+# whose open edges match its road neighbours - CellKind, cover and LOS never
+# see it. The catalog is the floor's ROAD_SHEETS entry, parsed once.
+var _road_map: Array = []
+var _road_catalog: Dictionary = {}
 # The air over this board. Follows the MAIN floor even on a level with an
 # inset: a compound courtyard inside a desert outpost is still a desert
 # afternoon, and hazing half the props toward concrete would split the place
@@ -289,9 +370,16 @@ var cover_dests: Dictionary = {}
 # sit on the sand with nothing under them and read as pasted on.
 var prop_shadows: Dictionary = {}
 
-# The tile outline reads as a tactical grid, which is right in a battle and
-# wrong in a camp you simply walk around.
-var show_grid := true
+# Debug escape hatch: true restores the full lattice over every tile. Off by
+# default - at rest the board reads as a place, and the tactical grid shows
+# only as corner ticks on the cells a move is actually being plotted through.
+var show_grid := false
+
+# Paints the static floor (tiles, haze, contact shadows) on its own canvas
+# item below everything, so those 160+ blits repaint on level changes rather
+# than on every highlight. Created in _ready; headless tools that new() a bare
+# Board never enter the tree and simply run without one.
+var floor_layer: FloorLayer = null
 
 # Fuel drums the selected unit could put a round into. Drawn hotter than an
 # attack tile so a hazard never reads as an enemy.
@@ -312,6 +400,13 @@ var watch_cells: Dictionary = {}
 # Cells any enemy could shoot next turn (selection-independent; cleared
 # only via set_danger, never by clear_highlights).
 var danger_cells: Dictionary = {}
+
+
+func _ready() -> void:
+	floor_layer = FloorLayer.new()
+	floor_layer.board = self
+	floor_layer.z_index = -2
+	add_child(floor_layer)
 
 
 func set_highlights(moves: Dictionary, dests: Dictionary,
@@ -430,26 +525,53 @@ func set_level(data: Dictionary) -> void:
 				row.append(CellKind.OPEN)
 		_kind.append(row)
 	var floor_name := _resolve_floor(data.get("floor", DEFAULT_FLOOR))
+	_floor_name = floor_name
 	_floor_sheet = FLOOR_SHEETS[floor_name]
 	_floor_regions = SHEET_REGIONS[floor_name]
+	_floor_catalog = TileCatalog.load_for(_floor_sheet.resource_path)
 	_mood = floor_mood_of(floor_name)
 	_floor_accent = float(_mood.get("accent", ACCENT_CHANCE))
 	_floor_spacing = int(_mood.get("spacing", ACCENT_MIN_SPACING))
 	_inset_sheet = null
 	_inset_rect = Rect2i()
+	_inset_name = ""
+	_inset_catalog = {}
 	_inset_accent = _floor_accent
 	_inset_spacing = _floor_spacing
 	var inset: Dictionary = data.get("floor_inset", {})
 	if not inset.is_empty():
 		var inset_name := _resolve_floor(inset.get("floor", DEFAULT_FLOOR))
+		_inset_name = inset_name
 		_inset_rect = inset.get("rect", Rect2i())
 		_inset_sheet = FLOOR_SHEETS[inset_name]
 		_inset_regions = SHEET_REGIONS[inset_name]
+		_inset_catalog = TileCatalog.load_for(_inset_sheet.resource_path)
 		_inset_accent = float(floor_mood_of(inset_name).get("accent", ACCENT_CHANCE))
 		_inset_spacing = int(floor_mood_of(inset_name).get("spacing", ACCENT_MIN_SPACING))
+	_zone_map = data.get("zone_map", [])
+	_road_map = data.get("roads", [])
+	_road_catalog = {}
+	if not _road_map.is_empty():
+		if ROAD_SHEETS.has(floor_name):
+			_road_catalog = TileCatalog.load_road_for(
+					(ROAD_SHEETS[floor_name] as Texture2D).resource_path)
+		if _road_catalog.is_empty():
+			push_warning("[Board] level paints roads but floor '%s' has no road set"
+					% floor_name)
 	var thresholds: Array = data.get("zone_thresholds", [-0.12, 0.22])
 	_build_tile_cache(data.get("zone_seed", 7), data.get("shade_seed", 13), thresholds)
 	queue_redraw()
+	if floor_layer != null:
+		floor_layer.queue_redraw()
+
+
+## Contact shadows for props spawned from objective lists rather than map
+## chars. Routed through a setter because the FloorLayer paints them, and it
+## only repaints when told the world changed.
+func set_prop_shadows(shadows: Dictionary) -> void:
+	prop_shadows = shadows
+	if floor_layer != null:
+		floor_layer.queue_redraw()
 
 
 ## The air over a named ground. A sheet with no entry inherits the desert's,
@@ -581,9 +703,18 @@ enum CoverLevel { NONE, HALF, FULL }
 const COVER_SPREAD := 1
 
 
+## Note the map edge grants nothing. Putting your back to it is a good
+## instinct, but this model hands out cover by sector, and the sectors an
+## off-map neighbour would protect are the ones a shooter would have to stand
+## off-map to occupy - so no shot on any shipped level ever received edge cover
+## (tools/check_cover_rules.gd measures this: 0 pairs across all 7 maps).
+## Returning FULL here only advertised it: 33-46 cells per map drew the cover
+## dot and the full-cover bars, and units visibly crouched on them, for
+## protection that could never apply. If edge cover should be real, make it
+## real in cover_map_at - do not restore the promise here.
 func cover_level_of(cell: Vector2i) -> CoverLevel:
 	if not in_bounds(cell):
-		return CoverLevel.FULL  # the map edge is something to put your back to
+		return CoverLevel.NONE
 	match cell_kind(cell):
 		CellKind.BLOCK:
 			return CoverLevel.FULL
@@ -668,9 +799,12 @@ func peek_origin(from: Vector2i, to: Vector2i) -> Vector2i:
 	if has_line_of_sight(from, to):
 		return NO_CELL  # nothing to lean around
 	# Only full cover is worth leaning past; junk never blocked sight anyway.
+	# in_bounds first: off-map neighbours read as FULL so that a unit can put
+	# its back to the map edge, but there is no scenery there to lean around,
+	# and treating it as such handed every unit on the perimeter a free shot.
 	var hugged := {}
 	for dir in DIRS:
-		if cover_level_of(from + dir) == CoverLevel.FULL:
+		if in_bounds(from + dir) and cover_level_of(from + dir) == CoverLevel.FULL:
 			hugged[from + dir] = true
 	if hugged.is_empty():
 		return NO_CELL
@@ -680,7 +814,12 @@ func peek_origin(from: Vector2i, to: Vector2i) -> Vector2i:
 			var side: Vector2i = from + perp
 			if not in_bounds(side) or is_blocker(side) or smoke_cells.has(side):
 				continue
-			if _los_ignoring(side, to, hugged):
+			# Ignore only the one piece being leaned past - not every blocker
+			# adjacent to the shooter. Passing the whole `hugged` set let a unit
+			# hugging two walls lean around one and shoot through the other,
+			# which is exactly the wall-vs-corner distinction this rule exists
+			# to draw.
+			if _los_ignoring(side, to, {cover_cell: true}):
 				return side
 	return NO_CELL
 
@@ -744,15 +883,46 @@ static func _hash01(cell: Vector2i, salt: int) -> float:
 
 ## Precompute each cell's tile region, mirror flag, and shade tint.
 ## Everything is seeded/hashed, so a level's floor is identical every run.
+##
+## When a sheet ships transition sets in its sidecar, zone boundaries resolve
+## corner-Wang style: cell zones are sampled onto the (w+1)x(h+1) vertex grid
+## and a cell whose corners disagree draws the transition tile indexed by
+## which corners sit in the upper terrain. Sheets without sidecars (all of
+## them today) skip those passes and land byte-identical to the legacy path.
 func _build_tile_cache(zone_seed: int, shade_seed: int, thresholds: Array) -> void:
 	var zone_noise := FastNoiseLite.new()
 	zone_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 	zone_noise.seed = zone_seed
-	zone_noise.frequency = 0.17
+	zone_noise.frequency = ZONE_NOISE_FREQ
 	var shade_noise := FastNoiseLite.new()
 	shade_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 	shade_noise.seed = shade_seed
 	shade_noise.frequency = 0.09
+
+	# 1. Cell zone pass - unchanged classification, so uniform cells pick the
+	# same variants they always have.
+	var zones: Array = []
+	for y in size.y:
+		var zone_row: Array[int] = []
+		for x in size.x:
+			zone_row.append(_cell_zone(Vector2i(x, y), zone_noise, thresholds))
+		zones.append(zone_row)
+
+	# 2-4. Vertex passes, run only when some sidecar actually ships transition
+	# art - without any, corners can never change what a cell draws.
+	var cross_key := "%s|%s" % [_floor_name, _inset_name]
+	var has_zone_sets := _has_set(_floor_catalog, "0|1") \
+			or _has_set(_floor_catalog, "1|2") \
+			or _has_set(_inset_catalog, "0|1") or _has_set(_inset_catalog, "1|2")
+	var has_cross_set: bool = _inset_sheet != null \
+			and (_has_set(_floor_catalog, cross_key)
+					or _has_set(_inset_catalog, cross_key))
+	var zone_verts: Array = []
+	var inset_verts: Array = []
+	if has_zone_sets or has_cross_set:
+		zone_verts = _zone_vertices(zones)
+		inset_verts = _inset_vertices()
+		_settle_vertices(zone_verts)
 
 	var accent_cells: Array[Vector2i] = []
 	tile_cache = []
@@ -760,92 +930,272 @@ func _build_tile_cache(zone_seed: int, shade_seed: int, thresholds: Array) -> vo
 		var row: Array = []
 		for x in size.x:
 			var cell := Vector2i(x, y)
-			var n := zone_noise.get_noise_2d(cell.x, cell.y)
-			var zone: int = 0 if n < thresholds[0] else (1 if n < thresholds[1] else 2)
-			var family: Array = ZONE_FAMILIES[zone]
-			var variant: int = family[int(_hash01(cell, 1) * family.size()) % family.size()]
+			var zone: int = zones[y][x]
 			# Which sheet this cell comes off has to be settled before the
 			# accent roll, because the scatter rate belongs to the sheet.
 			var sheet := _floor_sheet
 			var regions := _floor_regions
+			var catalog := _floor_catalog
 			var accent_rate := _floor_accent
 			var accent_gap := _floor_spacing
 			if _inset_sheet != null and _inset_rect.has_point(cell):
 				sheet = _inset_sheet
 				regions = _inset_regions
+				catalog = _inset_catalog
 				accent_rate = _inset_accent
 				accent_gap = _inset_spacing
-			if map_char(cell) == "." and not is_structure(cell) \
-					and _hash01(cell, 2) < accent_rate:
-				var clear := true
-				for placed in accent_cells:
-					if maxi(absi(placed.x - x), absi(placed.y - y)) <= accent_gap:
-						clear = false
-						break
-				if clear:
-					variant = ZONE_ACCENTS[zone]
-					accent_cells.append(cell)
 			# Subtle brightness patches (0.94..1.0) fake large-scale lighting.
 			var shade := 0.94 + 0.06 * (shade_noise.get_noise_2d(cell.x, cell.y) * 0.5 + 0.5)
 			var shadow: float = DIAMOND_SHADOW if is_structure(cell) \
 					else SHADOW_RADII.get(map_char(cell), 0.0)
-			row.append({
-				"sheet": sheet,
-				"region": regions[variant],
-				"flip": _hash01(cell, 3) < 0.5,
-				"shade": Color(shade, shade, shade),
-				"shadow": shadow,
-			})
+			# 5. Corner disagreements draw transition tiles instead of the
+			# uniform family: never mirrored, never accented.
+			var entry := {}
+			if has_cross_set or has_zone_sets:
+				entry = _transition_entry(cell, catalog, zone_verts, inset_verts,
+						cross_key, has_cross_set, has_zone_sets)
+			if entry.is_empty():
+				# Uniform cell: family variant, accent roll, mirror. The
+				# legacy tables, or the sheet's own catalog when it has one.
+				if catalog.is_empty():
+					var family: Array = ZONE_FAMILIES[zone]
+					var variant: int = family[int(_hash01(cell, 1) * family.size()) \
+							% family.size()]
+					if _accent_here(cell, accent_rate, accent_gap, accent_cells):
+						variant = ZONE_ACCENTS[zone]
+						accent_cells.append(cell)
+					entry = {
+						"sheet": sheet,
+						"region": regions[variant],
+						"flip": _hash01(cell, 3) < 0.5,
+					}
+				else:
+					var family: Array = catalog.families[zone]
+					var slot: Dictionary = family[int(_hash01(cell, 1) * family.size()) \
+							% family.size()]
+					var zone_accents: Array = catalog.accents[zone]
+					if not zone_accents.is_empty() \
+							and _accent_here(cell, accent_rate, accent_gap, accent_cells):
+						slot = zone_accents[mini(
+								int(_hash01(cell, 4) * zone_accents.size()),
+								zone_accents.size() - 1)]
+						accent_cells.append(cell)
+					entry = {
+						"sheet": sheet,
+						"region": slot.rect,
+						# Only art flagged symmetric may mirror - flipping a
+						# directionally lit tile turns it against the sun.
+						"flip": bool(slot.symmetric) and _hash01(cell, 3) < 0.5,
+					}
+			# 6. Roads pave over whatever they were laid across - family,
+			# accent and transition tiles alike - so the track stays continuous
+			# through a zone seam. The cell's shade and shadow stay its own.
+			if not _road_catalog.is_empty() and _is_road(cell):
+				var road := _road_tile(cell)
+				if not road.is_empty():
+					entry = road
+			entry["shade"] = Color(shade, shade, shade)
+			entry["shadow"] = shadow
+			row.append(entry)
 		tile_cache.append(row)
+
+
+## True where the level's optional "roads" overlay paints an 'r'. Rows shorter
+## than the map read as no road, same as zone_map's forgiveness.
+func _is_road(cell: Vector2i) -> bool:
+	if not in_bounds(cell) or cell.y >= _road_map.size():
+		return false
+	var row := str(_road_map[cell.y])
+	return cell.x < row.length() and row[cell.x] == "r"
+
+
+## The road tile whose open edges match this cell's road neighbours, or {}
+## when the set lacks that mask. Bit order is TileCatalog.EDGE_BITS: bit0
+## north (y-1), bit1 east (x+1), bit2 south (y+1), bit3 west (x-1); off-board
+## never continues a road, so a track ends in a cap at the board edge.
+func _road_tile(cell: Vector2i) -> Dictionary:
+	var mask := 0
+	if _is_road(cell + Vector2i(0, -1)):
+		mask |= 1
+	if _is_road(cell + Vector2i(1, 0)):
+		mask |= 2
+	if _is_road(cell + Vector2i(0, 1)):
+		mask |= 4
+	if _is_road(cell + Vector2i(-1, 0)):
+		mask |= 8
+	var rect: Rect2 = _road_catalog.tiles[mask]
+	if rect.size.x <= 0.0:
+		return {}
+	return {"sheet": _road_catalog.sheet, "region": rect, "flip": false}
+
+
+## Which terrain zone a cell belongs to: the level's optional "zone_map"
+## overlay wins where it paints a digit, the noise threshold split decides
+## everything else - which is all of it on every shipped level.
+func _cell_zone(cell: Vector2i, zone_noise: FastNoiseLite, thresholds: Array) -> int:
+	if cell.y < _zone_map.size():
+		var row := str(_zone_map[cell.y])
+		if cell.x < row.length() and row[cell.x] != ".":
+			return clampi(int(row[cell.x]), 0, 2)
+	var n := zone_noise.get_noise_2d(cell.x, cell.y)
+	return 0 if n < thresholds[0] else (1 if n < thresholds[1] else 2)
+
+
+## The shared accent roll: open sand only, hashed per cell, and never within
+## `gap` Chebyshev cells of an accent already placed this build.
+func _accent_here(cell: Vector2i, rate: float, gap: int,
+		placed: Array[Vector2i]) -> bool:
+	if map_char(cell) != "." or is_structure(cell):
+		return false
+	if _hash01(cell, 2) >= rate:
+		return false
+	for other in placed:
+		if maxi(absi(other.x - cell.x), absi(other.y - cell.y)) <= gap:
+			return false
+	return true
+
+
+## Cell zones sampled onto the dual (w+1)x(h+1) grid: a vertex takes the
+## highest zone among its up-to-four in-bounds cells, so the upper terrain
+## owns its own edges and the transition art always faces downhill.
+func _zone_vertices(zones: Array) -> Array:
+	var verts: Array = []
+	for vy in size.y + 1:
+		var vrow: Array[int] = []
+		for vx in size.x + 1:
+			var best := 0
+			for cell in [Vector2i(vx - 1, vy - 1), Vector2i(vx, vy - 1),
+					Vector2i(vx - 1, vy), Vector2i(vx, vy)]:
+				if in_bounds(cell):
+					best = maxi(best, zones[cell.y][cell.x])
+			vrow.append(best)
+		verts.append(vrow)
+	return verts
+
+
+## True at every vertex touching a cell inside the floor inset - the built
+## ground is the upper terrain of the cross-floor transition set.
+func _inset_vertices() -> Array:
+	var verts: Array = []
+	for vy in size.y + 1:
+		var vrow: Array[bool] = []
+		for vx in size.x + 1:
+			var inside := false
+			if _inset_sheet != null:
+				for cell in [Vector2i(vx - 1, vy - 1), Vector2i(vx, vy - 1),
+						Vector2i(vx - 1, vy), Vector2i(vx, vy)]:
+					if in_bounds(cell) and _inset_rect.has_point(cell):
+						inside = true
+						break
+			vrow.append(inside)
+		verts.append(vrow)
+	return verts
+
+
+## No transition set spans more than one zone step, so a cell whose corners
+## span two ({0, 2}) cannot be drawn. Promote its lowest corners a step in the
+## shared vertex array and re-check; two passes settle the worst case of a
+## zone-0 cell cornering a zone-2 cell.
+func _settle_vertices(verts: Array) -> void:
+	for fixup_pass in 2:
+		var changed := false
+		for y in size.y:
+			for x in size.x:
+				var corners: Array[int] = [verts[y][x], verts[y][x + 1],
+						verts[y + 1][x + 1], verts[y + 1][x]]
+				var lo: int = corners.min()
+				if corners.max() - lo < 2:
+					continue
+				for v: Vector2i in [Vector2i(x, y), Vector2i(x + 1, y),
+						Vector2i(x + 1, y + 1), Vector2i(x, y + 1)]:
+					if verts[v.y][v.x] == lo:
+						verts[v.y][v.x] = lo + 1
+						changed = true
+		if not changed:
+			return
+
+
+## The transition tile for a cell whose corners disagree, or {} for a uniform
+## cell (or when the needed set is not shipped, in which case the caller falls
+## back to the uniform family). Inset boundaries outrank zone seams: the edge
+## of a built floor is authored, a noise seam is weather.
+##
+## Corner order everywhere is the screen-space diamond's [top, right, bottom,
+## left], mapping to grid vertices (x,y), (x+1,y), (x+1,y+1), (x,y+1); mask
+## bit i is set when corner i sits in the upper terrain.
+func _transition_entry(cell: Vector2i, catalog: Dictionary, zone_verts: Array,
+		inset_verts: Array, cross_key: String, has_cross_set: bool,
+		has_zone_sets: bool) -> Dictionary:
+	var x := cell.x
+	var y := cell.y
+	if has_cross_set:
+		var flags: Array[bool] = [inset_verts[y][x], inset_verts[y][x + 1],
+				inset_verts[y + 1][x + 1], inset_verts[y + 1][x]]
+		if flags.has(true) and flags.has(false):
+			var mask := 0
+			for i in 4:
+				if flags[i]:
+					mask |= 1 << i
+			var entry := _set_tile(_floor_catalog, cross_key, mask)
+			if entry.is_empty():
+				entry = _set_tile(_inset_catalog, cross_key, mask)
+			if not entry.is_empty():
+				return entry
+	if has_zone_sets:
+		var corners: Array[int] = [zone_verts[y][x], zone_verts[y][x + 1],
+				zone_verts[y + 1][x + 1], zone_verts[y + 1][x]]
+		var lo: int = corners.min()
+		if corners.max() > lo:
+			var mask := 0
+			for i in 4:
+				if corners[i] > lo:
+					mask |= 1 << i
+			return _set_tile(catalog, "%d|%d" % [lo, lo + 1], mask)
+	return {}
+
+
+## One tile out of a named transition set: {sheet, region, flip=false}, or {}
+## when the set (or that particular mask) is missing.
+static func _set_tile(catalog: Dictionary, key: String, mask: int) -> Dictionary:
+	var sets: Dictionary = catalog.get("transitions", {})
+	if not sets.has(key):
+		return {}
+	var set_data: Dictionary = sets[key]
+	var rect: Rect2 = set_data.tiles[mask]
+	if rect.size.x <= 0.0:
+		return {}
+	return {"sheet": set_data.sheet, "region": rect, "flip": false}
+
+
+static func _has_set(catalog: Dictionary, key: String) -> bool:
+	return catalog.get("transitions", {}).has(key)
 
 
 func _draw() -> void:
 	if tile_cache.is_empty():
 		return
-	for y in size.y:
-		for x in size.x:
-			var cell := Vector2i(x, y)
-			var info: Dictionary = tile_cache[y][x]
-			var region: Rect2 = info.region
-			var c := cell_to_local(cell)
-			var dest := Rect2(
-				c.x - TILE_W / 2.0,
-				c.y - TILE_H / 2.0 - (region.size.y - TILE_H),
-				region.size.x, region.size.y)
-			if info.flip:
-				# Mirror around the tile's vertical center line.
-				draw_set_transform(Vector2(2.0 * c.x, 0.0), 0.0, Vector2(-1, 1))
-			draw_texture_rect_region(info.sheet, dest, region, info.shade)
-			if info.flip:
-				draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-			if show_grid:
-				var outline := _diamond(cell)
+	# The floor itself - tiles, haze, and every contact shadow - is painted by
+	# the FloorLayer below. From here up it is all live overlay.
+	if show_grid:
+		# Debug escape hatch: the full lattice over every cell.
+		for y in size.y:
+			for x in size.x:
+				var outline := _diamond(Vector2i(x, y))
 				outline.append(outline[0])
 				draw_polyline(outline, GRID_LINE, 1.5, true)
-	# Prop shadows sit above the floor but below every gameplay overlay.
-	for y in size.y:
-		for x in size.x:
-			var radius: float = tile_cache[y][x].shadow
-			if radius == 0.0:
+	else:
+		# At rest the board is a place. The grid surfaces as corner ticks on
+		# just the cells a selected unit could route through but not stop on -
+		# the one moment tile boundaries are actually being read.
+		for cell: Vector2i in move_cells:
+			if move_dests.has(cell):
 				continue
-			var center := cell_to_local(Vector2i(x, y)) + SHADOW_OFFSET
-			if radius == DIAMOND_SHADOW:
-				var shape := PackedVector2Array()
-				for point in _diamond(Vector2i(x, y)):
-					shape.append(center + (point - cell_to_local(Vector2i(x, y))) * 0.88)
-				draw_colored_polygon(shape, shadow_tone(SHADOW_COLOR.a))
-			else:
-				draw_set_transform(center, 0.0, Vector2(1.0, SHADOW_SQUASH))
-				draw_circle(Vector2.ZERO, radius, shadow_tone(SHADOW_COLOR.a))
-				draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	# Objective props are not map characters, so they get their contact shadow
-	# from here instead of from the tile cache.
-	for cell: Vector2i in prop_shadows:
-		var centre := cell_to_local(cell) + SHADOW_OFFSET
-		draw_set_transform(centre, 0.0, Vector2(1.0, SHADOW_SQUASH))
-		draw_circle(Vector2.ZERO, float(prop_shadows[cell]),
-				shadow_tone(SHADOW_COLOR.a))
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+			var tick := _diamond(cell)
+			var tick_centre := cell_to_local(cell)
+			for vertex in tick:
+				draw_line(vertex,
+						vertex + (tick_centre - vertex).normalized() * GRID_TICK_LEN,
+						GRID_TICK, 1.5, true)
 	# Smoke is world, not overlay: it goes down with the props so every
 	# gameplay marking still reads on top of it.
 	for cell: Vector2i in smoke_cells:

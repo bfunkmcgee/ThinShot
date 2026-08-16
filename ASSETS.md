@@ -136,67 +136,36 @@ plus one accent per zone.** Keep that shape and any biome drops in.
   buildings are all desert-toned and are reused on every map. A little warm
   grit showing through keeps them sitting naturally on the new ground.
 
-## Prompt 1 — SALT FLAT
+## How the last three were made
 
-> Isometric 2:1 diamond floor tiles for a top-down tactics game, pixel art. A
-> dried-out desert salt pan: pale grey-white mineral crust over warm sand, with
-> the sand showing through in patches. Muted and chalky rather than bright
-> white. Lit by a low sun from the upper left. Flat ground only, seen from
-> above, tiling seamlessly.
+The recipe has moved. **[artgen/STYLE.md](artgen/STYLE.md) §9** is the
+canonical generation recipe (with §7 prompt fragments and the §10 review
+rubric), and **[artgen/PIPELINE.md](artgen/PIPELINE.md)** is the
+stage-by-stage runbook with the failure playbook. Everything that used to be
+written here — shape mode not style mode, the one-Lanczos squash to 128×60,
+the shared-silhouette mask, luminance normalization, the ash special case —
+lives there now, enforced by `tools/floor_pipeline.py` and gated by
+`tools/validate_floor_art.py`.
 
-Then the ten tiles, softest to harshest:
+One correction from this section's history worth repeating: **"six tiles per
+call" was right all along.** `create_tiles_pro` at 128px silently caps at 6
+variants per call regardless of how many numbered prompts you send — never
+send more than 6.
 
-| Index | Tile |
-|---|---|
-| 8, 9 | **Zone A base** — damp brine margin. Darker, faintly wet, grey-brown, smooth |
-| 6 | **Zone A accent** — a shallow brine pool with a crusted white rim |
-| 0, 1, 2 | **Zone B base** — dry salt crust with fine polygon cracking, sand in the cracks |
-| 7 | **Zone B accent** — salt-crusted driftwood and dry sticks half buried |
-| 3, 5 | **Zone C base** — thick heaved salt, brittle plates, deep crack lines |
-| 4 | **Zone C accent** — a collapsed sinkhole, plates tipped inward |
+## If you add another sheet
 
-## Prompt 2 — ASH AND BURNT GROUND
-
-> Isometric 2:1 diamond floor tiles for a top-down tactics game, pixel art.
-> Ground that burned a long time ago: grey ash and soot over scorched desert
-> hardpan, warm sand still showing through where the ash is thin. Charcoal
-> greys and browns, no bright orange. Lit by a low sun from the upper left.
-> Flat ground only, seen from above, tiling seamlessly.
-
-| Index | Tile |
-|---|---|
-| 8, 9 | **Zone A base** — soft grey ash drift, powdery, wind-rippled |
-| 6 | **Zone A accent** — a charred stump or burnt scrub, black against the ash |
-| 0, 1, 2 | **Zone B base** — scorched hardpan streaked with soot, sand showing through |
-| 7 | **Zone B accent** — twisted burnt scrap and warped metal |
-| 3, 5 | **Zone C base** — cracked charcoal crust, deep black fissures |
-| 4 | **Zone C accent** — an old blast crater, ash blown outward in a ring |
-
-Index 6 is the one that may **overhang the top of its diamond** — the desert
-sheet's plant tuft does, and the code already allows that tile to be taller.
-
-## Where to put them
-
-```
-assets/Tiles/Environments/Salt/Salt_flat_floor.png
-assets/Tiles/Environments/Ash/Ash_burnt_floor.png
-```
-
-Matching the existing
-`assets/Tiles/Environments/Desert/Cracked_Desert_floor.png`.
-
-## What I will do with them
-
-Measure each sheet's regions, turn the currently hard-coded `FLOOR_SHEET` and
-`TILE_REGIONS` into a per-sheet table, and add a `floor` field to the level
-data so each mission picks its own ground — alongside the `zone_seed`,
-`shade_seed` and `zone_thresholds` the levels already carry. Small change; the
-whole zone system is already parameterised.
+Generate the ten roles above, drop the sheet in
+`assets/Tiles/Environments/<Name>/`, add it to `Board.FLOOR_SHEETS` and
+`Board.SHEET_REGIONS` (pointing at `TILE_REGIONS_FLAT` unless index 6
+overhangs), then name it from a level's `floor` or a biome. Run
+`godot --headless --path . -s tools/check_floor_sheets.gd` to confirm the
+slots line up.
 
 ---
 
 ## If you only do three
 
-**1 (supply cache)**, **15 (two floor sheets)**, **10 (shielded goblin)** — one
-fixes the objective players could not find, one makes three missions look like
-three places, and one turns the flanking rules from a detail into the point.
+**1 (supply cache)** and **15 (two floor sheets)** are both shipped, which
+leaves **10 (shielded goblin)** — the one that turns the flanking rules from a
+detail into the point. After that, **2 (gate)** for breaching and **16 (road
+tiles)**, now that a mission can pick its own ground.

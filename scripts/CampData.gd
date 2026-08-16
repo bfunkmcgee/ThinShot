@@ -94,6 +94,10 @@ static func map_for(in_field: bool, biome: Dictionary) -> Dictionary:
 	base.zone_seed = int(biome.get("floor_seed", 91))
 	base.shade_seed = int(biome.get("shade_seed", 17))
 	base.zone_thresholds = biome.get("thresholds", [-0.30, 0.10])
+	# Prop variants follow the biome's floor seed the same way Battle's follow
+	# the level's zone seed, so each biome's camp dresses itself its own way
+	# and does it the same way every visit.
+	base.prop_seed = int(biome.get("prop_seed", int(base.zone_seed) * 977 + 101))
 	return base
 
 

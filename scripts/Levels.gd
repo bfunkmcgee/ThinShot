@@ -53,6 +53,12 @@ class_name Levels
 ##       that divides ground without also dividing fire, which is what makes a
 ##       gate in it worth fighting over.
 ## Structure footprints overlay their cells as full blockers.
+##
+## A level may also paint an optional "roads" overlay: rows the same shape as
+## the map, 'r' for a road cell, '.' for not. Purely cosmetic - the floor art
+## under an 'r' becomes the connectable road tile matching its road
+## neighbours, and movement, cover and LOS never notice. The level's floor
+## needs an entry in Board.ROAD_SHEETS (only desert has one so far).
 
 const LEVELS: Array[Dictionary] = [
 	{
@@ -136,6 +142,24 @@ const LEVELS: Array[Dictionary] = [
 			"..j...j....j....",
 			"..p.j.j..p.j....",
 		],
+		# The track the tithe leaves on: a vehicle lane in from the west,
+		# through the outer gate at y=3, jogging down the corridor and out the
+		# inner gate lane at y=5 to the east edge. The relay mast at (10,4)
+		# stands on its own short spur off the corridor - the yard wired its
+		# aerials up beside the road that feeds it. Every road cell is open
+		# ground; the goblins simply hold the gates the road runs through.
+		"roads": [
+			"................",
+			"................",
+			"rrr.............",
+			"..rrrrrrr.......",
+			"........r.r.....",
+			"........rrrrrrrr",
+			"................",
+			"................",
+			"................",
+			"................",
+		],
 		"scout_spawns": [Vector2i(1, 1), Vector2i(1, 8), Vector2i(2, 5)],
 		"lead_spawns": [Vector2i(0, 4)],
 		"gunner_spawns": [Vector2i(2, 4)],
@@ -181,7 +205,9 @@ const LEVELS: Array[Dictionary] = [
 		],
 		"zone_seed": 21,
 		"shade_seed": 34,
-		"zone_thresholds": [-0.5, -0.2],
+		# Was [-0.5, -0.2], which handed zone 2 nearly the whole yard and made
+		# the tithe rows stand on one unbroken slab of heavy hardpan.
+		"zone_thresholds": [-0.35, 0.0],
 	},
 	{
 		# A properly sealed compound this time. The fortress is flush to the
@@ -318,6 +344,10 @@ const LEVELS: Array[Dictionary] = [
 		],
 		# The mission whose point is bare ground with nothing to hug, walked
 		# across forty miles of nothing - so it is fought on the salt pan.
+		# The convoy fiction begs for a "roads" overlay, but the column walks
+		# the pan and only a desert road set exists: painting warm hardpan
+		# track across pale salt would split the palette. Wire one in when a
+		# salt road sheet ships.
 		"floor": "salt",
 		"zone_seed": 5,
 		"shade_seed": 61,
@@ -507,7 +537,10 @@ const OPERATIONS: Array[Dictionary] = [
 	},
 	{
 		"name": "OPERATION SECOND VERSE",
-		"biome": "desert",
+		# The operation is fought out on the pan - the column, the cistern and
+		# the pens are all salt missions, and the field camp between them
+		# should stand on the same ground.
+		"biome": "salt",
 		"summary": "The ammo dumps at Outpost 7 were already light. Find out who took the rest.",
 		# Four rather than three: the rescue sits between the cistern and the
 		# gathering, because the water the column was hauling only makes sense
@@ -551,6 +584,12 @@ static func validate_all() -> void:
 	var ok := true
 	for i in LEVELS.size():
 		ok = _validate(i) and ok
+	# An operation's biome names the ground its field camp stands on; a typo
+	# would silently dress the camp as desert.
+	for op: Dictionary in OPERATIONS:
+		ok = _check(BIOMES.has(str(op.get("biome", ""))),
+				"Operation '%s': unknown biome '%s'" % [
+						op.get("name", "?"), op.get("biome", "")]) and ok
 	assert(ok, "Level data invalid - see errors above")
 
 
@@ -632,6 +671,108 @@ static func _validate(index: int) -> bool:
 				"%s: spawn %s unreachable from %s" % [label, spawn, start]) and ok
 	ok = _validate_objectives(data, label, walkable, visited, seen_spawn) and ok
 	ok = _validate_floor(data, label, grid) and ok
+	ok = _validate_zones(data, label) and ok
+	ok = _validate_roads(data, label, grid) and ok
+	return ok
+
+
+## The optional "roads" overlay is cosmetic, but it is still authored: rows
+## must match the map, chars are 'r' (road) or '.' (not), and the level's
+## floor has to have a road sheet at all or the key would silently paint
+## nothing. A road cell under a rock, wall or structure footprint only warns -
+## the art would be hidden, which is almost always a typo, but a track
+## disappearing under a boulder that fell across it is a legitimate look.
+static func _validate_roads(data: Dictionary, label: String, grid: Vector2i) -> bool:
+	var roads: Array = data.get("roads", [])
+	if roads.is_empty():
+		return true
+	var ok := _check(Board.ROAD_SHEETS.has(str(data.get("floor", Board.DEFAULT_FLOOR))),
+			"%s: paints roads but floor '%s' has no road sheet"
+			% [label, data.get("floor", Board.DEFAULT_FLOOR)])
+	if not _check(roads.size() == grid.y,
+			"%s: roads must have %d rows" % [label, grid.y]):
+		return false
+	var footprints := _footprint_cells(data)
+	for y in grid.y:
+		var srow := str(roads[y])
+		if not _check(srow.length() == grid.x,
+				"%s: roads row '%s' wrong length" % [label, srow]):
+			ok = false
+			continue
+		for x in grid.x:
+			var ch := srow[x]
+			ok = _check(ch == "r" or ch == ".",
+					"%s: roads char '%s' not in 'r.'" % [label, ch]) and ok
+			if ch != "r":
+				continue
+			var map_ch: String = data.map[y][x]
+			if map_ch == "#" or map_ch == "W" or footprints.has(Vector2i(x, y)):
+				push_warning("[Levels] %s: road cell (%d, %d) hidden under blocker '%s'"
+						% [label, x, y, map_ch])
+	return ok
+
+
+## The cosmetic layer gets checked too: thresholds must be two ascending
+## values, the optional zone_map / prop_seed / lint keys must be shaped right,
+## and the split the noise actually produces gets a sanity pass - a zone under
+## 5% of the board reads as stray speckles, one over 90% means the thresholds
+## are doing nothing. Lopsided splits only warn: a near-uniform pan is a valid
+## look, but it should be a chosen one.
+static func _validate_zones(data: Dictionary, label: String) -> bool:
+	var ok := true
+	var grid: Vector2i = data.size
+	var thresholds: Array = data.get("zone_thresholds", [-0.12, 0.22])
+	ok = _check(thresholds.size() == 2,
+			"%s: zone_thresholds needs exactly 2 values" % label) and ok
+	if thresholds.size() == 2:
+		ok = _check(float(thresholds[0]) < float(thresholds[1]),
+				"%s: zone_thresholds %s not ascending" % [label, thresholds]) and ok
+	var zone_map: Array = data.get("zone_map", [])
+	if not zone_map.is_empty():
+		ok = _check(zone_map.size() == grid.y,
+				"%s: zone_map must have %d rows" % [label, grid.y]) and ok
+		for row in zone_map:
+			var srow := str(row)
+			ok = _check(srow.length() == grid.x,
+					"%s: zone_map row '%s' wrong length" % [label, srow]) and ok
+			for ch in srow:
+				ok = _check("012.".contains(ch),
+						"%s: zone_map char '%s' not in '012.'" % [label, ch]) and ok
+	if data.has("prop_seed"):
+		ok = _check(typeof(data.prop_seed) == TYPE_INT,
+				"%s: prop_seed must be an int" % label) and ok
+	# "lint" is per-level tooling overrides (check_level.gd reads it); the game
+	# only requires that it is a dictionary and otherwise leaves it alone.
+	if data.has("lint"):
+		ok = _check(typeof(data.lint) == TYPE_DICTIONARY,
+				"%s: lint must be a dictionary" % label) and ok
+	if not ok:
+		return false
+	# Rebuild the classification Board will run - same noise, same seed, same
+	# thresholds, same zone_map overrides - and measure the split.
+	var noise := FastNoiseLite.new()
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	noise.seed = int(data.get("zone_seed", 7))
+	noise.frequency = Board.ZONE_NOISE_FREQ
+	var counts := [0, 0, 0]
+	for y in grid.y:
+		for x in grid.x:
+			var zone := -1
+			if y < zone_map.size():
+				var srow := str(zone_map[y])
+				if x < srow.length() and srow[x] != ".":
+					zone = clampi(int(srow[x]), 0, 2)
+			if zone < 0:
+				var n := noise.get_noise_2d(x, y)
+				zone = 0 if n < float(thresholds[0]) \
+						else (1 if n < float(thresholds[1]) else 2)
+			counts[zone] += 1
+	var total := grid.x * grid.y
+	for zone in 3:
+		var share := float(counts[zone]) / float(total)
+		if share < 0.05 or share > 0.90:
+			push_warning("[Levels] %s: zone %d covers %d%% of the board %s" % [
+					label, zone, roundi(share * 100.0), thresholds])
 	return ok
 
 
