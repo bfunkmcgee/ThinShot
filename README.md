@@ -469,8 +469,79 @@ campaign and playing again starts you with five fresh recruits.
 - Goblins chase, seek firing positions, avoid open ground lightly, and retreat
   to cover when wounded with no shot available; a goblin that holds position
   with no shot goes on overwatch to cover its lane.
-- Win by destroying all goblins; lose if all scouts fall — the fallen stay on
-  the battlefield where they dropped. Restart from the result screen.
+- Win by clearing the ground of everyone still **fighting** for it; lose if all
+  soldiers fall — the fallen stay on the battlefield where they dropped.
+  Restart from the result screen.
+
+## Morale, and the two ways a fight ends
+
+The Thirst has morale. Kestrel Squad does not, and that asymmetry is the point:
+five volunteers and a conscript with a campaign behind them are not the same
+kind of formation as a levy fighting forty miles from a well that stopped being
+theirs eleven days ago.
+
+Morale falls when a round lands (harder if it leaves them on half HP or less),
+when somebody dies within four tiles, and every turn spent under a beaten zone.
+It is given back only on a turn nothing happened at all — being shot at holds a
+fighter where the last round left him rather than letting him steady himself.
+
+At or below the threshold he breaks, and **the squad decides which way**:
+
+- **Two or more rifles on him** and he has somebody to give up to, so he
+  **surrenders**. He stops fighting, stops counting as a combatant, and the
+  ground he was holding counts as cleared.
+- **Fewer than two** and he **runs** for the nearest map edge instead. Stepping
+  off it is an **escape**, not a kill. The contact is resolved either way.
+
+Nothing stops you shooting either of them. That is deliberate — a choice with no
+wrong option is not a choice — and both wear a ring at their feet saying what
+they are. A grenade does not go around them either. The only people a blast
+avoids are the prisoners you were sent to fetch.
+
+**One class never breaks.** The Thirst Marksman is the one of them who was
+trained rather than pressed, and the bolt already roots him: he reloads after
+every round and reloading costs the move, so he has never been able to leave a
+firefight he is winning. Every map that asks the squad to *clear* ground fields
+one, which means a combat mission cannot be finished without killing. The five
+missions that ask for something else — burn it, blow it, break through, bring
+them home — can be.
+
+**Bystanders** are civilians who are not an objective: present, in the way, and
+killable. Two of them live at the cistern. Nothing in the game arranges for them
+to survive and nothing will mention them afterwards except the roll.
+
+## The after-action, which is two things
+
+The results screen shows two panels and **never adds them together**.
+
+**THE OPERATION** is *graded*: objective, who walked out, how many turns, and
+who earned what. Killing armed men fighting back is how it is earned — a
+hard-fought firefight with every soldier walking out is a perfect operation, and
+nothing on the other panel can take a point off it.
+
+**THE ROLL** is *reported*, never ranked. Who the squad met, by name, age and
+settlement; what became of them; how many civilians were harmed; and where the
+theater stands. Every fighter gets an identity the moment they spawn — drawn
+from a hash of the campaign seed, so the same seed replays the same dead as well
+as the same dice — and none of it is visible during the contact.
+
+Two counters sit behind it:
+
+- **District Standing**, per settlement, for what was done to their people.
+- **Alliance Strain**, theater-wide, and it **never reaches zero**. Good conduct
+  walks it down toward a floor above zero and cannot walk it through. An Accord
+  counterinsurgency is standing on ground whose Assembly filed an objection, and
+  behaving well does not make that untrue.
+
+Killing an armed, fighting combatant costs **nothing** on either counter. What
+costs is a *chosen* act against somebody who had stopped fighting or was never
+fighting at all: firing on the routing, the surrendered or the wounded, civilian
+casualties, destroying wells or homes or aid. A mission whose roll is entirely
+clean kills charges nobody and walks Strain down instead.
+
+**Dava's notebook** keeps all of it across the campaign — append-only,
+cross-linked by settlement, carried in the save. The panel shows three names and
+says where the rest of them are.
 
 ## Running it
 
@@ -504,12 +575,16 @@ scripts/
   Battle.gd       # controller: turn state machine, input, AI, campaign flow
   Board.gd        # grid: iso math, BFS, LOS/cover traces, tile/highlight drawing
   Unit.gd         # combatant: stats, animation state machine, damage, pips
+  Rules.gd        # every number: to-hit, damage, morale, conduct, Strain
+  Roll.gd         # who the enemy was - names, ages, settlements, grievances
   Levels.gd       # campaign data: maps, spawns, objectives, story + validator
   ObjectiveMarks.gd # beacons over objectives, above every unit and structure
-  Game.gd         # autoload: campaign roster, ranks, perks, level progress
+  Game.gd         # autoload: roster, ranks, perks, progress, notebook, save v3
   Sfx.gd          # autoload: pooled sound playback
   HitFx.gd        # one-shot code-drawn muzzle flash / impact ring
-tools/            # asset generators/measurers (SFX synth, muzzle scanner)
+tools/            # harnesses + asset generators. test_rules, test_roll,
+                  # test_morale, test_save_load, test_progression,
+                  # test_hero_gameover, check_level, check_briefing_fit, ...
 assets/audio/     # 11 generated retro SFX
 assets/sprites/
   Scout/, Goblin/ # 8-direction idle/walk/aim/aim-idle/death sets + dead stances
