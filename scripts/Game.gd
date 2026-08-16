@@ -39,6 +39,30 @@ var campaign_seed := 0
 # has to do is move.
 var mission_attempts := 0
 
+# --- v3: what the theater thinks of the squad, and what it remembers ---------
+#
+# Every number here is a LITERAL and not a Rules.* constant, and that is load
+# bearing. Rules names Unit in every signature, Unit names this autoload, and
+# a reference the other way would close the cycle - in the one file the `-s`
+# harnesses load before the autoloads exist (see CLASS_PERK_RANKS above, which
+# is keyed by raw ordinal for the same reason). Rules still owns these numbers
+# and does all the arithmetic on them; Battle is the layer that can name both
+# and is where conduct is actually applied. tools/test_rules.gd asserts the
+# duplicated values agree, so this cannot drift.
+const STANDING_START := 50
+const STRAIN_START := 12
+
+# Per settlement, 0..100: what the people whose water this was make of the
+# squad. Absent means nobody there has met them yet - see standing_of().
+var district_standing: Dictionary = {}
+# Theater-wide, and never zero. An Accord counterinsurgency is standing on
+# ground whose Assembly filed an objection, and conduct cannot make that untrue.
+var alliance_strain := STRAIN_START
+# Dava's notebook: every name the campaign has taken, mission by mission, in
+# the order it happened. Append-only. This is the document the game keeps
+# instead of a score.
+var notebook: Array = []
+
 # Squad ordnance, set at the camp's stores tent. The slots are a fixed budget
 # split between the two grenades, so choosing is a real decision and never an
 # increase in power - the 2/2 default is exactly what the squad carried before
@@ -606,6 +630,54 @@ func mark_dead(id: int) -> void:
 		mission_dead[id] = true
 
 
+## What a settlement makes of the squad. Absent means nobody from there has met
+## them yet, which is not the same as neutral having been earned - but it reads
+## the same from here, and STANDING_START is what "we have heard of you" means.
+func standing_of(settlement: String) -> int:
+	return int(district_standing.get(settlement, STANDING_START))
+
+
+func set_standing(settlement: String, value: int) -> void:
+	if settlement.is_empty():
+		return
+	district_standing[settlement] = clampi(value, 0, 100)
+
+
+## Add a mission's roll to the notebook. Entries are whatever Battle recorded,
+## stamped with the mission they happened on so the document reads as a
+## chronology rather than a heap.
+##
+## Append-only on purpose. The notebook is not a score and there is nothing in
+## the game that subtracts from it: a campaign that goes badly does not get to
+## revise what is already written down.
+func add_to_notebook(level: int, entries: Array) -> void:
+	for entry: Dictionary in entries:
+		var identity: Dictionary = entry.get("identity", {})
+		notebook.append({
+			"level": level,
+			"name": str(identity.get("name", "")),
+			"age": int(identity.get("age", 0)),
+			"settlement": str(identity.get("settlement", "")),
+			"fate": str(entry.get("fate", "")),
+		})
+
+
+## The notebook grouped the way the district connects it: settlement -> the
+## people from it, in the order the campaign met them. The cross-link the plan
+## asks for is this - four settlements lost their water, and the document shows
+## how much of each one the squad has accounted for.
+func notebook_by_settlement() -> Dictionary:
+	var out := {}
+	for entry: Dictionary in notebook:
+		var where := str(entry.get("settlement", ""))
+		if where.is_empty():
+			continue
+		if not out.has(where):
+			out[where] = []
+		out[where].append(entry)
+	return out
+
+
 ## Mission won: keep the XP, promote whoever earned it, and queue the perk
 ## choices those promotions unlocked. The dead were already marked during play
 ## and simply stay marked.
@@ -676,7 +748,7 @@ const SAVE_PATH := "user://campaign.json"
 # Raise this in the same commit that adds the migration step reaching it, and
 # never one without the other - _migrate_step() is what turns a number into a
 # shape the rest of this file can read.
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 
 # Raised, and never lowered again, when load_save() finds a campaign written by
 # a build newer than this one. Refusing to READ such a file is only half the
@@ -711,6 +783,10 @@ func save() -> void:
 		# v2: what makes a battle reproducible from the file. See battle_seed().
 		"campaign_seed": campaign_seed,
 		"mission_attempts": mission_attempts,
+		# v3: what the theater thinks, and what it remembers.
+		"district_standing": district_standing,
+		"alliance_strain": alliance_strain,
+		"notebook": notebook,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f == null:
@@ -754,6 +830,8 @@ func _migrate_step(payload: Dictionary, from: int) -> Dictionary:
 	match from:
 		1:
 			return _migrate_1_to_2(payload)
+		2:
+			return _migrate_2_to_3(payload)
 	return {}
 
 
@@ -795,6 +873,39 @@ func _migrate_1_to_2(payload: Dictionary) -> Dictionary:
 	payload["campaign_seed"] = _mint_campaign_seed()
 	payload["mission_attempts"] = 0
 	return payload
+
+
+## v2 -> v3: the theater starts keeping score of the squad, and the squad
+## starts keeping a document.
+##
+## A campaign already in progress has fought missions nobody was writing down,
+## and none of that is recoverable - so the notebook opens empty and Strain
+## opens where a fresh campaign opens. That is deliberately NOT an amnesty
+## dressed up as a migration: it is the honest shape of "this build started
+## counting today", and the alternative would be inventing a history.
+func _migrate_2_to_3(payload: Dictionary) -> Dictionary:
+	payload["district_standing"] = {}
+	payload["alliance_strain"] = STRAIN_START
+	payload["notebook"] = []
+	return payload
+
+
+## Standing, sanitised the way the roster is: the ladder guarantees the field
+## exists and a hand-edited file guarantees nothing. Anything that is not a
+## settlement name mapped to a number in 0..100 is dropped rather than repaired,
+## because a district whose opinion cannot be read has not got one.
+func _read_standing(raw: Variant) -> Dictionary:
+	if typeof(raw) != TYPE_DICTIONARY:
+		return {}
+	var out := {}
+	for key: Variant in raw:
+		if typeof(key) != TYPE_STRING or str(key).is_empty():
+			continue
+		var value: Variant = raw[key]
+		if typeof(value) != TYPE_FLOAT and typeof(value) != TYPE_INT:
+			continue
+		out[str(key)] = clampi(int(value), 0, 100)
+	return out
 
 
 ## A campaign's number. Never 0 - that is the "not minted yet" sentinel, and a
@@ -888,6 +999,14 @@ func load_save() -> bool:
 	# means "this campaign has no identity yet".
 	campaign_seed = int(payload.get("campaign_seed", 0))
 	mission_attempts = maxi(int(payload.get("mission_attempts", 0)), 0)
+	# The v3 fields, read the same defensive way. Strain is floored at 1 rather
+	# than at 0 - Rules.STRAIN_FLOOR is the authority and asserts it, but a
+	# hand-edited save that says 0 must not be adopted as gospel, because a
+	# theater at zero Strain is a bug in the theme.
+	district_standing = _read_standing(payload.get("district_standing", {}))
+	alliance_strain = clampi(int(payload.get("alliance_strain", STRAIN_START)), 1, 100)
+	var read_notebook: Variant = payload.get("notebook", [])
+	notebook = read_notebook if typeof(read_notebook) == TYPE_ARRAY else []
 	if campaign_seed == 0:
 		campaign_seed = _mint_campaign_seed()
 	# Per-mission scratch is never saved, and must not survive a load either.

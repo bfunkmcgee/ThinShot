@@ -18,6 +18,8 @@ extends SceneTree
 ##   6. the Marksman never breaks, which is what holds the kill floor up
 ##   7. morale is given back only to a fighter nothing happened to
 ##   8. bystanders: killable, uncounted, and not what a blast goes around
+##   9. the after-action is two panels that are never summed, and the roll
+##      reaches the notebook and the theater's two counters
 ##
 ## The save is backed up in _init() before the Game autoload can touch it, the
 ## way tools/test_progression.gd does - a test that fights battles commits
@@ -118,6 +120,7 @@ func _run() -> void:
 	await _test_marksman_holds()
 	await _test_recovery_needs_a_quiet_turn()
 	await _test_bystanders()
+	await _test_after_action()
 
 	# Moving and surrendering play pooled SFX. Sfx assigns `player.stream` and
 	# never clears it, so whichever player went last is still holding its WAV
@@ -435,4 +438,67 @@ func _test_bystanders() -> void:
 			"the surviving bystander is nowhere near the extraction zone")
 	_check(battle._objective_complete(0),
 			"and the squad still extracts")
+	await _dismiss(battle)
+
+
+# --- 9. the after-action ----------------------------------------------------
+
+func _test_after_action() -> void:
+	print("\n[9] two panels, and neither one is the other's score")
+	var game: Node = root.get_node("/root/Game")
+	# A campaign that has not been anywhere, so the counters start where a
+	# fresh one does and the notebook is empty.
+	game.notebook = []
+	game.district_standing = {}
+	game.alliance_strain = game.STRAIN_START
+	var battle: Node = await _battle(0)
+
+	# Fight it the cleanest way there is: every fighter killed while fighting.
+	# Not one conduct entry, and every one of them still a name.
+	for u in battle.living_units(TEAM_GOBLIN):
+		u.take_damage(u.hp)
+	await process_frame
+	await process_frame
+	_check(battle.last_result_won, "the wash is cleared")
+
+	var operation: String = battle.debrief_label.text
+	var roll: String = battle.roll_label.text
+	print("\n--- THE OPERATION ---\n%s\n\n--- THE ROLL ---\n%s\n" % [operation, roll])
+
+	_check(operation.begins_with("THE OPERATION"), "the left panel is the operation")
+	_check(operation.contains("OBJECTIVE MET"), "it grades the objective")
+	_check(operation.contains(" TURN"),
+			"and reports the tempo, singular or plural")
+	_check(roll.begins_with("THE ROLL"), "the right panel is the roll")
+	_check(roll.contains("KILLED"), "it counts what happened")
+	_check(roll.contains(", of "), "and reads out names rather than a headcount")
+
+	# The rule the whole split exists for.
+	_check(not operation.contains("STRAIN") and not operation.contains("ROLL"),
+			"the graded panel never mentions the reported one")
+	_check(not roll.contains("xp") and not roll.contains("OBJECTIVE"),
+			"and the reported panel never grades anything")
+
+	print("\n     a clean fight costs the theater nothing")
+	_check(game.alliance_strain < game.STRAIN_START,
+			"Strain walked DOWN toward the floor (%d from %d)"
+			% [game.alliance_strain, game.STRAIN_START])
+	_check(game.district_standing.is_empty(),
+			"and no settlement thinks worse of the squad for a firefight")
+	_check(not roll.contains("CIVILIANS HARMED"),
+			"the roll has no civilian line to print")
+
+	print("\n     and the notebook remembers all of them")
+	_check(game.notebook.size() == 9,
+			"nine names went into the notebook (%d)" % game.notebook.size())
+	var by_settlement: Dictionary = game.notebook_by_settlement()
+	_check(by_settlement.size() >= 2,
+			"cross-linked across %d settlements" % by_settlement.size())
+	var first: Dictionary = game.notebook[0]
+	_check(int(first.get("level", -1)) == 0 and not str(first.get("name", "")).is_empty(),
+			"each entry carries its mission and its name (%s)" % first.get("name", "?"))
+	# The panel is a summary; the document is the record. That distinction is
+	# the reason only three names are on screen.
+	_check(roll.contains("more in the notebook"),
+			"and the panel says where the rest of them are")
 	await _dismiss(battle)

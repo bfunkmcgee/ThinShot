@@ -366,6 +366,7 @@ var _resolving_blast := false
 @onready var level_2_button: Button = $UI/GameOver/Level2Button
 @onready var level_3_button: Button = $UI/GameOver/Level3Button
 @onready var debrief_label: Label = $UI/GameOver/DebriefLabel
+@onready var roll_label: Label = $UI/GameOver/RollLabel
 @onready var narrative_label: Label = $UI/GameOver/NarrativeLabel
 @onready var briefing_panel: ColorRect = $UI/Briefing
 @onready var briefing_mission_label: Label = $UI/Briefing/Center/Box/MissionLabel
@@ -888,6 +889,16 @@ func _spawn_bystander(spawn_cell: Vector2i) -> void:
 		return
 	unit.bystander = true
 	unit.release()
+	# They get a name too, and from the same four settlements: the water this
+	# place is arguing about is theirs. Without one, killing a bystander would
+	# cost the theater Strain but cost no district anything, and there would be
+	# nobody for THE ROLL to name.
+	#
+	# The prisoners in the pens deliberately do NOT get one - they are
+	# Confederacy survey staff, not Thirst, and Roll's tables are not theirs.
+	unit.identity = Roll.identity(Game.campaign_seed, Game.current_level,
+			_enemy_ordinal, unit.kind)
+	_enemy_ordinal += 1
 
 
 ## Walk a level's spawn list for one scout role alongside the roster slots for
@@ -3542,6 +3553,38 @@ func _nearest_scout_distance(cell: Vector2i, scouts: Array[Unit]) -> int:
 	return best
 
 
+## Walk THE ROLL and charge the campaign for it.
+##
+## This is the layer that can name both Rules and Game: Game holds the counters
+## as plain numbers and cannot reach for Rules without closing a compile cycle
+## (see the v3 block in Game.gd), and Rules is static arithmetic that has never
+## heard of a campaign. So the arithmetic is Rules', the storage is Game's, and
+## the one place that puts them together is here.
+##
+## Standing is charged to the SETTLEMENT the person came from - a district
+## notices what happened to its own - while Strain is theater-wide. A mission
+## with nothing but clean kills on its roll charges neither, and walks Strain
+## down toward the floor instead, because a war fought properly is still a war
+## and the floor is where that fact lives.
+func _apply_conduct() -> void:
+	var charged := 0
+	for entry: Dictionary in roll:
+		var conduct: int = int(entry.get("conduct", Rules.Conduct.COMBATANT_KILLED))
+		if Rules.standing_cost(conduct) == 0 and Rules.strain_cost(conduct) == 0:
+			continue
+		charged += 1
+		var identity: Dictionary = entry.get("identity", {})
+		var where := str(identity.get("settlement", ""))
+		if not where.is_empty():
+			Game.set_standing(where, Rules.standing_after(
+					Game.standing_of(where), conduct))
+		Game.alliance_strain = Rules.strain_after(Game.alliance_strain, conduct)
+	if charged == 0:
+		Game.alliance_strain = Rules.strain_decayed(Game.alliance_strain)
+	print("[Sandline] conduct: %d of %d roll entries charged, strain now %d" % [
+			charged, roll.size(), Game.alliance_strain])
+
+
 ## Add one line to THE ROLL, and price what it cost.
 ##
 ## The conduct is decided HERE, from the state the unit was in when it stopped,
@@ -3648,6 +3691,8 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 		# who did the walking. The people they carried out are not on the roster.
 		for scout in living_soldiers(Unit.TEAM_SCOUT):
 			_award_xp(scout, Game.XP_SURVIVE, "survived")
+		_apply_conduct()
+		Game.add_to_notebook(Game.current_level, roll)
 		Game.commit_mission()
 	else:
 		# Nothing earned in a failed attempt sticks, so retrying cannot be
@@ -3659,6 +3704,9 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 	# The story beat only lands on a win - a failed attempt is not part of it.
 	narrative_label.text = str(level.get("debrief", "")) if won else ""
 	debrief_label.text = _debrief_text(won)
+	# Built after _apply_conduct() has run, so the Strain it reports is the one
+	# this mission left behind rather than the one it started with.
+	roll_label.text = _roll_text(won)
 	# Where the squad wakes up next is the difference between a tent and home.
 	if not won:
 		restart_button.text = "Back to Camp"
@@ -3702,11 +3750,27 @@ func _progress_text(unit: Unit) -> String:
 	return "  ".join(parts)
 
 
-## Who earned what, so a win reads as more than a banner.
+## THE OPERATION - the graded panel, and the only one that is graded.
+##
+## Objective, squad, tempo, and who earned what. Killing armed men is how this
+## is earned: a hard-fought firefight with every soldier walking out is a
+## perfect operation, and nothing on THE ROLL can take a point off it. The two
+## are never summed and this one never mentions the other.
 func _debrief_text(won: bool) -> String:
 	if not won:
 		return "NOTHING EARNED - THE ATTEMPT DOES NOT COUNT"
-	var lines: Array[String] = []
+	# The heading and the grade share a line. This panel is bottom-aligned and
+	# grows UPWARD into the debrief prose above it, so every line it gains is a
+	# line closer to collision on the missions with the longest debriefs -
+	# which is what tools/check_briefing_fit.gd now measures.
+	var walked: int = living_soldiers(Unit.TEAM_SCOUT).size()
+	var deployed: int = Game.mission_dead.size() + walked
+	var lines: Array[String] = [
+		"THE OPERATION  -  OBJECTIVE MET  -  %d OF %d OUT  -  %s" % [
+				walked, deployed,
+				"1 TURN" if turn_number == 1 else "%d TURNS" % turn_number],
+		"",
+	]
 	for soldier: Dictionary in Game.roster:
 		var id: int = int(soldier.id)
 		# The roster keeps its dead permanently, so only the squad that
@@ -3724,6 +3788,66 @@ func _debrief_text(won: bool) -> String:
 			lines.append("%s  +%d xp" % [who, gained])
 		else:
 			lines.append(who)
+	return "\n".join(lines)
+
+
+## THE ROLL - the reported panel, and it is never ranked.
+##
+## Who the squad met and what became of them. There is no grade here, no score,
+## and nothing that subtracts from the operation next to it. It is a list of
+## people, a count of what was done to them, and the two numbers the theater
+## keeps - reported flatly, in the order a clerk would write them.
+##
+## Only three names are read out. The rest are in Dava's notebook, which is the
+## document that remembers; this panel only has to say that they existed and
+## that somebody wrote them down.
+const ROLL_NAMES_SHOWN := 3
+
+func _roll_text(won: bool) -> String:
+	if not won or roll.is_empty():
+		return ""
+	var killed := 0
+	var surrendered := 0
+	var escaped := 0
+	var civilians := 0
+	for entry: Dictionary in roll:
+		match str(entry.get("fate", "")):
+			"surrendered": surrendered += 1
+			"escaped": escaped += 1
+			_: killed += 1
+		if int(entry.get("conduct", -1)) == Rules.Conduct.CIVILIAN_KILLED:
+			civilians += 1
+
+	var lines: Array[String] = ["THE ROLL", ""]
+	var tally: Array[String] = []
+	if killed > 0:
+		tally.append("%d KILLED" % killed)
+	if surrendered > 0:
+		tally.append("%d SURRENDERED" % surrendered)
+	if escaped > 0:
+		tally.append("%d WALKED AWAY" % escaped)
+	lines.append("  -  ".join(tally))
+	lines.append("")
+
+	var shown := 0
+	for entry: Dictionary in roll:
+		var identity: Dictionary = entry.get("identity", {})
+		if identity.is_empty() or shown >= ROLL_NAMES_SHOWN:
+			continue
+		lines.append(Roll.line(identity, str(entry.get("fate", ""))))
+		shown += 1
+	var named := 0
+	for entry: Dictionary in roll:
+		if not (entry.get("identity", {}) as Dictionary).is_empty():
+			named += 1
+	if named > shown:
+		lines.append("...and %d more in the notebook" % (named - shown))
+
+	if civilians > 0:
+		lines.append("")
+		lines.append("CIVILIANS HARMED: %d" % civilians)
+	lines.append("")
+	lines.append("ALLIANCE STRAIN %d" % Game.alliance_strain)
 	return "\n".join(lines)
 
 

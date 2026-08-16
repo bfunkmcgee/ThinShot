@@ -43,6 +43,9 @@ func _init() -> void:
 		_measure(font, i, level, budget)
 
 	print("")
+	_measure_after_action(font)
+
+	print("")
 	if _failures > 0:
 		print("RESULT: FAIL (%d briefing(s) overflow the panel)" % _failures)
 		quit(1)
@@ -95,4 +98,66 @@ func _wrapped_height(font: Font, text: String, size: int) -> float:
 		var width := font.get_string_size(
 				paragraph, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
 		lines += maxi(1, int(ceil(width / BOX_WIDTH)))
+	return float(lines) * line_height
+
+
+# --- the after-action ---------------------------------------------------------
+#
+# A second, unrelated collision, in the same spirit. The results panel stacks a
+# debrief paragraph that flows DOWN from y=126 over two columns that are
+# bottom-aligned at y=600 and therefore grow UP. Neither clips and neither
+# scrolls, so the failure mode is prose printed through prose - and it gets
+# likelier every time either half gains a line.
+
+# Straight off scenes/Battle.tscn.
+const NARRATIVE_TOP := 126.0
+const NARRATIVE_WIDTH := 1200.0
+const NARRATIVE_SIZE := 22
+const COLUMN_BOTTOM := 890.0
+const COLUMN_WIDTH := 500.0
+const COLUMN_SIZE := 20
+
+## The tallest the left column can get: heading, a blank, one line per soldier
+## in a full squad, and the two trailing blocks _show_game_over appends.
+const SQUAD_MAX := 6
+const OPERATION_LINES := 2 + SQUAD_MAX + 2 + 2
+## The right column is bounded by construction - ROLL_NAMES_SHOWN caps the names
+## - so its worst case is every optional block present at once.
+const ROLL_LINES := 2 + 2 + 3 + 1 + 2 + 2
+
+
+func _measure_after_action(font: Font) -> void:
+	var line_height := font.get_height(COLUMN_SIZE)
+	var tallest := maxi(OPERATION_LINES, ROLL_LINES)
+	var column_top := COLUMN_BOTTOM - float(tallest) * line_height
+	print("after-action: columns rise to y=%d at worst (%d lines)"
+			% [int(column_top), tallest])
+	for i in Levels.LEVELS.size():
+		var level: Dictionary = Levels.LEVELS[i]
+		var text := str(level.get("debrief", ""))
+		var height := _wrapped_height_at(font, text, NARRATIVE_SIZE, NARRATIVE_WIDTH)
+		var narrative_bottom := NARRATIVE_TOP + height
+		var slack := column_top - narrative_bottom
+		var name_text := str(level.get("name", "?"))
+		if slack < 0.0:
+			_failures += 1
+			print("  FAIL  level %d '%s': debrief reaches y=%d, columns start y=%d - overlaps by %d"
+					% [i + 1, name_text, int(narrative_bottom), int(column_top), int(-slack)])
+		else:
+			print("  ok    level %d '%s': debrief ends y=%d, %dpx clear of the columns"
+					% [i + 1, name_text, int(narrative_bottom), int(slack)])
+
+
+func _wrapped_height_at(font: Font, text: String, size: int, width: float) -> float:
+	if text.is_empty():
+		return 0.0
+	var line_height := font.get_height(size)
+	var lines := 0
+	for paragraph in text.split("\n"):
+		if paragraph.is_empty():
+			lines += 1
+			continue
+		var w := font.get_string_size(
+				paragraph, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+		lines += maxi(1, int(ceil(w / width)))
 	return float(lines) * line_height

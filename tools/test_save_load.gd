@@ -286,7 +286,75 @@ func _init() -> void:
 		_check(not (g2._migrate_step({}, v) as Dictionary).is_empty(),
 				"there is a step out of version %d" % v)
 
-	print("\n[11] the lock is not sticky")
+	print("\n[11] a version-2 save gains the theater's memory")
+	# The v3 rung, from the shape a player of the seeded build actually has on
+	# disk right now: campaign_seed and mission_attempts, and nothing after.
+	var g3: Node = GAME.new()
+	var mf3 := FileAccess.open(g3.SAVE_PATH, FileAccess.WRITE)
+	mf3.store_string(JSON.stringify({
+		"version": 2,
+		"current_operation": 0, "current_level": 2, "in_the_field": false,
+		"frags": 2, "smokes": 2, "next_id": 2,
+		"roster": [{"id": 1, "surname": "ODUYA", "kind": 0, "xp": 6, "rank": 1,
+				"perks": ["sprinter"], "alive": true}],
+		"pending_promotions": [],
+		"campaign_seed": 555111, "mission_attempts": 2,
+	}, "\t"))
+	mf3.close()
+	_check(g3.load_save(), "load_save() accepted the v2 save")
+	_check(g3.campaign_seed == 555111 and g3.mission_attempts == 2
+			and g3.current_level == 2,
+			"the v2 fields were not disturbed by the climb")
+	_check(g3.notebook.is_empty(), "the notebook opens empty")
+	_check(g3.district_standing.is_empty(), "and no district has an opinion yet")
+	_check(g3.alliance_strain == g3.STRAIN_START,
+			"Strain opens where a fresh campaign opens (%d)" % g3.alliance_strain)
+	_check(g3.standing_of("Kessit") == g3.STANDING_START,
+			"a settlement nobody has met reads as STANDING_START (%d)"
+			% g3.standing_of("Kessit"))
+
+	# The document and the counters survive a round trip.
+	g3.add_to_notebook(2, [
+		{"identity": {"name": "Kesh Varr", "age": 33, "settlement": "Kessit"},
+				"fate": "killed"},
+		{"identity": {}, "fate": "escaped"},
+	])
+	g3.set_standing("Kessit", 31)
+	g3.alliance_strain = 44
+	g3.save()
+	var g4: Node = GAME.new()
+	_check(g4.load_save(), "the v3 file loads back")
+	_check(g4.notebook.size() == 2
+			and str((g4.notebook[0] as Dictionary).get("name", "")) == "Kesh Varr"
+			and int((g4.notebook[0] as Dictionary).get("level", -1)) == 2,
+			"the notebook round-trips with its names and its missions")
+	_check(g4.standing_of("Kessit") == 31 and g4.alliance_strain == 44,
+			"so do Standing and Strain (%d / %d)"
+			% [g4.standing_of("Kessit"), g4.alliance_strain])
+	_check((g4.notebook_by_settlement().get("Kessit", []) as Array).size() == 1,
+			"and the notebook cross-links by settlement")
+
+	# A hand-edited file must not be able to stand the theater at zero Strain,
+	# and must not be able to invent a district by writing nonsense at one.
+	var tampered: Dictionary = _read_json(g4.SAVE_PATH)
+	tampered["alliance_strain"] = 0
+	tampered["district_standing"] = {"Kessit": 31, "": 5, "Ashet Draw": "nonsense"}
+	var tf := FileAccess.open(g4.SAVE_PATH, FileAccess.WRITE)
+	tf.store_string(JSON.stringify(tampered, "\t"))
+	tf.close()
+	var g5: Node = GAME.new()
+	_check(g5.load_save(), "a tampered v3 file still loads")
+	_check(g5.alliance_strain >= 1,
+			"but Strain 0 is refused on the way in (%d)" % g5.alliance_strain)
+	_check(not g5.district_standing.has("")
+			and not g5.district_standing.has("Ashet Draw")
+			and g5.standing_of("Kessit") == 31,
+			"and unreadable district entries are dropped rather than repaired")
+	g3.free()
+	g4.free()
+	g5.free()
+
+	print("\n[12] the lock is not sticky")
 	g2.frags = 1
 	g2.smokes = 3
 	g2.save()

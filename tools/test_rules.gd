@@ -917,3 +917,15 @@ func _test_conduct() -> void:
 			"no conduct and no decay puts Strain under the floor, from any value")
 	_check(int(_k.STRAIN_START) > floor_at,
 			"a campaign opens above the floor, so good conduct has somewhere to go")
+
+	# Game.gd cannot name Rules either - Rules names Unit and Unit names the
+	# Game autoload, so the reference would close a cycle in the one file the
+	# `-s` harnesses load before the autoloads exist. It carries these two as
+	# literals instead. Same deal as Unit.morale above, same assertion.
+	var game_consts: Dictionary = (load("res://scripts/Game.gd") as GDScript) \
+			.get_script_constant_map()
+	_check(int(game_consts["STRAIN_START"]) == int(_k.STRAIN_START),
+			"Game.STRAIN_START matches Rules' (%d)" % int(game_consts["STRAIN_START"]))
+	_check(int(game_consts["STANDING_START"]) == int(_k.STANDING_START),
+			"Game.STANDING_START matches Rules' (%d)"
+			% int(game_consts["STANDING_START"]))
