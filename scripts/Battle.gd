@@ -1238,10 +1238,15 @@ func _update_unit_panel() -> void:
 		# Aiming the hero's called shot: quote the round the way the other
 		# modes quote theirs - odds are the normal roll, cover buys nothing.
 		if unit.team == Unit.TEAM_GOBLIN and _can_call_shot_at(selected, unit):
-			var called_dmg := selected.damage \
-					+ (CALLED_SHOT_BONUS if selected.has_perk("one_shot") else 0)
+			# Quoted through the same function do_called_shot resolves through,
+			# passed the same two arguments: One Shot's extra, and the trick
+			# itself. Composing the number here instead is what let this line
+			# quietly forget Executioner's point on a flanking called shot.
+			var called := Rules.shot_preview(board, selected, unit, 0,
+					_inspiration_bonus(selected),
+					CALLED_SHOT_BONUS if selected.has_perk("one_shot") else 0, true)
 			panel_status_label.text = "CALLED SHOT %d%% - %d DMG, IGNORES COVER" % [
-					hit_chance(selected, unit), called_dmg]
+					called.chance, called.dmg]
 			panel_status_label.modulate = Color("7ae8ff")
 			return
 		if unit == selected:
@@ -1275,31 +1280,30 @@ func _update_unit_panel() -> void:
 							caught, SUPPRESSION_ACCURACY]
 			panel_status_label.modulate = Unit.SUPPRESSED_COLOR
 			return
-		var flanking := _is_flanking(selected, unit)
-		var dmg := selected.damage
+		# The promise, straight from the function that will keep it. The panel
+		# no longer re-derives the damage rule - it reads the answer and writes
+		# the label, which is all a readout was ever supposed to do.
+		var shot := Rules.shot_preview(board, selected, unit,
+				_mode_accuracy(selected, fire_mode), _inspiration_bonus(selected))
+		var flanking: bool = shot.flanking
 		var note := ""
-		var cover := effective_cover(selected, unit)
 		if flanking:
 			note = "FLANK"
-			if selected.has_perk("executioner"):
-				dmg += Rules.EXECUTIONER_BONUS  # quoted so the promise matches _fire_round
-		elif cover == Board.CoverLevel.FULL:
-			dmg >>= 1
+		elif shot.cover == Board.CoverLevel.FULL:
 			note = "FULL COVER"
-		elif cover == Board.CoverLevel.HALF:
-			dmg >>= 1
+		elif shot.cover == Board.CoverLevel.HALF:
 			note = "HALF COVER"
-		if _is_peeking(selected, unit):
+		if shot.peeking:
 			note = "PEEK" if note == "" else "PEEK - " + note
+		# The burst note stays the panel's own: `dmg` is one round, and how many
+		# rounds a mode sends is a controller question.
 		var rounds := _rounds_for(fire_mode)
-		var mod := _mode_accuracy(selected, fire_mode)
 		if rounds > 1:
 			var label := "AUTO" if fire_mode == FireMode.AUTO else "BURST"
 			note = "x%d %s" % [rounds, label] if note == "" \
 					else "x%d %s - %s" % [rounds, label, note]
 		panel_status_label.text = "%d%% TO HIT - %d DMG%s" % [
-				hit_chance(selected, unit, mod), dmg,
-				"  " + note if note != "" else ""]
+				shot.chance, shot.dmg, "  " + note if note != "" else ""]
 		panel_status_label.modulate = Color("7ae8ff") if flanking else Color.WHITE
 		return
 	if unit == selected and fire_mode != FireMode.SINGLE:
@@ -1630,9 +1634,15 @@ func _update_hover(cell: Vector2i) -> void:
 			aim_from = selected.cell
 			if fire_mode == FireMode.SUPPRESS:
 				beaten = _suppress_zone(cell, selected.suppress_radius())
-			aim_flanking = target != null and _is_flanking(selected, target)
-			aim_covered = target != null \
-					and effective_cover(selected, target) != Board.CoverLevel.NONE
+			if target != null:
+				# The aim line's colour is the panel's answer rather than a
+				# second opinion about the same shot: one preview decides
+				# both, so the line can never read FLANK while the readout
+				# under it quotes cover. Only these two fields are wanted
+				# here - the panel a few lines below quotes the numbers.
+				var aim := Rules.shot_preview(board, selected, target)
+				aim_flanking = aim.flanking
+				aim_covered = aim.cover != Board.CoverLevel.NONE
 	board.set_blast_cells(beaten, _can_shoot_drum(selected, cell))
 	board.set_hover(cell, path, aim_from, aim_covered, aim_flanking)
 	# Hovering somewhere you could move to previews the cover you would have
@@ -2754,12 +2764,21 @@ func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0,
 		attacker.lean(lean * PEEK_LEAN)
 	var chest := target.position + Vector2(0, -36)
 	var dir := (chest - muzzle).normalized()
-	var flanking := _is_flanking(attacker, target)
+	# The whole shot, asked once and asked early: the number to roll against,
+	# the damage it will do, and which of the two the log should describe. This
+	# is the same call the panel made while the player was still hovering, which
+	# is precisely what makes the promise on screen and the round out of the
+	# barrel the same shot rather than two shots that happen to match. Taken
+	# before the tracer's flight, so flank and cover are read at one instant
+	# instead of one on each side of an await.
+	var shot := Rules.shot_preview(board, attacker, target, accuracy_mod,
+			_inspiration_bonus(attacker), bonus_damage, ignore_cover)
+	var flanking: bool = shot.flanking
 	# Sparks come off whatever the target is actually hunkered behind.
 	var covered_cell := Board.NO_CELL
 	if not flanking:
 		covered_cell = board.cover_source(attacker.cell, target.cell)
-	var chance := hit_chance(attacker, target, accuracy_mod)
+	var chance: int = shot.chance
 	var hit := _rules_rng.randi_range(1, 100) <= chance
 	# A miss sails past the target and off to one side.
 	var impact_point := chest if hit else chest + dir * 54.0 \
@@ -2795,18 +2814,16 @@ func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0,
 		_update_unit_panel()
 		return
 
-	var dmg := attacker.damage + bonus_damage
-	var cover := effective_cover(attacker, target)
-	if ignore_cover:
-		cover = Board.CoverLevel.NONE  # a called shot goes where the cover is not
+	# Both numbers were settled above; all that is left is to say which happened.
+	# `cover` is already NONE if this round was a called shot, so the log never
+	# claims a wall the damage did not pay for.
+	var dmg: int = shot.dmg
+	var cover: Board.CoverLevel = shot.cover
 	if cover != Board.CoverLevel.NONE:
-		dmg >>= 1
 		print("[ThinShot]   shot %s -> %s into %s cover: %d dmg (%d%%)" % [
 				attacker.cell, target.cell,
 				"full" if cover == Board.CoverLevel.FULL else "half", dmg, chance])
 	elif flanking:
-		if attacker.has_perk("executioner"):
-			dmg += Rules.EXECUTIONER_BONUS  # a flanking shot lands a point harder
 		print("[ThinShot]   flanking shot %s -> %s: %d dmg (%d%%)" % [
 				attacker.cell, target.cell, dmg, chance])
 	var lethal := target.hp - dmg <= 0
@@ -2832,6 +2849,13 @@ func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0,
 ## and the numbers, and knows nothing about the scene tree. Battle supplies the
 ## two things it cannot reach for itself: the board, and the inspiration aura,
 ## which has to be found by walking the living units.
+##
+## Like the three forwarders further down, this now has no caller in the
+## controller: the panel and the resolver both take their chance off the same
+## Rules.shot_preview that hands them the damage, so the two can never be
+## quoted from different moments. It survives for tools/test_progression.gd,
+## which measures Rally and Inspiration through a booted Battle and wants the
+## aura included exactly as a real shot would include it.
 func hit_chance(attacker: Unit, target: Unit, accuracy_mod := 0) -> int:
 	return Rules.hit_chance(board, attacker, target, accuracy_mod,
 			_inspiration_bonus(attacker))
@@ -2941,8 +2965,12 @@ func _on_danger_button_toggled(pressed: bool) -> void:
 	_refresh_danger()
 
 
-# Three one-line forwarders into Rules, kept under their old names because a
-# controller with a board in hand should not have to say so at every call site.
+# Three one-line forwarders into Rules, kept under their old names. The
+# controller itself no longer asks any of them: every shot it quotes or fires
+# now comes from one Rules.shot_preview call, which is the point. What still
+# calls them is tools/test_progression.gd, which reaches through a booted
+# Battle to check flank and cover on the shipped map's real geometry - a
+# seam worth keeping, and three lines is a cheap price for it.
 # The rules themselves, and the reasoning behind them, are in scripts/Rules.gd.
 
 func _is_flanking(attacker: Unit, target: Unit) -> bool:

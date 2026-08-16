@@ -120,3 +120,72 @@ static func hit_chance(board: Board, attacker: Unit, target: Unit,
 	if dist > comfortable and not attacker.has_perk("marksman"):
 		chance -= (dist - comfortable) * LONG_SHOT_PENALTY
 	return clampi(chance, MIN_HIT_CHANCE, MAX_HIT_CHANCE)
+
+
+# --- The round ---------------------------------------------------------------
+
+## The cover this shot has to get through. `effective_cover` already answers
+## what the target's facing leaves it; this adds the one shot that goes where
+## the cover is not. Both reductions mean the same thing by the same word -
+## cover that APPLIES, not cover that exists - so a called shot at a soldier
+## hugging a wall reports NONE for the same reason a flanked one does.
+static func _applied_cover(board: Board, attacker: Unit, target: Unit,
+		ignore_cover: bool) -> Board.CoverLevel:
+	if ignore_cover:
+		return Board.CoverLevel.NONE
+	return effective_cover(board, attacker, target)
+
+
+## What one round takes off, before the target's own arithmetic.
+##
+## PER ROUND. A burst fires this several times; how many, and how to say so on
+## the panel, is the controller's business and not a rule.
+##
+## The branch order is cover first, flank second. That is not a coin toss: it
+## is the order the resolver has always used, and the resolver is the one that
+## pays out - if a preview and a round ever came apart, the number on screen
+## would be the wrong one by definition, so the screen should be quoting the
+## resolver's shape. The other order was equally correct, and that was the
+## problem: two spellings of one rule, agreeing only because `effective_cover`
+## returns NONE on a flank (see above) and so a flanked target can never reach
+## the halving arm. That invariant is pinned by tools/test_rules.gd, but it now
+## has nothing to hold together here - there is one spelling left.
+##
+## `ignore_cover` is the called shot's whole trick: the roll stays a normal
+## one, the damage is simply never halved. `bonus_damage` carries One Shot's
+## extra, and lands BEFORE the halving, so a bonus fired into cover is halved
+## along with the rest of the round.
+static func damage_for(board: Board, attacker: Unit, target: Unit,
+		bonus_damage := 0, ignore_cover := false) -> int:
+	var dmg: int = attacker.damage + bonus_damage
+	if _applied_cover(board, attacker, target, ignore_cover) != Board.CoverLevel.NONE:
+		return dmg >> 1
+	if is_flanking(attacker, target) and attacker.has_perk("executioner"):
+		dmg += EXECUTIONER_BONUS
+	return dmg
+
+
+## Everything a shot that has not been fired yet can be asked, answered once.
+##
+## This exists because the answer used to be assembled four times over: the
+## resolver, the panel's damage line, the panel's called-shot line, and the
+## colour of the aim line all re-derived flank and cover for themselves. They
+## agreed, but by coincidence renewed at every edit rather than by construction.
+## A tactics game where the promise and the round can drift apart is one the
+## player stops trusting, and the cheapest way to make drift impossible is to
+## leave only one place capable of answering.
+##
+## `chance` is the roll to beat, `dmg` is PER ROUND (see damage_for), `cover`
+## is the cover that APPLIES to this shot - NONE on a flank, and NONE when
+## `ignore_cover` says the round goes around it - and `flanking` / `peeking`
+## are the two facts the panel and the aim line label themselves with.
+static func shot_preview(board: Board, attacker: Unit, target: Unit,
+		accuracy_mod := 0, inspiration := 0,
+		bonus_damage := 0, ignore_cover := false) -> Dictionary:
+	return {
+		"chance": hit_chance(board, attacker, target, accuracy_mod, inspiration),
+		"dmg": damage_for(board, attacker, target, bonus_damage, ignore_cover),
+		"cover": _applied_cover(board, attacker, target, ignore_cover),
+		"flanking": is_flanking(attacker, target),
+		"peeking": is_peeking(board, attacker, target),
+	}

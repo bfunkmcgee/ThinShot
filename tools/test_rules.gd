@@ -5,7 +5,7 @@ extends SceneTree
 ## wall placed where the rule needs a wall, rather than whichever rock a
 ## shipped level happens to have near a spawn.
 ##
-## Six things are checked, and they are the six the game rests on:
+## Seven things are checked, and they are the seven the game rests on:
 ##   1. flanking and cover are mutually exclusive - a flanked target has NONE,
 ##      takes the flank bonus, and does NOT also charge the full-cover penalty
 ##   2. the long-shot threshold is `attack_range / 2` in INTEGER division, so a
@@ -14,6 +14,8 @@ extends SceneTree
 ##   4. cover halves damage with `>>`, which is why every base damage is even
 ##   5. Executioner adds its point on a flank and can never add it through cover
 ##   6. peek_origin leans around the END of a wall run and not around its MIDDLE
+##   7. the promise equals the round: shot_preview and damage_for return the
+##      same number over every combination of flank, cover, perk and bonus
 ##
 ## Nothing here needs a scene, a save, or a turn. Board's spatial predicates run
 ## on a detached `Board.new()` (tools/check_cover_rules.gd sweeps all seven maps
@@ -81,20 +83,20 @@ func _peeking(board: Board, a: Node2D, t: Node2D) -> bool:
 	return _rules.call("is_peeking", board, a, t)
 
 
-## The damage rule exactly as _fire_round applies it today, mirrored here
-## because it still lives inside a 90-line coroutine that fires effects and
-## awaits timers. Step 5 moves it to `Rules.damage_for` and deletes this
-## helper; every assertion that calls it re-points there unchanged. What the
-## assertions get from the real code meanwhile is the branch SELECTION -
-## `_cover` and `_flanking` below are Rules', so the test proves which arm of
-## _fire_round's if/elif a given board position lands in.
-func _damage(board: Board, a: Node2D, t: Node2D, bonus := 0) -> int:
-	var dmg: int = a.damage + bonus
-	if _cover(board, a, t) != Board.CoverLevel.NONE:
-		return dmg >> 1
-	if _flanking(a, t) and a.has_perk("executioner"):
-		dmg += _k.EXECUTIONER_BONUS
-	return dmg
+## The damage rule itself, no longer mirrored. Until step 5 this file carried
+## its own copy of _fire_round's if/elif, because the real one lived inside a
+## 90-line coroutine that fires effects and awaits timers and could not be
+## called from a headless test. `Rules.damage_for` is that rule lifted out
+## whole, so the assertions below now run against the shipping code rather
+## than against a copy of it that had to be kept honest by hand.
+func _damage(board: Board, a: Node2D, t: Node2D, bonus := 0, ignore_cover := false) -> int:
+	return _rules.call("damage_for", board, a, t, bonus, ignore_cover)
+
+
+## The other half of the same rule: what the panel promises before the trigger.
+func _preview(board: Board, a: Node2D, t: Node2D, mod := 0, insp := 0,
+		bonus := 0, ignore_cover := false) -> Dictionary:
+	return _rules.call("shot_preview", board, a, t, mod, insp, bonus, ignore_cover)
 
 
 # --- Building the fixtures ---------------------------------------------------
@@ -189,6 +191,7 @@ func _run() -> void:
 	_test_cover_halving()
 	_test_executioner()
 	_test_peek_asymmetry()
+	_test_preview_matches_resolution()
 
 	print("\nRESULT: ", "FAIL" if _failed else "PASS")
 	quit(1 if _failed else 0)
@@ -241,9 +244,13 @@ func _test_flank_excludes_cover() -> void:
 			"turning the target is worth the bonus plus the penalty, %d points"
 			% [_k.FLANK_ACCURACY + _k.FULL_COVER_ACCURACY])
 
-	# The invariant itself, not just this one pair. Step 5's damage rule tests
-	# cover before flanking; _update_unit_panel tests flanking before cover.
-	# Both are correct only because these two can never be true at once.
+	# The invariant itself, not just this one pair. It used to be what held the
+	# damage rule's two spellings together - the resolver tested cover first,
+	# the panel tested flanking first - and there is only one spelling now. But
+	# it is still load-bearing one function up: hit_chance takes the flank
+	# bonus in an `if` and charges full cover in the matching `elif`, so a
+	# target that were somehow both would silently be granted the bonus and
+	# excused the penalty. Sweep it.
 	_sweep_exclusive(board, "one wall")
 
 	shooter.free()
@@ -424,7 +431,7 @@ func _test_executioner() -> void:
 
 	_check(_face_flanked(target, killer), "the target is turned away from the shooter")
 	_check(_flanking(killer, target) and _cover(board, killer, target) == Board.CoverLevel.NONE,
-			"so _fire_round takes its `elif flanking:` arm, with cover NONE")
+			"so damage_for falls past its cover arm into the flanking one")
 	_check(_damage(board, killer, target) == hit + _k.EXECUTIONER_BONUS,
 			"a flanking round from the perked shooter deals %d"
 			% (hit + _k.EXECUTIONER_BONUS))
@@ -434,7 +441,7 @@ func _test_executioner() -> void:
 	_check(_face_covered(target, killer), "now the target faces its wall")
 	_check(not _flanking(killer, target)
 			and _cover(board, killer, target) == Board.CoverLevel.FULL,
-			"so the flanking arm is unreachable and the cover arm halves instead")
+			"so the cover arm takes it first and the flanking one is unreachable")
 	_check(_damage(board, killer, target) == hit >> 1,
 			"the perked shooter deals %d into cover - halved, with no point added"
 			% (hit >> 1))
@@ -513,6 +520,160 @@ func _test_peek_asymmetry() -> void:
 			% [_k.PEEK_ACCURACY, _chance(board, shooter, target)])
 
 	_sweep_exclusive(board, "one long wall")
+
+	shooter.free()
+	target.free()
+	board.free()
+
+
+# --- 7. the promise equals the round -----------------------------------------
+
+## The two branch orders the game used to carry, kept here as history rather
+## than as rules - nothing runs either one now, because Rules.damage_for is the
+## only spelling left. They stay because "unifying them changed no outcome" is
+## a claim, and a sweep that tries every combination and finds no daylight
+## between them is a proof. The resolver tested cover first; the panel tested
+## flanking first; they agreed only because effective_cover returns NONE on a
+## flank. If one of these ever fails, that invariant has broken and the
+## unification silently moved a real number.
+func _old_resolver_order(board: Board, a: Node2D, t: Node2D,
+		bonus: int, ignore_cover: bool) -> int:
+	var dmg: int = a.damage + bonus
+	var cover: int = Board.CoverLevel.NONE if ignore_cover else _cover(board, a, t)
+	if cover != Board.CoverLevel.NONE:
+		dmg >>= 1
+	elif _flanking(a, t) and a.has_perk("executioner"):
+		dmg += _k.EXECUTIONER_BONUS
+	return dmg
+
+
+func _old_panel_order(board: Board, a: Node2D, t: Node2D,
+		bonus: int, ignore_cover: bool) -> int:
+	var dmg: int = a.damage + bonus
+	var cover: int = Board.CoverLevel.NONE if ignore_cover else _cover(board, a, t)
+	if _flanking(a, t):
+		if a.has_perk("executioner"):
+			dmg += _k.EXECUTIONER_BONUS
+	elif cover == Board.CoverLevel.FULL:
+		dmg >>= 1
+	elif cover == Board.CoverLevel.HALF:
+		dmg >>= 1
+	return dmg
+
+
+## Place the pair on a shot whose target, facing its shooter, has exactly the
+## cover level asked for. Searched rather than hand-placed, so the assertion
+## that all three levels were reached is a fact about the board instead of a
+## diagram in a comment that nobody re-checks.
+func _find_shot(board: Board, shooter: Node2D, target: Node2D, want: int) -> bool:
+	for ty in board.size.y:
+		for tx in board.size.x:
+			var t := Vector2i(tx, ty)
+			if not board.is_walkable(t):
+				continue
+			for sy in board.size.y:
+				for sx in board.size.x:
+					var s := Vector2i(sx, sy)
+					if s == t or not board.is_walkable(s):
+						continue
+					if not board.has_line_of_sight(s, t):
+						continue
+					shooter.cell = s
+					target.cell = t
+					if _face_covered(target, shooter) \
+							and _cover(board, shooter, target) == want:
+						return true
+	return false
+
+
+func _test_preview_matches_resolution() -> void:
+	print("\n[7] the promise and the round are one function, over every combination")
+	# One wall and one junk pile, far enough apart that no cell is adjacent to
+	# both - so the search below can find a clean FULL shot and a clean HALF
+	# one without either contaminating the other.
+	var board := _board([
+		"..........",
+		"..........",
+		"..#.......",
+		"..........",
+		"..........",
+		"......j...",
+		"..........",
+	])
+	var shooter: Node2D = _mk(KIND_SCOUT, Vector2i.ZERO)
+	var target: Node2D = _mk(KIND_SCOUT, Vector2i.ZERO)
+	var levels := {"NONE": Board.CoverLevel.NONE, "HALF": Board.CoverLevel.HALF,
+			"FULL": Board.CoverLevel.FULL}
+	var drift: Array[String] = []    # the preview disagreed with the round
+	var history: Array[String] = []  # an old branch order disagreed with either
+	var fields: Array[String] = []   # a dict field disagreed with its predicate
+	var combos := 0
+
+	for level_name: String in levels:
+		var want: int = levels[level_name]
+		_check(_find_shot(board, shooter, target, want),
+				"found a shot whose target sits in %s cover" % level_name)
+		for flanked in [false, true]:
+			# Turning the target does not change the geometry, only whether the
+			# cover applies - which is the whole point of sweeping both.
+			_check(_face_flanked(target, shooter) if flanked
+					else _face_covered(target, shooter),
+					"%s: a %s facing exists" % [level_name,
+							"flanked" if flanked else "covered"])
+			for executioner in [false, true]:
+				shooter.perks = ["executioner"] if executioner else []
+				for ignore_cover in [false, true]:
+					for bonus in [0, 2]:
+						combos += 1
+						var tag := "%s/%s/exec=%s/ignore=%s/+%d" % [level_name,
+								"flanked" if flanked else "covered",
+								executioner, ignore_cover, bonus]
+						var round_dmg := _damage(board, shooter, target,
+								bonus, ignore_cover)
+						var shot := _preview(board, shooter, target, 0, 0,
+								bonus, ignore_cover)
+						if int(shot.dmg) != round_dmg:
+							drift.append("%s: promised %d, dealt %d"
+									% [tag, shot.dmg, round_dmg])
+						if _old_resolver_order(board, shooter, target, bonus,
+										ignore_cover) != round_dmg \
+								or _old_panel_order(board, shooter, target, bonus,
+										ignore_cover) != round_dmg:
+							history.append(tag)
+						var applied: int = Board.CoverLevel.NONE if ignore_cover \
+								else _cover(board, shooter, target)
+						if int(shot.cover) != applied \
+								or bool(shot.flanking) != _flanking(shooter, target) \
+								or bool(shot.peeking) != _peeking(board, shooter, target) \
+								or int(shot.chance) != _chance(board, shooter, target):
+							fields.append(tag)
+
+	_check(combos == 48, "the sweep ran all 48 combinations (got %d)" % combos)
+	_check(drift.is_empty(),
+			"shot_preview never quotes a number damage_for will not pay (%s)" % [drift])
+	_check(history.is_empty(),
+			"and both pre-unification orders return it too - no outcome moved (%s)"
+			% [history])
+	_check(fields.is_empty(),
+			"cover, flanking, peeking and chance match their own predicates (%s)"
+			% [fields])
+
+	# The one combination the old code did quote wrong, now on the record. A
+	# called shot forces cover to NONE, which drops it into the flanking arm, so
+	# the resolver has always added Executioner's point - while the panel's
+	# called-shot line composed `damage + CALLED_SHOT_BONUS` by hand and never
+	# did. No shipped soldier can hold both perks (called_shot is HERO rank 1,
+	# executioner is SCOUT rank 4), so it was never quoted at a live target; one
+	# edit to the perk tables and it would have been.
+	_check(_find_shot(board, shooter, target, Board.CoverLevel.FULL),
+			"a full-cover shot, one more time")
+	_check(_face_flanked(target, shooter), "with the target turned away from it")
+	shooter.perks = ["executioner"]
+	var called := _damage(board, shooter, target, 2, true)
+	_check(called == shooter.damage + 2 + _k.EXECUTIONER_BONUS,
+			"a flanking called shot pays the bonus AND Executioner's point (%d)" % called)
+	_check(int(_preview(board, shooter, target, 0, 0, 2, true).dmg) == called,
+			"...and the quote on the panel is now that same %d" % called)
 
 	shooter.free()
 	target.free()

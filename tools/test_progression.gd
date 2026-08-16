@@ -8,7 +8,10 @@ extends SceneTree
 ##   4. a real Battle.tscn boot on a crafted roster: the ability buttons, the
 ##      quick-hands reload, walking fire's gate, grenadier's frag, Rally,
 ##      Field Dressing, Inspiration, Flanker/Executioner, and Called Shot
-##      against a full-cover goblin
+##      against a full-cover goblin - plus that a resolved round takes exactly
+##      the HP Rules.damage_for promised for it before the trigger, which is
+##      the preview/resolver agreement measured on the live resolver
+
 ##   5. Untouchable refuses the first killing blow and honours the second
 ##
 ## Any real save is backed up in _init() - BEFORE the Game autoload's _ready
@@ -344,10 +347,22 @@ func _run() -> void:
 			"flanker adds 10 on top of the flank bonus (%d vs %d)"
 			% [with_perk, without_perk])
 	goblin.hp = 4
+	# What the panel would promise for this exact shot, read BEFORE the trigger
+	# and out of the same function the panel reads. Checking the HP that
+	# actually left the goblin against it is preview-vs-resolution agreement
+	# measured on the live resolver - through _fire_round's effects, awaits and
+	# seeded roll - which tools/test_rules.gd cannot reach from a bare board.
+	# Rules is load()ed rather than named for the -s reason in the header.
+	var rules := load("res://scripts/Rules.gd") as GDScript
+	var promised: int = rules.call("damage_for", battle.board, flanker, goblin)
+	var hp_before: int = goblin.hp
 	battle._rules_rng.seed = _seed_for_roll(battle.hit_chance(flanker, goblin))
 	await battle._fire_round(flanker, goblin)
 	_check(goblin.hp == 1,
 			"executioner's flanking round deals 3 (2+1) - hp 4 -> %d" % goblin.hp)
+	_check(hp_before - goblin.hp == promised,
+			"...and the HP that left him is exactly what damage_for promised (%d)"
+			% promised)
 
 	print("\n  called shot against full cover")
 	var mark_and_from := _full_cover_shot(battle)
