@@ -20,6 +20,8 @@ extends SceneTree
 ##   8. bystanders: killable, uncounted, and not what a blast goes around
 ##   9. the after-action is two panels that are never summed, and the roll
 ##      reaches the notebook and the theater's two counters
+##  10. an escape survives the REAL turn loop - the one that keeps holding
+##      the unit after the activation that freed it
 ##
 ## The save is backed up in _init() before the Game autoload can touch it, the
 ## way tools/test_progression.gd does - a test that fights battles commits
@@ -121,6 +123,7 @@ func _run() -> void:
 	await _test_recovery_needs_a_quiet_turn()
 	await _test_bystanders()
 	await _test_after_action()
+	await _test_escape_through_the_turn_loop()
 
 	# Moving and surrendering play pooled SFX. Sfx assigns `player.stream` and
 	# never clears it, so whichever player went last is still holding its WAV
@@ -501,4 +504,64 @@ func _test_after_action() -> void:
 	# the reason only three names are on screen.
 	_check(roll.contains("more in the notebook"),
 			"and the panel says where the rest of them are")
+	await _dismiss(battle)
+
+
+# --- 10. the escape, through run_enemy_turn rather than around it -------------
+
+func _test_escape_through_the_turn_loop() -> void:
+	print("\n[10] a fighter who runs off the map does not take the turn with him")
+	# This is the test that was missing. Sections 2 and 3 call _resolve_morale
+	# directly, which is exactly the shape that hid the bug: run_enemy_turn
+	# goes on to clear the acting markers off the unit AFTER the activation
+	# that freed it, and calling anything on a freed instance is a hard error
+	# that stops the enemy turn dead.
+	var battle: Node = await _battle(0)
+
+	# One fighter left, standing on the rim, already broken and running.
+	var runner: Node2D = null
+	for u in battle.living_units(TEAM_GOBLIN):
+		if u.kind != KIND_GOBLIN_BOLT and runner == null:
+			runner = u
+		else:
+			u.take_damage(u.hp)
+	await process_frame
+	_check(battle.living_units(TEAM_GOBLIN).size() == 1,
+			"one fighter left on the wash")
+
+	var rim := Vector2i(0, runner.cell.y)
+	var tries := 0
+	while tries < battle.board.size.y and (not battle.board.is_walkable(rim)
+			or battle.unit_at(rim) != null):
+		rim.y = (rim.y + 1) % battle.board.size.y
+		tries += 1
+	_place(battle, runner, rim)
+	runner.begin_rout()
+	_check(battle._at_map_edge(runner.cell),
+			"he is broken and standing on the rim at %s" % runner.cell)
+
+	# The real thing, with its timers and its marker bookkeeping.
+	battle.state = battle.State.ENEMY_TURN
+	await battle.run_enemy_turn()
+	await process_frame
+
+	_check(battle.living_units(TEAM_GOBLIN).is_empty(),
+			"the turn ran him off the board")
+	# The invariant the guard in run_enemy_turn exists for, stated directly.
+	# The structural assertions around it cannot catch the regression on their
+	# own: calling a method on a freed instance logs a SCRIPT ERROR and returns
+	# null rather than halting, so the turn limps on and every other check here
+	# still passes. Run the suite with `grep -E "RESULT|SCRIPT ERROR"` - which
+	# is what the README already tells you to do - and pin the reason here.
+	_check(not is_instance_valid(runner),
+			"the escaped fighter is genuinely freed, which is why the turn loop "
+			+ "must not touch him afterwards")
+	_check(not battle.roll.is_empty()
+			and str(battle.roll.back().fate) == "escaped",
+			"THE ROLL says escaped")
+	# The proof that the turn loop finished rather than erroring out partway:
+	# clearing the wash is what ends the mission, and _show_game_over is what
+	# sets this. A crash in run_enemy_turn would leave it false.
+	_check(battle.last_result_won,
+			"and the contact resolved, so the loop ran to the end")
 	await _dismiss(battle)

@@ -60,6 +60,18 @@ var board: Board = null
 
 
 func _init() -> void:
+	_run()
+
+
+## Deferred out of _init() for one reason: _check_kill_floor loads Rules.gd, and
+## Rules type-hints Unit, and Unit names the Game autoload. Compiling that chain
+## before the autoloads exist is the `-s` trap tools/test_hero_gameover.gd
+## documents at length - it still produced the right answer here, because
+## never_breaks() touches none of it at runtime, but it logged a compile error
+## into a tool that had none. One frame is the whole fix, and it is the same
+## shape every test harness in this directory already uses.
+func _run() -> void:
+	await process_frame
 	var args := OS.get_cmdline_user_args()
 	var jobs: Array = []  # {label: String, data: Dictionary, shipped_idx: int}
 	var i := 0

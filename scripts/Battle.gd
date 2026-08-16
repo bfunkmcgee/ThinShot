@@ -3181,8 +3181,14 @@ func run_enemy_turn() -> void:
 		# Morale is settled before anything is decided, because whether this
 		# fighter is still fighting is a prior question to what he does.
 		if await _resolve_morale(goblin, acted, squad.size()):
-			goblin.set_selected(false)
-			goblin.set_acting(false)
+			# The one branch that can end with no unit left to tidy up: a
+			# fighter who reaches the rim is freed by _run_for_it, and the
+			# frame it waits for to make that stick has already passed by the
+			# time we are back here. Everything else - surrender, a rout that
+			# is still running - leaves him on the board.
+			if is_instance_valid(goblin):
+				goblin.set_selected(false)
+				goblin.set_acting(false)
 			if state == State.GAME_OVER:
 				return
 			await get_tree().create_timer(AI_BEAT).timeout
