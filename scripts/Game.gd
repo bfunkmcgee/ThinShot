@@ -72,7 +72,9 @@ var _rng := RandomNumberGenerator.new()
 # an average soldier makes Corporal after the first mission and Staff Sergeant
 # by the end, and a standout makes Master Sergeant.
 const RANKS: Array[Dictionary] = [
-	{"title": "Scout", "abbrev": "", "xp": 0},
+	# Rodar enters as a conscript, so the bottom rung says so. Title only -
+	# the threshold and both per-rank bonuses are unchanged.
+	{"title": "Levy", "abbrev": "", "xp": 0},
 	{"title": "Corporal", "abbrev": "Cpl.", "xp": 6},
 	{"title": "Sergeant", "abbrev": "Sgt.", "xp": 14},
 	{"title": "Staff Sergeant", "abbrev": "SSgt.", "xp": 26},
@@ -493,13 +495,13 @@ func ensure_roster(level_data: Dictionary) -> void:
 				soldier.kind = Unit.Kind.HERO
 				soldier.surname = "Akai"
 				formed = true
-				print("[ThinShot] the team lead steps forward: Rodar Akai")
+				print("[Sandline] the team lead steps forward: Rodar Akai")
 				break
 	for kind: int in wanted:
 		for i in maxi(int(wanted[kind]) - _ever_of_kind(kind), 0):
 			var soldier := _recruit(kind)
 			formed = true
-			print("[ThinShot] new recruit: %s (%s)" % [
+			print("[Sandline] new recruit: %s (%s)" % [
 					soldier.surname, Unit.kind_role_name(kind)])
 	# Surnames are drawn at random, so a squad that is not written down is a
 	# different five people next launch. Nothing earned is being captured here -
@@ -544,7 +546,7 @@ func recruit_to_strength(level_data: Dictionary) -> Array:
 		for i in int(gaps[kind]):
 			var soldier := _recruit(kind)
 			taken.append(soldier)
-			print("[ThinShot] garrison assigns %s (%s)" % [
+			print("[Sandline] garrison assigns %s (%s)" % [
 					soldier.surname, Unit.kind_role_name(kind)])
 	if not taken.is_empty():
 		save()
@@ -616,7 +618,7 @@ func commit_mission() -> void:
 		if new_rank <= old_rank:
 			continue
 		soldier.rank = new_rank
-		print("[ThinShot] %s promoted to %s" % [soldier.surname, rank_title(new_rank)])
+		print("[Sandline] %s promoted to %s" % [soldier.surname, rank_title(new_rank)])
 		# Every rank crossed that offers this soldier's class a choice queues
 		# one, so a soldier who jumps two ranks at once still gets both picks.
 		for rank in range(old_rank + 1, new_rank + 1):
@@ -651,7 +653,7 @@ func choose_perk(id: int, perk: String) -> void:
 	if soldier.is_empty() or (soldier.perks as Array).has(perk):
 		return
 	(soldier.perks as Array).append(perk)
-	print("[ThinShot] %s takes %s" % [soldier.surname, PERKS[perk].name])
+	print("[Sandline] %s takes %s" % [soldier.surname, PERKS[perk].name])
 	save()
 
 
@@ -693,7 +695,7 @@ func has_save() -> bool:
 
 func save() -> void:
 	if _save_locked:
-		push_error("[ThinShot] %s was written by a newer build - refusing to overwrite it"
+		push_error("[Sandline] %s was written by a newer build - refusing to overwrite it"
 				% SAVE_PATH)
 		return
 	var payload := {
@@ -712,7 +714,7 @@ func save() -> void:
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f == null:
-		push_error("[ThinShot] cannot write %s: %s" % [
+		push_error("[Sandline] cannot write %s: %s" % [
 				SAVE_PATH, error_string(FileAccess.get_open_error())])
 		return
 	f.store_string(JSON.stringify(payload, "\t"))
@@ -765,7 +767,7 @@ func _migrate_step(payload: Dictionary, from: int) -> Dictionary:
 ## something to adopt and hope about.
 func _migrate(payload: Dictionary, from: int) -> Dictionary:
 	if from > SAVE_VERSION:
-		push_error("[ThinShot] refusing to migrate save version %d down to %d"
+		push_error("[Sandline] refusing to migrate save version %d down to %d"
 				% [from, SAVE_VERSION])
 		return {}
 	var out := payload
@@ -773,7 +775,7 @@ func _migrate(payload: Dictionary, from: int) -> Dictionary:
 	while at < SAVE_VERSION:
 		out = _migrate_step(out, at)
 		if out.is_empty():
-			push_error("[ThinShot] no migration step from save version %d - the ladder in Game.gd has a gap"
+			push_error("[Sandline] no migration step from save version %d - the ladder in Game.gd has a gap"
 					% at)
 			return {}
 		at += 1
@@ -815,14 +817,14 @@ func load_save() -> bool:
 		return false
 	var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
 	if f == null:
-		push_error("[ThinShot] cannot read %s: %s" % [
+		push_error("[Sandline] cannot read %s: %s" % [
 				SAVE_PATH, error_string(FileAccess.get_open_error())])
 		return false
 	var text := f.get_as_text()
 	f.close()
 	var parsed: Variant = JSON.parse_string(text)
 	if typeof(parsed) != TYPE_DICTIONARY:
-		push_error("[ThinShot] %s is not valid JSON - ignoring it" % SAVE_PATH)
+		push_error("[Sandline] %s is not valid JSON - ignoring it" % SAVE_PATH)
 		return false
 	var payload: Dictionary = parsed
 	var version := int(payload.get("version", 0))
@@ -833,7 +835,7 @@ func load_save() -> bool:
 	# save this build has outgrown loses nothing that can still be read.
 	if version > SAVE_VERSION:
 		_save_locked = true
-		push_warning("[ThinShot] save is version %d, this build reads %d - leaving it alone"
+		push_warning("[Sandline] save is version %d, this build reads %d - leaving it alone"
 				% [version, SAVE_VERSION])
 		return false
 	# Below the first version the game ever wrote - which is also where a version
@@ -842,7 +844,7 @@ func load_save() -> bool:
 	# fresh. See the asymmetry note above for why that is safe here and is not
 	# safe for a newer save.
 	if version < 1:
-		push_warning("[ThinShot] save is version %s, this build reads %d - starting fresh"
+		push_warning("[Sandline] save is version %s, this build reads %d - starting fresh"
 				% [payload.get("version", "?"), SAVE_VERSION])
 		return false
 	# Old, but a shape this build knows how to bring forward. The ladder runs on
@@ -853,16 +855,16 @@ func load_save() -> bool:
 	if version < SAVE_VERSION:
 		var migrated := _migrate(payload, version)
 		if migrated.is_empty():
-			push_warning("[ThinShot] cannot bring save version %d up to %d - starting fresh"
+			push_warning("[Sandline] cannot bring save version %d up to %d - starting fresh"
 					% [version, SAVE_VERSION])
 			return false
 		payload = migrated
 		climbed = true
-		print("[ThinShot] save migrated from version %d to %d" % [version, SAVE_VERSION])
+		print("[Sandline] save migrated from version %d to %d" % [version, SAVE_VERSION])
 
 	var loaded := _read_roster(payload.get("roster", []))
 	if loaded.is_empty():
-		push_warning("[ThinShot] save has no roster - starting fresh")
+		push_warning("[Sandline] save has no roster - starting fresh")
 		return false
 	roster = loaded
 	# Ids must stay unique or soldier_by_id() starts returning the wrong person.
@@ -892,7 +894,7 @@ func load_save() -> bool:
 	_snapshot.clear()
 	mission_xp.clear()
 	mission_dead.clear()
-	print("[ThinShot] campaign loaded: %d soldier(s), %s mission %d/%d" % [
+	print("[Sandline] campaign loaded: %d soldier(s), %s mission %d/%d" % [
 			roster.size(), operation().name, mission_number(), mission_count()])
 	# A climb is checkpointed once, here, and this is the one write load_save()
 	# does. Not tidiness: the v1 rung MINTS the campaign seed, and nothing else
@@ -912,7 +914,7 @@ func delete_save() -> void:
 		return
 	var err := DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
 	if err != OK:
-		push_error("[ThinShot] cannot delete %s: %s" % [SAVE_PATH, error_string(err)])
+		push_error("[Sandline] cannot delete %s: %s" % [SAVE_PATH, error_string(err)])
 
 
 func _highest_id() -> int:

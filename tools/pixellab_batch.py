@@ -61,7 +61,7 @@ VERDICTS = ["accept", "regen"]
 DOWNLOAD_TIMEOUT = 60          # seconds per URL
 DOWNLOAD_RETRIES = 1           # extra attempts after the first failure
 # the tile storage 403s urllib's default Python-urllib/3.x agent
-DOWNLOAD_UA = "Mozilla/5.0 (ThinShot pixellab_batch)"
+DOWNLOAD_UA = "Mozilla/5.0 (Sandline pixellab_batch)"
 
 
 def now() -> str:

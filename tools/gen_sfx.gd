@@ -1,6 +1,6 @@
 extends SceneTree
 
-## Generates ThinShot's SFX as 16-bit PCM mono 44.1kHz WAVs.
+## Generates Sandline's SFX as 16-bit PCM mono 44.1kHz WAVs.
 ## Run: godot --headless -s tools/gen_sfx.gd
 ##
 ## Design brief: visceral and dark. Every impact is layered as transient +

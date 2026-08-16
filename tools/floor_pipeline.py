@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Post-process raw PixelLab tiles into ThinShot floor sheets + sidecars.
+"""Post-process raw PixelLab tiles into Sandline floor sheets + sidecars.
 
 Raw generations arrive as square 1:1 diamonds (128x128, or 96x96 from the
 isometric tileset/path modes). This tool runs the proven post chain per tile

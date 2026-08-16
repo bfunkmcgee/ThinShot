@@ -1,4 +1,4 @@
-# ThinShot floor-art pipeline — runbook
+# Sandline floor-art pipeline — runbook
 
 How a batch of ground art goes from prompt to shipped sheet. The style rules
 live in [STYLE.md](STYLE.md); the numbers live in [style.json](style.json);

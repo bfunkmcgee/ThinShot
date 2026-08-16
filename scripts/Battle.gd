@@ -75,17 +75,17 @@ const SANDBAG_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/Environment/Desert/desert_sandbags/Desert_Sandbags.png"),
 	preload("res://assets/sprites/Environment/Desert/desert_sandbags/Desert_Sandbags_1.png"),
 ]
-# The Choir's own stacked ordnance. Deliberately kept off the maps that have
+# The Thirst's own stacked ordnance. Deliberately kept off the maps that have
 # demolition objectives on them: crates you must burn and crates you merely
 # hide behind should never be on the same board.
-const CHOIR_CACHE_ROOT := "res://assets/sprites/Environment/Desert/Props/Desert_insurgent_weapons_cache/"
-const CHOIR_CACHE_TEXTURES: Array[Texture2D] = [
-	preload(CHOIR_CACHE_ROOT + "Desert_insurgent_weapons_cache/rotations/unknown.png"),
-	preload(CHOIR_CACHE_ROOT + "Desert_insurgent_weapons_cache_1/rotations/unknown.png"),
-	preload(CHOIR_CACHE_ROOT + "Desert_insurgent_weapons_cache_2/rotations/unknown.png"),
-	preload(CHOIR_CACHE_ROOT + "Desert_insurgent_weapons_cache_3/rotations/unknown.png"),
-	preload(CHOIR_CACHE_ROOT + "Desert_insurgent_weapons_cache_4/rotations/unknown.png"),
-	preload(CHOIR_CACHE_ROOT + "Desert_insurgent_weapons_cache_5/rotations/unknown.png"),
+const THIRST_CACHE_ROOT := "res://assets/sprites/Environment/Desert/Props/Desert_insurgent_weapons_cache/"
+const THIRST_CACHE_TEXTURES: Array[Texture2D] = [
+	preload(THIRST_CACHE_ROOT + "Desert_insurgent_weapons_cache/rotations/unknown.png"),
+	preload(THIRST_CACHE_ROOT + "Desert_insurgent_weapons_cache_1/rotations/unknown.png"),
+	preload(THIRST_CACHE_ROOT + "Desert_insurgent_weapons_cache_2/rotations/unknown.png"),
+	preload(THIRST_CACHE_ROOT + "Desert_insurgent_weapons_cache_3/rotations/unknown.png"),
+	preload(THIRST_CACHE_ROOT + "Desert_insurgent_weapons_cache_4/rotations/unknown.png"),
+	preload(THIRST_CACHE_ROOT + "Desert_insurgent_weapons_cache_5/rotations/unknown.png"),
 ]
 const STRUCTURE_ROOT := "res://assets/sprites/Environment/Desert/Structures"
 const STRUCTURE_DIRS := {
@@ -134,7 +134,7 @@ const RIFLE_OFFSET := Vector2(0, -1)
 const RIFLE_DROP := Vector2(0, 10)
 # Downsampled to 40px so it draws at the shared 2x like every other standing
 # prop - one texel density across the board.
-const CHOIR_CACHE_OFFSET := Vector2(0, -15)
+const THIRST_CACHE_OFFSET := Vector2(0, -15)
 const STRUCTURE_OFFSETS := {
 	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33),
 	"tent": Vector2(0, -33), "fortress": Vector2(0, -55),
@@ -221,7 +221,7 @@ const SUSTAIN_ROUND_GAP := 0.12
 const SUSTAIN_VOLLEY_GAP := 1.45
 const SUSTAIN_VOLUME := -13.0
 
-# Thrown ordnance - the squad's edge, and the one thing the Choir has no
+# Thrown ordnance - the squad's edge, and the one thing the Thirst has no
 # answer to. Carried as a shared pool rather than per soldier, so the decision
 # is "is this the moment" rather than "which pocket".
 const THROW_RANGE := 4       # tiles from the thrower, needs line of sight
@@ -452,7 +452,7 @@ func _ready() -> void:
 	_show_briefing()
 	show_banner("%s  -  %s" % [Game.operation().name, level.name])
 	player_turn_ready_msec = Time.get_ticks_msec()
-	print("[ThinShot] level %d '%s', player turn 1 begins" % [
+	print("[Sandline] level %d '%s', player turn 1 begins" % [
 			Game.current_level + 1, level.name])
 	_apply_cmdline_screenshot()
 
@@ -484,7 +484,7 @@ func _apply_cmdline_overrides() -> void:
 				was_pinned = true
 	rules_seed = pinned if was_pinned else Game.battle_seed()
 	_rules_rng.seed = rules_seed
-	print("[ThinShot] rules seed %d%s" % [rules_seed, " (--seed)" if was_pinned else ""])
+	print("[Sandline] rules seed %d%s" % [rules_seed, " (--seed)" if was_pinned else ""])
 
 
 ## Save one settled frame to disk and quit:
@@ -501,7 +501,7 @@ func _apply_cmdline_screenshot() -> void:
 
 func _capture_screenshot(path: String) -> void:
 	if DisplayServer.get_name() == "headless":
-		push_error("[ThinShot] --screenshot needs a window; headless renders nothing")
+		push_error("[Sandline] --screenshot needs a window; headless renders nothing")
 		get_tree().quit(1)
 		return
 	# The shot exists to show the board, and the briefing would cover it.
@@ -511,7 +511,7 @@ func _capture_screenshot(path: String) -> void:
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
 	var err := image.save_png(path)
-	print("[ThinShot] screenshot -> %s (%s) zoom=%s" % [
+	print("[Sandline] screenshot -> %s (%s) zoom=%s" % [
 			path, "saved" if err == OK else error_string(err), camera.zoom])
 	get_tree().quit(0 if err == OK else 1)
 
@@ -649,9 +649,9 @@ func _spawn_props() -> void:
 							SANDBAG_OFFSET, cell)
 				"c":
 					_spawn_prop(
-							CHOIR_CACHE_TEXTURES[_prop_pick(cell, SALT_CACHE,
-									CHOIR_CACHE_TEXTURES.size())],
-							CHOIR_CACHE_OFFSET, cell)
+							THIRST_CACHE_TEXTURES[_prop_pick(cell, SALT_CACHE,
+									THIRST_CACHE_TEXTURES.size())],
+							THIRST_CACHE_OFFSET, cell)
 				"W":
 					var kind := _wall_kind(cell)
 					_spawn_prop(_wall_texture_for(kind), WALL_OFFSETS[kind], cell)
@@ -693,7 +693,7 @@ func _spawn_prop(texture: Texture2D, offset: Vector2, cell: Vector2i,
 	# that cannot draw at its class gets downsampled, not scaled; the mast and
 	# the structures stay 2x forever.
 	if OS.is_debug_build() and scale > 0.0 and not is_equal_approx(scale, expected):
-		push_error("[ThinShot] prop at %s spawned at %sx - normalise the art to "
+		push_error("[Sandline] prop at %s spawned at %sx - normalise the art to "
 				% [cell, scale] + "the %sx class instead" % expected)
 	var prop := Sprite2D.new()
 	prop.texture = texture
@@ -841,7 +841,7 @@ func _spawn_structure(s: Dictionary) -> void:
 		})
 
 
-## `soldier` is the roster entry for a named scout, or {} for the Choir.
+## `soldier` is the roster entry for a named Kestrel, or {} for the Thirst.
 func _spawn_unit(kind: Unit.Kind, spawn_cell: Vector2i, soldier := {}) -> void:
 	var unit: Unit = UNIT_SCENE.instantiate()
 	entities_node.add_child(unit)
@@ -865,12 +865,12 @@ func _spawn_squad(kind: Unit.Kind, spawns: Array) -> void:
 	for i in mini(spawns.size(), soldiers.size()):
 		_spawn_unit(kind, spawns[i], soldiers[i])
 	if soldiers.size() < spawns.size():
-		print("[ThinShot] %s deploys %d of %d - the rest were lost" % [
+		print("[Sandline] %s deploys %d of %d - the rest were lost" % [
 				Unit.kind_role_name(kind), soldiers.size(), spawns.size()])
 
 
 ## Living units of a team that actually fight. The prisoner is on your side and
-## walks out with the squad, but the Choir never shoots at them and losing every
+## walks out with the squad, but the Thirst never shoots at them and losing every
 ## soldier is a wipe whether or not they are still standing.
 func living_soldiers(team: int) -> Array[Unit]:
 	var result: Array[Unit] = []
@@ -897,7 +897,7 @@ func _free_reached_captives(mover: Unit) -> void:
 		Sfx.play("select", 0.0, 0.0)
 		_award_xp(mover, Game.XP_RESCUE, "cut a prisoner loose")
 		show_banner("PRISONER FREED")
-		print("[ThinShot] %s reaches the prisoner at %s" % [
+		print("[Sandline] %s reaches the prisoner at %s" % [
 				mover.display_name(), prisoner.cell])
 		_refresh_objectives()
 
@@ -1394,7 +1394,7 @@ func _try_reload() -> void:
 	_set_fire_mode(_default_fire_mode(selected))
 	board.clear_highlights()
 	Sfx.play("reload")
-	print("[ThinShot] scout at %s reloads" % scout.cell)
+	print("[Sandline] scout at %s reloads" % scout.cell)
 	await scout.play_reload()
 	scout.reload()  # magazine seats as the animation lands
 	state = prev_state
@@ -1501,7 +1501,7 @@ func _commit_aim(cell: Vector2i) -> void:
 	if mode == AimMode.FACE:
 		# Free: the unit keeps whatever activation it had left.
 		Sfx.play("select", -6.0, 0.0)
-		print("[ThinShot] scout at %s turns to sector %d" % [unit.cell, sector])
+		print("[Sandline] scout at %s turns to sector %d" % [unit.cell, sector])
 		_refresh_watch_cells()
 		_refresh_highlights()
 		return
@@ -1510,7 +1510,7 @@ func _commit_aim(cell: Vector2i) -> void:
 	unit.set_overwatch(true)
 	Sfx.play("overwatch_set", 0.0, 0.0)
 	_refresh_watch_cells()
-	print("[ThinShot] scout at %s watches sector %d" % [unit.cell, sector])
+	print("[Sandline] scout at %s watches sector %d" % [unit.cell, sector])
 
 
 ## Cells an overwatching unit would cover: in range, in arc, with LOS.
@@ -1719,7 +1719,7 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 				if not unit.is_alive():
 					break
 				watcher.set_overwatch(false)  # consumed, even if the shot kills
-				print("[ThinShot]   overwatch! %s fires %d at %s" % [
+				print("[Sandline]   overwatch! %s fires %d at %s" % [
 						watcher.cell, watcher.overwatch_rounds(), unit.cell])
 				await _resolve_reaction(watcher, unit)
 			if not unit.is_alive() or state == State.GAME_OVER:
@@ -1781,7 +1781,7 @@ func do_suppressive_fire(attacker: Unit, target: Unit) -> void:
 	var prev_state := state
 	state = State.ANIMATING
 	board.clear_highlights()
-	print("[ThinShot] suppressive fire %s -> %s" % [attacker.cell, target.cell])
+	print("[Sandline] suppressive fire %s -> %s" % [attacker.cell, target.cell])
 	var aim := (target.position - attacker.position).normalized()
 	attacker.set_facing(aim)
 	await attacker.raise_rifle()
@@ -1797,7 +1797,7 @@ func do_suppressive_fire(attacker: Unit, target: Unit) -> void:
 		if Board.manhattan(unit.cell, target.cell) <= attacker.suppress_radius():
 			unit.suppress(pin_turns)
 			pinned.append(unit.cell)
-	print("[ThinShot]   pinned %s for %d turn(s)" % [pinned, pin_turns - 1])
+	print("[Sandline]   pinned %s for %d turn(s)" % [pinned, pin_turns - 1])
 	# The gun does not stop. It keeps working the same ground until the
 	# gunner's next turn, which is exactly as long as the pin lasts - so the
 	# effect is visible on screen for its whole duration instead of being a
@@ -1889,7 +1889,7 @@ func _enemy_team_of(unit: Unit) -> int:
 # already have the attacker in scope.
 
 
-## Credit a kill, if a named soldier earned it against the Choir. Guards both
+## Credit a kill, if a named soldier earned it against the Thirst. Guards both
 ## directions: goblins earn nothing, and a frag that catches your own scout is
 ## not an achievement.
 func _credit_kill(killer: Unit, victim: Unit) -> void:
@@ -1898,7 +1898,7 @@ func _credit_kill(killer: Unit, victim: Unit) -> void:
 	if victim.team != Unit.TEAM_GOBLIN or killer.team != Unit.TEAM_SCOUT:
 		return
 	Game.award(killer.soldier_id, Game.XP_KILL)
-	print("[ThinShot]   %s credited a kill (+%d xp)" % [
+	print("[Sandline]   %s credited a kill (+%d xp)" % [
 			killer.display_name(), Game.XP_KILL])
 
 
@@ -1908,7 +1908,7 @@ func _award_xp(unit: Unit, amount: int, reason: String) -> void:
 	if unit == null or unit.soldier_id == 0:
 		return
 	Game.award(unit.soldier_id, amount)
-	print("[ThinShot]   %s +%d xp (%s)" % [unit.display_name(), amount, reason])
+	print("[Sandline]   %s +%d xp (%s)" % [unit.display_name(), amount, reason])
 
 
 ## Hustle: give up the shot to move a second time. Reuses do_move untouched -
@@ -1921,7 +1921,7 @@ func _try_hustle() -> void:
 	selected.moved = false
 	selected.acted = true
 	Sfx.play("select", -3.0, 0.0)
-	print("[ThinShot] %s hustles - second move, no shot" % selected.display_name())
+	print("[Sandline] %s hustles - second move, no shot" % selected.display_name())
 	_set_fire_mode(_default_fire_mode(selected))
 	_refresh_highlights()
 	_update_unit_panel()
@@ -2033,7 +2033,7 @@ func do_called_shot(attacker: Unit, target: Unit) -> void:
 	var prev_state := state
 	state = State.ANIMATING
 	board.clear_highlights()
-	print("[ThinShot] called shot %s -> %s" % [attacker.cell, target.cell])
+	print("[Sandline] called shot %s -> %s" % [attacker.cell, target.cell])
 	attacker.set_facing((target.position - attacker.position).normalized())
 	await attacker.raise_rifle()
 	await _fire_round(attacker, target, 0, true,
@@ -2072,7 +2072,7 @@ func do_rally(hero: Unit) -> void:
 			steadied += 1
 	Sfx.play("overwatch_set", 0.0, 0.3)
 	show_banner("RALLY - THE SQUAD STEADIES")
-	print("[ThinShot] %s rallies %d soldier(s)" % [hero.display_name(), steadied])
+	print("[Sandline] %s rallies %d soldier(s)" % [hero.display_name(), steadied])
 	_set_fire_mode(_default_fire_mode(selected))
 	_refresh_highlights()
 	_update_unit_panel()
@@ -2092,7 +2092,7 @@ func do_field_dressing(medic: Unit) -> void:
 	medic.acted = true
 	medic.heal(FIELD_DRESSING_HEAL)
 	Sfx.play("reload", -2.0)
-	print("[ThinShot] %s patches up to %d/%d HP" % [
+	print("[Sandline] %s patches up to %d/%d HP" % [
 			medic.display_name(), medic.hp, medic.max_hp])
 	_set_fire_mode(_default_fire_mode(selected))
 	_refresh_highlights()
@@ -2195,7 +2195,7 @@ func _load_target_art(kind: String) -> Dictionary:
 	for name: String in spec.stages:
 		art.stages.append(_find_prop_anim(dir, name))
 	if art.stages.is_empty() or art.still == null:
-		push_error("[ThinShot] objective prop '%s' has no art at %s" % [kind, dir])
+		push_error("[Sandline] objective prop '%s' has no art at %s" % [kind, dir])
 	return art
 
 
@@ -2294,7 +2294,7 @@ func _update_objective_label() -> void:
 		match obj.get("kind", ""):
 			"eliminate":
 				if text.is_empty():
-					text = "DESTROY THE RUST CHOIR"
+					text = "CLEAR THE CONTACT"
 				text += " %d LEFT" % living_units(Unit.TEAM_GOBLIN).size()
 			"destroy":
 				var total: int = obj.get("cells", []).size()
@@ -2368,7 +2368,7 @@ func do_demolish(scout: Unit, cache: Dictionary) -> void:
 	var stage: int = int(cache.stage)
 	var last: bool = stage + 1 >= (art.stages as Array).size()
 	scout.set_facing((pos - scout.position).normalized())
-	print("[ThinShot] scout at %s sets charges on the %s at %s (stage %d/%d)" % [
+	print("[Sandline] scout at %s sets charges on the %s at %s (stage %d/%d)" % [
 			scout.cell, cache.kind, cache.cell, stage + 1, (art.stages as Array).size()])
 	await scout.play_reload()  # doubles as the setting-charges beat
 	# The prop comes apart a stage at a time, so a two-stage target visibly
@@ -2464,7 +2464,7 @@ func do_shoot_drum(shooter: Unit, cell: Vector2i) -> void:
 	var pos := board.cell_to_global(cell)
 	var muzzle := shooter.muzzle_point()
 	var dir := (pos + Vector2(0, -20) - muzzle).normalized()
-	print("[ThinShot] %s shoots the drum at %s" % [shooter.display_name(), cell])
+	print("[Sandline] %s shoots the drum at %s" % [shooter.display_name(), cell])
 	shooter.set_facing(dir)
 	await shooter.raise_rifle()
 	shooter.spend_ammo()
@@ -2513,7 +2513,7 @@ func _detonate_drums(blast: Dictionary) -> Dictionary:
 			continue
 		drum.spent = true
 		var pos := board.cell_to_global(cell)
-		print("[ThinShot]   fuel drum at %s goes up" % cell)
+		print("[Sandline]   fuel drum at %s goes up" % cell)
 		Sfx.play("explosion")
 		fx_air.explosion(pos + Vector2(0, -18))
 		fx_ground.scorch(pos)
@@ -2538,7 +2538,7 @@ func _detonate_drums(blast: Dictionary) -> Dictionary:
 
 
 ## A grenade can be released at any cell in range that the thrower can see and
-## that is not solid. Junk counts - lobbing onto the scrap the Choir is hiding
+## that is not solid. Junk counts - lobbing onto the scrap the Thirst is hiding
 ## behind is the whole point.
 func _can_target_throw(thrower: Unit, cell: Vector2i) -> bool:
 	return board.in_bounds(cell) and not board.is_blocker(cell) \
@@ -2595,7 +2595,7 @@ func do_throw_frag(thrower: Unit, cell: Vector2i) -> void:
 	state = State.ANIMATING
 	board.clear_highlights()
 	frags_left -= 1
-	print("[ThinShot] frag %s -> %s (%d left)" % [thrower.cell, cell, frags_left])
+	print("[Sandline] frag %s -> %s (%d left)" % [thrower.cell, cell, frags_left])
 	await _deliver_throw(thrower, cell)
 	var blast := _blast_cells_at(cell)
 	var center := board.cell_to_global(cell)
@@ -2632,7 +2632,7 @@ func _apply_blast(blast: Dictionary, center: Vector2, source: Unit, what: String
 	for unit in living_units(Unit.TEAM_GOBLIN) + living_units(Unit.TEAM_SCOUT):
 		# Prisoners come through a blast untouched. Being able to frag the
 		# person you came to rescue is the kind of thing that turns a rescue
-		# into a chore, and the Choir wants them alive anyway.
+		# into a chore, and the Thirst wants them alive anyway.
 		if blast.has(unit.cell) and unit.is_combatant():
 			caught.append(unit)
 	# The whole footprint resolves before anyone asks who won. `caught` lists
@@ -2652,9 +2652,9 @@ func _apply_blast(blast: Dictionary, center: Vector2, source: Unit, what: String
 		if unit.hp <= dmg:
 			_credit_kill(source, unit)
 		unit.take_damage(dmg, away)
-		print("[ThinShot]   %s hits %s at %s for %d" % [
+		print("[Sandline]   %s hits %s at %s for %d" % [
 				what, unit.display_name(), unit.cell, dmg])
-	print("[ThinShot]   %s caught %d unit(s)" % [what, caught.size()])
+	print("[Sandline]   %s caught %d unit(s)" % [what, caught.size()])
 	_resolving_blast = false
 	check_game_over()
 
@@ -2664,7 +2664,7 @@ func do_throw_smoke(thrower: Unit, cell: Vector2i) -> void:
 	state = State.ANIMATING
 	board.clear_highlights()
 	smokes_left -= 1
-	print("[ThinShot] smoke %s -> %s (%d left)" % [thrower.cell, cell, smokes_left])
+	print("[Sandline] smoke %s -> %s (%d left)" % [thrower.cell, cell, smokes_left])
 	await _deliver_throw(thrower, cell)
 	var cloud := _blast_cells_at(cell)
 	Sfx.play("smoke_pop")
@@ -2674,7 +2674,7 @@ func do_throw_smoke(thrower: Unit, cell: Vector2i) -> void:
 		for i in 7:
 			fx_air.smoke_drift(pos)
 	_apply_smoke()
-	print("[ThinShot]   smoke covers %d cell(s)" % cloud.size())
+	print("[Sandline]   smoke covers %d cell(s)" % cloud.size())
 	_finish_throw(thrower, prev_state)
 
 
@@ -2832,7 +2832,7 @@ func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0,
 	await get_tree().create_timer(TRACER_TIME).timeout
 
 	if not hit:
-		print("[ThinShot]   %s -> %s MISSES (%d%%)" % [
+		print("[Sandline]   %s -> %s MISSES (%d%%)" % [
 				attacker.cell, target.cell, chance])
 		Sfx.play("miss")
 		var strike := impact_point + Vector2(0, 30)
@@ -2848,11 +2848,11 @@ func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0,
 	var dmg: int = shot.dmg
 	var cover: Board.CoverLevel = shot.cover
 	if cover != Board.CoverLevel.NONE:
-		print("[ThinShot]   shot %s -> %s into %s cover: %d dmg (%d%%)" % [
+		print("[Sandline]   shot %s -> %s into %s cover: %d dmg (%d%%)" % [
 				attacker.cell, target.cell,
 				"full" if cover == Board.CoverLevel.FULL else "half", dmg, chance])
 	elif flanking:
-		print("[ThinShot]   flanking shot %s -> %s: %d dmg (%d%%)" % [
+		print("[Sandline]   flanking shot %s -> %s: %d dmg (%d%%)" % [
 				attacker.cell, target.cell, dmg, chance])
 	var lethal := target.hp - dmg <= 0
 
@@ -2921,7 +2921,7 @@ func do_volley(attacker: Unit, target: Unit, rounds: int, gap: float,
 	var prev_state := state
 	state = State.ANIMATING
 	board.clear_highlights()
-	print("[ThinShot] %d-round volley %s -> %s" % [rounds, attacker.cell, target.cell])
+	print("[Sandline] %d-round volley %s -> %s" % [rounds, attacker.cell, target.cell])
 	var aim := (target.position - attacker.position).normalized()
 	attacker.set_facing(aim)
 	await attacker.raise_rifle()
@@ -3043,9 +3043,9 @@ func end_player_turn() -> void:
 	deselect()
 	board.set_danger({})
 	state = State.ENEMY_TURN
-	print("[ThinShot] enemy turn %d begins" % turn_number)
+	print("[Sandline] enemy turn %d begins" % turn_number)
 	Sfx.play("turn_enemy", 0.0, 0.0)
-	show_banner("RUST CHOIR'S TURN")
+	show_banner("THE THIRST'S TURN")
 	end_turn_button.disabled = true
 	overwatch_button.disabled = true
 	burst_button.disabled = true
@@ -3075,7 +3075,7 @@ func end_player_turn() -> void:
 	for goblin in living_units(Unit.TEAM_GOBLIN):
 		goblin.set_done(false)
 	turn_number += 1
-	print("[ThinShot] player turn %d begins" % turn_number)
+	print("[Sandline] player turn %d begins" % turn_number)
 	Sfx.play("turn_player", 0.0, 0.0)
 	end_turn_button.disabled = false
 	overwatch_button.disabled = false
@@ -3092,7 +3092,7 @@ func end_player_turn() -> void:
 	_tick_smoke()
 	# The pin expires as the goblins refresh, so the gun stops with it.
 	_end_sustained_fire()
-	show_banner("DESERT SCOUTS' TURN")
+	show_banner("KESTREL SQUAD'S TURN")
 	state = State.PLAYER_TURN
 	player_turn_ready_msec = Time.get_ticks_msec()
 	_refresh_danger()
@@ -3123,7 +3123,7 @@ func run_enemy_turn() -> void:
 		var reloaded := await _ai_reload(goblin, acted, squad.size())
 		var shootable := _shootable_from(goblin.cell, goblin.attack_range, scouts)
 		if goblin.has_ammo() and not shootable.is_empty():
-			print("[ThinShot]   goblin %d/%d shoots from %s" % [acted, squad.size(), from_cell])
+			print("[Sandline]   goblin %d/%d shoots from %s" % [acted, squad.size(), from_cell])
 			await _ai_fire(goblin, _nearest(goblin.cell, shootable))
 		else:
 			var moved_now := false
@@ -3140,7 +3140,7 @@ func run_enemy_turn() -> void:
 			shootable = _shootable_from(goblin.cell, goblin.attack_range,
 					living_soldiers(Unit.TEAM_SCOUT))
 			var shoots := goblin.is_alive() and goblin.has_ammo() and not shootable.is_empty()
-			print("[ThinShot]   goblin %d/%d %s %s -> %s%s" % [
+			print("[Sandline]   goblin %d/%d %s %s -> %s%s" % [
 					acted, squad.size(), "reloads at" if reloaded else "moves",
 					from_cell, goblin.cell, ", shoots" if shoots else ""])
 			if shoots:
@@ -3153,7 +3153,7 @@ func run_enemy_turn() -> void:
 				goblin.set_facing_sector(_best_watch_sector(goblin, scouts))
 				goblin.set_overwatch(true)
 				Sfx.play("overwatch_set", -4.0, 0.0)
-				print("[ThinShot]   goblin %d/%d holds %s on overwatch" % [
+				print("[Sandline]   goblin %d/%d holds %s on overwatch" % [
 						acted, squad.size(), goblin.cell])
 		goblin.set_selected(false)
 		goblin.set_acting(false)
@@ -3172,7 +3172,7 @@ func _ai_reload(goblin: Unit, index: int, squad_size: int) -> bool:
 		return false
 	goblin.moved = true
 	Sfx.play("reload")
-	print("[ThinShot]   goblin %d/%d reloads at %s" % [index, squad_size, goblin.cell])
+	print("[Sandline]   goblin %d/%d reloads at %s" % [index, squad_size, goblin.cell])
 	await goblin.play_reload()
 	goblin.reload()  # magazine seats as the animation lands
 	return true
@@ -3323,7 +3323,7 @@ func _on_unit_died(unit: Unit) -> void:
 		# Provisional: abort_mission() puts them back if the mission is lost
 		# and retried, so only a won mission makes a death permanent.
 		Game.mark_dead(unit.soldier_id)
-		print("[ThinShot] %s is down" % unit.display_name())
+		print("[Sandline] %s is down" % unit.display_name())
 	Sfx.play("unit_death")
 	fx_ground.stain(unit.position)
 	_drop_rifle(unit)
@@ -3336,7 +3336,7 @@ func _on_unit_died(unit: Unit) -> void:
 		check_game_over()
 
 
-## Only your own dead leave a rifle. The Choir loses eleven bodies on a bad
+## Only your own dead leave a rifle. The Thirst loses eleven bodies on a bad
 ## map and eleven rifles would be litter; five soldiers is a squad, and the
 ## mark one of them leaves should still be there ten turns later when you
 ## walk back past it. Prisoners carried nothing to drop.
@@ -3365,7 +3365,7 @@ func check_game_over() -> bool:
 	# A wipe is every soldier down. A prisoner left standing alone is not a
 	# squad, and cannot finish anything.
 	if living_soldiers(Unit.TEAM_SCOUT).is_empty():
-		_show_game_over("THE CHOIR SINGS ON", false)
+		_show_game_over("THE SQUAD IS GONE", false)
 		return true
 	# Rodar is the campaign: if he deployed and is down, the mission is lost
 	# no matter who else is still standing. After the wipe check so a full
@@ -3377,7 +3377,10 @@ func check_game_over() -> bool:
 				fallen_hero.death_landing_time())
 		return true
 	if _all_objectives_complete():
-		_show_game_over("DESERT SCOUTS WIN", true)
+		# Not "WIN": the victory line should not read as a scoreline. The
+		# objective is met, the contact is over, and what that cost is the
+		# after-action's business rather than this banner's.
+		_show_game_over("CONTACT RESOLVED", true)
 		return true
 	return false
 
@@ -3404,7 +3407,7 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 	# cycling a volley every SUSTAIN_VOLLEY_GAP behind the results panel.
 	_end_sustained_fire()
 	last_result_won = won
-	print("[ThinShot] level %d over on turn %d: %s" % [
+	print("[Sandline] level %d over on turn %d: %s" % [
 			Game.current_level + 1, turn_number, "WON" if won else "LOST"])
 	if won:
 		# Walking off the map is worth something on its own - to the soldiers
@@ -3492,7 +3495,7 @@ func _debrief_text(won: bool) -> String:
 
 # -------------------------------------------------------------- narrative --
 # The three missions are one story: a border contact, the discovery of what
-# the Choir is really carrying, and a raid to take it away again. The briefing
+# the Thirst is really carrying, and a raid to take it away again. The briefing
 # sets the situation, the debrief pays it off and points at the next mission.
 
 
@@ -3502,7 +3505,7 @@ func _show_briefing() -> void:
 		# No briefing to dismiss, so nothing else will swap the level banner
 		# for the turn banner - do it here.
 		briefing_panel.visible = false
-		show_banner("DESERT SCOUTS' TURN")
+		show_banner("KESTREL SQUAD'S TURN")
 		return
 	briefing_mission_label.text = "%s  -  MISSION %d OF %d" % [
 			Game.operation().name, Game.mission_number(), Game.mission_count()]
@@ -3517,7 +3520,7 @@ func _dismiss_briefing() -> void:
 	briefing_panel.visible = false
 	# The turn banner has been sitting behind the briefing this whole time.
 	if state == State.PLAYER_TURN:
-		show_banner("DESERT SCOUTS' TURN")
+		show_banner("KESTREL SQUAD'S TURN")
 		player_turn_ready_msec = Time.get_ticks_msec()
 
 

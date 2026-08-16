@@ -13,10 +13,10 @@ class_name Levels
 ## separate means the mission data never had to move.
 ##
 ## Each level carries an ordered "objectives" list; a level with none defaults
-## to wiping out the Choir, which is what the first one does. Objectives are
+## to wiping out the Thirst, which is what the first one does. Objectives are
 ## completed in order, and the level is won when the last one is:
 ##   {"kind": "eliminate"}                       - kill every goblin
-##   {"kind": "destroy", "cells": [...]}         - demolish every tithe cache
+##   {"kind": "destroy", "cells": [...]}         - demolish every cache
 ##   {"kind": "rescue"}                          - reach every prisoner
 ##   {"kind": "extract", "cells": [...]}         - every surviving scout to the
 ##                                                 zone, and only once every
@@ -43,7 +43,7 @@ class_name Levels
 ##   behave identically and say different things about who was here:
 ##   'j' rusted junk (nobody put it there)
 ##   's' sandbags (somebody dug in here)
-##   'c' the Choir's stacked ordnance (their ground, not yours). Keep these off
+##   'c' the Thirst's stacked ordnance (their ground, not yours). Keep these off
 ##       any map with a 'destroy' objective - crates you must burn and crates
 ##       you merely hide behind must not share a board.
 ##   'd' fuel drum (half cover too, but detonates when caught in a blast)
@@ -69,10 +69,10 @@ const LEVELS: Array[Dictionary] = [
 		# Goblins hold in pairs, one per lane, which is what gives the
 		# gunner's suppression something worth pinning.
 		"name": "DRY WASH",
-		"fiction": "The dry riverbed where the Rust Choir first crossed into scout territory.",
-		"briefing": "The Choir has never crossed the wash before. This morning they did - in daylight, in numbers, and they did not stop to loot the crossing.\n\nCommand wants them off scout ground. That is the whole order.",
+		"fiction": "A dead watercourse on the Confederacy's eastern line. There has been no water in it for two hundred years, and men are dying over it this morning.",
+		"briefing": "The Thirst has never crossed the wash before. This morning they did - in daylight, in numbers, and they did not stop at the pumping station they passed on the way.\n\nEleven days ago an Accord survey capped four marginal wells north of here. The Assembly filed an objection. The Thirst filed this.\n\nRangers are stretched east and the Accord wants the crossing clear. That is the whole order, and it is yours because you are what is available.",
 		"orders": "CLEAR THE WASH",
-		"debrief": "They were not raiding.\n\nEvery body on the wash was carrying the same load: scrap, sorted and tallied, bundled for transport. Nobody carries a tally into a raid.\n\nThey were hauling it somewhere, and they were late. Follow the route back.",
+		"debrief": "They were not raiding.\n\nEvery fighter on the wash carried the same load: crates, sorted and tallied, roped for a long carry. Nobody hauls a tally into a raid.\n\nThey were moving it somewhere, and they were late. Follow the route back.",
 		"size": Vector2i(16, 10),
 		"map": [
 			"..p.##.....##...",
@@ -97,9 +97,9 @@ const LEVELS: Array[Dictionary] = [
 		# ground is where his extra tile of movement reads clearest.
 		"smg_spawns": [Vector2i(12, 3)],
 		"smg_alt_spawns": [Vector2i(12, 6)],
-		# Novices are pushed out in front of everyone as a screen.
+		# Conscripts are pushed out in front of everyone as a screen.
 		"novice_spawns": [Vector2i(15, 2), Vector2i(15, 5), Vector2i(15, 7)],
-		# The Cantor sits at the back of the middle lane behind the junk
+		# The marksman sits at the back of the middle lane behind the junk
 		# island, so he only starts mattering once the squad is most of the
 		# way across - the backstop rather than the opening problem.
 		"bolt_spawns": [Vector2i(15, 4)],
@@ -121,10 +121,10 @@ const LEVELS: Array[Dictionary] = [
 		# stand in pairs, and the corridor between the lines is the killing
 		# ground the machinegunner exists for.
 		"name": "THE SCRAPLINE",
-		"fiction": "The Choir's scrap-tithe yard - tribute junk sung into rows.",
-		"briefing": "The route ends in a yard the Choir calls the Scrapline: rows of tribute stacked and sung over, waiting to move on.\n\nKilling collectors changes nothing. There are always more collectors. The tithe is what matters.\n\nThere is a mast over the yard as well - scrap aerials wired up a pole - and it is how the Scrapline calls the rest of the Choir down on anyone who walks in. Put it down too.",
+		"fiction": "A wire-and-scrap yard on the old freight line, where the Thirst stacks what it moves.",
+		"briefing": "The route ends in a yard the locals call the Scrapline: rows of crates stacked and roped, waiting on a truck that has not come.\n\nKilling carriers changes nothing. There are always more carriers - the Charter left four settlements without water and every one of them has sons. The load is what matters.\n\nThere is a mast over the yard as well. It is not theirs, and while it stands, everyone within forty miles knows you are here.",
 		"orders": "BURN THE CACHES, DROP THE RELAY",
-		"debrief": "The caches were not scrap.\n\nPrimers. Casings. Barrel stock. Machined, not scavenged - and every crate struck with the same depot mark. One of ours, taken off the maps eleven years ago.\n\nThe mast carried it too, stamped into the base plate. They no more built that than they milled the casings.\n\nThe Choir is not scavenging the desert. It is stripping Outpost 7, and arming itself with what we left behind.",
+		"debrief": "The crates were not scrap.\n\nPrimers, casings, barrel stock - machined, not scavenged. And the rifles: Tarkesh Foundry Mattocks, factory-new, no wear on the rails, no dust in the actions. Bhorra proof marks.\n\nThe Foundry was unwritten in eighty-three. There has not been a new Mattock in the world for three hundred and forty years, and there are eleven of them in this yard.\n\nEvery crate is struck with a Crown depot mark. One of ours, taken off the maps eleven years ago.\n\nSomebody is shipping guns that do not exist through a depot that does not either.",
 		"size": Vector2i(16, 10),
 		# Scrap thins out toward the west rather than stopping dead at the
 		# outer barricade: the squad deploys onto ground it can bound through
@@ -142,7 +142,7 @@ const LEVELS: Array[Dictionary] = [
 			"..j...j....j....",
 			"..p.j.j..p.j....",
 		],
-		# The track the tithe leaves on: a vehicle lane in from the west,
+		# The track the load leaves on: a vehicle lane in from the west,
 		# through the outer gate at y=3, jogging down the corridor and out the
 		# inner gate lane at y=5 to the east edge. The relay mast at (10,4)
 		# stands on its own short spur off the corridor - the yard wired its
@@ -181,7 +181,7 @@ const LEVELS: Array[Dictionary] = [
 			{"kind": "hut_1", "anchor": Vector2i(13, 2), "size": Vector2i(2, 2)},
 			{"kind": "tent", "anchor": Vector2i(13, 6), "size": Vector2i(2, 2)},
 		],
-		# The tithe itself. Three caches spread corner to corner behind the
+		# The load itself. Three caches spread corner to corner behind the
 		# barricades, so clearing the yard is the only way to reach them all -
 		# and a body count no longer ends the level. All three sit clear of the
 		# hut and tent sprites, which are tall enough to paint over a cell
@@ -189,7 +189,7 @@ const LEVELS: Array[Dictionary] = [
 		"objectives": [
 			{
 				"kind": "destroy",
-				"label": "BURN THE TITHE CACHES",
+				"label": "BURN THE CACHES",
 				"prop": "crates",
 				"cells": [Vector2i(15, 1), Vector2i(14, 4), Vector2i(12, 8)],
 			},
@@ -206,7 +206,7 @@ const LEVELS: Array[Dictionary] = [
 		"zone_seed": 21,
 		"shade_seed": 34,
 		# Was [-0.5, -0.2], which handed zone 2 nearly the whole yard and made
-		# the tithe rows stand on one unbroken slab of heavy hardpan.
+		# the cache rows stand on one unbroken slab of heavy hardpan.
 		"zone_thresholds": [-0.35, 0.0],
 	},
 	{
@@ -217,10 +217,10 @@ const LEVELS: Array[Dictionary] = [
 		# The hamlet and rocks outside give the squad staging cover to set
 		# the gun up before anyone steps into a gateway.
 		"name": "OUTPOST 7",
-		"fiction": "The old desert command, now the Choir's hive. The scouts go in at dawn.",
-		"briefing": "Outpost 7 was ours. The Choir lives in it now, and every round it has fired at you came out of our own stores.\n\nTwo ammunition dumps are still standing in there, and they are the reason the Choir is worth anything at all.\n\nYou cannot hold the place. There are not enough of you, and there never were. So you will not try. Go in at dawn, and come back out.",
-		"orders": "BLOW THE AMMO DUMPS, THEN EXTRACT",
-		"debrief": "The dumps are gone, and with them the only thing that ever made the Choir more than a rabble with knives.\n\nThey will be out there tomorrow. They will still outnumber you. But they will be singing over scrap again - the way they were, before somebody left them a war to find.\n\nTake the squad home.",
+		"fiction": "A Crown forward depot, struck off the maps eleven years ago. The Thirst lives in it now, and the squad goes in at dawn.",
+		"briefing": "Outpost 7 was ours. It is not on any inventory the Accord will admit to holding, and the Thirst has been eating out of it for a decade.\n\nTwo ammunition stores are still standing in there. They are the reason a water dispute has rifles in it.\n\nYou cannot hold the place. There are not enough of you and there never were. Blow the stores and walk the squad back out.",
+		"orders": "BLOW THE AMMO STORES, THEN EXTRACT",
+		"debrief": "The stores are gone. What was in them was not.\n\nBoth were light - a third full, at most, and swept clean rather than looted. Somebody drew that stock down deliberately and moved it out ahead of you.\n\nRanger liaison has filed the Foundry marks upward and been told the query is above the Accord. Note that and keep it out of the log.\n\nTake the squad home. This is not finished, and the Assembly of Wells has called a strike in three districts over the capping. Whatever comes next is going to happen in front of people.",
 		"size": Vector2i(16, 10),
 		# Scrap in the staging ground west of the compound, so the squad has
 		# something to bound between on the approach instead of crossing bare
@@ -266,12 +266,12 @@ const LEVELS: Array[Dictionary] = [
 		# a fighting withdrawal.
 		# The fortress sprite is 512px square and swallows most of the northern
 		# compound, so the western dump sits at (10,4) rather than deeper
-		# in - close behind the west-gate defenders and the Cantor, which makes
+		# in - close behind the west-gate defenders and the marksman, which makes
 		# it something to fight toward rather than something to hunt for.
 		"objectives": [
 			{
 				"kind": "destroy",
-				"label": "BLOW THE AMMO DUMPS",
+				"label": "BLOW THE AMMO STORES",
 				"prop": "crates",
 				"cells": [Vector2i(10, 4), Vector2i(14, 6)],
 			},
@@ -304,10 +304,10 @@ const LEVELS: Array[Dictionary] = [
 		# first mission where the cover rules bite by their absence - there is
 		# very little to hug and the ground between is bare.
 		"name": "THE LONG HAUL",
-		"fiction": "Open ground west of the wash, where a Choir column was still walking two days after the outpost burned.",
-		"briefing": "You were told the Choir was finished. Here they are in daylight, walking a load west.\n\nThe ammo dumps at Outpost 7 were light when you blew them. This is why. Something went out ahead of the raid, and it is still going.",
+		"fiction": "Open ground west of the wash, where a Thirst column was still walking two days after the depot burned.",
+		"briefing": "You were told the Thirst was finished east of the line. Here they are in daylight, walking a load west with no cover for a mile in any direction.\n\nThe stores at Outpost 7 were light when you blew them. This is where the rest went, and it is still going.\n\nBurn the load.\n\nRanger liaison has asked, on the record, that the squad account for what is in it before firing. That request is noted, and the order stands.",
 		"orders": "BURN THE COLUMN'S LOAD",
-		"debrief": "Water.\n\nNot ordnance - drums of water, tallied and roped and hauled by hand across forty miles of nothing.\n\nThe Choir is not arming a war any more. It is supplying something. And whatever it is sits far enough out that a drink is worth a column.",
+		"debrief": "Water.\n\nNot ordnance. Drums of water, tallied and roped and hand-hauled across forty miles of nothing, and the squad put a match to all of it in a country that has been arguing about wells for three centuries.\n\nThe Rangers have gone quiet. Not hostile. Quiet, which is worse, and Liaison has stopped forwarding district intelligence pending a conversation nobody has scheduled.\n\nNote also: the Thirst is not arming a war any more. It is supplying something. And whatever it is sits far enough out that a drink is worth a column.",
 		"size": Vector2i(16, 10),
 		"map": [
 			"..p......j......",
@@ -359,10 +359,10 @@ const LEVELS: Array[Dictionary] = [
 		# far edge, and there is nothing to destroy - the only way to finish is
 		# to get the whole squad through and out the other side.
 		"name": "THE CISTERN",
-		"fiction": "A walled water point on the old survey line, and the only way east for a day in either direction.",
-		"briefing": "The column's tallies all name the same place: a cistern on the survey line, walled and held.\n\nIt is the only water east of here, which is why they hold it and why you cannot go around it.\n\nGet the squad through. Do not stop to take it - you could not hold it either.",
+		"fiction": "A walled water point on the old survey line. The only water east for a day in either direction, and the Charter says it belongs to a family that has not drawn from it in ninety years.",
+		"briefing": "Every tally in the column names the same place: a cistern on the survey line, walled and held.\n\nIt is the only water east of here, which is why they hold it and why you cannot go around it.\n\nGet the squad through and out the far side. Do not stop to take it - you could not hold it, and the Assembly would hear that the Crown seized a well before the sun went down.",
 		"orders": "BREAK THROUGH TO THE EAST",
-		"debrief": "Past the cistern the tracks stop scattering.\n\nEvery path east of the water runs together into one, beaten flat and wide by more feet than the Choir has ever put in one place.\n\nSomething is gathering them. Follow it in.",
+		"debrief": "Past the cistern the tracks stop scattering.\n\nEvery path east of the water runs together into one, beaten flat and wide by more feet than the Thirst has ever put in one place - and it does not follow the road. It follows the old riverbed, which has been dry since before the Charter was written.\n\nSomebody is walking them along a watercourse that has no water in it.",
 		"size": Vector2i(16, 10),
 		"map": [
 			"..p...WWW.......",
@@ -418,10 +418,10 @@ const LEVELS: Array[Dictionary] = [
 		# mission is a long reach followed by a longer walk back, with the
 		# squad's own guns as the only thing making that walk survivable.
 		"name": "THE HOLDING PENS",
-		"fiction": "A wire pen behind the Choir's line, and the reason they have been hauling water across forty miles of nothing.",
-		"briefing": "The water was not for them.\n\nBehind the Choir's line there is a pen, and in it are the people they have been keeping alive - surveyors off the old line, by the look of the tallies.\n\nThat is what the column was for. Go and get them.\n\nThe pen is wire. You will see them long before you reach them and every gun in there will see you coming - wire stops a boot and nothing else. There is one gate, and they have dug in behind it.\n\nA freed prisoner has no weapon and cannot be shot at, but they walk at their own pace and they walk the whole way back out through that same gate. Reaching them is the easy half.",
+		"fiction": "A wire pen behind the Thirst's line, and the reason they have been hauling water across forty miles of nothing.",
+		"briefing": "The water was not for them.\n\nBehind the line there is a pen, and in it are the people they have been keeping alive - Confederacy survey staff, by the tallies. Civilians. Taken, fed, and kept.\n\nThat is what the column was for. Go and get them.\n\nThe pen is wire. You will see them long before you reach them, and so will everyone else - wire stops a boot and nothing else. There is one gate, and they have dug in behind it.\n\nA freed prisoner has no weapon and cannot be shot at, but they walk at their own pace and they walk the whole way back out through that same gate. Reaching them is the easy half.",
 		"orders": "REACH THE PRISONERS, THEN WALK THEM OUT",
-		"debrief": "Surveyors. Taken off the line eleven years ago, when Outpost 7 came off the maps, and kept alive ever since because somebody down there wanted the maps in their heads.\n\nThey knew where every dump and cistern on the survey line was. That is how the Choir found them all.\n\nAnd they say the one who asked the questions is still out there, at the end of the tracks.",
+		"debrief": "Surveyors. Taken off the line eleven years ago, the same season Outpost 7 came off the maps, and kept alive ever since because somebody wanted the maps in their heads.\n\nThey knew every well, dump, and cistern on the survey line. That is how the Thirst found them all.\n\nThey will not say his name. They say he asked about water that is not there - where it used to run, how deep, how fast, which way it turned. Eleven years of questions about dry rivers.\n\nOne of them asked us, twice, what day it was, and then said she already knew.\n\nHe is still out there, at the end of the tracks.",
 		"size": Vector2i(16, 10),
 		# The pen is wire, not wall, and that is the whole map. You can see
 		# the prisoners from the start line and shoot the guards through the
@@ -474,14 +474,14 @@ const LEVELS: Array[Dictionary] = [
 	},
 	{
 		# A bowl in the rock with cover through the middle of it, and the whole
-		# Choir standing in it. Back to elimination, which is the point: the
+		# Thirst standing in it. Back to elimination, which is the point: the
 		# first operation taught that killing them changed nothing, and this is
 		# the one time it does.
-		"name": "THE CHOIRMASTER",
-		"fiction": "Where every track east of the cistern ends, and the singing is loudest.",
-		"briefing": "The tracks end in a bowl in the rock, and the Choir is in it. All of it, and more of it than you have seen in one place.\n\nThey did not gather themselves. Somebody down there is keeping them, and while they are kept there will always be another column.\n\nNo caches this time. No withdrawal. Finish it.",
-		"orders": "LEAVE NOBODY SINGING",
-		"debrief": "It is over, and it is quiet, and there is nothing left down there to sing.\n\nWhoever held them together held them here, and held them to the last one. The Choir will be scavengers again by the next dry season - scattered, starving, and nobody's army.\n\nBring the squad home.",
+		"name": "THE SURVEY CAMP",
+		"fiction": "Where every track east of the cistern ends: a camp laid out along a riverbed that has been dry for two hundred years, pitched as though the water were still running.",
+		"briefing": "The tracks end in a bowl in the rock, and the Thirst is in it - all of it, and more than you have seen in one place.\n\nThey did not gather themselves. Somebody down there has been keeping them, and while he keeps them there will always be another column.\n\nFighters in that bowl will not break. Liaison has been clear on this and so has the interrogation of the pen guards: they are not staying because they are brave. They are staying because they have been told how this ends and they believe it.\n\nNo caches this time. No withdrawal.",
+		"orders": "END THE READING",
+		"debrief": "It is over, and it is quiet.\n\nThe camp was not a camp. It was laid out along the bed in stages - markers at the bends, stakes at the depth changes, the whole dry course measured out and pegged as though somebody intended to fill it.\n\nThe old man's papers are forty years of Confederacy survey work, annotated in a hand that gets steadier the further out it goes. The last forty pages are not survey. They are a schedule.\n\nHe was not with the bodies. Nobody saw him leave.\n\nBring the squad home. The Rangers are burying their own dead separately from ours, and did not ask whether we minded.",
 		"size": Vector2i(16, 10),
 		"map": [
 			"....##......##..",
@@ -512,10 +512,10 @@ const LEVELS: Array[Dictionary] = [
 			{"kind": "tent", "anchor": Vector2i(10, 8), "size": Vector2i(2, 2)},
 		],
 		"objectives": [
-			{"kind": "eliminate", "label": "LEAVE NOBODY SINGING"},
+			{"kind": "eliminate", "label": "END THE READING"},
 		],
 		# The end of every track, and the one map that is not desert or pan:
-		# burnt ground, because the Choir has been gathering and burning here
+		# burnt ground, because the Thirst has been gathering and burning here
 		# long enough to leave the bowl black.
 		"floor": "ash",
 		"zone_seed": 77,
@@ -530,18 +530,18 @@ const LEVELS: Array[Dictionary] = [
 ## floor tilesheet in BIOMES.
 const OPERATIONS: Array[Dictionary] = [
 	{
-		"name": "OPERATION DRY CHOIR",
+		"name": "OPERATION DRY WELL",
 		"biome": "desert",
-		"summary": "Push the Rust Choir back off scout ground, and find out what they are carrying.",
+		"summary": "Push the Thirst back off the eastern wells, and find out what they are carrying.",
 		"missions": [0, 1, 2],
 	},
 	{
-		"name": "OPERATION SECOND VERSE",
+		"name": "OPERATION LONG SURVEY",
 		# The operation is fought out on the pan - the column, the cistern and
 		# the pens are all salt missions, and the field camp between them
 		# should stand on the same ground.
 		"biome": "salt",
-		"summary": "The ammo dumps at Outpost 7 were already light. Find out who took the rest.",
+		"summary": "The stores were drawn down before you got there. Find out who took the rest, and where it went.",
 		# Four rather than three: the rescue sits between the cistern and the
 		# gathering, because the water the column was hauling only makes sense
 		# once you find who it was being hauled to.
@@ -811,7 +811,7 @@ static func _validate_objectives(data: Dictionary, label: String,
 	var ok := true
 	var objectives: Array = data.get("objectives", [])
 	var seen_cell := {}
-	# Scenery must never impersonate an objective. The Choir's crate stacks
+	# Scenery must never impersonate an objective. The Thirst's crate stacks
 	# ('c') and the demolition targets are both stacked ordnance, so a map that
 	# asks you to burn crates cannot also be dressed with crates you can only
 	# hide behind - you would be reading art to guess at the objective.

@@ -150,7 +150,7 @@ static var MG_HURT_FRAMES: Array = _load_dir_frames(
 static var MG_RELOAD_FRAMES: Array = _load_dir_frames(
 		MG_ROOT + "/animations/standing_idle_reload")
 
-# Choir raider with a submachine gun. Note the aim-idle folder uses a
+# Thirst runner with a submachine gun. Note the aim-idle folder uses a
 # hyphen where every other set uses an underscore.
 static var SMG_FRAMES: Array[Texture2D] = _load_rotation_frames(
 		SMG_ROOT + "/Goblin_SMG/rotations")
@@ -175,7 +175,7 @@ static var SMG_HURT_FRAMES: Array = _load_dir_frames(
 static var SMG_RELOAD_FRAMES: Array = _load_dir_frames(
 		SMG_ROOT + "/Goblin_SMG/animations/standing_idle_reload")
 
-# The bottom of the Choir's roster: a shirtless novice with a revolver.
+# The worst-equipped of the Thirst: a pressed conscript with a revolver.
 static var REV_FRAMES: Array[Texture2D] = _load_rotation_frames(
 		REV_ROOT + "/goblin_revolver/rotations")
 static var REV_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
@@ -274,7 +274,7 @@ static var RODAR_HURT_FRAMES: Array = _load_dir_frames(
 static var RODAR_RELOAD_FRAMES: Array = _load_dir_frames(
 		RODAR_ROOT + "/Rodar_Akai/animations/standing_idle_reload")
 
-# The prisoner. Two poses that matter: huddled where the Choir left them, and
+# The prisoner. Two poses that matter: huddled where the Thirst left them, and
 # on their feet once somebody has reached them. free() swaps between the sets.
 static var CIVILIAN_COWER_FRAMES: Array[Texture2D] = _load_rotation_frames(
 		CIVILIAN_ROOT + "/Cower_stance/rotations")
@@ -577,7 +577,7 @@ var cover_level := 0
 # off this. Outside a battle a unit is a person standing in a camp, and all of
 # it is noise; only the contact shadow survives.
 var show_combat_hud := true
-# A prisoner nobody has reached yet: rooted where the Choir left them, and
+# A prisoner nobody has reached yet: rooted where the Thirst left them, and
 # huddled rather than standing. free() ends it.
 var captive := false
 var _body_tween: Tween = null
@@ -595,7 +595,7 @@ func _ready() -> void:
 
 func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 	kind = p_kind
-	# Civilians count as yours: they walk out with the squad, and the Choir
+	# Civilians count as yours: they walk out with the squad, and the Thirst
 	# never shoots at them (is_combatant keeps them off the AI's target list).
 	team = TEAM_SCOUT if kind == Kind.SCOUT or kind == Kind.TEAM_LEAD \
 			or kind == Kind.MACHINEGUNNER or kind == Kind.HERO \
@@ -726,7 +726,7 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			hurt_frames = SMGA_HURT_FRAMES
 			reload_frames = SMGA_RELOAD_FRAMES
 		Kind.GOBLIN_BOLT:
-			# The Choir's designated marksman. One round in the rifle and the
+			# The Thirst's designated marksman. One round in the rifle and the
 			# bolt worked by hand between shots, so he reloads after every
 			# single one - and since reloading costs the move, he is rooted
 			# for as long as he keeps firing. In exchange he outranges every
@@ -749,9 +749,10 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			hurt_frames = BOLT_HURT_FRAMES
 			reload_frames = BOLT_RELOAD_FRAMES
 		Kind.GOBLIN_REVOLVER:
-			# The Choir's newest and worst-equipped: no shirt, no cover, and
-			# whatever sidearm was left over. Two HP means a single carbine
-			# round puts him down - the fiction stated in numbers.
+			# Pressed last week and handed a bad sidearm: no armour, no
+			# training, and a revolver somebody else had already worn out.
+			# Two HP means a single carbine round puts him down - the
+			# fiction stated in numbers, and the fiction is equipment.
 			max_hp = 2
 			move_range = 5
 			attack_range = 3
@@ -770,7 +771,7 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			reload_frames = REV_RELOAD_FRAMES
 		Kind.CIVILIAN:
 			# Carries nothing and shoots nothing. Starts huddled where the
-			# Choir left them; release() puts them on their feet.
+			# Thirst left them; release() puts them on their feet.
 			max_hp = 4
 			move_range = 4
 			attack_range = 0
@@ -1076,27 +1077,28 @@ func can_move_freely() -> bool:
 static func kind_role_name(p_kind: Kind) -> String:
 	match p_kind:
 		Kind.TEAM_LEAD:
-			return "Scout Team Lead"
+			return "Kestrel Team Lead"
 		Kind.HERO:
-			return "Rodar Akai, Hero of the Scouts"
+			return "Rodar Akai, Kestrel Squad"
 		Kind.MACHINEGUNNER:
-			return "Scout Machinegunner"
+			return "Kestrel Machinegunner"
 		Kind.GOBLIN:
-			return "Rust Choir Chorister"
+			return "Thirst Well-hand"
 		Kind.GOBLIN_SMG:
-			return "Rust Choir Raider"
+			return "Thirst Runner"
 		Kind.GOBLIN_SMG_ALT:
-			return "Rust Choir Skirmisher"
+			return "Thirst Light Runner"
 		Kind.GOBLIN_BOLT:
-			return "Rust Choir Cantor"
+			return "Thirst Marksman"
 		Kind.GOBLIN_REVOLVER:
-			return "Rust Choir Novice"
+			return "Pressed Conscript"
 		Kind.CIVILIAN:
 			return "Prisoner"
-	return "Desert Scout"
+	return "Kestrel Rifleman"
 
 
-## Named soldiers answer to their name; the Choir stays anonymous.
+## Named soldiers answer to their name; the Thirst stays anonymous until the
+## after-action names them.
 func display_name() -> String:
 	if surname.is_empty():
 		return kind_role_name(kind)

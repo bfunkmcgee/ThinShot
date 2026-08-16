@@ -1,12 +1,13 @@
-# ThinShot
+# Sandline
 
 A turn-based tactics thin slice built in **Godot 4** (2D isometric, GDScript,
-placeholder art). One desert skirmish: the **Desert Scouts** against the
-**Goblin Rust Choir**.
+placeholder art). One desert counterinsurgency: **Kestrel Squad**, Crown
+soldiers seconded to a Confederacy the locals never asked them to police,
+against **the Thirst** - goblin settlements dispossessed of their water.
 
 ## The game
 
-| | Rodar Akai | Machinegunner | Desert Scout | Chorister | Raider | Skirmisher | Novice | Cantor |
+| | Rodar Akai | Machinegunner | Rifleman | Well-hand | Runner | Light Runner | Conscript | Marksman |
 |---|---|---|---|---|---|---|---|---|
 | Side | you | you | you | AI | AI | AI | AI | AI |
 | Per battle | 1 | 1 | 3 | 3–4 | 1 | 1–2 | 3 | 1 |
@@ -23,7 +24,7 @@ placeholder art). One desert skirmish: the **Desert Scouts** against the
 (The Scout Team Lead is retired: Rodar Akai fills his slot — same spawn, same
 job, stronger soldier. An old save's lead becomes Rodar, record intact.)
 
-The squad also carries **ordnance the Choir has nothing like** — two frags and
+The squad also carries **ordnance the Thirst has nothing like** — two frags and
 two smokes for the whole battle, pooled, thrown by whichever soldier is in the
 right place. It is the answer to being outnumbered: grenades are the only
 thing in the game that touches more than one cell, and the only damage that
@@ -47,31 +48,37 @@ A five-soldier squad, each with a job:
   within two tiles is pinned — it cannot move at all next turn**, shoots 25%
   worse, and cannot set overwatch. Six rounds in the belt, and he is the
   slowest soldier on the field.
-- **Desert Scouts** ×3 — the fast, accurate line. Single shots, or a braced
+- **Kestrel Riflemen** ×3 — the fast, accurate line. Single shots, or a braced
   burst when they hold still.
 
-The Choir is an armed rabble, and its roster shows it. **Choristers** hold
-ground with scavenged rifles. **Raiders** carry submachine guns: almost no
-reach at two tiles, but they move as fast as your riflemen and fire a burst the
-moment they close, so the answer is to kill them on the way in rather than let
-them arrive. **Skirmishers** are the same gun on a half-starved frame — the
-fastest thing on the field at six tiles, so they arrive a full turn ahead of
-their heavier twin and split your attention before the real push lands. Being
-scrawny costs them: too light to hold the weapon down (52%), and thin enough
-that three rounds through cover put one away instead of four. **Novices** are
-the bottom of it — shirtless, handed whatever
-sidearm was left over, and pushed out front as a screen. Two HP means a single
-carbine round puts one down, and at 48% they mostly miss. They are dangerous
-only because there are always more of them, and because every round you spend
-on one is a round Rodar did not spend on something that matters.
+The Thirst fields what a dispossessed duneworks can arm and no more, and its
+roster is a reading of its supply. **Well-hands** hold ground with old rifles:
+labourers off the capped wells, fighting where they used to draw water.
+**Runners** carry submachine guns - almost no reach at two tiles, but they move
+as fast as your riflemen and fire a burst the moment they close, so the answer
+is to kill them on the way in rather than let them arrive. **Light Runners**
+are the same gun stripped for speed: the fastest thing on the field at six
+tiles, so they arrive a full turn ahead of their heavier twin and split your
+attention before the real push lands. Travelling light costs them - nothing to
+brace the weapon against (52%), and no plate to stop the third round through
+cover instead of the fourth.
 
-One goblin in the rabble is not a joke. The **Cantor** is the Choir's
-designated marksman: a bolt rifle reaching five tiles — further than anything
+**Pressed Conscripts** are the newest of them, and their numbers are an
+equipment list rather than a character sketch: a worn-out sidearm handed over
+last week, no armour, and no training to speak of. Two HP means a single
+carbine round puts one down, and at 48% they mostly miss. They are pushed out
+front because the settlements that lost their water have sons and the Thirst
+has more of them than it has rifles. Every round you spend on one is a round
+Rodar did not spend on something that matters, which is the whole reason
+they are standing there.
+
+Do not mistake the supply for the skill. The **Thirst Marksman** is their
+designated shot: a bolt rifle reaching five tiles — further than anything
 you carry except Rodar's — at 70% and four damage a round, which is
 half a scout. He is the counter-sniper the campaign builds toward, and he
 answers to exactly one weakness. **One round in the rifle**, and the bolt
 worked by hand between shots, so he reloads after every single one. Reloading
-costs the move, so the Cantor is **rooted for as long as he keeps firing**: he
+costs the move, so the Marksman is **rooted for as long as he keeps firing**: he
 will trade with you every turn, from the same tile, forever. Kill him with
 Rodar (six tiles out-reaches him, and four damage drops him in one), break
 line of sight and make him choose between shooting and repositioning, or eat a
@@ -81,27 +88,31 @@ Seven missions across two operations, on 16×10 isometric maps. It is one story,
 and **the objectives are how it is told** — each mission opens with a briefing
 and closes on a debrief that sets up the next.
 
-### Operation Dry Choir
+### Operation Dry Well
 
-Push the Choir off scout ground, and find out what they are carrying.
+Push the Thirst back off the eastern wells, and find out what they are carrying.
 
-1. A border contact. The Choir has crossed the wash for the first time, and
-   command wants them off scout ground. You kill them because there is nothing
-   else to be done yet — but the bodies are carrying sorted, tallied scrap, and
-   nobody carries a tally into a raid.
-2. You follow the route to the yard where the tithe is stacked. Killing
-   collectors changes nothing; the tithe is what matters. Burn it — and find
-   that it was never scrap. Machined ordnance, every crate struck with a depot
-   mark of your own army's, off the maps for eleven years.
-3. That depot is Outpost 7, and the Choir lives in it. Every round fired at you
-   came out of your own stores. You cannot hold the place, so you do not try:
-   blow the two ammo dumps and walk the squad back out.
+1. A border contact. The Thirst has crossed the wash for the first time -
+   eleven days after an Accord survey capped four marginal wells north of it -
+   and the Accord wants the crossing clear. You fight them because that is the
+   order you were given, and the bodies turn out to be carrying sorted,
+   tallied crates. Nobody hauls a tally into a raid.
+2. You follow the route to the yard where the load is stacked. Killing carriers
+   changes nothing - there are always more carriers - so the load is what
+   matters. Burn it, and find it was never scrap: machined ordnance, and
+   factory-new Tarkesh Mattocks from a foundry unwritten three centuries ago,
+   in crates struck with a Crown depot mark that came off the maps eleven
+   years back.
+3. That depot is Outpost 7, and the Thirst has been eating out of it for a
+   decade. You cannot hold the place, so you do not try: blow the two ammo
+   stores and walk the squad back out.
 
-### Operation Second Verse
+### Operation Long Survey
 
-The ammo dumps at Outpost 7 were already light. Find out who took the rest.
+The stores were drawn down before you got there. Find out who took the rest,
+and where it went.
 
-4. **The Long Haul** — a Choir column still walking, two days after you were
+4. **The Long Haul** — a Thirst column still walking, two days after you were
    told they were finished. **Burn its load**, strung out across ground with
    almost nothing on it to hide behind. What they were hauling turns out to be
    water, which means they are supplying something a long way out.
@@ -109,29 +120,31 @@ The ammo dumps at Outpost 7 were already light. Find out who took the rest.
    cannot go round it and you could not hold it, so you **break through and
    out the far side**: no caches, no body count, just get the squad through.
    Past it every track runs together into one.
-6. **The Holding Pens** — the water was never for the Choir. Behind their line
-   is a wire pen with surveyors in it, kept alive for eleven years because
-   somebody wanted the maps in their heads. **Reach them, then walk them out.**
-7. **The Choirmaster** — a bowl in the rock with the whole Choir standing in
-   it, because somebody down there has been keeping them together. **Leave
-   nobody singing.** The first operation taught that killing them changed
-   nothing; this is the one time it does.
+6. **The Holding Pens** — the water was never for the Thirst. Behind their line
+   is a wire pen with Confederacy surveyors in it, kept alive for eleven years
+   because somebody wanted the maps in their heads. **Reach them, then walk
+   them out.**
+7. **The Survey Camp** — a bowl in the rock with the whole Thirst standing in
+   it, because somebody down there has been keeping them together. **End the
+   reading.** The first operation taught that killing carriers changed
+   nothing; this is the one time the killing is the point, and the man who
+   made it so is not among the bodies.
 
 Which is why each map asks for something different:
 
 1. **Dry Wash** — open skirmish. Kill every goblin. The teaching level.
-2. **The Scrapline** — a raid on the yard where the tithe is stacked. **Burn
+2. **The Scrapline** — a raid on the yard where the load is stacked. **Burn
    three caches** spread corner to corner behind the barricades, and **drop the
-   relay mast** that calls the rest of the Choir down on anyone who walks in. A
+   relay mast** that tells everyone within forty miles you are here. A
    body count does not end this one; you can win with goblins still standing,
    and you can wipe them out and still not be finished. The crates turn out to
    hold machined ordnance — and the mast carries the same depot mark, which is
    what points you at Outpost 7.
-3. **Outpost 7** — a raid with a way out. **Blow both ammo dumps** at opposite
+3. **Outpost 7** — a raid with a way out. **Blow both ammo stores** at opposite
    ends of the compound, *then* **walk the whole squad back to the extraction
    zone** on the west edge. The zone stays shut until the charges go off, so
    the last stretch is a fighting withdrawal across ground you already crossed
-   once — with whatever the Choir has left chasing you.
+   once — with whatever the Thirst has left chasing you.
 4. **The Holding Pens** — a rescue behind **barbed wire**, which is the only
    thing on the board that stops movement and nothing else: you can see the
    prisoners from your start line and shoot the guards straight through the
@@ -141,15 +154,15 @@ Which is why each map asks for something different:
    reaching them *is* the rescue. Freed, they get up, keep their own slower
    pace, and count for the extraction like anyone else: the zone will not open
    until all of them are aboard. They carry nothing and cannot shoot, throw or
-   set charges, and the Choir will not fire on them or catch them in a blast —
+   set charges, and the Thirst will not fire on them or catch them in a blast —
    which makes the walk home a problem of tempo rather than of covering fire.
 
-The Choir gets heavier as you go — 9 goblins on Dry Wash, 13 in the bowl at the
-end — but so does your squad, and by the second operation your veterans have
-specialties.
+The Thirst gets heavier as you go — 9 goblins on Dry Wash, 13 in the bowl at
+the end — but so does your squad, and by the second operation your veterans
+have specialties.
 
-Your scouts are elite — tougher, faster, longer-ranged — but the Choir has
-numbers and holds the ground.
+Kestrel Squad is elite — tougher, faster, longer-ranged — but the Thirst has
+numbers, holds the ground, and is fighting where it lives.
 
 ## Operations, and the two camps
 
@@ -327,7 +340,7 @@ campaign and playing again starts you with five fresh recruits.
 
 - Each unit may **move once and shoot once** per turn; shooting ends its
   activation (you can move-then-shoot, but not shoot-then-move).
-- **Shots can miss.** Your scouts are trained marksmen; the Choir fires
+- **Shots can miss.** Your soldiers are trained marksmen; the Thirst fires
   scavenged rifles badly. Hovering a target shows the exact odds. Flanking adds
   +10%, and shots past half your range lose 5% per extra tile — so the accuracy
   gap is the elite-squad edge, and closing distance sharpens it. Half cover
@@ -337,11 +350,11 @@ campaign and playing again starts you with five fresh recruits.
   cover from a direction when the tile next to them that way is something to
   get behind — so pressing up against a wall is a decision, and the ground
   between two walls is a route.
-  - **Half cover** — rusted junk, sandbags, the Choir's stacked ordnance, and
+  - **Half cover** — rusted junk, sandbags, the Thirst's stacked ordnance, and
     fuel drums. Shots pass over it at **half damage**, both ways. You can shoot
     over it freely. The four behave identically and differ only in what they
     tell you about the ground: junk is cover nobody put there, sandbags are
-    cover somebody *dug*, crates are the Choir's, and a drum is all three right
+    cover somebody *dug*, crates are the Thirst's, and a drum is all three right
     up until it goes off.
   - **Full cover** — rock, brick wall, building. **Half damage *and* 25% harder
     to hit**, and it blocks sight both ways.
@@ -370,7 +383,7 @@ campaign and playing again starts you with five fresh recruits.
   stationary object, so the decision is whether the shot is worth spending,
   not whether it lands. It goes up with a frag's force, **and its blast sets
   off the next drum along**, so a line of them is a fuse. Each drum burns
-  exactly once, and they catch your own scouts as readily as the Choir.
+  exactly once, and they catch your own soldiers as readily as the Thirst.
 - Cacti are decoration.
 - Every mission opens on a **briefing** — situation, then orders — and a won
   mission closes on a **debrief** that points at the next one. A lost attempt
@@ -388,7 +401,7 @@ campaign and playing again starts you with five fresh recruits.
 - **A rescue is over when you reach them, not when you free them.** Ending a
   move next to a prisoner cuts them loose; there is no action to spend and no
   button to remember. From there they are yours to walk out: slower than a
-  scout, unarmed, and untouchable — the Choir never fires on them and a blast
+  soldier, unarmed, and untouchable — the Thirst never fires on them and a blast
   goes round them. Losing every soldier is still a wipe whether or not a
   prisoner is left standing.
 - Winning advances to the next level; losing retries the current one.
@@ -407,7 +420,7 @@ campaign and playing again starts you with five fresh recruits.
 - **Grenades** cost the attack, never the move, so a soldier can advance and
   then throw. They are **thrown at a tile rather than a unit**, cover the
   **3×3 square** around where they land, **always connect** (no hit roll), and
-  **cover does not stop them** — lobbing onto the scrap the Choir is hiding behind is
+  **cover does not stop them** — lobbing onto the scrap the Thirst is hiding behind is
   the entire point. A blast will not reach through a wall.
   - **Frag** falls off from the centre — **3 down the cross, 2 on the four
     corners**:
@@ -418,15 +431,15 @@ campaign and playing again starts you with five fresh recruits.
     2 3 2
     ```
 
-    A 3 kills a Novice or a Skirmisher outright and leaves a Chorister, Raider
-    or Cantor on 1; a corner 2 still finishes a Novice but only wounds the
+    A 3 kills a Conscript or a Light Runner outright and leaves a Well-hand,
+    Runner or Marksman on 1; a corner 2 still finishes a Conscript but only wounds the
     rest. So the blast has an axis worth lining up, and the soft ring is
     exactly where a hurried throw catches your own squad. The preview draws
     the corners dimmer, and the panel shows the two numbers while you aim.
   - **Smoke** blocks line of sight through those cells — for **both sides**,
     including yours. It stands for the rest of the turn you threw it and the
     whole enemy turn that follows, then burns off. Throw it, walk the rest of
-    the squad under it, and the Cantor gets nothing. A unit standing *in* its
+    the squad under it, and the Marksman gets nothing. A unit standing *in* its
     own cloud can still see out; only lines passing *through* it are cut.
   - **A frag catches your own scouts too**, and a 3×3 is wide enough that it
     will if you are careless. The preview shows exactly which tiles are in it,
@@ -447,11 +460,11 @@ campaign and playing again starts you with five fresh recruits.
   Pinning two goblins costs you the damage you'd have dealt to one — that
   trade is the decision.
 - **Magazines** are drawn as brass pips under a unit's HP. Your scouts carry
-  one, and so does the Cantor; every other goblin has unlimited ammo. A burst
+  one, and so does the Marksman; every other goblin has unlimited ammo. A burst
   costs two rounds, so bursting every chance you get means reloading — and
   giving up a move — every other turn. **Reloading costs the move, never the
   shot**, for both sides: a dry unit can reload and still fire, but cannot
-  reposition that turn. Watch the Cantor's single pip to know whether he is
+  reposition that turn. Watch the Marksman's single pip to know whether he is
   about to shoot or about to work the bolt.
 - Goblins chase, seek firing positions, avoid open ground lightly, and retreat
   to cover when wounded with no shot available; a goblin that holds position

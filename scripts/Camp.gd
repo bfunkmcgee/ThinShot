@@ -45,7 +45,7 @@ const WALL_TEX_JUNCTION := preload(
 		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/north.png")
 const CRATE_TEXTURE := preload(
 		"res://assets/sprites/Environment/Desert/Props/Pile_of_desert_ammo_crates/Pile_of_desert_ammo_crates/rotations/unknown.png")
-# Loose crates for the stores, as opposed to the assignment post's stacked
+# Loose crates for the stores, as opposed to the levy post's stacked
 # pile. Single crates read as "opened and worked out of" - which is what a
 # quartermaster's ground looks like, and what you walk up to here to do.
 const STORES_TEXTURES: Array[Texture2D] = [
@@ -159,7 +159,7 @@ func _ready() -> void:
 	# by zoom, so the clamping adapts on its own.
 	camera.zoom = Vector2(CAMP_ZOOM, CAMP_ZOOM)
 	_snap_camera()
-	print("[ThinShot] %s: %d soldier(s), %s mission %d/%d '%s'" % [
+	print("[Sandline] %s: %d soldier(s), %s mission %d/%d '%s'" % [
 			"field camp" if in_field else "garrison", Game.roster.size(),
 			Game.operation().name, Game.mission_number(), Game.mission_count(),
 			Game.data().name])
@@ -388,7 +388,7 @@ func _build_fixtures() -> void:
 		fixtures.append({
 			"kind": "recruit", "cell": post,
 			"pos": board.cell_to_global(post),
-			"label": "the assignment post", "id": 0,
+			"label": "the levy post", "id": 0,
 		})
 		_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, post)
 	# The table itself, so the fixture is the thing it is named after rather than
@@ -526,8 +526,8 @@ func _prompt_for(fixture: Dictionary) -> String:
 		"recruit":
 			var short := Game.vacancy_count(Game.data())
 			if short <= 0:
-				return "E  -  assignment post: squad at full strength"
-			return "E  -  assignment post: %d replacement(s) available" % short
+				return "E  -  levy post: squad at full strength"
+			return "E  -  levy post: %d levy/levies available" % short
 	return ""
 
 
@@ -689,9 +689,9 @@ func _on_choice(slot: int) -> void:
 			_close_modal()
 			# Rebuild the camp so the new faces are actually standing in it.
 			get_tree().reload_current_scene()
-			print("[ThinShot] %d replacement(s) signed on" % taken.size())
+			print("[Sandline] %d levy/levies reported" % taken.size())
 		"deploy":
-			print("[ThinShot] deploying: %s mission %d/%d" % [
+			print("[Sandline] deploying: %s mission %d/%d" % [
 					Game.operation().name, Game.mission_number(), Game.mission_count()])
 			Game.go_to_battle()
 
@@ -712,13 +712,13 @@ func _apply_cmdline_screenshot() -> void:
 
 func _capture_screenshot(path: String) -> void:
 	if DisplayServer.get_name() == "headless":
-		push_error("[ThinShot] --screenshot needs a window; headless renders nothing")
+		push_error("[Sandline] --screenshot needs a window; headless renders nothing")
 		get_tree().quit(1)
 		return
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
 	var err := image.save_png(path)
-	print("[ThinShot] screenshot -> %s (%s) zoom=%s" % [
+	print("[Sandline] screenshot -> %s (%s) zoom=%s" % [
 			path, "saved" if err == OK else error_string(err), camera.zoom])
 	get_tree().quit(0 if err == OK else 1)

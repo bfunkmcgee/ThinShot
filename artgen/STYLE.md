@@ -1,6 +1,6 @@
-# ThinShot floor-art style bible
+# Sandline floor-art style bible
 
-The single source of truth for what ThinShot ground art looks like and how it
+The single source of truth for what Sandline ground art looks like and how it
 is generated. The machine half of this document lives in [style.json](style.json) —
 every number a tool needs is there; every number quoted here is documentation
 of that file, not a second authority. `tools/floor_pipeline.py` enforces the

@@ -517,7 +517,7 @@ func set_level(data: Dictionary) -> void:
 				row.append(CellKind.WIRE)
 			elif ch == "j" or ch == "d" or ch == "s" or ch == "c":
 				# A fuel drum is cover you can shoot over, exactly like junk -
-				# right up until somebody sets it off. Sandbags and the Choir's
+				# right up until somebody sets it off. Sandbags and the Thirst's
 				# own crate stacks are the same tier; what differs is that
 				# somebody built them there on purpose.
 				row.append(CellKind.COVER)

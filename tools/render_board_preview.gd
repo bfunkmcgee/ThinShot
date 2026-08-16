@@ -17,7 +17,7 @@ extends SceneTree
 ## board_{nw,ne,sw,se}.png at 2x the fitted zoom, plus meta.json.
 ##
 ## Marker legend: green diamond = squad spawn (S scout, L lead, G gunner);
-## red/orange = Choir spawns (g rifle, s smg, a smg-alt, n novice, b bolt);
+## red/orange = Thirst spawns (g rifle, s smg, a smg-alt, n novice, b bolt);
 ## cyan P = prisoner; amber ring = demolition target; green fill = extraction.
 
 # --- prop art, kept in sync with Battle.gd's tables ---------------------------
@@ -31,7 +31,7 @@ const ROCK_OFFSET := Vector2(0, -18)
 const JUNK_OFFSET := Vector2(0, -20)
 const PLANT_OFFSET := Vector2(0, -17)
 const SANDBAG_OFFSET := Vector2(0, -22)
-const CHOIR_CACHE_OFFSET := Vector2(0, -15)
+const THIRST_CACHE_OFFSET := Vector2(0, -15)
 const DRUM_OFFSET := Vector2(0, -22)
 const WALL_OFFSETS := {
 	"x_run": Vector2(0, -15), "y_run": Vector2(0, -15),
@@ -320,9 +320,9 @@ func _spawn_props(board: Board, entities: Node2D, data: Dictionary) -> void:
 	var junk := _numbered(ENV + "/desert_rusted_garbage", "Rusted_desert_garbage", 7)
 	var plants := _numbered(ENV + "/desert_plants", "Desert_Plants", 16)
 	var sandbags := _numbered(ENV + "/desert_sandbags", "Desert_Sandbags", 2)
-	var choir: Array = []
+	var caches: Array = []
 	for path in _numbered(CACHE_ROOT, "Desert_insurgent_weapons_cache", 6):
-		choir.append((path as String).get_basename() + "/rotations/unknown.png")
+		caches.append((path as String).get_basename() + "/rotations/unknown.png")
 	var drum := PROP_ROOT \
 			+ "/desert_Explosive_Fuel_drum/desert_Explosive_Fuel_drum/rotations/unknown.png"
 
@@ -343,8 +343,8 @@ func _spawn_props(board: Board, entities: Node2D, data: Dictionary) -> void:
 					_prop(board, entities, _pick(sandbags, cell, SALT_SANDBAG),
 							SANDBAG_OFFSET, cell)
 				"c":
-					_prop(board, entities, _pick(choir, cell, SALT_CACHE),
-							CHOIR_CACHE_OFFSET, cell)
+					_prop(board, entities, _pick(caches, cell, SALT_CACHE),
+							THIRST_CACHE_OFFSET, cell)
 				"d":
 					_prop(board, entities, drum, DRUM_OFFSET, cell)
 				"W":

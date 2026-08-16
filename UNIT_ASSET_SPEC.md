@@ -29,7 +29,7 @@ This says *what shape they have to be*.
 | Light | sun **upper left**, shading falls down-right | same | matches every prop, the floor sheet, and the code-drawn shadow offset |
 | Outline | full near-black outline (`#00090B`, `#030109`) — 1 texel = 2 screen px | **1 px near-black outline** — at 1× the rim is a single screen px. **Judge criterion:** if a unit stops popping against the rimless floor at 100 % zoom, fall back to a **2 px outline** for that unit and log it | the outline is what keeps units legible on a busy desert board; at 1× it is also the thinnest line the style owns |
 | Palette | tight; informational for shipped sets (Goblin 71 colours, Scout ships at ~387) | **≤128 colours per sprite** (validator warns above 128, fails above 160) | doubled canvas invites noise; the budget keeps the house style flat-shaded |
-| Colour family | desert military: olive/khaki `#7D9352` `#61724B` `#97A272`, slate greys `#445153` `#4B4D54`, warm dust | same | scouts are tan/brown, Choir goblins green-skinned in darker rags |
+| Colour family | desert military: olive/khaki `#7D9352` `#61724B` `#97A272`, slate greys `#445153` `#4B4D54`, warm dust | same | Kestrels are tan/brown, Thirst goblins green-skinned in worn work clothes |
 | View | 3/4 top-down ("low top-down"), standing upright, for an isometric board | same | |
 
 **The silhouette carries the identity.** At 30 px the face is four pixels; at
