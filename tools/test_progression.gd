@@ -30,6 +30,7 @@ extends SceneTree
 ## Run: godot --headless --path . -s tools/test_progression.gd
 
 const SAVE_PATH := "user://campaign.json"  # mirrors Game.SAVE_PATH (not preloaded)
+const BACKUP_PATH := "user://campaign.json.testbak"  # crash-proof copy, see _init
 
 # Raw ordinals, matching test_save_load.gd's style.
 const KIND_SCOUT := 0
@@ -56,15 +57,39 @@ func _check(ok: bool, label: String) -> void:
 		_failed = true
 
 
+## The backup lives on disk, not just in this script's memory. A parse error
+## or a failed assertion can abort the run before _finish() gets to put the
+## campaign back, and a copy held only in a String dies with the process -
+## which is exactly how a real campaign was lost once. A sidecar survives,
+## and the next run below restores from it before doing anything else.
 func _init() -> void:
+	_recover_stale_backup()
 	_had_save = FileAccess.file_exists(SAVE_PATH)
 	if _had_save:
 		var bf := FileAccess.open(SAVE_PATH, FileAccess.READ)
 		_backup = bf.get_as_text()
 		bf.close()
+		var wf := FileAccess.open(BACKUP_PATH, FileAccess.WRITE)
+		wf.store_string(_backup)
+		wf.close()
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
 		print("backed up existing save (%d bytes)" % _backup.length())
 	_run()
+
+
+## A backup still on disk means a previous run died before restoring it. Put
+## it back rather than letting this run's fixture bury the campaign for good.
+func _recover_stale_backup() -> void:
+	if not FileAccess.file_exists(BACKUP_PATH):
+		return
+	var bf := FileAccess.open(BACKUP_PATH, FileAccess.READ)
+	var text := bf.get_as_text()
+	bf.close()
+	var rf := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	rf.store_string(text)
+	rf.close()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(BACKUP_PATH))
+	print("recovered a save left behind by an interrupted run (%d bytes)" % text.length())
 
 
 ## A seed whose FIRST randi_range(1, 100) roll lands at or under `roll_max`,
@@ -425,6 +450,7 @@ func _finish() -> void:
 		var rf := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 		rf.store_string(_backup)
 		rf.close()
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(BACKUP_PATH))
 		print("\nrestored the original save")
 	else:
 		var err := DirAccess.remove_absolute(
