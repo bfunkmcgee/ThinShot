@@ -772,6 +772,21 @@ func _test_morale() -> void:
 	var bolt: int = int(_k.KIND_GOBLIN_BOLT)
 	var smg := 4  # GOBLIN_SMG, and nothing special about it - that is the point
 
+	# Unit.gd cannot name Rules - Rules names Unit in every signature and the
+	# cycle would be resolved by compile order - so it carries the starting
+	# morale as a literal. This is the assertion that keeps the two honest.
+	var fresh: Node2D = _mk(smg, Vector2i.ZERO)
+	_check(int(fresh.morale) == int(_k.MORALE_MAX),
+			"a fresh unit starts at MORALE_MAX (%d), which Unit.gd spells by hand"
+			% int(fresh.morale))
+	_check(not fresh.surrendered and not fresh.routing and not fresh.has_stopped(),
+			"...and starts fighting")
+	fresh.free()
+
+	# The Kind ordinal Rules names for the kill floor must be the real one.
+	_check(KIND_NAMES[bolt] == "GOBLIN_BOLT",
+			"Rules.KIND_GOBLIN_BOLT (%d) is the Marksman's real ordinal" % bolt)
+
 	# The wound is the big term, and it only lands at half HP or less.
 	var grazed: int = _rules.call("morale_after_round", 100, 3, 4)
 	var hurt: int = _rules.call("morale_after_round", 100, 2, 4)

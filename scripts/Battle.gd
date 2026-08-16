@@ -291,6 +291,13 @@ var _vis_rng := RandomNumberGenerator.new()
 # carries this number is a battle somebody can play back, rather than a story
 # about some goblin who hit three times running.
 var rules_seed := 0
+# Spawn order among the Thirst, and the third input to their identities. Counted
+# rather than derived from the cell so that two fighters on the same tile across
+# two different missions are still two different people.
+var _enemy_ordinal := 0
+# THE ROLL: what became of every one of them, in the order it happened.
+# [{identity, kind, fate, conduct}] - see Roll.gd and Rules.Conduct.
+var roll: Array[Dictionary] = []
 # Seed for every scenery-variant hash stream, so prop picks decorrelate from
 # cell coordinates without losing determinism. Levels may pin it with a
 # "prop_seed" key; otherwise it derives from the zone seed.
@@ -842,6 +849,10 @@ func _spawn_structure(s: Dictionary) -> void:
 
 
 ## `soldier` is the roster entry for a named Kestrel, or {} for the Thirst.
+##
+## The Thirst are not anonymous either, they are just not introduced: every
+## fighter is given an identity here and it stays hidden until THE ROLL reads it
+## out. See scripts/Roll.gd for why this cannot draw from the rules stream.
 func _spawn_unit(kind: Unit.Kind, spawn_cell: Vector2i, soldier := {}) -> void:
 	var unit: Unit = UNIT_SCENE.instantiate()
 	entities_node.add_child(unit)
@@ -849,6 +860,10 @@ func _spawn_unit(kind: Unit.Kind, spawn_cell: Vector2i, soldier := {}) -> void:
 	if not soldier.is_empty():
 		# Strictly after setup(), which assigns every stat from scratch.
 		unit.apply_progression(soldier)
+	elif unit.team == Unit.TEAM_GOBLIN:
+		unit.identity = Roll.identity(Game.campaign_seed, Game.current_level,
+				_enemy_ordinal, kind)
+		_enemy_ordinal += 1
 	unit.position = board.cell_to_global(spawn_cell)
 	unit.shadow_color = board.shadow_tone(Unit.SHADOW_COLOR.a)
 	unit.corpse_shadow_color = board.shadow_tone(Unit.CORPSE_SHADOW_COLOR.a)
@@ -3324,6 +3339,8 @@ func _on_unit_died(unit: Unit) -> void:
 		# and retried, so only a won mission makes a death permanent.
 		Game.mark_dead(unit.soldier_id)
 		print("[Sandline] %s is down" % unit.display_name())
+	else:
+		_record_on_roll(unit, "killed")
 	Sfx.play("unit_death")
 	fx_ground.stain(unit.position)
 	_drop_rifle(unit)
@@ -3334,6 +3351,34 @@ func _on_unit_died(unit: Unit) -> void:
 	# side is counted before the mission is scored.
 	if not _resolving_blast:
 		check_game_over()
+
+
+## Add one line to THE ROLL, and price what it cost.
+##
+## The conduct is decided HERE, from the state the unit was in when it stopped,
+## rather than at the trigger - because "he was already running" is a fact about
+## the target and not about the shot, and the same round means different things
+## depending on which. Rules owns the prices; this only reads the situation.
+##
+## A clean kill is on the roll exactly like the rest of them. It costs nothing,
+## and it is still a name.
+func _record_on_roll(unit: Unit, fate: String) -> void:
+	if unit.team != Unit.TEAM_GOBLIN and not unit.is_civilian():
+		return
+	var conduct: int = Rules.Conduct.COMBATANT_KILLED
+	if unit.is_civilian():
+		conduct = Rules.Conduct.CIVILIAN_KILLED
+	elif fate == "killed":
+		if unit.surrendered:
+			conduct = Rules.Conduct.SURRENDERED_FIRED_ON
+		elif unit.routing:
+			conduct = Rules.Conduct.ROUTING_FIRED_ON
+	roll.append({
+		"identity": unit.identity,
+		"kind": int(unit.kind),
+		"fate": fate,
+		"conduct": conduct,
+	})
 
 
 ## Only your own dead leave a rifle. The Thirst loses eleven bodies on a bad

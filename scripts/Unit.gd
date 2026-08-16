@@ -580,6 +580,27 @@ var show_combat_hud := true
 # A prisoner nobody has reached yet: rooted where the Thirst left them, and
 # huddled rather than standing. free() ends it.
 var captive := false
+# Who this one is, for the Thirst: {name, age, settlement, grievance}, minted at
+# spawn by Roll.identity and empty for everybody else. Deliberately NOT read by
+# display_name() or anything else the battle draws - the squad is not being
+# asked to hesitate, and a name over a target would be a mechanic. THE ROLL
+# reads it afterwards, where it cannot change a decision already made.
+var identity: Dictionary = {}
+# Morale, and the only meter the Thirst has that the squad does not.
+#
+# The literal is deliberate and is NOT Rules.MORALE_MAX, however much it wants
+# to be: Rules names Unit in every one of its signatures, so reaching back the
+# other way would make the two mutually dependent and put the resolution of
+# that cycle at the mercy of compile order - in a project whose test harnesses
+# already run scripts before the autoloads exist. Rules still owns the number.
+# tools/test_rules.gd asserts these two agree, so the duplication cannot drift.
+var morale := 100
+# Hands up. Stops fighting, stops being fired on by the AI, and stops counting
+# as a combatant - so a map cleared of everyone still standing is cleared.
+var surrendered := false
+# Broken with nobody to give up to: heading for the nearest map edge. Reaching
+# it is an ESCAPE rather than a kill, and resolves the contact either way.
+var routing := false
 var _body_tween: Tween = null
 var _marker_tween: Tween = null
 
@@ -1047,7 +1068,20 @@ func suppress_radius() -> int:
 ## Someone who fights. A prisoner is on your side and walks out with you, but
 ## is never shot at, never shoots, and never counts toward a squad wipe.
 func is_combatant() -> bool:
-	return kind != Kind.CIVILIAN
+	return kind != Kind.CIVILIAN and not surrendered
+
+
+## A civilian is anyone who never carried a weapon: the prisoners in the pens,
+## and the bystanders who were only ever standing there. Distinct from
+## is_combatant(), which a fighter with his hands up also fails.
+func is_civilian() -> bool:
+	return kind == Kind.CIVILIAN
+
+
+## Has stopped fighting and is trying to leave. Still a legal target - the game
+## will let you - which is exactly why THE ROLL records that you did.
+func has_stopped() -> bool:
+	return surrendered or routing
 
 
 ## Reached. They get up off the floor and can walk out with the squad.
