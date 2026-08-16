@@ -1,0 +1,365 @@
+extends SceneTree
+
+## Surrender and rout, driven through the real battle.
+##
+## Rules.gd's arithmetic is pinned in tools/test_rules.gd; this is the other
+## half - that the controller actually asks it, and that the answers reach the
+## board. Everything here runs against a live Battle scene with real units on a
+## real map, because the interesting failures are all in the wiring:
+##
+##   1. a broken fighter with rifles on him puts his hands up, stops being a
+##      combatant, and goes on THE ROLL as surrendered
+##   2. a broken fighter with nobody covering him runs instead, and runs
+##      TOWARD the edge rather than in some arbitrary direction
+##   3. reaching the rim is an escape - off the tree, on the roll, not a death
+##   4. an objective to CLEAR ground is met when nobody is still fighting for
+##      it, whether or not everybody is dead
+##   5. shooting a man with his hands up is allowed, and is recorded
+##   6. the Marksman never breaks, which is what holds the kill floor up
+##
+## The save is backed up in _init() before the Game autoload can touch it, the
+## way tools/test_progression.gd does - a test that fights battles commits
+## missions, and a developer's campaign should survive the suite.
+##
+## Known cosmetic noise: this is the only harness that moves units, so it is the
+## only one that plays footstep SFX, and Godot's audio teardown occasionally
+## races `quit()` and reports "2 ObjectDB instances were leaked at exit". The
+## streams are stopped and released below and the exit code is 0 either way -
+## grep RESULT, not stderr.
+##
+## Run: godot --headless --path . -s tools/test_morale.gd
+
+const SAVE_PATH := "user://campaign.json"
+const BACKUP_PATH := "user://campaign.json.morale-test-backup"
+
+const TEAM_SCOUT := 0
+const TEAM_GOBLIN := 1
+const KIND_GOBLIN_BOLT := 7
+
+var _failed := false
+var _rules: GDScript = null
+var _had_save := false
+
+
+func _check(ok: bool, label: String) -> void:
+	if ok:
+		print("  ok    %s" % label)
+	else:
+		printerr("  FAIL  %s" % label)
+		_failed = true
+
+
+func _init() -> void:
+	# Before anything loads it.
+	_had_save = FileAccess.file_exists(SAVE_PATH)
+	if _had_save:
+		DirAccess.copy_absolute(SAVE_PATH, BACKUP_PATH)
+	_run()
+
+
+func _restore() -> void:
+	if _had_save:
+		DirAccess.copy_absolute(BACKUP_PATH, SAVE_PATH)
+		DirAccess.remove_absolute(BACKUP_PATH)
+		print("\nrestored the original save")
+	elif FileAccess.file_exists(SAVE_PATH):
+		DirAccess.remove_absolute(SAVE_PATH)
+
+
+## A fresh battle on `level`, with its own scene tree node.
+func _battle(level: int) -> Node:
+	var game: Node = root.get_node("/root/Game")
+	game.current_level = level
+	var battle: Node = (load("res://scenes/Battle.tscn") as PackedScene).instantiate()
+	root.add_child(battle)
+	await process_frame
+	await process_frame
+	return battle
+
+
+## Put `unit` on `cell`. Occupancy is derived from unit.cell (see
+## Battle.unit_at), so this is the whole of it.
+func _place(battle: Node, unit: Node2D, cell: Vector2i) -> void:
+	unit.cell = cell
+	unit.position = battle.board.cell_to_global(cell)
+
+
+## Tear a battle down. queue_free() rather than free(): a live battle has tweens
+## and timers hanging off its units, and freeing it out from under them is what
+## the ObjectDB leak warning at exit is complaining about. The other harnesses
+## never hit this because they build one battle and keep it; this file builds
+## five.
+func _dismiss(battle: Node) -> void:
+	battle.queue_free()
+	await process_frame
+	await process_frame
+
+
+## A walkable, unoccupied cell adjacent to `cell`, or NO_CELL.
+func _free_neighbour(battle: Node, cell: Vector2i, taken: Array) -> Vector2i:
+	for step in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
+			Vector2i(1, 1), Vector2i(-1, -1), Vector2i(1, -1), Vector2i(-1, 1)]:
+		var c: Vector2i = cell + step
+		if battle.board.in_bounds(c) and battle.board.is_walkable(c) \
+				and battle.unit_at(c) == null and not taken.has(c):
+			return c
+	return Board.NO_CELL
+
+
+func _run() -> void:
+	await process_frame
+	_rules = load("res://scripts/Rules.gd") as GDScript
+
+	await _test_surrender()
+	await _test_rout_and_escape()
+	await _test_clear_means_still_fighting()
+	await _test_marksman_holds()
+	await _test_recovery_needs_a_quiet_turn()
+
+	# Moving and surrendering play pooled SFX. Sfx assigns `player.stream` and
+	# never clears it, so whichever player went last is still holding its WAV
+	# when a `-s` script calls quit() - and Godot reports that at exit as a
+	# leaked instance and a resource still in use. The game itself never trips
+	# this because it quits through the main loop; the other harnesses never
+	# trip it because they never move anybody. Let the tails finish, then hand
+	# the streams back, so the suite does not ship a warning that means nothing.
+	await create_timer(0.8).timeout
+	var sfx: Node = root.get_node_or_null("/root/Sfx")
+	if sfx != null:
+		for player: AudioStreamPlayer in sfx._players:
+			player.stop()
+			player.stream = null
+	# stop() retires the playback on the audio server's next pass, not on this
+	# line, so quitting immediately can still race it.
+	await process_frame
+	await process_frame
+
+	_restore()
+	print("\nRESULT: ", "FAIL" if _failed else "PASS")
+	quit(1 if _failed else 0)
+
+
+# --- 1 & 5. hands up --------------------------------------------------------
+
+func _test_surrender() -> void:
+	print("\n[1] a broken fighter with rifles on him puts his hands up")
+	var battle: Node = await _battle(0)
+	var brk: int = int(_rules.get_script_constant_map()["MORALE_BREAK"])
+
+	# A runner - anything but the Marksman, who is the one that never breaks.
+	var goblin: Node2D = null
+	for u in battle.living_units(TEAM_GOBLIN):
+		if u.kind != KIND_GOBLIN_BOLT:
+			goblin = u
+			break
+	_check(goblin != null, "found a breakable fighter on Dry Wash")
+
+	# Two rifles on him, which is what makes surrender possible rather than rout.
+	var scouts: Array = battle.living_soldiers(TEAM_SCOUT)
+	var taken: Array = []
+	var placed := 0
+	for scout in scouts:
+		var spot: Vector2i = _free_neighbour(battle, goblin.cell, taken)
+		if spot == Board.NO_CELL:
+			break
+		_place(battle, scout, spot)
+		taken.append(spot)
+		placed += 1
+		if placed == 2:
+			break
+	_check(placed == 2, "put two soldiers alongside him (%d)" % placed)
+	_check(battle._guns_on(goblin) >= 2,
+			"and the game agrees they have a shot (%d guns)" % battle._guns_on(goblin))
+
+	# The state a fighter is actually in when he breaks: pushed to the
+	# threshold by a round that landed during the player's turn.
+	goblin.morale = brk
+	goblin.morale_pressed = true
+	var done: bool = await battle._resolve_morale(goblin, 1, 9)
+	_check(done, "his activation ends there")
+	_check(goblin.surrendered and not goblin.routing,
+			"he surrenders rather than running")
+	_check(not goblin.is_combatant(),
+			"a man with his hands up is not a combatant any more")
+	_check(goblin.has_stopped(), "and reads as stopped")
+
+	var last: Dictionary = battle.roll.back()
+	_check(str(last.fate) == "surrendered", "THE ROLL says surrendered")
+	_check(not (last.identity as Dictionary).is_empty(),
+			"and it has his name on it (%s)" % last.identity.get("name", "?"))
+	_check(int(last.conduct) == int(_rules.get_script_constant_map()["Conduct"].COMBATANT_KILLED),
+			"taking a surrender costs nothing")
+
+	print("\n[5] and the game still lets you shoot him")
+	var before: int = battle.roll.size()
+	goblin.take_damage(goblin.hp)
+	await process_frame
+	_check(battle.roll.size() == before + 1, "the round lands and is recorded")
+	var shot: Dictionary = battle.roll.back()
+	_check(int(shot.conduct)
+			== int(_rules.get_script_constant_map()["Conduct"].SURRENDERED_FIRED_ON),
+			"as firing on the surrendered, which is the entry that costs most")
+	await _dismiss(battle)
+
+
+# --- 2 & 3. running for it --------------------------------------------------
+
+func _test_rout_and_escape() -> void:
+	print("\n[2] a broken fighter with nobody covering him runs")
+	var battle: Node = await _battle(0)
+	var brk: int = int(_rules.get_script_constant_map()["MORALE_BREAK"])
+
+	var goblin: Node2D = null
+	for u in battle.living_units(TEAM_GOBLIN):
+		if u.kind != KIND_GOBLIN_BOLT:
+			goblin = u
+			break
+	# Every soldier a long way off, so nobody has a shot.
+	for scout in battle.living_soldiers(TEAM_SCOUT):
+		_place(battle, scout, Vector2i(0, 0))
+	_check(battle._guns_on(goblin) == 0, "no rifle is on him")
+
+	var edge_before: int = battle._edge_distance(goblin.cell)
+	goblin.morale = brk
+	goblin.morale_pressed = true
+	var done: bool = await battle._resolve_morale(goblin, 1, 9)
+	_check(done, "his activation ends there too")
+	_check(goblin.routing and not goblin.surrendered, "he breaks and runs")
+	var edge_after: int = battle._edge_distance(goblin.cell)
+	_check(edge_after < edge_before,
+			"and runs TOWARD the edge (%d -> %d tiles from it)"
+			% [edge_before, edge_after])
+
+	print("\n[3] reaching the rim is an escape, not a death")
+	# Walk him onto the rim and give him one more activation.
+	var rim := Vector2i(0, goblin.cell.y)
+	while rim.x < battle.board.size.x and (not battle.board.is_walkable(rim)
+			or battle.unit_at(rim) != null):
+		rim.y = (rim.y + 1) % battle.board.size.y
+		if rim.y == goblin.cell.y:
+			break
+	_place(battle, goblin, rim)
+	_check(battle._at_map_edge(goblin.cell),
+			"he is standing on the rim at %s" % goblin.cell)
+	var roll_before: int = battle.roll.size()
+	var alive_before: int = battle.living_units(TEAM_GOBLIN).size()
+	done = await battle._resolve_morale(goblin, 1, 9)
+	await process_frame
+	await process_frame
+	_check(done, "the activation ends")
+	_check(battle.roll.size() == roll_before + 1
+			and str(battle.roll.back().fate) == "escaped",
+			"THE ROLL says escaped")
+	_check(battle.living_units(TEAM_GOBLIN).size() == alive_before - 1,
+			"and he is off the board without dying (%d -> %d)"
+			% [alive_before, battle.living_units(TEAM_GOBLIN).size()])
+	await _dismiss(battle)
+
+
+# --- 4. what CLEAR means ----------------------------------------------------
+
+func _test_clear_means_still_fighting() -> void:
+	print("\n[4] ground is cleared when nobody is still fighting for it")
+	var battle: Node = await _battle(0)
+	_check(not battle._objective_complete(0),
+			"Dry Wash starts uncleared")
+	var total: int = battle.living_units(TEAM_GOBLIN).size()
+	var surrendered := 0
+	for u in battle.living_units(TEAM_GOBLIN):
+		if u.kind == KIND_GOBLIN_BOLT:
+			continue  # he never breaks; he has to be killed
+		u.surrender()
+		surrendered += 1
+	_check(not battle._objective_complete(0),
+			"%d of %d with their hands up is not cleared - the Marksman holds"
+			% [surrendered, total])
+	for u in battle.living_units(TEAM_GOBLIN):
+		if u.kind == KIND_GOBLIN_BOLT:
+			u.take_damage(u.hp)
+	await process_frame
+	_check(battle._objective_complete(0),
+			"kill the one who would not stop, and the contact is resolved")
+	var standing: int = battle.living_units(TEAM_GOBLIN).size()
+	_check(standing > 0,
+			"with %d of them still alive and standing on it" % standing)
+	await _dismiss(battle)
+
+
+# --- 6. the kill floor, on the board ----------------------------------------
+
+func _test_marksman_holds() -> void:
+	print("\n[6] the Marksman never breaks")
+	var battle: Node = await _battle(0)
+	var bolt: Node2D = null
+	for u in battle.living_units(TEAM_GOBLIN):
+		if u.kind == KIND_GOBLIN_BOLT:
+			bolt = u
+			break
+	_check(bolt != null, "Dry Wash fields one")
+	# Everything stacked against him: no morale at all, and rifles all round.
+	var taken: Array = []
+	for scout in battle.living_soldiers(TEAM_SCOUT):
+		var spot: Vector2i = _free_neighbour(battle, bolt.cell, taken)
+		if spot == Board.NO_CELL:
+			break
+		_place(battle, scout, spot)
+		taken.append(spot)
+	bolt.morale = 0
+	var done: bool = await battle._resolve_morale(bolt, 1, 9)
+	_check(not done, "at zero morale under %d guns his activation continues"
+			% battle._guns_on(bolt))
+	_check(not bolt.surrendered and not bolt.routing,
+			"he neither surrenders nor runs")
+	_check(bolt.is_combatant(), "he is still a combatant, and still in the way")
+	await _dismiss(battle)
+
+
+# --- 7. a lull, and a pause for breath --------------------------------------
+
+func _test_recovery_needs_a_quiet_turn() -> void:
+	print("
+[7] morale is given back only to a fighter nothing happened to")
+	var battle: Node = await _battle(0)
+	var k: Dictionary = _rules.get_script_constant_map()
+	var brk: int = int(k["MORALE_BREAK"])
+	var recover: int = int(k["MORALE_RECOVER"])
+
+	var quiet: Node2D = null
+	var shot_at: Node2D = null
+	for u in battle.living_units(TEAM_GOBLIN):
+		if u.kind == KIND_GOBLIN_BOLT:
+			continue
+		if quiet == null:
+			quiet = u
+		elif shot_at == null:
+			shot_at = u
+	# Nobody covering either of them, so neither can surrender and confuse this.
+	for scout in battle.living_soldiers(TEAM_SCOUT):
+		_place(battle, scout, Vector2i(0, 0))
+
+	quiet.morale = brk + 1  # above the line, and left alone
+	quiet.morale_pressed = false
+	await battle._resolve_morale(quiet, 1, 9)
+	_check(quiet.morale == brk + 1 + recover,
+			"a quiet turn steadies him by %d (%d)" % [recover, quiet.morale])
+
+	shot_at.morale = brk + 1
+	shot_at.morale_pressed = true
+	await battle._resolve_morale(shot_at, 2, 9)
+	_check(shot_at.morale == brk + 1,
+			"a turn he was shot in gives back nothing (%d)" % shot_at.morale)
+	_check(not shot_at.morale_pressed,
+			"and the pressure is consumed, so the NEXT quiet turn counts")
+
+	# The rule this exists to protect: the break threshold means what it says.
+	var edge: Node2D = null
+	for u in battle.living_units(TEAM_GOBLIN):
+		if u.kind != KIND_GOBLIN_BOLT and u != quiet and u != shot_at:
+			edge = u
+			break
+	edge.morale = brk
+	edge.morale_pressed = true
+	await battle._resolve_morale(edge, 3, 9)
+	_check(edge.has_stopped(),
+			"a fighter shot exactly to MORALE_BREAK breaks, rather than steadying past it")
+	await _dismiss(battle)

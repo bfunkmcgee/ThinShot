@@ -868,6 +868,7 @@ func _spawn_unit(kind: Unit.Kind, spawn_cell: Vector2i, soldier := {}) -> void:
 	unit.shadow_color = board.shadow_tone(Unit.SHADOW_COLOR.a)
 	unit.corpse_shadow_color = board.shadow_tone(Unit.CORPSE_SHADOW_COLOR.a)
 	unit.died.connect(_on_unit_died)
+	unit.wounded.connect(_on_unit_wounded)
 
 
 ## Walk a level's spawn list for one scout role alongside the roster slots for
@@ -2128,7 +2129,12 @@ func _objective_complete(index: int) -> bool:
 	var obj: Dictionary = _objectives()[index]
 	match obj.get("kind", ""):
 		"eliminate":
-			return living_units(Unit.TEAM_GOBLIN).is_empty()
+			# Everyone still FIGHTING, rather than everyone still breathing.
+			# A fighter with his hands up has stopped holding the ground the
+			# squad was sent to clear, and the objective is the ground.
+			# is_combatant() is false once he surrenders; a routing one is
+			# gone from the tree the moment he steps off the rim.
+			return living_soldiers(Unit.TEAM_GOBLIN).is_empty()
 		"destroy":
 			return _targets_left(index) == 0
 		"rescue":
@@ -3125,6 +3131,9 @@ func run_enemy_turn() -> void:
 		var scouts := living_soldiers(Unit.TEAM_SCOUT)
 		if scouts.is_empty():
 			return
+		# Hands already up: he is finished for the battle, not for the turn.
+		if goblin.surrendered:
+			continue
 		acted += 1
 		var from_cell := goblin.cell
 		# Mark the actor and give the player a beat to find it before it
@@ -3133,6 +3142,15 @@ func run_enemy_turn() -> void:
 		goblin.set_selected(true)
 		goblin.set_acting(true)
 		await get_tree().create_timer(ACT_LEAD_IN).timeout
+		# Morale is settled before anything is decided, because whether this
+		# fighter is still fighting is a prior question to what he does.
+		if await _resolve_morale(goblin, acted, squad.size()):
+			goblin.set_selected(false)
+			goblin.set_acting(false)
+			if state == State.GAME_OVER:
+				return
+			await get_tree().create_timer(AI_BEAT).timeout
+			continue
 		# An empty weapon is worked before anything else is decided, and costs
 		# the move - the same rule the scouts reload under.
 		var reloaded := await _ai_reload(goblin, acted, squad.size())
@@ -3175,6 +3193,77 @@ func run_enemy_turn() -> void:
 		if state == State.GAME_OVER:
 			return
 		await get_tree().create_timer(AI_BEAT).timeout
+
+
+## Settle whether this fighter is still fighting, before asking what he does.
+## Returns true when the activation is over - he has put his hands up, he has
+## run, or he is off the map - and the caller should move to the next one.
+##
+## The order is deliberate. Pressure is applied first, then the break is tested,
+## then a unit already running keeps running. A fighter who breaks this turn
+## does not also get to shoot on the way out.
+func _resolve_morale(goblin: Unit, index: int, squad_size: int) -> bool:
+	# A unit under a beaten zone erodes. One that had a genuinely quiet turn
+	# steadies. One that was shot at does neither: it holds where the player
+	# left it.
+	#
+	# That last case is the whole reason morale_pressed exists. Without it,
+	# recovery lands between the round that broke a fighter and the check that
+	# asks whether he is broken - so the squad could shoot a man to the edge of
+	# breaking and watch him steady himself on his own turn, and MORALE_BREAK
+	# would quietly mean MORALE_BREAK minus MORALE_RECOVER.
+	if goblin.is_suppressed():
+		goblin.morale = Rules.morale_after_suppression(goblin.morale)
+	elif not goblin.morale_pressed and not goblin.routing:
+		goblin.morale = Rules.morale_recovered(goblin.morale)
+	goblin.morale_pressed = false
+
+	if goblin.routing:
+		return await _run_for_it(goblin, index, squad_size)
+
+	var guns := _guns_on(goblin)
+	if Rules.breaks_to_surrender(goblin.kind, goblin.morale, guns):
+		goblin.surrender()
+		_record_on_roll(goblin, "surrendered")
+		Sfx.play("overwatch_set", -6.0, 0.0)
+		print("[Sandline]   goblin %d/%d surrenders at %s (morale %d, %d guns)" % [
+				index, squad_size, goblin.cell, goblin.morale, guns])
+		_refresh_objectives()
+		check_game_over()
+		return true
+	if Rules.breaks_to_rout(goblin.kind, goblin.morale, guns):
+		goblin.begin_rout()
+		print("[Sandline]   goblin %d/%d breaks at %s (morale %d, %d guns)" % [
+				index, squad_size, goblin.cell, goblin.morale, guns])
+		return await _run_for_it(goblin, index, squad_size)
+	return false
+
+
+## One turn of running. A fighter who starts his activation already on the rim
+## is gone; otherwise he moves toward it and tries again next turn.
+##
+## Escaping is not a kill and is not a loss. The contact is resolved - he is no
+## longer on the ground the squad was sent to clear - and THE ROLL says which of
+## the two it was.
+func _run_for_it(goblin: Unit, index: int, squad_size: int) -> bool:
+	if _at_map_edge(goblin.cell):
+		print("[Sandline]   goblin %d/%d escapes off %s" % [
+				index, squad_size, goblin.cell])
+		_record_on_roll(goblin, "escaped")
+		goblin.hide()
+		# Off the board rather than dead: removed from every query the turn
+		# loop and the objectives make, without a corpse or a death sound.
+		goblin.queue_free()
+		await get_tree().process_frame
+		_refresh_objectives()
+		check_game_over()
+		return true
+	var dest := _rout_dest(goblin)
+	if board.in_bounds(dest) and dest != goblin.cell and goblin.can_move():
+		await do_move(goblin, dest)
+		print("[Sandline]   goblin %d/%d runs %s -> %s" % [
+				index, squad_size, goblin.cell, dest])
+	return true
 
 
 ## Works a dry AI weapon. Costs the move rather than the shot, mirroring
@@ -3341,6 +3430,7 @@ func _on_unit_died(unit: Unit) -> void:
 		print("[Sandline] %s is down" % unit.display_name())
 	else:
 		_record_on_roll(unit, "killed")
+	_spread_morale_from_death(unit)
 	Sfx.play("unit_death")
 	fx_ground.stain(unit.position)
 	_drop_rifle(unit)
@@ -3351,6 +3441,80 @@ func _on_unit_died(unit: Unit) -> void:
 	# side is counted before the mission is scored.
 	if not _resolving_blast:
 		check_game_over()
+
+
+## A round that did not kill. Only the Thirst has morale (see Unit.morale), and
+## the arithmetic is Rules' - this reads the wound and hands it over.
+func _on_unit_wounded(unit: Unit) -> void:
+	if unit.team != Unit.TEAM_GOBLIN:
+		return
+	unit.morale = Rules.morale_after_round(unit.morale, unit.hp, unit.max_hp)
+	unit.morale_pressed = true
+
+
+## Watching somebody go down. Charged to every fighter close enough to have
+## seen it, which is a radius rather than a line of sight on purpose: the sound
+## of it carries further than the view does.
+func _spread_morale_from_death(dead: Unit) -> void:
+	for goblin in living_units(Unit.TEAM_GOBLIN):
+		if goblin == dead or goblin.has_stopped():
+			continue
+		var before: int = goblin.morale
+		goblin.morale = Rules.morale_after_ally_down(
+				goblin.morale, Board.manhattan(goblin.cell, dead.cell))
+		if goblin.morale < before:
+			goblin.morale_pressed = true
+
+
+## How many living soldiers have a shot on this unit right now. The number that
+## decides whether a broken fighter has somebody to surrender TO, so it asks the
+## same engagement question the shooting does rather than a cheaper proxy.
+func _guns_on(unit: Unit) -> int:
+	var n := 0
+	for scout in living_soldiers(Unit.TEAM_SCOUT):
+		if Board.manhattan(scout.cell, unit.cell) <= scout.attack_range \
+				and board.can_engage(scout.cell, unit.cell):
+			n += 1
+	return n
+
+
+## True once a routing fighter is standing on the rim of the map. One step off
+## it and he is gone - not killed, and the contact resolved either way.
+func _at_map_edge(cell: Vector2i) -> bool:
+	return cell.x == 0 or cell.y == 0 \
+			or cell.x == board.size.x - 1 or cell.y == board.size.y - 1
+
+
+## Where a broken fighter runs. Of everything he can reach this turn, the cell
+## closest to leaving - ties broken by distance from the nearest rifle, because
+## a man running for the edge would still rather not run past somebody.
+func _rout_dest(goblin: Unit) -> Vector2i:
+	var reach: Dictionary = board.flood_fill(goblin.cell, goblin.move_range,
+			_blocked_for_team.bind(goblin.team))
+	var scouts := living_soldiers(Unit.TEAM_SCOUT)
+	var best := goblin.cell
+	var best_score := Vector2i(_edge_distance(goblin.cell),
+			-_nearest_scout_distance(goblin.cell, scouts))
+	for cell: Vector2i in reach:
+		var score := Vector2i(_edge_distance(cell),
+				-_nearest_scout_distance(cell, scouts))
+		if score.x < best_score.x \
+				or (score.x == best_score.x and score.y < best_score.y):
+			best = cell
+			best_score = score
+	return best
+
+
+func _edge_distance(cell: Vector2i) -> int:
+	return mini(mini(cell.x, cell.y),
+			mini(board.size.x - 1 - cell.x, board.size.y - 1 - cell.y))
+
+
+func _nearest_scout_distance(cell: Vector2i, scouts: Array[Unit]) -> int:
+	var best := 99
+	for scout in scouts:
+		best = mini(best, Board.manhattan(cell, scout.cell))
+	return best
 
 
 ## Add one line to THE ROLL, and price what it cost.

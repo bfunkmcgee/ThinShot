@@ -5,6 +5,10 @@ extends Node2D
 ## HP pips and the selection ring are drawn in _draw().
 
 signal died(unit: Unit)
+## Took a round and lived. Battle listens so it can charge the morale, which is
+## a rule and therefore Rules' arithmetic rather than this file's - and Unit
+## cannot name Rules without closing a compile cycle (see `morale` below).
+signal wounded(unit: Unit)
 
 const TEAM_SCOUT := 0
 const TEAM_GOBLIN := 1
@@ -487,6 +491,10 @@ const COVER_FULL_COLOR := Color("6fe08a")
 const SUPPRESSED_COLOR := Color("8fb8d8")
 const RING_COLOR := Color("ffd94a")        # player selection
 const ENEMY_RING_COLOR := Color("ff5a3c")  # AI unit currently acting
+# The two ways a fighter stops. Deliberately not red: neither of these is a
+# threat, and the palette should say so before the player reads the word.
+const SURRENDER_COLOR := Color("e8e2c8")  # hands up
+const ROUT_COLOR := Color("d9a441")       # running for the edge
 const DONE_TINT := Color(0.55, 0.55, 0.55)
 
 # Ground contact shadow. Squashed to the tile's own 2:1 ratio and nudged
@@ -601,6 +609,11 @@ var surrendered := false
 # Broken with nobody to give up to: heading for the nearest map edge. Reaching
 # it is an ESCAPE rather than a kill, and resolves the contact either way.
 var routing := false
+# Something cost this unit morale since its last activation. What it buys is
+# the difference between a lull and a pause for breath: recovery is only given
+# back to a fighter nothing happened to, so the squad cannot shoot a man to the
+# edge of breaking and then have him steady himself on his own turn.
+var morale_pressed := false
 var _body_tween: Tween = null
 var _marker_tween: Tween = null
 
@@ -1084,6 +1097,37 @@ func has_stopped() -> bool:
 	return surrendered or routing
 
 
+## Hands up. The weapon comes down, the watch is dropped, and the unit is done
+## for good rather than for the turn: nothing in the AI will pick it up again,
+## and is_combatant() now answers false, so a map with nobody left fighting on
+## it counts as cleared whether or not this one is still standing.
+##
+## Deliberately does NOT make the unit untargetable. The player can still shoot
+## him. That is the entire point of the prompt existing - a choice with no
+## wrong option is not a choice - and THE ROLL is where the answer is kept.
+func surrender() -> void:
+	if surrendered or not is_alive():
+		return
+	surrendered = true
+	routing = false
+	set_overwatch(false)
+	lower_rifle()
+	set_done(true)
+	_spawn_float_text("HANDS UP", SURRENDER_COLOR, 18)
+	queue_redraw()
+
+
+## Broken with nobody to give up to. Runs for the nearest edge; Battle walks it.
+func begin_rout() -> void:
+	if routing or surrendered or not is_alive():
+		return
+	routing = true
+	set_overwatch(false)
+	lower_rifle()
+	_spawn_float_text("BREAKS", ROUT_COLOR, 18)
+	queue_redraw()
+
+
 ## Reached. They get up off the floor and can walk out with the squad.
 ## Not named free() - that is Object's, and shadowing it deletes the node.
 func release() -> void:
@@ -1381,6 +1425,7 @@ func take_damage(amount: int, from_dir := Vector2.ZERO) -> void:
 		_die()
 	else:
 		play_hurt()
+		wounded.emit(self)
 
 
 ## Plays the fall animation, then rests in the dead stance. The corpse stays
@@ -1520,6 +1565,16 @@ func _draw() -> void:
 		return  # corpses carry no pips, rings, or markers
 	if not show_combat_hud:
 		return  # walking around camp: a soldier, not a game piece
+	# Who has stopped fighting, readable without selecting anything. A ring at
+	# the feet in the same two colours the float text used, because the player
+	# needs this at a glance while deciding where to point five rifles - and
+	# because the game will happily let him shoot either of them.
+	if has_stopped():
+		var stop_col := SURRENDER_COLOR if surrendered else ROUT_COLOR
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.5))
+		draw_arc(Vector2.ZERO, 32.0, 0.0, TAU, 32,
+				Color(stop_col, 0.85), 2.0, true)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_draw_facing_wedge()
 	if selected:
 		# Ground ellipse at the unit's feet, matching the isometric 2:1 view.
