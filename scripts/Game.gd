@@ -63,6 +63,10 @@ var alliance_strain := STRAIN_START
 # the order it happened. Append-only. This is the document the game keeps
 # instead of a score.
 var notebook: Array = []
+# v4: which three of the six rifle-slot Kestrels go out this mission, by id.
+# Ids rather than indices - the roster reorders as people die, and an index
+# would quietly deploy somebody else.
+var deployed_ids: Array = []
 
 # Squad ordnance, set at the camp's stores tent. The slots are a fixed budget
 # split between the two grenades, so choosing is a real decision and never an
@@ -146,6 +150,67 @@ const CLASS_PERK_RANKS := {
 		3: ["inspiration", "deep_pockets"],
 		4: ["one_shot", "untouchable"],
 	},
+	# --- the five specialist Kestrels (Phase 3) ---------------------------
+	#
+	# Composed entirely from perks the game already implements. That is not
+	# laziness, it is the same rule the original three trees were built under:
+	# every perk hangs off machinery that exists rather than adding a
+	# subsystem. A tree that promised an effect nothing reads would be a lie
+	# told on a promotion screen.
+	#
+	# Perks deliberately repeat across classes. A perk is an effect, not a
+	# possession, and Sprinter means the same thing on a medic as on a
+	# rifleman; what separates these six is the STAT LINE and which effects
+	# they can reach, not a private vocabulary each.
+	10: {  # GRENADIER - Essa Vane, the squad's ordnance
+		1: ["pack_mule", "quick_hands"],
+		2: ["deep_pockets", "sprinter"],
+		3: ["hustle", "flanker"],
+		4: ["ranger", "executioner"],
+	},
+	11: {  # MARKSMAN - Sillae Vekh, reach without armour
+		1: ["iron_will", "quick_hands"],
+		2: ["sentinel", "sprinter"],
+		3: ["flanker", "hustle"],
+		4: ["one_shot", "executioner"],
+	},
+	12: {  # BREACHER - Halvik Dunn, through the gate first
+		1: ["iron_will", "pack_mule"],
+		2: ["snap_burst", "quick_hands"],
+		3: ["sprinter", "hustle"],
+		4: ["untouchable", "executioner"],
+	},
+	13: {  # MEDIC - Dava Ren, keeps them standing
+		1: ["sprinter", "quick_hands"],
+		2: ["iron_will", "snap_burst"],
+		3: ["hustle", "sentinel"],
+		4: ["ranger", "untouchable"],
+	},
+	14: {  # TECHNICIAN - Fen Ost, reads ground rather than holds it
+		1: ["sprinter", "quick_hands"],
+		2: ["marksman", "snap_burst"],
+		3: ["flanker", "hustle"],
+		4: ["ranger", "deep_pockets"],
+	},
+}
+
+## What each specialist walks in already knowing - the thing that makes the
+## deployment screen a decision on mission one rather than after a promotion.
+##
+## Keyed by raw ordinal like the tree above, and every value must be a real key
+## in PERKS: _read_roster whitelists against that table, so a typo here would be
+## silently deleted from every save that stored it. tools/test_progression.gd
+## asserts the whole table resolves.
+##
+## Rodar and the machinegunner are deliberately absent: their trees ARE their
+## progression, and handing them a free perk would flatten a curve that is
+## already tuned.
+const CLASS_STARTING_PERK := {
+	10: "grenadier",       # the squad carries one more frag because she is on it
+	11: "marksman",        # no accuracy loss at long range - the reason she is here
+	12: "iron_will",       # the breacher goes first and stays standing
+	13: "field_dressing",  # the seed the plan named, in the hands it was meant for
+	14: "sentinel",        # the widest watch in the squad
 }
 const PERKS := {
 	# Blurbs are kept short deliberately: they are rendered on fixed-width
@@ -296,6 +361,11 @@ const NAMED_KESTRELS := {
 	9: ["Akai"],    # HERO
 	2: ["Meshan"],  # MACHINEGUNNER
 	0: ["Marr"],    # SCOUT
+	10: ["Vane"],   # GRENADIER
+	11: ["Vekh"],   # MARKSMAN
+	12: ["Dunn"],   # BREACHER
+	13: ["Ren"],    # MEDIC
+	14: ["Ost"],    # TECHNICIAN
 }
 
 ## Given names, for the places that are talking about a person rather than
@@ -304,6 +374,29 @@ const GIVEN_NAMES := {
 	"Akai": "Rodar",
 	"Meshan": "Brukk",
 	"Marr": "Josen",
+	"Vane": "Essa",
+	"Vekh": "Sillae",
+	"Dunn": "Halvik",
+	"Ren": "Dava",
+	"Ost": "Fen",
+}
+
+## How many of each kind the campaign keeps on the ROSTER, as opposed to how
+## many it fields. A mission has three rifle slots; six people can stand in one,
+## and which three go is chosen at the garrison.
+##
+## This is the whole shape of Phase 3: the squad did not get bigger - the plan
+## forbids touching the spawn tables - it got deeper. Losing Dava Ren does not
+## cost a body, it costs the only pair of hands that could patch one.
+const ROSTER_STRENGTH := {
+	9: 1,   # HERO          - Rodar, the lead slot
+	2: 1,   # MACHINEGUNNER - Brukk, the gun
+	0: 1,   # SCOUT         - Josen
+	10: 1,  # GRENADIER     - Essa
+	11: 1,  # MARKSMAN      - Sillae
+	12: 1,  # BREACHER      - Halvik
+	13: 1,  # MEDIC         - Dava
+	14: 1,  # TECHNICIAN    - Fen
 }
 
 
@@ -535,7 +628,10 @@ func _recruit(kind: int) -> Dictionary:
 		"kind": kind,
 		"xp": 0,
 		"rank": 0,
-		"perks": [] as Array,
+		# Specialists arrive knowing their specialty; everybody else starts
+		# with nothing and earns it.
+		"perks": ([CLASS_STARTING_PERK[kind]] if CLASS_STARTING_PERK.has(kind)
+				else []) as Array,
 		"alive": true,
 	}
 	_next_id += 1
@@ -563,11 +659,16 @@ func _ever_of_kind(kind: int) -> int:
 func ensure_roster(level_data: Dictionary) -> void:
 	# The lead slot belongs to Rodar Akai now: same spawn key, same job,
 	# stronger soldier. TEAM_LEAD is never requested again.
-	var wanted := {
-		Unit.Kind.HERO: level_data.get("lead_spawns", []).size(),
-		Unit.Kind.MACHINEGUNNER: level_data.get("gunner_spawns", []).size(),
-		Unit.Kind.SCOUT: level_data.scout_spawns.size(),
-	}
+	# The roster is deeper than the squad. Slot counts decide how many DEPLOY
+	# (see deployment() below); ROSTER_STRENGTH decides how many people the
+	# campaign has, and the two stopped being the same number in Phase 3.
+	var wanted := ROSTER_STRENGTH.duplicate()
+	# A mission with no lead or gunner slot wants no lead or gunner. Nothing
+	# shipped looks like that, but a draft map might.
+	if level_data.get("lead_spawns", []).is_empty():
+		wanted[Unit.Kind.HERO] = 0
+	if level_data.get("gunner_spawns", []).is_empty():
+		wanted[Unit.Kind.MACHINEGUNNER] = 0
 	var formed := false
 	# Saves from before Rodar existed hold an alive TEAM_LEAD in the slot he
 	# now fills. Convert that soldier in place - id, xp, rank and perks kept -
@@ -603,13 +704,22 @@ func ensure_roster(level_data: Dictionary) -> void:
 ## spot, and abort_mission() un-kills him on the loss path, so a roster that
 ## reaches camp always still has him.
 func vacancies(level_data: Dictionary) -> Dictionary:
-	var wanted := {
-		Unit.Kind.MACHINEGUNNER: level_data.get("gunner_spawns", []).size(),
-		Unit.Kind.SCOUT: level_data.scout_spawns.size(),
-	}
+	# Sized off ROSTER_STRENGTH rather than off the level's spawn counts, and
+	# that distinction is the whole of Phase 3: the garrison refills the
+	# CAMPAIGN's roster, not the mission's three rifle slots. Sizing this off
+	# scout_spawns would cap the squad at three riflemen again and quietly make
+	# four of the specialists unreplaceable.
 	var gaps := {}
-	for kind: int in wanted:
-		var short := int(wanted[kind]) - soldiers_of_kind(kind).size()
+	for kind: int in ROSTER_STRENGTH:
+		# Rodar is not a posting. If he is gone the campaign is over, which
+		# check_game_over settles a long way before the levy post opens.
+		if kind == Unit.Kind.HERO:
+			continue
+		# A map with no gun has no gunner to replace.
+		if kind == Unit.Kind.MACHINEGUNNER \
+				and level_data.get("gunner_spawns", []).is_empty():
+			continue
+		var short := int(ROSTER_STRENGTH[kind]) - soldiers_of_kind(kind).size()
 		if short > 0:
 			gaps[kind] = short
 	return gaps
@@ -675,6 +785,7 @@ func new_campaign() -> bool:
 	district_standing.clear()
 	alliance_strain = STRAIN_START
 	notebook.clear()
+	deployed_ids.clear()
 	# A new campaign is a different campaign, so it fights different dice.
 	campaign_seed = _mint_campaign_seed()
 	save()
@@ -748,6 +859,52 @@ func mark_dead(id: int) -> void:
 	if not soldier.is_empty():
 		soldier.alive = false
 		mission_dead[id] = true
+
+
+## Who can stand in one of a mission's three rifle slots: everybody alive who is
+## not the lead or the gun. Six people for three places, which is the decision
+## the garrison exists to make.
+func rifle_candidates() -> Array:
+	var out: Array = []
+	for soldier: Dictionary in roster:
+		if not bool(soldier.get("alive", false)):
+			continue
+		if Unit.RIFLE_SLOT_KINDS.has(int(soldier.get("kind", -1))):
+			out.append(soldier)
+	return out
+
+
+## The three ids going out this mission, sanitised on the way out rather than
+## trusted: a soldier who died since the choice was made, or an id from a save
+## written against a different roster, must not deploy a ghost.
+##
+## Under-filled choices are topped up in roster order so a player who never
+## opens the deployment screen still fields a full squad - and so does a
+## campaign loaded from before the screen existed.
+func deployment(slots: int) -> Array:
+	var candidates := rifle_candidates()
+	var by_id := {}
+	for soldier: Dictionary in candidates:
+		by_id[int(soldier.id)] = soldier
+	var chosen: Array = []
+	for id: int in deployed_ids:
+		if by_id.has(id) and not chosen.has(by_id[id]):
+			chosen.append(by_id[id])
+	for soldier: Dictionary in candidates:
+		if chosen.size() >= slots:
+			break
+		if not chosen.has(soldier):
+			chosen.append(soldier)
+	return chosen.slice(0, slots)
+
+
+## Record the player's choice. Ids rather than indices, because the roster
+## reorders as people die and an index would quietly deploy somebody else.
+func set_deployment(ids: Array) -> void:
+	deployed_ids = []
+	for id: Variant in ids:
+		deployed_ids.append(int(id))
+	save()
 
 
 ## What a settlement makes of the squad. Absent means nobody from there has met
@@ -868,7 +1025,7 @@ const SAVE_PATH := "user://campaign.json"
 # Raise this in the same commit that adds the migration step reaching it, and
 # never one without the other - _migrate_step() is what turns a number into a
 # shape the rest of this file can read.
-const SAVE_VERSION := 3
+const SAVE_VERSION := 4
 
 # Raised, and never lowered again, when load_save() finds a campaign written by
 # a build newer than this one. Refusing to READ such a file is only half the
@@ -907,6 +1064,8 @@ func save() -> void:
 		"district_standing": district_standing,
 		"alliance_strain": alliance_strain,
 		"notebook": notebook,
+		# v4: who the garrison picked.
+		"deployed_ids": deployed_ids,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f == null:
@@ -952,6 +1111,8 @@ func _migrate_step(payload: Dictionary, from: int) -> Dictionary:
 			return _migrate_1_to_2(payload)
 		2:
 			return _migrate_2_to_3(payload)
+		3:
+			return _migrate_3_to_4(payload)
 	return {}
 
 
@@ -1026,6 +1187,18 @@ func _read_standing(raw: Variant) -> Dictionary:
 			continue
 		out[str(key)] = clampi(int(value), 0, 100)
 	return out
+
+
+## v3 -> v4: the squad becomes deeper than the slots it fills.
+##
+## An empty choice is the honest migration here, and it is not a gap: the
+## roster of a v3 campaign holds only the three kinds that existed then, and
+## deployment() tops an under-filled choice up in roster order. So a campaign
+## in progress fields exactly the squad it fielded yesterday, and meets the
+## other five Kestrels the first time it walks into the garrison.
+func _migrate_3_to_4(payload: Dictionary) -> Dictionary:
+	payload["deployed_ids"] = []
+	return payload
 
 
 ## A campaign's number. Never 0 - that is the "not minted yet" sentinel, and a
@@ -1127,6 +1300,14 @@ func load_save() -> bool:
 	alliance_strain = clampi(int(payload.get("alliance_strain", STRAIN_START)), 1, 100)
 	var read_notebook: Variant = payload.get("notebook", [])
 	notebook = read_notebook if typeof(read_notebook) == TYPE_ARRAY else []
+	# The v4 field. Read as ints and no further: deployment() re-checks every id
+	# against the living roster anyway, so a stale or invented one costs nothing.
+	deployed_ids = []
+	var read_deployed: Variant = payload.get("deployed_ids", [])
+	if typeof(read_deployed) == TYPE_ARRAY:
+		for id: Variant in read_deployed:
+			if typeof(id) == TYPE_FLOAT or typeof(id) == TYPE_INT:
+				deployed_ids.append(int(id))
 	if campaign_seed == 0:
 		campaign_seed = _mint_campaign_seed()
 	# Per-mission scratch is never saved, and must not survive a load either.

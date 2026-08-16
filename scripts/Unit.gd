@@ -21,11 +21,32 @@ enum Kind {
 	# Not a soldier. Carries no weapon, is never shot at, and until somebody
 	# reaches them, does not move either.
 	CIVILIAN,
-	# Rodar Akai, the hero of the scouts. Appended last and must STAY last:
-	# saves store the raw ordinal, so inserting mid-enum would quietly turn
-	# every saved soldier into somebody else.
+	# Rodar Akai, the hero of the scouts. Appended, and everything after it was
+	# appended too: saves store the raw ordinal, so inserting ANYWHERE above
+	# this line would quietly turn every saved soldier into somebody else.
 	HERO,
+	# Phase 3, and the same rule applies to these - append below, never insert.
+	# The five specialist Kestrels. Each takes a rifle slot, so they are
+	# alternatives to a rifleman rather than additions to the squad, and each
+	# has its own entry in Game.CLASS_PERK_RANKS.
+	#
+	# All five wear the rifleman's sprites for now. That is a deliberate,
+	# recorded shortcut (see ASSETS.md): the rules are what makes them
+	# different, and art can be swapped in later without touching a rule.
+	GRENADIER,
+	MARKSMAN,
+	BREACHER,
+	MEDIC,
+	TECHNICIAN,
 }
+
+## The kinds that can fill one of a mission's three rifle slots. Rodar owns the
+## lead slot and the machinegunner owns the gun; everybody else competes for
+## these, which is what the garrison's deployment screen is choosing between.
+const RIFLE_SLOT_KINDS: Array[Kind] = [
+	Kind.SCOUT, Kind.GRENADIER, Kind.MARKSMAN,
+	Kind.BREACHER, Kind.MEDIC, Kind.TECHNICIAN,
+]
 
 const LEAD_ROOT := "res://assets/sprites/Scout_TeamLead"
 const MG_ROOT := "res://assets/sprites/Scout_MachineGunner/Scout_MachineGunner"
@@ -638,13 +659,32 @@ func _ready() -> void:
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
 
+## The five specialist Kestrels wear the rifleman's sprites.
+##
+## This is a shortcut and it is written down as one (ASSETS.md). What separates
+## them is stats and perk trees - rules, which is where the difference belongs -
+## and swapping real art in later touches this function and nothing else.
+func _use_rifleman_art() -> void:
+	frames = SCOUT_FRAMES
+	aim_frames = SCOUT_AIM_FRAMES
+	walk_frames = SCOUT_WALK_FRAMES
+	idle_frames = SCOUT_IDLE_FRAMES
+	raise_frames = SCOUT_RAISE_FRAMES
+	aim_idle_frames = SCOUT_AIM_IDLE_FRAMES
+	death_frames = SCOUT_DEATH_FRAMES
+	dead_frames = SCOUT_DEAD_FRAMES
+	idle_alt_frames = SCOUT_IDLE_ALT_FRAMES
+	hurt_frames = SCOUT_HURT_FRAMES
+	reload_frames = SCOUT_RELOAD_FRAMES
+
+
 func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 	kind = p_kind
 	# Civilians count as yours: they walk out with the squad, and the Thirst
 	# never shoots at them (is_combatant keeps them off the AI's target list).
 	team = TEAM_SCOUT if kind == Kind.SCOUT or kind == Kind.TEAM_LEAD \
 			or kind == Kind.MACHINEGUNNER or kind == Kind.HERO \
-			or kind == Kind.CIVILIAN \
+			or kind == Kind.CIVILIAN or RIFLE_SLOT_KINDS.has(kind) \
 			else TEAM_GOBLIN
 	cell = p_cell
 	match kind:
@@ -710,6 +750,75 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			idle_alt_frames = RODAR_IDLE_ALT_FRAMES
 			hurt_frames = RODAR_HURT_FRAMES
 			reload_frames = RODAR_RELOAD_FRAMES
+		# --- the five specialist Kestrels -------------------------------------
+		#
+		# Every one of them is a SIDEGRADE of the rifleman, because every one of
+		# them is standing in a rifleman's slot. The baseline is 8 HP, move 5,
+		# range 4, damage 2, accuracy 90, three rounds; each of these trades
+		# some of that for the thing it is for, and none of them is simply
+		# better. Choosing at the garrison has to be a decision rather than a
+		# ranking, or the deployment screen is a formality with checkboxes.
+		#
+		# They all wear the rifleman's sprites for now - a recorded shortcut,
+		# see ASSETS.md - so the frame lines below are identical on purpose.
+		Kind.GRENADIER:
+			# Essa Vane. Carries the squad's ordnance, which is heavy: a tile
+			# slower and a little worse over the sights, for a frag the squad
+			# would not otherwise have (the grenadier perk, which she starts
+			# with) and the pockets to work with it.
+			max_hp = 8
+			move_range = 4
+			attack_range = 4
+			damage = 2
+			accuracy = 86
+			mag_size = 3
+			_use_rifleman_art()
+		Kind.MARKSMAN:
+			# Sillae Vekh. Rodar's job at a Kestrel's pay grade: the reach and
+			# the damage, none of the armour, and two rounds rather than three.
+			# She is the answer to the Thirst Marksman when Rodar is elsewhere,
+			# and she is the one who reads the district back to you.
+			max_hp = 6
+			move_range = 4
+			attack_range = 6
+			damage = 4
+			accuracy = 88
+			mag_size = 2
+			_use_rifleman_art()
+		Kind.BREACHER:
+			# Halvik Dunn. Built to go through a gate first and be standing
+			# afterwards: the deepest HP pool in the squad, bought with reach.
+			# At three tiles he has to close, which is the whole shape of him.
+			max_hp = 11
+			move_range = 4
+			attack_range = 3
+			damage = 2
+			accuracy = 84
+			mag_size = 3
+			_use_rifleman_art()
+		Kind.MEDIC:
+			# Dava Ren. The notebook is hers. She keeps the squad standing
+			# rather than putting anything down - the worst shot of the six and
+			# the only one who arrives already knowing how to patch a wound.
+			max_hp = 8
+			move_range = 5
+			attack_range = 4
+			damage = 2
+			accuracy = 82
+			mag_size = 3
+			_use_rifleman_art()
+		Kind.TECHNICIAN:
+			# Fen Ost. Reads ground rather than holds it: the widest watch in
+			# the squad for its own turn, thin in a firefight, and the man who
+			# will be taking the readings when the campaign stops being about
+			# water.
+			max_hp = 7
+			move_range = 5
+			attack_range = 4
+			damage = 2
+			accuracy = 88
+			mag_size = 3
+			_use_rifleman_art()
 		Kind.MACHINEGUNNER:
 			# Belt-fed support weapon: no single shot, a deep magazine, and
 			# the volume of fire to pin a target. Slow to reposition.
@@ -1192,6 +1301,16 @@ static func kind_role_name(p_kind: Kind) -> String:
 			return "Thirst Marksman"
 		Kind.GOBLIN_REVOLVER:
 			return "Pressed Conscript"
+		Kind.GRENADIER:
+			return "Kestrel Grenadier"
+		Kind.MARKSMAN:
+			return "Kestrel Marksman"
+		Kind.BREACHER:
+			return "Kestrel Breacher"
+		Kind.MEDIC:
+			return "Kestrel Medic"
+		Kind.TECHNICIAN:
+			return "Kestrel Technician"
 		Kind.CIVILIAN:
 			return "Prisoner"
 	return "Kestrel Rifleman"

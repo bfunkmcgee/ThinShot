@@ -406,7 +406,7 @@ func _ready() -> void:
 	# Rodar Akai deploys in the lead slot: same spawn key, stronger soldier.
 	_spawn_squad(Unit.Kind.HERO, level.get("lead_spawns", []))
 	_spawn_squad(Unit.Kind.MACHINEGUNNER, level.get("gunner_spawns", []))
-	_spawn_squad(Unit.Kind.SCOUT, level.scout_spawns)
+	_spawn_rifle_slots(level.scout_spawns)
 	for spawn: Vector2i in level.goblin_spawns:
 		_spawn_unit(Unit.Kind.GOBLIN, spawn)
 	for spawn: Vector2i in level.get("smg_spawns", []):
@@ -899,6 +899,28 @@ func _spawn_bystander(spawn_cell: Vector2i) -> void:
 	unit.identity = Roll.identity(Game.campaign_seed, Game.current_level,
 			_enemy_ordinal, unit.kind)
 	_enemy_ordinal += 1
+
+
+## The three rifle slots, filled with whoever the garrison chose.
+##
+## Distinct from _spawn_squad because it is a different question. That one asks
+## "which soldiers hold this posting" and pairs a kind to its spawns; this one
+## asks "who is going", and the answer is six people deep and three places wide.
+## The kind comes off the soldier rather than being handed in, so a grenadier
+## and a medic can stand in slots that used to be riflemen only.
+func _spawn_rifle_slots(spawns: Array) -> void:
+	var going := Game.deployment(spawns.size())
+	for i in mini(spawns.size(), going.size()):
+		var soldier: Dictionary = going[i]
+		_spawn_unit(int(soldier.kind), spawns[i], soldier)
+	if going.size() < spawns.size():
+		print("[Sandline] %d of %d rifle slots filled - the rest were lost" % [
+				going.size(), spawns.size()])
+	else:
+		var names: Array[String] = []
+		for soldier: Dictionary in going:
+			names.append(Game.full_name(soldier))
+		print("[Sandline] deploying: %s" % ", ".join(names))
 
 
 ## Walk a level's spawn list for one scout role alongside the roster slots for

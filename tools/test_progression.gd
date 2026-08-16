@@ -478,6 +478,8 @@ func _full_cover_shot(battle: Node) -> Dictionary:
 
 func _finish() -> void:
 	_test_named_kestrels()
+	_test_specialists()
+	_test_deployment()
 
 	if _had_save:
 		var rf := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -575,3 +577,157 @@ func _named_total(named: Dictionary) -> int:
 	for kind: int in named:
 		n += (named[kind] as Array).size()
 	return n
+
+
+# --- 7. the five specialists -------------------------------------------------
+
+func _test_specialists() -> void:
+	print("\n[7] the specialist Kestrels are sidegrades, and their trees are real")
+	var game: Node = root.get_node("/root/Game")
+	var gconsts: Dictionary = (load("res://scripts/Game.gd") as GDScript) \
+			.get_script_constant_map()
+	var uconsts: Dictionary = (load("res://scripts/Unit.gd") as GDScript) \
+			.get_script_constant_map()
+	var trees: Dictionary = gconsts["CLASS_PERK_RANKS"]
+	var perks: Dictionary = gconsts["PERKS"]
+	var starting: Dictionary = gconsts["CLASS_STARTING_PERK"]
+	var kinds: Dictionary = uconsts["Kind"]
+	var rifle_kinds: Array = uconsts["RIFLE_SLOT_KINDS"]
+
+	# The ordinals every save is written in. Appending is the only safe edit,
+	# so these five must sit ABOVE the nine that shipped before them.
+	_check(int(kinds["GRENADIER"]) == 10 and int(kinds["MARKSMAN"]) == 11
+			and int(kinds["BREACHER"]) == 12 and int(kinds["MEDIC"]) == 13
+			and int(kinds["TECHNICIAN"]) == 14,
+			"the five specialists are ordinals 10-14, appended after HERO")
+	_check(int(kinds["HERO"]) == 9 and int(kinds["CIVILIAN"]) == 8
+			and int(kinds["SCOUT"]) == 0,
+			"and nothing that shipped before them moved")
+
+	# Every specialist can hold a rifle slot; the lead and the gun cannot.
+	for name: String in ["SCOUT", "GRENADIER", "MARKSMAN", "BREACHER",
+			"MEDIC", "TECHNICIAN"]:
+		_check(rifle_kinds.has(int(kinds[name])),
+				"%s can stand in a rifle slot" % name)
+	_check(not rifle_kinds.has(int(kinds["HERO"]))
+			and not rifle_kinds.has(int(kinds["MACHINEGUNNER"])),
+			"the lead and the gun cannot - they have their own slots")
+
+	# A tree that names a perk nothing implements is a lie told on a promotion
+	# screen. Sweep every class, not just the new ones.
+	var unknown: Array[String] = []
+	var malformed: Array[String] = []
+	for kind: int in trees:
+		var tree: Dictionary = trees[kind]
+		for rank: int in tree:
+			var choices: Array = tree[rank]
+			if choices.size() != 2:
+				malformed.append("kind %d rank %d has %d" % [kind, rank, choices.size()])
+			for key: String in choices:
+				if not perks.has(key):
+					unknown.append("kind %d rank %d: %s" % [kind, rank, key])
+	_check(unknown.is_empty(), "every perk in every tree exists (%s)" % [unknown])
+	_check(malformed.is_empty(), "and every rank offers exactly two (%s)" % [malformed])
+
+	# Starting perks must be real too - _read_roster whitelists against PERKS,
+	# so a typo here is silently deleted from every save that stored it.
+	var bad_start: Array[String] = []
+	for kind: int in starting:
+		if not perks.has(str(starting[kind])):
+			bad_start.append("kind %d: %s" % [kind, starting[kind]])
+	_check(bad_start.is_empty(),
+			"every starting specialty is a real perk (%s)" % [bad_start])
+
+	# Sidegrades, not upgrades: nobody is strictly better than the rifleman.
+	game.roster = []
+	game._next_id = 1
+	game.ensure_roster(Levels.LEVELS[0])
+	var baseline := _stats_of(int(kinds["SCOUT"]))
+	var dominated: Array[String] = []
+	for name: String in ["GRENADIER", "MARKSMAN", "BREACHER", "MEDIC", "TECHNICIAN"]:
+		var s := _stats_of(int(kinds[name]))
+		var better_or_equal := true
+		var strictly_better := false
+		for stat: String in baseline:
+			if s[stat] < baseline[stat]:
+				better_or_equal = false
+			elif s[stat] > baseline[stat]:
+				strictly_better = true
+		if better_or_equal and strictly_better:
+			dominated.append(name)
+	_check(dominated.is_empty(),
+			"no specialist dominates the rifleman on every stat (%s)" % [dominated])
+
+	# And each of them arrives already being the thing they are.
+	for soldier: Dictionary in game.roster:
+		var kind: int = int(soldier.kind)
+		if starting.has(kind):
+			_check((soldier.perks as Array).has(str(starting[kind])),
+					"%s starts with %s" % [game.full_name(soldier), starting[kind]])
+
+
+## A bare unit's stat line, built the way Battle builds one.
+func _stats_of(kind: int) -> Dictionary:
+	var unit: Node2D = (load("res://scenes/Unit.tscn") as PackedScene).instantiate()
+	unit.setup(kind, Vector2i.ZERO)
+	var out := {
+		"max_hp": int(unit.max_hp), "move_range": int(unit.move_range),
+		"attack_range": int(unit.attack_range), "damage": int(unit.damage),
+		"accuracy": int(unit.accuracy), "mag_size": int(unit.mag_size),
+	}
+	unit.free()
+	return out
+
+
+# --- 8. who actually goes ----------------------------------------------------
+
+func _test_deployment() -> void:
+	print("\n[8] three of the six go, and the choice survives the roster moving")
+	var game: Node = root.get_node("/root/Game")
+	game.roster = []
+	game._next_id = 1
+	game.deployed_ids = []
+	game.ensure_roster(Levels.LEVELS[0])
+
+	_check(game.roster.size() == 8, "the campaign keeps eight people (%d)" % game.roster.size())
+	_check(game.rifle_candidates().size() == 6,
+			"six of them can hold a rifle slot (%d)" % game.rifle_candidates().size())
+
+	# No choice made: a full squad still deploys, in roster order.
+	var default_three: Array = game.deployment(3)
+	_check(default_three.size() == 3,
+			"an unset deployment still fields three (%d)" % default_three.size())
+
+	# A choice is honoured, and honoured by identity rather than by position.
+	var candidates: Array = game.rifle_candidates()
+	var picked: Array = [int(candidates[5].id), int(candidates[3].id),
+			int(candidates[1].id)]
+	game.set_deployment(picked)
+	var going: Array = game.deployment(3)
+	var going_ids: Array = []
+	for soldier: Dictionary in going:
+		going_ids.append(int(soldier.id))
+	_check(going_ids == picked,
+			"the three chosen are the three that go, in order (%s)" % [going_ids])
+
+	# One of them dies. The dead do not deploy, and the gap is filled rather
+	# than left - a squad of two because somebody died last mission would be a
+	# punishment nobody chose.
+	for soldier: Dictionary in game.roster:
+		if int(soldier.id) == picked[1]:
+			soldier["alive"] = false
+	var after: Array = game.deployment(3)
+	var after_ids: Array = []
+	for soldier: Dictionary in after:
+		after_ids.append(int(soldier.id))
+	_check(not after_ids.has(picked[1]), "the dead one does not deploy")
+	_check(after.size() == 3,
+			"and the slot is backfilled rather than left empty (%s)" % [after_ids])
+
+	# A save from another campaign cannot deploy a ghost.
+	game.deployed_ids = [999, 1000, 1001]
+	var ghosts: Array = game.deployment(3)
+	_check(ghosts.size() == 3, "invented ids fall back to the roster (%d)" % ghosts.size())
+	for soldier: Dictionary in ghosts:
+		_check(bool(soldier.alive), "and everybody who deploys is alive")
+		break

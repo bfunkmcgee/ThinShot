@@ -118,12 +118,21 @@ func _run() -> void:
 	_check((hero.get("perks", []) as Array).has("marksman")
 			and (hero.get("perks", []) as Array).has("sentinel"), "perks kept")
 	var orphan := false
-	var recruited: bool = game.roster.size() != 5
+	var heroes := 0
 	for s: Dictionary in game.roster:
 		if int(s.kind) == KIND_TEAM_LEAD and bool(s.alive):
 			orphan = true
+		if int(s.kind) == KIND_HERO:
+			heroes += 1
 	_check(not orphan, "no orphaned alive TEAM_LEAD remains")
-	_check(not recruited, "nobody new recruited (roster still %d)" % game.roster.size())
+	# The invariant is "the lead BECAME Rodar", not a roster size. Phase 3 made
+	# the roster deeper than the squad - ensure_roster now forms the five
+	# specialist Kestrels alongside these five - so counting bodies would only
+	# be counting the wrong thing. What must never happen is a SECOND hero
+	# standing next to the one that was converted.
+	_check(heroes == 1, "exactly one hero on the roster (%d)" % heroes)
+	_check(int(game.soldier_by_id(1).get("kind", -1)) == KIND_HERO,
+			"and he is the converted lead, not a stranger recruited beside him")
 	_check(game.vacancies(Levels.LEVELS[0]).is_empty(),
 			"vacancies() reports none (hero slot never refills)")
 
