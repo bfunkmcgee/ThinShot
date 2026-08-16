@@ -20,10 +20,12 @@ extends SceneTree
 ## Unit.gd before the autoloads exist and cache the broken script. Everything
 ## is load()ed after the first frame, once the autoloads are up.
 ##
-## Hit rolls are made deterministic without touching game code: the battle's
-## RNG is re-seeded immediately before each resolved shot with a seed whose
-## first roll is known to land under the quoted chance (hit_chance clamps at
-## 99, so an unseeded miss is always possible).
+## Hit rolls are made deterministic by seeding battle._rules_rng immediately
+## before each resolved shot with a seed whose first roll is known to land
+## under the quoted chance (hit_chance clamps at 99, so an unseeded miss is
+## always possible). That is exact rather than hopeful because the rules
+## stream carries nothing but hit rolls - every cosmetic draw goes to
+## _vis_rng - so the very next number out of it is the one the shot reads.
 ##
 ## Run: godot --headless --path . -s tools/test_progression.gd
 
@@ -317,7 +319,7 @@ func _run() -> void:
 			"flanker adds 10 on top of the flank bonus (%d vs %d)"
 			% [with_perk, without_perk])
 	goblin.hp = 4
-	battle._rng.seed = _seed_for_roll(battle.hit_chance(flanker, goblin))
+	battle._rules_rng.seed = _seed_for_roll(battle.hit_chance(flanker, goblin))
 	await battle._fire_round(flanker, goblin)
 	_check(goblin.hp == 1,
 			"executioner's flanking round deals 3 (2+1) - hp 4 -> %d" % goblin.hp)
@@ -342,7 +344,7 @@ func _run() -> void:
 		battle._cancel_aim()
 		mark.hp = 6  # only an unhalved 4+2 kills through this
 		var ammo_before: int = hero.ammo
-		battle._rng.seed = _seed_for_roll(battle.hit_chance(hero, mark))
+		battle._rules_rng.seed = _seed_for_roll(battle.hit_chance(hero, mark))
 		await battle.do_called_shot(hero, mark)
 		_check(not mark.is_alive(),
 				"called shot killed through full cover for 6 (halved would leave 3)")

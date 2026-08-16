@@ -274,7 +274,17 @@ var _cam_lean := Vector2.ZERO
 var _cam_shake := Vector2.ZERO
 var _shake_tween: Tween = null
 var _kick_tween: Tween = null
-var _rng := RandomNumberGenerator.new()
+# Two streams, deliberately. _rules_rng rolls to hit and nothing else;
+# _vis_rng does every scatter, splash and puff. They were one generator, and
+# the punchline is _boil_smoke(): it runs off _process, fourteen draws a second
+# for as long as smoke is on the board, so the number a shot would have rolled
+# used to depend on how long the player sat and thought about it. Sustained
+# suppression draws off a wall clock too, and the miss-offset draw hid inside a
+# ternary, so the stream even advanced by a different amount on a hit than on a
+# miss. Split, the rules stream advances exactly once per shot and cosmetics
+# cost nothing - which is also what makes seeding it reproducible.
+var _rules_rng := RandomNumberGenerator.new()
+var _vis_rng := RandomNumberGenerator.new()
 # Seed for every scenery-variant hash stream, so prop picks decorrelate from
 # cell coordinates without losing determinism. Levels may pin it with a
 # "prop_seed" key; otherwise it derives from the zone seed.
@@ -354,7 +364,8 @@ var _resolving_blast := false
 
 
 func _ready() -> void:
-	_rng.randomize()
+	_rules_rng.randomize()
+	_vis_rng.randomize()
 	Engine.time_scale = 1.0  # a reload mid-hit-stop must never persist
 	Levels.validate_all()  # push_error-based, so it reports in release too
 	_apply_cmdline_level()
@@ -1815,7 +1826,7 @@ func _sustain_suppression(delta: float) -> void:
 		_suppress_in_volley = 0
 		_suppress_timer = SUSTAIN_VOLLEY_GAP
 	var muzzle := _suppressor.muzzle_point()
-	var scatter := Vector2(_rng.randf_range(-26, 26), _rng.randf_range(-14, 14))
+	var scatter := Vector2(_vis_rng.randf_range(-26, 26), _vis_rng.randf_range(-14, 14))
 	var strike := _suppress_point + Vector2(0, -18) + scatter
 	var dir := (strike - muzzle).normalized()
 	_suppressor.recoil(dir)
@@ -2676,8 +2687,8 @@ func _fire_suppression_round(attacker: Unit, target: Unit) -> void:
 	var muzzle := attacker.muzzle_point()
 	var chest := target.position + Vector2(0, -36)
 	var dir := (chest - muzzle).normalized()
-	var splash := chest + dir * _rng.randf_range(10.0, 40.0) \
-			+ dir.orthogonal() * _rng.randf_range(-30.0, 30.0)
+	var splash := chest + dir * _vis_rng.randf_range(10.0, 40.0) \
+			+ dir.orthogonal() * _vis_rng.randf_range(-30.0, 30.0)
 	attacker.spend_ammo()
 	attacker.recoil(dir)
 	Sfx.play("shot")
@@ -2748,10 +2759,10 @@ func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0,
 	if not flanking:
 		covered_cell = board.cover_source(attacker.cell, target.cell)
 	var chance := hit_chance(attacker, target, accuracy_mod)
-	var hit := _rng.randi_range(1, 100) <= chance
+	var hit := _rules_rng.randi_range(1, 100) <= chance
 	# A miss sails past the target and off to one side.
 	var impact_point := chest if hit else chest + dir * 54.0 \
-			+ dir.orthogonal() * _rng.randf_range(-34.0, 34.0)
+			+ dir.orthogonal() * _vis_rng.randf_range(-34.0, 34.0)
 
 	attacker.spend_ammo()
 	attacker.recoil(dir)
@@ -2867,7 +2878,7 @@ func _spark_cover(cell: Vector2i, dir: Vector2, delay: float) -> void:
 		return
 	var at := board.cell_to_global(cell)
 	fx_glow.cover_spark(at + Vector2(0, -20), dir)
-	fx_ground.bullet_hole(at + Vector2(_rng.randf_range(-14, 14), 0), dir, true)
+	fx_ground.bullet_hole(at + Vector2(_vis_rng.randf_range(-14, 14), 0), dir, true)
 
 
 ## A multi-round volley. Each round is cover- and accuracy-checked on its
@@ -3508,7 +3519,7 @@ func _boil_smoke(delta: float) -> void:
 	while _smoke_puff_accum >= 1.0:
 		_smoke_puff_accum -= 1.0
 		var cells: Array = smoke.keys()
-		var cell: Vector2i = cells[_rng.randi_range(0, cells.size() - 1)]
+		var cell: Vector2i = cells[_vis_rng.randi_range(0, cells.size() - 1)]
 		fx_air.smoke_drift(board.cell_to_global(cell) + Vector2(0, -18))
 
 
