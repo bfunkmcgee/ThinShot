@@ -632,12 +632,26 @@ func choose_perk(id: int, perk: String) -> void:
 const SAVE_PATH := "user://campaign.json"
 const SAVE_VERSION := 1
 
+# Raised, and never lowered again, when load_save() finds a campaign written by
+# a build newer than this one. Refusing to READ such a file is only half the
+# job: the refusal leaves the roster empty, and the very next ensure_roster()
+# forms a squad from nothing and checkpoints it - straight over the campaign it
+# just declined to understand. A player who launches an old build once, for any
+# reason, would lose everything the new one had earned. So a version we cannot
+# read is treated as someone else's data and this process writes no more saves
+# at all: better a session that cannot checkpoint than a campaign that is gone.
+var _save_locked := false
+
 
 func has_save() -> bool:
 	return FileAccess.file_exists(SAVE_PATH)
 
 
 func save() -> void:
+	if _save_locked:
+		push_error("[ThinShot] %s was written by a newer build - refusing to overwrite it"
+				% SAVE_PATH)
+		return
 	var payload := {
 		"version": SAVE_VERSION,
 		"current_operation": current_operation,
@@ -661,7 +675,8 @@ func save() -> void:
 ## Restore a saved campaign. Returns false - leaving every field untouched at
 ## its default - when there is no save, or when the file is unreadable or from
 ## a version this build does not understand. A corrupt save must never be worse
-## than a missing one.
+## than a missing one; a save from a NEWER build is worse than either, and
+## additionally locks saving for the rest of the process (see _save_locked).
 func load_save() -> bool:
 	if not FileAccess.file_exists(SAVE_PATH):
 		return false
@@ -677,7 +692,18 @@ func load_save() -> bool:
 		push_error("[ThinShot] %s is not valid JSON - ignoring it" % SAVE_PATH)
 		return false
 	var payload: Dictionary = parsed
-	if int(payload.get("version", 0)) != SAVE_VERSION:
+	var version := int(payload.get("version", 0))
+	# Newer than us. Starting fresh is fine; overwriting is not, so lock first.
+	# Note the asymmetry: an OLDER version - like anything that fails to parse
+	# as a number at all, and lands at 0 - falls through to the plain refusal
+	# below and leaves saving alone, because a fresh campaign written over a
+	# save this build has outgrown loses nothing that can still be read.
+	if version > SAVE_VERSION:
+		_save_locked = true
+		push_warning("[ThinShot] save is version %d, this build reads %d - leaving it alone"
+				% [version, SAVE_VERSION])
+		return false
+	if version != SAVE_VERSION:
 		push_warning("[ThinShot] save is version %s, this build reads %d - starting fresh"
 				% [payload.get("version", "?"), SAVE_VERSION])
 		return false
