@@ -1,0 +1,256 @@
+{
+  "batch": "dryrun-2026-08-14",
+  "kind": "biome",
+  "biome": "desert",
+  "created": "2026-08-14T15:45:07+00:00",
+  "balance_start": 6798,
+  "balance_end": 6798,
+  "style_hash": "44268697be5627a53d01cd4adf5a9f7051a30530",
+  "jobs": [
+    {
+      "job_id": "b01a283b",
+      "tool": "create_tiles_pro",
+      "targets": "10 desert base variants 128px",
+      "params_file": "artgen\\staging\\dryrun-2026-08-14\\params_base.json",
+      "params_sha1": "8263a58e16fa71959bfa2bb607cafed28384ad6a",
+      "cost": 0,
+      "status": "completed",
+      "submitted": "2026-08-14T15:45:23+00:00",
+      "urls": {
+        "base/tile_0": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/b01a283b-92ce-4f84-94bf-39bb049445c0/tile_0.png",
+        "base/tile_1": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/b01a283b-92ce-4f84-94bf-39bb049445c0/tile_1.png",
+        "base/tile_2": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/b01a283b-92ce-4f84-94bf-39bb049445c0/tile_2.png",
+        "base/tile_3": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/b01a283b-92ce-4f84-94bf-39bb049445c0/tile_3.png",
+        "base/tile_4": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/b01a283b-92ce-4f84-94bf-39bb049445c0/tile_4.png",
+        "base/tile_5": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/b01a283b-92ce-4f84-94bf-39bb049445c0/tile_5.png",
+        "base/tile_6": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/b01a283b-92ce-4f84-94bf-39bb049445c0/tile_6.png",
+        "base/tile_7": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/b01a283b-92ce-4f84-94bf-39bb049445c0/tile_7.png",
+        "base/tile_8": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/b01a283b-92ce-4f84-94bf-39bb049445c0/tile_8.png",
+        "base/tile_9": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/b01a283b-92ce-4f84-94bf-39bb049445c0/tile_9.png"
+      },
+      "downloaded": {
+        "base/tile_0": {
+          "sha1": "25170480ce97a61d134c330cd832cdd28e57a1bc",
+          "ts": "2026-08-14T15:46:08+00:00"
+        },
+        "base/tile_1": {
+          "sha1": "81aaf6da2c53e8a94513583a112f5349724b601b",
+          "ts": "2026-08-14T15:46:09+00:00"
+        },
+        "base/tile_2": {
+          "sha1": "0614ca809c1648cd2d7d3d55a7661e351adb0072",
+          "ts": "2026-08-14T15:46:09+00:00"
+        },
+        "base/tile_3": {
+          "sha1": "25c526a1abf6106e645bd74f5660286f9df7a67a",
+          "ts": "2026-08-14T15:46:11+00:00"
+        },
+        "base/tile_4": {
+          "sha1": "0af9db7b002079e2b52ae0e1fcefaac21992b08e",
+          "ts": "2026-08-14T15:46:11+00:00"
+        },
+        "base/tile_5": {
+          "sha1": "51874e7a7bf95f1231c4e11328b9a5c51279a55c",
+          "ts": "2026-08-14T15:46:12+00:00"
+        },
+        "base/tile_6": {
+          "sha1": "644a91b4a3605111d662ac82aea971569c91111d",
+          "ts": "2026-08-14T15:46:13+00:00"
+        },
+        "base/tile_7": {
+          "sha1": "8e1e721b2ba5a891041654ec4f03e124a71d2815",
+          "ts": "2026-08-14T15:46:13+00:00"
+        },
+        "base/tile_8": {
+          "sha1": "bc8b067a3c55389b5f58a0570c8b1391ed74a078",
+          "ts": "2026-08-14T15:46:14+00:00"
+        },
+        "base/tile_9": {
+          "sha1": "a6f176279b997b2c0a3299859639bd5694045329",
+          "ts": "2026-08-14T15:46:15+00:00"
+        }
+      },
+      "regen_of": null,
+      "completed": "2026-08-14T15:45:31+00:00"
+    },
+    {
+      "job_id": "f9426fe8",
+      "tool": "create_path_tiles",
+      "targets": "18 path tiles 96px",
+      "params_file": "artgen\\staging\\dryrun-2026-08-14\\params_paths.json",
+      "params_sha1": "994f3cd09fc507825a1cc2aeea324f45735bf8bb",
+      "cost": 0,
+      "status": "completed",
+      "submitted": "2026-08-14T15:45:23+00:00",
+      "urls": {
+        "paths/tile_0": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_0.png",
+        "paths/tile_1": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_1.png",
+        "paths/tile_2": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_2.png",
+        "paths/tile_3": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_3.png",
+        "paths/tile_4": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_4.png",
+        "paths/tile_5": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_5.png",
+        "paths/tile_6": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_6.png",
+        "paths/tile_7": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_7.png",
+        "paths/tile_8": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_8.png",
+        "paths/tile_9": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_9.png",
+        "paths/tile_10": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_10.png",
+        "paths/tile_11": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_11.png",
+        "paths/tile_12": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_12.png",
+        "paths/tile_13": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_13.png",
+        "paths/tile_14": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_14.png",
+        "paths/tile_15": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_15.png",
+        "paths/tile_16": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_16.png",
+        "paths/tile_17": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_17.png"
+      },
+      "downloaded": {
+        "paths/tile_0": {
+          "sha1": "833662c8b191b5d6198c4c3a7ee4657afb1df600",
+          "ts": "2026-08-14T15:46:15+00:00"
+        },
+        "paths/tile_1": {
+          "sha1": "61fc50d711cbeb7a8855cf2560acf99bbdad5455",
+          "ts": "2026-08-14T15:46:16+00:00"
+        },
+        "paths/tile_2": {
+          "sha1": "f8551d2e714566b8c286abf14740a9fc02d72e23",
+          "ts": "2026-08-14T15:46:16+00:00"
+        },
+        "paths/tile_3": {
+          "sha1": "8268411d5478d62317f802110a2f37bd66194ab5",
+          "ts": "2026-08-14T15:46:17+00:00"
+        },
+        "paths/tile_4": {
+          "sha1": "9d4537579b19b94f19b57abb4c800b583507a777",
+          "ts": "2026-08-14T15:46:18+00:00"
+        },
+        "paths/tile_5": {
+          "sha1": "65e6efa0ae6a75f73a5e5a7fa91eb6097fe0e240",
+          "ts": "2026-08-14T15:46:18+00:00"
+        },
+        "paths/tile_6": {
+          "sha1": "609bd504b847d11bf2235a56b0104c9b3c95c815",
+          "ts": "2026-08-14T15:46:19+00:00"
+        },
+        "paths/tile_7": {
+          "sha1": "b97730b46dd8cca4657c9dc01a2735f1946e8dcd",
+          "ts": "2026-08-14T15:46:19+00:00"
+        },
+        "paths/tile_8": {
+          "sha1": "061e75101610dc656b339ea6a0159cd9991e0170",
+          "ts": "2026-08-14T15:46:20+00:00"
+        },
+        "paths/tile_9": {
+          "sha1": "dba7ad41540f26be09b00c72e05a3c6f01478c8b",
+          "ts": "2026-08-14T15:46:21+00:00"
+        },
+        "paths/tile_10": {
+          "sha1": "5598d45ac21ecd68ff35d00c0a0efb28c346ce32",
+          "ts": "2026-08-14T15:46:21+00:00"
+        },
+        "paths/tile_11": {
+          "sha1": "f16e981023b4b2193e2efc4c70ae945bf127fa36",
+          "ts": "2026-08-14T15:46:22+00:00"
+        },
+        "paths/tile_12": {
+          "sha1": "a74493ef6b4e09a1f46b8727549e6d14e1487e0f",
+          "ts": "2026-08-14T15:46:24+00:00"
+        },
+        "paths/tile_13": {
+          "sha1": "01af35e15da8db52f3c90219a90b894430579808",
+          "ts": "2026-08-14T15:46:24+00:00"
+        },
+        "paths/tile_14": {
+          "sha1": "a4ee7ce623ea00e489092f9687e1f52f0c75d743",
+          "ts": "2026-08-14T15:46:25+00:00"
+        },
+        "paths/tile_15": {
+          "sha1": "f481077b873fd0e598e1138ebb26adb970e15f6c",
+          "ts": "2026-08-14T15:46:25+00:00"
+        },
+        "paths/tile_16": {
+          "sha1": "3359b40b830fc72f043695d07a8afb49ab2cbd52",
+          "ts": "2026-08-14T15:46:26+00:00"
+        },
+        "paths/tile_17": {
+          "sha1": "23c3960df598c128a824d40751d27787ab805c8e",
+          "ts": "2026-08-14T15:46:26+00:00"
+        }
+      },
+      "regen_of": null,
+      "completed": "2026-08-14T15:45:32+00:00"
+    }
+  ],
+  "validation": {
+    "pass": true,
+    "report": "dry-run: rim 1.081, seam 0.49x, spread 0.011, mask exact; structural 18-slot contract intentionally unmet (10-tile legacy-shaped dry run)",
+    "ts": "2026-08-14T15:52:19+00:00"
+  },
+  "review": {
+    "slots": {
+      "0": {
+        "verdict": "accept",
+        "reason": "dry-run rubric pass: no rim, seams invisible in 3x3, accent legible",
+        "job_id": "b01a283b",
+        "ts": "2026-08-14T15:52:19+00:00"
+      },
+      "1": {
+        "verdict": "accept",
+        "reason": "dry-run rubric pass: no rim, seams invisible in 3x3, accent legible",
+        "job_id": "b01a283b",
+        "ts": "2026-08-14T15:52:20+00:00"
+      },
+      "2": {
+        "verdict": "accept",
+        "reason": "dry-run rubric pass: no rim, seams invisible in 3x3, accent legible",
+        "job_id": "b01a283b",
+        "ts": "2026-08-14T15:52:20+00:00"
+      },
+      "3": {
+        "verdict": "accept",
+        "reason": "dry-run rubric pass: no rim, seams invisible in 3x3, accent legible",
+        "job_id": "b01a283b",
+        "ts": "2026-08-14T15:52:20+00:00"
+      },
+      "4": {
+        "verdict": "accept",
+        "reason": "dry-run rubric pass: no rim, seams invisible in 3x3, accent legible",
+        "job_id": "b01a283b",
+        "ts": "2026-08-14T15:52:20+00:00"
+      },
+      "5": {
+        "verdict": "accept",
+        "reason": "dry-run rubric pass: no rim, seams invisible in 3x3, accent legible",
+        "job_id": "b01a283b",
+        "ts": "2026-08-14T15:52:20+00:00"
+      },
+      "6": {
+        "verdict": "accept",
+        "reason": "dry-run rubric pass: no rim, seams invisible in 3x3, accent legible",
+        "job_id": "b01a283b",
+        "ts": "2026-08-14T15:52:20+00:00"
+      },
+      "7": {
+        "verdict": "accept",
+        "reason": "dry-run rubric pass: no rim, seams invisible in 3x3, accent legible",
+        "job_id": "b01a283b",
+        "ts": "2026-08-14T15:52:20+00:00"
+      },
+      "8": {
+        "verdict": "accept",
+        "reason": "dry-run rubric pass: no rim, seams invisible in 3x3, accent legible",
+        "job_id": "b01a283b",
+        "ts": "2026-08-14T15:52:20+00:00"
+      },
+      "9": {
+        "verdict": "accept",
+        "reason": "dry-run rubric pass: no rim, seams invisible in 3x3, accent legible",
+        "job_id": "b01a283b",
+        "ts": "2026-08-14T15:52:21+00:00"
+      }
+    }
+  },
+  "promoted": {
+    "to": "C:\\Users\\bhixe\\AppData\\Local\\Temp\\dryrun_promote_test",
+    "ts": "2026-08-14T15:52:21+00:00"
+  }
+}

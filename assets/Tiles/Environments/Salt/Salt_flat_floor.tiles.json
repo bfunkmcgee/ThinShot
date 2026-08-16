@@ -1,0 +1,767 @@
+{
+  "sheet": "Salt_flat_floor.png",
+  "tile_size": [
+    128,
+    60
+  ],
+  "slots": [
+    {
+      "rect": [
+        0,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        421,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        421,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        421,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        421,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        550,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        550,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    }
+  ],
+  "sets": [
+    {
+      "lower": "zone0",
+      "upper": "zone1",
+      "sheet": "res://assets/Tiles/Environments/Salt/Salt_transitions_01.png",
+      "tiles": [
+        {
+          "rect": [
+            0,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        }
+      ]
+    },
+    {
+      "lower": "zone1",
+      "upper": "zone2",
+      "sheet": "res://assets/Tiles/Environments/Salt/Salt_transitions_12.png",
+      "tiles": [
+        {
+          "rect": [
+            0,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        }
+      ]
+    }
+  ],
+  "provenance": {
+    "batch": "2026-08-14_salt-redo",
+    "job_ids": [
+      "910d3926-7466-499d-a26c-854cc94ca9d7",
+      "05f12db0-7335-4caa-bff0-f7688ff809fb",
+      "c4af4162-e6c5-417a-95a2-64f6f153b34f",
+      "b9f0cf9f-880f-4b00-9774-9b7faf1b025b"
+    ],
+    "seed": 102,
+    "style_hash": "2ae80721d5ed0f3ffd5576abfcf36fd749fef922",
+    "merged_sets": {
+      "note": "transition sets merged from standalone work/ sidecars on 2026-08-14 (tiles arrays copied verbatim; per-set sheet points at promoted res:// path); per-corner-class anchors re-measured from the FINISHED repaired base sheet (zone1 = slots 4-7 mean 0.6013, zone2 = slots 8-11 mean 0.5908). trans12 = v4 delivery 5fca231a (seed 3204, same-tone terrain identity) SYMMETRY-COMPLETED: the delivery was mask-degenerate per its own metadata AND empirical corner classification (dark-seam-fraction classifier, validated 16/16 on the a1d9756e raws; v4 12/12 usable masks agree with metadata, margins 19-46pts) - delivered masks [0,1,2,15,4,5,6,3,8,9,10,11,15,5,15,15], masks {7,12,13,14} absent. Completion by symmetry synthesis from verified v4 raws (screen diamond corners top=NW right=NE bottom=SE left=SW; H-flip swaps NE<->SW; 90deg CW grid rotation = unsquash 96x48->96x96 Lanczos, ROTATE_270, resquash, re-masked with the delivery alpha): mask 12 = hflip(tile_10 mask10); mask 13 = hflip(tile_11 mask11); mask 14 = rot90cw(tile_11 mask11); mask 7 = rot90cw(synth mask13). mask 3 slot uses delivered tile_7 (tile_3 was a mask-15 pure dup, the known corner-set tile_3 defect); mask 15 slot uses tile_15 (healthiest of pure dups t3/t12/t14/t15). All 16 assembled tiles re-classify 16/16 as their index, margins 19-43pts; seam textures near-directionless, no lighting flip visible at 2x. Earlier strikes on this set: 8a0d5622 v1 (corner failures), a1d9756e v2 (tone rejection: dark grey-brown upper), caa0e49e v3 (mask-degenerate, 7 distinct masks).",
+      "sources": {
+        "Salt_transitions_01.png": {
+          "sidecar": "Salt_transitions_01.tiles.json",
+          "job_ids": [
+            "a997535f-d8bb-4486-892c-36e281985e5f"
+          ],
+          "seed": 203
+        },
+        "Salt_transitions_12.png": {
+          "sidecar": "Salt_transitions_12.tiles.json",
+          "job_ids": [
+            "5fca231a-0d05-472f-9a84-9df3c7428d58"
+          ],
+          "seed": 3204,
+          "synthesized_masks": {
+            "7": "rot90cw(synth mask13) [= rot90cw(hflip(tile_11))]",
+            "12": "hflip(tile_10)",
+            "13": "hflip(tile_11)",
+            "14": "rot90cw(tile_11)"
+          },
+          "delivered_masks": [
+            0,
+            1,
+            2,
+            15,
+            4,
+            5,
+            6,
+            3,
+            8,
+            9,
+            10,
+            11,
+            15,
+            5,
+            15,
+            15
+          ],
+          "mask3_from": "tile_7",
+          "mask15_from": "tile_15"
+        }
+      }
+    }
+  },
+  "metrics": {
+    "slot_mean_lum": [
+      0.6131,
+      0.6093,
+      0.6152,
+      0.6023,
+      0.5954,
+      0.6,
+      0.6007,
+      0.6089,
+      0.5921,
+      0.5883,
+      0.5942,
+      0.5886,
+      0.5991,
+      0.6065,
+      0.6033,
+      0.6007,
+      0.5778,
+      0.5971
+    ]
+  }
+}

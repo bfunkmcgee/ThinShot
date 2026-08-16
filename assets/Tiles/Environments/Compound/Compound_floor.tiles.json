@@ -1,0 +1,742 @@
+{
+  "sheet": "Compound_floor.png",
+  "tile_size": [
+    128,
+    60
+  ],
+  "slots": [
+    {
+      "rect": [
+        0,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        421,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        421,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        421,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        421,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        550,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        550,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    }
+  ],
+  "sets": [
+    {
+      "lower": "zone0",
+      "upper": "zone1",
+      "sheet": "res://assets/Tiles/Environments/Compound/Compound_transitions_01.png",
+      "tiles": [
+        {
+          "rect": [
+            0,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        }
+      ]
+    },
+    {
+      "lower": "zone1",
+      "upper": "zone2",
+      "sheet": "res://assets/Tiles/Environments/Compound/Compound_transitions_12.png",
+      "tiles": [
+        {
+          "rect": [
+            0,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          },
+          "synth": "horizontal mirror of tile 5 (mask 5 -> mask 3), 2026-08-14"
+        },
+        {
+          "rect": [
+            0,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        }
+      ]
+    }
+  ],
+  "provenance": {
+    "batch": "2026-08-14_compound-redo",
+    "job_ids": [
+      "c55d2373-5f38-4d97-8d9c-f04ecefa9bbe",
+      "d6ebcdce-d725-4b87-a079-19b838e79e09",
+      "caf713cc-12ca-4b32-a945-0bb28d0e6707",
+      "ccd8ef91-e0ea-4ae2-b683-23c23f4f016b"
+    ],
+    "seed": 104,
+    "style_hash": "2ae80721d5ed0f3ffd5576abfcf36fd749fef922",
+    "merged_sets": {
+      "note": "transition sets merged from standalone work/ sidecars on 2026-08-14 (tiles arrays copied verbatim; per-set sheet points at the promoted res:// path); REPAIR PASS: base slots 2 and 6 replaced from job ccd8ef91 (seed 1104); transition sheets re-posted against re-measured zone anchors; trans12 mask 3 RESOLVED 2026-08-14 by mirror-synth: horizontal flip of the accepted posted mask-5 tile (712844b9 art; screen L-R flip swaps grid NE<->SW so mask 5 -> mask 3), re-masked with the canonical diamond, spliced in place; empirical corner classify of the result = mask 3 (16/16 set-wide). Unused strikes on this slot, both NOT adopted: 696af086 (seed 1209) reproduced the pure-lower tile_3 defect; 5e390648 (seed 2209, stronger-contrast prompt) fixed mask 3 but its shattered terrain drifted warmer/sandier than the accepted 712844b9 art - tone drift, rejected wholesale",
+      "sources": {
+        "Compound_transitions_01.png": {
+          "sidecar": "Compound_transitions_01.tiles.json",
+          "job_ids": [
+            "157fa617-cf37-4ef7-b74a-b6032a3126bc"
+          ],
+          "seed": 208
+        },
+        "Compound_transitions_12.png": {
+          "sidecar": "Compound_transitions_12.tiles.json",
+          "job_ids": [
+            "712844b9-a87f-4cbe-bcfc-19aadcee876e"
+          ],
+          "seed": 209
+        }
+      }
+    }
+  },
+  "metrics": {
+    "slot_mean_lum": [
+      0.5554,
+      0.566,
+      0.5605,
+      0.5495,
+      0.551,
+      0.5502,
+      0.5661,
+      0.5528,
+      0.5404,
+      0.5414,
+      0.5378,
+      0.5398,
+      0.5298,
+      0.5429,
+      0.5401,
+      0.5442,
+      0.5374,
+      0.5404
+    ]
+  }
+}

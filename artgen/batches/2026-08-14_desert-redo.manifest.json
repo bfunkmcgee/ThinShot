@@ -1,0 +1,1016 @@
+{
+  "batch": "2026-08-14_desert-redo",
+  "kind": "biome",
+  "biome": "desert",
+  "created": "2026-08-14T16:06:09+00:00",
+  "balance_start": null,
+  "balance_end": 6428,
+  "style_hash": "9749f0d1281a90947170e5daf0e454d446ad37c9",
+  "jobs": [
+    {
+      "job_id": "7f8d0504-c27b-4f86-9a3e-5f7db6efca09",
+      "tool": "create_tiles_pro",
+      "targets": "base sheet slots 0-3,4-7,12,13 (zone0 base x4, zone1 base x4, zone0 accents x2)",
+      "params_file": "artgen\\staging\\2026-08-14_desert-redo\\raw\\params_base1.json",
+      "params_sha1": "d95a8d0b856afc1127a5d7fadc5521865f73ed14",
+      "cost": null,
+      "status": "completed",
+      "submitted": "2026-08-14T16:06:49+00:00",
+      "urls": {
+        "base1/tile_0": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/7f8d0504-c27b-4f86-9a3e-5f7db6efca09/tile_0.png",
+        "base1/tile_1": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/7f8d0504-c27b-4f86-9a3e-5f7db6efca09/tile_1.png",
+        "base1/tile_2": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/7f8d0504-c27b-4f86-9a3e-5f7db6efca09/tile_2.png",
+        "base1/tile_3": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/7f8d0504-c27b-4f86-9a3e-5f7db6efca09/tile_3.png",
+        "base1/tile_4": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/7f8d0504-c27b-4f86-9a3e-5f7db6efca09/tile_4.png",
+        "base1/tile_5": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/7f8d0504-c27b-4f86-9a3e-5f7db6efca09/tile_5.png",
+        "base1/tile_6": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/7f8d0504-c27b-4f86-9a3e-5f7db6efca09/tile_6.png",
+        "base1/tile_7": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/7f8d0504-c27b-4f86-9a3e-5f7db6efca09/tile_7.png",
+        "base1/tile_8": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/7f8d0504-c27b-4f86-9a3e-5f7db6efca09/tile_8.png",
+        "base1/tile_9": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/7f8d0504-c27b-4f86-9a3e-5f7db6efca09/tile_9.png"
+      },
+      "downloaded": {
+        "base1/tile_0": {
+          "sha1": "f28aa2c0e40e34996410d7ba47168ff56f1661d1",
+          "ts": "2026-08-14T16:07:07+00:00"
+        },
+        "base1/tile_1": {
+          "sha1": "9ad5dd459e0aed63bf896111c7efc9ac04637a1b",
+          "ts": "2026-08-14T16:07:08+00:00"
+        },
+        "base1/tile_2": {
+          "sha1": "043a2dc08df346a682105ad4f8ab1a2eafb4a485",
+          "ts": "2026-08-14T16:07:08+00:00"
+        },
+        "base1/tile_3": {
+          "sha1": "7cc056d4f533d4a39bf3ae192578d89b15bbba9e",
+          "ts": "2026-08-14T16:07:09+00:00"
+        },
+        "base1/tile_4": {
+          "sha1": "c620477cca100391d505d529ee809bdc44121e65",
+          "ts": "2026-08-14T16:07:09+00:00"
+        },
+        "base1/tile_5": {
+          "sha1": "7455787ad55a308785b967380a3da81077eb3c1d",
+          "ts": "2026-08-14T16:07:10+00:00"
+        }
+      },
+      "regen_of": null,
+      "completed": "2026-08-14T16:07:01+00:00"
+    },
+    {
+      "job_id": "9f2929bf-d28c-4425-adb0-7236d62d7668",
+      "tool": "create_tiles_pro",
+      "targets": "base sheet slots 8-11,14-17 + 2 spares (zone2 base x4, zone1/zone2 accents, spare bases)",
+      "params_file": "artgen\\staging\\2026-08-14_desert-redo\\raw\\params_base2.json",
+      "params_sha1": "c72f4784df049055e9e32fda9d20b30994268d39",
+      "cost": null,
+      "status": "completed",
+      "submitted": "2026-08-14T16:06:49+00:00",
+      "urls": {
+        "base2/tile_0": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/9f2929bf-d28c-4425-adb0-7236d62d7668/tile_0.png",
+        "base2/tile_1": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/9f2929bf-d28c-4425-adb0-7236d62d7668/tile_1.png",
+        "base2/tile_2": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/9f2929bf-d28c-4425-adb0-7236d62d7668/tile_2.png",
+        "base2/tile_3": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/9f2929bf-d28c-4425-adb0-7236d62d7668/tile_3.png",
+        "base2/tile_4": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/9f2929bf-d28c-4425-adb0-7236d62d7668/tile_4.png",
+        "base2/tile_5": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/9f2929bf-d28c-4425-adb0-7236d62d7668/tile_5.png",
+        "base2/tile_6": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/9f2929bf-d28c-4425-adb0-7236d62d7668/tile_6.png",
+        "base2/tile_7": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/9f2929bf-d28c-4425-adb0-7236d62d7668/tile_7.png",
+        "base2/tile_8": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/9f2929bf-d28c-4425-adb0-7236d62d7668/tile_8.png",
+        "base2/tile_9": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/9f2929bf-d28c-4425-adb0-7236d62d7668/tile_9.png"
+      },
+      "downloaded": {
+        "base2/tile_0": {
+          "sha1": "6e7fc210625cbe992ee5f7c7bd0e986bc61952b6",
+          "ts": "2026-08-14T16:07:12+00:00"
+        },
+        "base2/tile_1": {
+          "sha1": "7118e25378678891139e57b7b2b417af5c7a8edb",
+          "ts": "2026-08-14T16:07:13+00:00"
+        },
+        "base2/tile_2": {
+          "sha1": "c0ab5c4d26469628d3264154a7b671236f2249b1",
+          "ts": "2026-08-14T16:07:13+00:00"
+        },
+        "base2/tile_3": {
+          "sha1": "689f20c347fce4d37fd11520830910419891cd36",
+          "ts": "2026-08-14T16:07:14+00:00"
+        },
+        "base2/tile_4": {
+          "sha1": "42baf7a2a63d7c47c12024eb434ebdba647c5cd2",
+          "ts": "2026-08-14T16:07:14+00:00"
+        },
+        "base2/tile_5": {
+          "sha1": "2b5352e1c38275a06f4e95fbbf727a14c68ff782",
+          "ts": "2026-08-14T16:07:15+00:00"
+        }
+      },
+      "regen_of": null,
+      "completed": "2026-08-14T16:07:01+00:00"
+    },
+    {
+      "job_id": "280a1c45-34f4-43d3-8c4e-d30de60f97cb",
+      "tool": "create_tiles_pro",
+      "targets": "16-tile corner set zone0(sand)<->zone1(light hardpan)",
+      "params_file": "artgen\\staging\\2026-08-14_desert-redo\\raw\\params_trans01.json",
+      "params_sha1": "c859e977042802df7e7c7334a47556d59fb530eb",
+      "cost": null,
+      "status": "completed",
+      "submitted": "2026-08-14T16:06:49+00:00",
+      "urls": {
+        "trans01/tile_0": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_0.png",
+        "trans01/tile_1": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_1.png",
+        "trans01/tile_2": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_2.png",
+        "trans01/tile_3": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_3.png",
+        "trans01/tile_4": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_4.png",
+        "trans01/tile_5": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_5.png",
+        "trans01/tile_6": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_6.png",
+        "trans01/tile_7": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_7.png",
+        "trans01/tile_8": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_8.png",
+        "trans01/tile_9": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_9.png",
+        "trans01/tile_10": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_10.png",
+        "trans01/tile_11": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_11.png",
+        "trans01/tile_12": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_12.png",
+        "trans01/tile_13": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_13.png",
+        "trans01/tile_14": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_14.png",
+        "trans01/tile_15": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/280a1c45-34f4-43d3-8c4e-d30de60f97cb/tile_15.png"
+      },
+      "downloaded": {
+        "trans01/tile_0": {
+          "sha1": "0ce6d9c2aa8eab63f68d2fada0bea8f016c2cc25",
+          "ts": "2026-08-14T16:07:17+00:00"
+        },
+        "trans01/tile_1": {
+          "sha1": "0315a0337e41f346f9fa0c75525749433e6789f2",
+          "ts": "2026-08-14T16:07:18+00:00"
+        },
+        "trans01/tile_2": {
+          "sha1": "1579bc81da2f150c863dcaf27c6bd537245a16bd",
+          "ts": "2026-08-14T16:07:18+00:00"
+        },
+        "trans01/tile_3": {
+          "sha1": "baf215fa91c65297f6b819ff5913133e4e45cc9d",
+          "ts": "2026-08-14T16:07:19+00:00"
+        },
+        "trans01/tile_4": {
+          "sha1": "1b2cd764e53c966a3eeb41b9e6e4a3efe42f8f88",
+          "ts": "2026-08-14T16:07:20+00:00"
+        },
+        "trans01/tile_5": {
+          "sha1": "11bdcdfbe1c77860660ccb81fb790acdba62add4",
+          "ts": "2026-08-14T16:07:20+00:00"
+        },
+        "trans01/tile_6": {
+          "sha1": "846b61c46f782b995482b497ad26ae6ef796eb32",
+          "ts": "2026-08-14T16:07:21+00:00"
+        },
+        "trans01/tile_7": {
+          "sha1": "2d3367f29eddf0c61d907f46dbea26f1aa4e662e",
+          "ts": "2026-08-14T16:07:21+00:00"
+        },
+        "trans01/tile_8": {
+          "sha1": "fa567fd26ad1d19e35f0f9714369340799affda9",
+          "ts": "2026-08-14T16:07:21+00:00"
+        },
+        "trans01/tile_9": {
+          "sha1": "08ed2aa6560565b464f326bc73a4561986620481",
+          "ts": "2026-08-14T16:07:22+00:00"
+        },
+        "trans01/tile_10": {
+          "sha1": "3fc8d81839179a4dcc89c4d18f012ac6b8ccaa40",
+          "ts": "2026-08-14T16:07:22+00:00"
+        },
+        "trans01/tile_11": {
+          "sha1": "0060cd1340016d5b789ff833877640db4c14ab3a",
+          "ts": "2026-08-14T16:07:23+00:00"
+        },
+        "trans01/tile_12": {
+          "sha1": "0dc2ac721c0c7ba15f7f11f6c27218c12ad23631",
+          "ts": "2026-08-14T16:07:23+00:00"
+        },
+        "trans01/tile_13": {
+          "sha1": "22b73bae84334809c983fe614c71f85a0ddf8ef1",
+          "ts": "2026-08-14T16:07:24+00:00"
+        },
+        "trans01/tile_14": {
+          "sha1": "14c407db1ae937fb3d0e2d7c8524dfc2b82eccd4",
+          "ts": "2026-08-14T16:07:25+00:00"
+        },
+        "trans01/tile_15": {
+          "sha1": "dadb2099e71c5a7ee7715e8db1cc27f65044bf26",
+          "ts": "2026-08-14T16:07:25+00:00"
+        }
+      },
+      "regen_of": null,
+      "completed": "2026-08-14T16:07:01+00:00"
+    },
+    {
+      "job_id": "1dacb511-bfa0-437f-9e9e-e6804944a511",
+      "tool": "create_tiles_pro",
+      "targets": "16-tile corner set zone1(light hardpan)<->zone2(heavy hardpan)",
+      "params_file": "artgen\\staging\\2026-08-14_desert-redo\\raw\\params_trans12.json",
+      "params_sha1": "a9fe9250a8b72398c072c6fc965872bf6b91c830",
+      "cost": null,
+      "status": "completed",
+      "submitted": "2026-08-14T16:06:49+00:00",
+      "urls": {
+        "trans12/tile_0": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_0.png",
+        "trans12/tile_1": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_1.png",
+        "trans12/tile_2": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_2.png",
+        "trans12/tile_3": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_3.png",
+        "trans12/tile_4": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_4.png",
+        "trans12/tile_5": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_5.png",
+        "trans12/tile_6": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_6.png",
+        "trans12/tile_7": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_7.png",
+        "trans12/tile_8": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_8.png",
+        "trans12/tile_9": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_9.png",
+        "trans12/tile_10": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_10.png",
+        "trans12/tile_11": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_11.png",
+        "trans12/tile_12": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_12.png",
+        "trans12/tile_13": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_13.png",
+        "trans12/tile_14": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_14.png",
+        "trans12/tile_15": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/1dacb511-bfa0-437f-9e9e-e6804944a511/tile_15.png"
+      },
+      "downloaded": {
+        "trans12/tile_0": {
+          "sha1": "ca42bc4fde1875b30b10f6e2ae26abd0dadb210c",
+          "ts": "2026-08-14T16:07:25+00:00"
+        },
+        "trans12/tile_1": {
+          "sha1": "0a6b52a7a3a9ee0ee5fd87faba2d1e4b1d080fa9",
+          "ts": "2026-08-14T16:07:27+00:00"
+        },
+        "trans12/tile_2": {
+          "sha1": "cdf5b046022859be979b8b6dd408ddde7ed8ff3f",
+          "ts": "2026-08-14T16:07:27+00:00"
+        },
+        "trans12/tile_3": {
+          "sha1": "6cbd71929aabcada81f7fac6c4755ac39a229d4a",
+          "ts": "2026-08-14T16:07:28+00:00"
+        },
+        "trans12/tile_4": {
+          "sha1": "d06a693beeb4deca006a1efd6290489c216fc154",
+          "ts": "2026-08-14T16:07:28+00:00"
+        },
+        "trans12/tile_5": {
+          "sha1": "42c3dec0ef7dbf94722f59cc051bf23c0c21bee6",
+          "ts": "2026-08-14T16:07:29+00:00"
+        },
+        "trans12/tile_6": {
+          "sha1": "9c3c1ca7d00204263db76950e999e4671e1d72ff",
+          "ts": "2026-08-14T16:07:30+00:00"
+        },
+        "trans12/tile_7": {
+          "sha1": "e3b9d5f6349faec75f494fd9849b7781716b8bf7",
+          "ts": "2026-08-14T16:07:30+00:00"
+        },
+        "trans12/tile_8": {
+          "sha1": "3ea701e557bac4eee122020ceab0576a35d7b02e",
+          "ts": "2026-08-14T16:07:31+00:00"
+        },
+        "trans12/tile_9": {
+          "sha1": "2fb99480edf09e1c75ef2548ab3a2477ccfb2cd1",
+          "ts": "2026-08-14T16:07:31+00:00"
+        },
+        "trans12/tile_10": {
+          "sha1": "821a827365617af83d5b2baa37621a63b295b18e",
+          "ts": "2026-08-14T16:07:32+00:00"
+        },
+        "trans12/tile_11": {
+          "sha1": "7a7b1cd59ef2f5e92def5e996fc768e577ce877e",
+          "ts": "2026-08-14T16:07:32+00:00"
+        },
+        "trans12/tile_12": {
+          "sha1": "84f7e0ea0aa8bf7b9fd9c0f0c3426f251759f344",
+          "ts": "2026-08-14T16:07:33+00:00"
+        },
+        "trans12/tile_13": {
+          "sha1": "bdc8e442bdd32dcec0b1bc6aa6d82942cec61185",
+          "ts": "2026-08-14T16:07:33+00:00"
+        },
+        "trans12/tile_14": {
+          "sha1": "09152fb8baaad2ceb2005c796050605cfe77a0c0",
+          "ts": "2026-08-14T16:07:34+00:00"
+        },
+        "trans12/tile_15": {
+          "sha1": "07b5062adc79654b29ea3c1cef36ffa5fbc19089",
+          "ts": "2026-08-14T16:07:34+00:00"
+        }
+      },
+      "regen_of": null,
+      "completed": "2026-08-14T16:07:01+00:00"
+    },
+    {
+      "job_id": "4fc84c45-a197-459d-a1f3-cdef4e3b2622",
+      "tool": "create_tiles_pro",
+      "targets": "16-tile corner set desert<->compound (concrete first terrain)",
+      "params_file": "artgen\\staging\\2026-08-14_desert-redo\\raw\\params_cross.json",
+      "params_sha1": "7272a041ef08edfd36ec4d52879784d83ce910d0",
+      "cost": null,
+      "status": "completed",
+      "submitted": "2026-08-14T16:06:49+00:00",
+      "urls": {
+        "cross/tile_0": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_0.png",
+        "cross/tile_1": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_1.png",
+        "cross/tile_2": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_2.png",
+        "cross/tile_3": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_3.png",
+        "cross/tile_4": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_4.png",
+        "cross/tile_5": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_5.png",
+        "cross/tile_6": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_6.png",
+        "cross/tile_7": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_7.png",
+        "cross/tile_8": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_8.png",
+        "cross/tile_9": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_9.png",
+        "cross/tile_10": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_10.png",
+        "cross/tile_11": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_11.png",
+        "cross/tile_12": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_12.png",
+        "cross/tile_13": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_13.png",
+        "cross/tile_14": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_14.png",
+        "cross/tile_15": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/4fc84c45-a197-459d-a1f3-cdef4e3b2622/tile_15.png"
+      },
+      "downloaded": {
+        "cross/tile_0": {
+          "sha1": "b621eeb7c4a8b2ee49d78377c562942eac5bd273",
+          "ts": "2026-08-14T16:07:34+00:00"
+        },
+        "cross/tile_1": {
+          "sha1": "1f97dfc30fc4d02b2ce0b920f2a73181d1f1da99",
+          "ts": "2026-08-14T16:07:35+00:00"
+        },
+        "cross/tile_2": {
+          "sha1": "418b56ba3faceaf39e6e944a9f9bc4500e8089fa",
+          "ts": "2026-08-14T16:07:36+00:00"
+        },
+        "cross/tile_3": {
+          "sha1": "e7a70b0b0cbfb3f59748d319d63bb2a40e0da82c",
+          "ts": "2026-08-14T16:07:36+00:00"
+        },
+        "cross/tile_4": {
+          "sha1": "578b5a11cf557c59b76a83682b375716c21d997b",
+          "ts": "2026-08-14T16:07:37+00:00"
+        },
+        "cross/tile_5": {
+          "sha1": "cd29dbf7a2f82faafc13ad54dd45191421381338",
+          "ts": "2026-08-14T16:07:37+00:00"
+        },
+        "cross/tile_6": {
+          "sha1": "320834a4b3e04d326d0c3414272267915244c667",
+          "ts": "2026-08-14T16:07:38+00:00"
+        },
+        "cross/tile_7": {
+          "sha1": "c230513abfc0cbb91e4978a9b793a42b44d11f75",
+          "ts": "2026-08-14T16:07:38+00:00"
+        },
+        "cross/tile_8": {
+          "sha1": "4b212f94586671fcf845aa786699c8c712480b53",
+          "ts": "2026-08-14T16:07:39+00:00"
+        },
+        "cross/tile_9": {
+          "sha1": "1e4924e2e773543ac1d810c35eadd2e807ae637c",
+          "ts": "2026-08-14T16:07:39+00:00"
+        },
+        "cross/tile_10": {
+          "sha1": "74584387b85a29879a6325b5b4752de17b873e9b",
+          "ts": "2026-08-14T16:07:40+00:00"
+        },
+        "cross/tile_11": {
+          "sha1": "6e89a10c0c0564607cfa9b9f7bfc9215870e1a9f",
+          "ts": "2026-08-14T16:07:41+00:00"
+        },
+        "cross/tile_12": {
+          "sha1": "e64821611dc1897d9116c3b50d712d3bba79080d",
+          "ts": "2026-08-14T16:07:41+00:00"
+        },
+        "cross/tile_13": {
+          "sha1": "88cf2d3012db81db09470aff8f8516283c88279f",
+          "ts": "2026-08-14T16:07:41+00:00"
+        },
+        "cross/tile_14": {
+          "sha1": "abafc56aa5f176466d3cddc8997d4f2ede0844b8",
+          "ts": "2026-08-14T16:07:42+00:00"
+        },
+        "cross/tile_15": {
+          "sha1": "6620350e2410129e5f3694e6989559e957e4d77b",
+          "ts": "2026-08-14T16:07:43+00:00"
+        }
+      },
+      "regen_of": null,
+      "completed": "2026-08-14T16:07:02+00:00"
+    },
+    {
+      "job_id": "0ed68dc8-907b-4f9f-ab8d-51adb3a91818",
+      "tool": "create_path_tiles",
+      "targets": "18-tile desert road set",
+      "params_file": "artgen\\staging\\2026-08-14_desert-redo\\raw\\params_paths.json",
+      "params_sha1": "a3c15e42d9bf4679cb207f17ca790a6ce0f32711",
+      "cost": null,
+      "status": "completed",
+      "submitted": "2026-08-14T16:06:50+00:00",
+      "urls": {
+        "paths/tile_0": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_0.png",
+        "paths/tile_1": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_1.png",
+        "paths/tile_2": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_2.png",
+        "paths/tile_3": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_3.png",
+        "paths/tile_4": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_4.png",
+        "paths/tile_5": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_5.png",
+        "paths/tile_6": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_6.png",
+        "paths/tile_7": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_7.png",
+        "paths/tile_8": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_8.png",
+        "paths/tile_9": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_9.png",
+        "paths/tile_10": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_10.png",
+        "paths/tile_11": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_11.png",
+        "paths/tile_12": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_12.png",
+        "paths/tile_13": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_13.png",
+        "paths/tile_14": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_14.png",
+        "paths/tile_15": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_15.png",
+        "paths/tile_16": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_16.png",
+        "paths/tile_17": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/0ed68dc8-907b-4f9f-ab8d-51adb3a91818/tile_17.png"
+      },
+      "downloaded": {
+        "paths/tile_0": {
+          "sha1": "28ba0cfa475db288dcdae8a26a54ef9de08b5dcf",
+          "ts": "2026-08-14T16:07:43+00:00"
+        },
+        "paths/tile_1": {
+          "sha1": "f8b9cd96a5d8397d8eec618a264bdb7a74983ec4",
+          "ts": "2026-08-14T16:07:43+00:00"
+        },
+        "paths/tile_2": {
+          "sha1": "001003dc3b25961e0045c1a90d05b059cbf9f191",
+          "ts": "2026-08-14T16:07:44+00:00"
+        },
+        "paths/tile_3": {
+          "sha1": "859ca5cec1a7438f505e426aac9b36cedb4d0093",
+          "ts": "2026-08-14T16:07:44+00:00"
+        },
+        "paths/tile_4": {
+          "sha1": "e2cc1cc5fa9c4bfe66b24713a56379794840291a",
+          "ts": "2026-08-14T16:07:45+00:00"
+        },
+        "paths/tile_5": {
+          "sha1": "3e82a83ad29873c6059ee6b78534b03c11a5d0e2",
+          "ts": "2026-08-14T16:07:45+00:00"
+        },
+        "paths/tile_6": {
+          "sha1": "81a6ca453c9e9e1077451f7fc9119dc51ba58135",
+          "ts": "2026-08-14T16:07:46+00:00"
+        },
+        "paths/tile_7": {
+          "sha1": "3cea6b39203b2fce40e8c1ab7b2fbea930f048a8",
+          "ts": "2026-08-14T16:07:46+00:00"
+        },
+        "paths/tile_8": {
+          "sha1": "d90a79ceab1151a0a54b1d12cdf639c4f6671c92",
+          "ts": "2026-08-14T16:07:47+00:00"
+        },
+        "paths/tile_9": {
+          "sha1": "89f2ebe6c0ba484312c7b2674b338c80abc68ab6",
+          "ts": "2026-08-14T16:07:47+00:00"
+        },
+        "paths/tile_10": {
+          "sha1": "6e4f897af12e5940475edfcd3f88cd3d6906045a",
+          "ts": "2026-08-14T16:07:48+00:00"
+        },
+        "paths/tile_11": {
+          "sha1": "96ad52f43a23b80897ee69346bcce55073c45d0a",
+          "ts": "2026-08-14T16:07:48+00:00"
+        },
+        "paths/tile_12": {
+          "sha1": "a8e555ed81e302afe8fd0d8749608012eced92ac",
+          "ts": "2026-08-14T16:07:49+00:00"
+        },
+        "paths/tile_13": {
+          "sha1": "bf3064ee54423396b13379036aea2fd9be0668a4",
+          "ts": "2026-08-14T16:07:50+00:00"
+        },
+        "paths/tile_14": {
+          "sha1": "42bb9346c10618dff97dff9fb3c9c7f24fa3414a",
+          "ts": "2026-08-14T16:07:50+00:00"
+        },
+        "paths/tile_15": {
+          "sha1": "275ba455cc55c237004351fe756dfe84d1621106",
+          "ts": "2026-08-14T16:07:51+00:00"
+        },
+        "paths/tile_16": {
+          "sha1": "ca10015b3220eea4f4ac82f55d1f44648bd55e3b",
+          "ts": "2026-08-14T16:07:51+00:00"
+        },
+        "paths/tile_17": {
+          "sha1": "7aefac2e15657c10f1c4770a341acc46095d0b94",
+          "ts": "2026-08-14T16:07:52+00:00"
+        }
+      },
+      "regen_of": null,
+      "completed": "2026-08-14T16:07:02+00:00"
+    },
+    {
+      "job_id": "2714708d-0aa0-4e8a-9667-5fa5ab094808",
+      "tool": "create_tiles_pro",
+      "targets": "REPAIR base slots 4-7 (zone1 base x4) + spare zone0/zone1 bases",
+      "params_file": "artgen\\staging\\2026-08-14_desert-redo\\raw\\params_fix1.json",
+      "params_sha1": "78f2f1e5cab54d5f497cd03cb661629d8b89077e",
+      "cost": null,
+      "status": "completed",
+      "submitted": "2026-08-14T16:25:43+00:00",
+      "urls": {
+        "fix1/tile_0": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/2714708d-0aa0-4e8a-9667-5fa5ab094808/tile_0.png",
+        "fix1/tile_1": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/2714708d-0aa0-4e8a-9667-5fa5ab094808/tile_1.png",
+        "fix1/tile_2": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/2714708d-0aa0-4e8a-9667-5fa5ab094808/tile_2.png",
+        "fix1/tile_3": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/2714708d-0aa0-4e8a-9667-5fa5ab094808/tile_3.png",
+        "fix1/tile_4": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/2714708d-0aa0-4e8a-9667-5fa5ab094808/tile_4.png",
+        "fix1/tile_5": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/2714708d-0aa0-4e8a-9667-5fa5ab094808/tile_5.png"
+      },
+      "downloaded": {
+        "fix1/tile_0": {
+          "sha1": "7d983217f5137b387555cde5f38cd8526b56f202",
+          "ts": "2026-08-14T16:26:01+00:00"
+        },
+        "fix1/tile_1": {
+          "sha1": "30b0e3240725deef09d15ddc1f064e3c009e3057",
+          "ts": "2026-08-14T16:26:02+00:00"
+        },
+        "fix1/tile_2": {
+          "sha1": "7f86939010ea2058d85239a6abb1139d51eb0233",
+          "ts": "2026-08-14T16:26:02+00:00"
+        },
+        "fix1/tile_3": {
+          "sha1": "754abf96152b499987a3d87739cc98bf2edcb61f",
+          "ts": "2026-08-14T16:26:03+00:00"
+        },
+        "fix1/tile_4": {
+          "sha1": "5adfbf9505ddb1248817e5d0979f8b5786ed3fdd",
+          "ts": "2026-08-14T16:26:04+00:00"
+        },
+        "fix1/tile_5": {
+          "sha1": "ddbae4732f032b8431be736126f1ed40f733db45",
+          "ts": "2026-08-14T16:26:04+00:00"
+        }
+      },
+      "regen_of": "7f8d0504-c27b-4f86-9a3e-5f7db6efca09",
+      "completed": "2026-08-14T16:25:55+00:00"
+    },
+    {
+      "job_id": "98e8044c-74dd-4a51-ae7a-6fd76fd52c8b",
+      "tool": "create_tiles_pro",
+      "targets": "REPAIR base slots 16,17 (zone2 accents) + slot 3 replacement + spares",
+      "params_file": "artgen\\staging\\2026-08-14_desert-redo\\raw\\params_fix2.json",
+      "params_sha1": "ada165e4a9e3e4944d1b67b2fe6ac490d60465fe",
+      "cost": null,
+      "status": "completed",
+      "submitted": "2026-08-14T16:25:43+00:00",
+      "urls": {
+        "fix2/tile_0": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/98e8044c-74dd-4a51-ae7a-6fd76fd52c8b/tile_0.png",
+        "fix2/tile_1": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/98e8044c-74dd-4a51-ae7a-6fd76fd52c8b/tile_1.png",
+        "fix2/tile_2": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/98e8044c-74dd-4a51-ae7a-6fd76fd52c8b/tile_2.png",
+        "fix2/tile_3": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/98e8044c-74dd-4a51-ae7a-6fd76fd52c8b/tile_3.png",
+        "fix2/tile_4": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/98e8044c-74dd-4a51-ae7a-6fd76fd52c8b/tile_4.png",
+        "fix2/tile_5": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/98e8044c-74dd-4a51-ae7a-6fd76fd52c8b/tile_5.png"
+      },
+      "downloaded": {
+        "fix2/tile_0": {
+          "sha1": "b8a1ffd1c6f1c86de4d97b5c4f235770788a003f",
+          "ts": "2026-08-14T16:26:04+00:00"
+        },
+        "fix2/tile_1": {
+          "sha1": "2ceef42e99fac6d3315460d935b5d1578bdcea14",
+          "ts": "2026-08-14T16:26:05+00:00"
+        },
+        "fix2/tile_2": {
+          "sha1": "226713d23589f64135cb911127dd4717bb4895af",
+          "ts": "2026-08-14T16:26:05+00:00"
+        },
+        "fix2/tile_3": {
+          "sha1": "d67700695f954b7409f2e40eec148e59cfdae03e",
+          "ts": "2026-08-14T16:26:06+00:00"
+        },
+        "fix2/tile_4": {
+          "sha1": "c276647ebf046f3c38a42db63e627f7a84918df6",
+          "ts": "2026-08-14T16:26:07+00:00"
+        },
+        "fix2/tile_5": {
+          "sha1": "f5d702fd8c52be1e9abf5f463747aae2617a800d",
+          "ts": "2026-08-14T16:26:07+00:00"
+        }
+      },
+      "regen_of": "9f2929bf-d28c-4425-adb0-7236d62d7668",
+      "completed": "2026-08-14T16:25:55+00:00"
+    },
+    {
+      "job_id": "3ebebe2d-c02c-40cf-9b9e-39a9029d1463",
+      "tool": "create_tiles_pro",
+      "targets": "REGEN 16-tile corner set zone1<->zone2",
+      "params_file": "artgen\\staging\\2026-08-14_desert-redo\\raw\\params_trans12b.json",
+      "params_sha1": "937df8f9eba10abe5c0152cb0e42616dde61a789",
+      "cost": null,
+      "status": "completed",
+      "submitted": "2026-08-14T16:25:43+00:00",
+      "urls": {
+        "trans12b/tile_0": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_0.png",
+        "trans12b/tile_1": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_1.png",
+        "trans12b/tile_2": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_2.png",
+        "trans12b/tile_3": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_3.png",
+        "trans12b/tile_4": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_4.png",
+        "trans12b/tile_5": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_5.png",
+        "trans12b/tile_6": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_6.png",
+        "trans12b/tile_7": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_7.png",
+        "trans12b/tile_8": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_8.png",
+        "trans12b/tile_9": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_9.png",
+        "trans12b/tile_10": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_10.png",
+        "trans12b/tile_11": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_11.png",
+        "trans12b/tile_12": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_12.png",
+        "trans12b/tile_13": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_13.png",
+        "trans12b/tile_14": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_14.png",
+        "trans12b/tile_15": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/3ebebe2d-c02c-40cf-9b9e-39a9029d1463/tile_15.png"
+      },
+      "downloaded": {
+        "trans12b/tile_0": {
+          "sha1": "324f2dc5e81ee200d09f27f142530f26132ad431",
+          "ts": "2026-08-14T16:26:07+00:00"
+        },
+        "trans12b/tile_1": {
+          "sha1": "e6bbb41b5366228cd8df14af77af254066eed12b",
+          "ts": "2026-08-14T16:26:08+00:00"
+        },
+        "trans12b/tile_2": {
+          "sha1": "6a09a78ab0001fc5ff35f40b59d1d7243708e876",
+          "ts": "2026-08-14T16:26:08+00:00"
+        },
+        "trans12b/tile_3": {
+          "sha1": "fbb815940e7f79bea3eb48cde96e61dfe2d9f7ec",
+          "ts": "2026-08-14T16:26:09+00:00"
+        },
+        "trans12b/tile_4": {
+          "sha1": "4a66880e1e938e68af1b91cdeb712f79298c9a86",
+          "ts": "2026-08-14T16:26:09+00:00"
+        },
+        "trans12b/tile_5": {
+          "sha1": "b893f261ed565168eec60946d3b00c2671bebd8c",
+          "ts": "2026-08-14T16:26:10+00:00"
+        },
+        "trans12b/tile_6": {
+          "sha1": "16d6acce10a0c8dcb96c928a492f0396b73ec201",
+          "ts": "2026-08-14T16:26:10+00:00"
+        },
+        "trans12b/tile_7": {
+          "sha1": "f03a57d8545a9e516a0a5067ba39d9e7c9d7fdb3",
+          "ts": "2026-08-14T16:26:11+00:00"
+        },
+        "trans12b/tile_8": {
+          "sha1": "dbd24312cec3c70955ffcf0614a16cb74c849255",
+          "ts": "2026-08-14T16:26:11+00:00"
+        },
+        "trans12b/tile_9": {
+          "sha1": "c8a490870ea1313b177b2f7eb2b570558404e4e3",
+          "ts": "2026-08-14T16:26:12+00:00"
+        },
+        "trans12b/tile_10": {
+          "sha1": "d208f60288c331395f746cdcc0a0f73ff2b5ee91",
+          "ts": "2026-08-14T16:26:12+00:00"
+        },
+        "trans12b/tile_11": {
+          "sha1": "a89dc0fa11d09c09896d1b74ae1fcbd802eb67f1",
+          "ts": "2026-08-14T16:26:13+00:00"
+        },
+        "trans12b/tile_12": {
+          "sha1": "10c8bbbee96fa91b1625d28e3f8fb39cefaf69fe",
+          "ts": "2026-08-14T16:26:13+00:00"
+        },
+        "trans12b/tile_13": {
+          "sha1": "d8de327759c3fad1d4d1956a47894416fdd51dfd",
+          "ts": "2026-08-14T16:26:14+00:00"
+        },
+        "trans12b/tile_14": {
+          "sha1": "9ac87341b3f4761c40004b3721f4959db3d90894",
+          "ts": "2026-08-14T16:26:14+00:00"
+        },
+        "trans12b/tile_15": {
+          "sha1": "2d193d9ff30ba996897066b1f564d0f489ad3271",
+          "ts": "2026-08-14T16:26:14+00:00"
+        }
+      },
+      "regen_of": "1dacb511-bfa0-437f-9e9e-e6804944a511",
+      "completed": "2026-08-14T16:25:55+00:00"
+    },
+    {
+      "job_id": "145f940e-4bc5-4f20-82c6-24653e6db64b",
+      "tool": "create_tiles_pro",
+      "targets": "REGEN 16-tile corner set desert<->compound",
+      "params_file": "artgen\\staging\\2026-08-14_desert-redo\\raw\\params_crossb.json",
+      "params_sha1": "9c7c6474e8ce3bf1211f4b917c65ff599f2e49af",
+      "cost": null,
+      "status": "completed",
+      "submitted": "2026-08-14T16:25:43+00:00",
+      "urls": {
+        "crossb/tile_0": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_0.png",
+        "crossb/tile_1": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_1.png",
+        "crossb/tile_2": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_2.png",
+        "crossb/tile_3": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_3.png",
+        "crossb/tile_4": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_4.png",
+        "crossb/tile_5": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_5.png",
+        "crossb/tile_6": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_6.png",
+        "crossb/tile_7": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_7.png",
+        "crossb/tile_8": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_8.png",
+        "crossb/tile_9": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_9.png",
+        "crossb/tile_10": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_10.png",
+        "crossb/tile_11": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_11.png",
+        "crossb/tile_12": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_12.png",
+        "crossb/tile_13": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_13.png",
+        "crossb/tile_14": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_14.png",
+        "crossb/tile_15": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/145f940e-4bc5-4f20-82c6-24653e6db64b/tile_15.png"
+      },
+      "downloaded": {
+        "crossb/tile_0": {
+          "sha1": "36b449d0cd002611fce13b6a09a5a66ffd947927",
+          "ts": "2026-08-14T16:26:15+00:00"
+        },
+        "crossb/tile_1": {
+          "sha1": "5dcb094c97c47a2738f0b2ccc94c3cde3c707894",
+          "ts": "2026-08-14T16:26:15+00:00"
+        },
+        "crossb/tile_2": {
+          "sha1": "ce98abfc8b326af72fb94a087aae2e2d2387282e",
+          "ts": "2026-08-14T16:26:16+00:00"
+        },
+        "crossb/tile_3": {
+          "sha1": "5883affd8d7dd8390c2d9b28e8a19c2269c0c327",
+          "ts": "2026-08-14T16:26:16+00:00"
+        },
+        "crossb/tile_4": {
+          "sha1": "7637f7a684a75506330185e6151bdcdc5c4a7fd0",
+          "ts": "2026-08-14T16:26:17+00:00"
+        },
+        "crossb/tile_5": {
+          "sha1": "15e9bc3e6d7696585c42251591b1357468216aa8",
+          "ts": "2026-08-14T16:26:17+00:00"
+        },
+        "crossb/tile_6": {
+          "sha1": "d8873f650ac6ff1659e8d8be2b6cd3d361d29efd",
+          "ts": "2026-08-14T16:26:18+00:00"
+        },
+        "crossb/tile_7": {
+          "sha1": "06562118c42f682cdbf21b7d44928dd532cae51f",
+          "ts": "2026-08-14T16:26:18+00:00"
+        },
+        "crossb/tile_8": {
+          "sha1": "807446618b4cbd80390d608ebfa6b329dc9a9611",
+          "ts": "2026-08-14T16:26:19+00:00"
+        },
+        "crossb/tile_9": {
+          "sha1": "a6660a40c57a0555b1c5be669a281da6e3306f31",
+          "ts": "2026-08-14T16:26:19+00:00"
+        },
+        "crossb/tile_10": {
+          "sha1": "449198d896b225b14d8be9ab3eb485320451de29",
+          "ts": "2026-08-14T16:26:20+00:00"
+        },
+        "crossb/tile_11": {
+          "sha1": "84f0691ee1fd8ef3b27b4a45f1bfc07a8c3be485",
+          "ts": "2026-08-14T16:26:20+00:00"
+        },
+        "crossb/tile_12": {
+          "sha1": "0d7afbcaa41f3fed65521040e866f210cc0546da",
+          "ts": "2026-08-14T16:26:21+00:00"
+        },
+        "crossb/tile_13": {
+          "sha1": "2b39fe4cb65f3889d75f741064c7772b9c5a27f4",
+          "ts": "2026-08-14T16:26:21+00:00"
+        },
+        "crossb/tile_14": {
+          "sha1": "6a0983f3b7fddc7ab27d827d268e97bd00319136",
+          "ts": "2026-08-14T16:26:22+00:00"
+        },
+        "crossb/tile_15": {
+          "sha1": "e54a44542b0bbcfbe9ff2ba0e00acfb18b9567e4",
+          "ts": "2026-08-14T16:26:23+00:00"
+        }
+      },
+      "regen_of": "4fc84c45-a197-459d-a1f3-cdef4e3b2622",
+      "completed": "2026-08-14T16:25:56+00:00"
+    },
+    {
+      "job_id": "f9426fe8-f206-481c-9bce-250e233548af",
+      "tool": "create_path_tiles",
+      "targets": "road: verified pre-existing record adopted (replaces rejected 0ed68dc8)",
+      "params_file": "artgen\\staging\\2026-08-14_desert-redo\\raw\\params_roadv.json",
+      "params_sha1": "7528beb0a60dd8dcf8420ed5bd894cf823173fed",
+      "cost": 0,
+      "status": "completed",
+      "submitted": "2026-08-14T16:25:44+00:00",
+      "urls": {
+        "roadv/tile_0": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_0.png",
+        "roadv/tile_1": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_1.png",
+        "roadv/tile_2": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_2.png",
+        "roadv/tile_3": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_3.png",
+        "roadv/tile_4": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_4.png",
+        "roadv/tile_5": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_5.png",
+        "roadv/tile_6": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_6.png",
+        "roadv/tile_7": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_7.png",
+        "roadv/tile_8": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_8.png",
+        "roadv/tile_9": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_9.png",
+        "roadv/tile_10": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_10.png",
+        "roadv/tile_11": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_11.png",
+        "roadv/tile_12": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_12.png",
+        "roadv/tile_13": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_13.png",
+        "roadv/tile_14": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_14.png",
+        "roadv/tile_15": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_15.png",
+        "roadv/tile_16": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_16.png",
+        "roadv/tile_17": "https://backblaze.pixellab.ai/file/pixellab-tiles/e75ac9ba-19dc-4044-8950-6fa8bd931830/f9426fe8-f206-481c-9bce-250e233548af/tile_17.png"
+      },
+      "downloaded": {
+        "roadv/tile_0": {
+          "sha1": "833662c8b191b5d6198c4c3a7ee4657afb1df600",
+          "ts": "2026-08-14T16:26:23+00:00"
+        },
+        "roadv/tile_1": {
+          "sha1": "61fc50d711cbeb7a8855cf2560acf99bbdad5455",
+          "ts": "2026-08-14T16:26:23+00:00"
+        },
+        "roadv/tile_2": {
+          "sha1": "f8551d2e714566b8c286abf14740a9fc02d72e23",
+          "ts": "2026-08-14T16:26:23+00:00"
+        },
+        "roadv/tile_3": {
+          "sha1": "8268411d5478d62317f802110a2f37bd66194ab5",
+          "ts": "2026-08-14T16:26:23+00:00"
+        },
+        "roadv/tile_4": {
+          "sha1": "9d4537579b19b94f19b57abb4c800b583507a777",
+          "ts": "2026-08-14T16:26:23+00:00"
+        },
+        "roadv/tile_5": {
+          "sha1": "65e6efa0ae6a75f73a5e5a7fa91eb6097fe0e240",
+          "ts": "2026-08-14T16:26:23+00:00"
+        },
+        "roadv/tile_6": {
+          "sha1": "609bd504b847d11bf2235a56b0104c9b3c95c815",
+          "ts": "2026-08-14T16:26:23+00:00"
+        },
+        "roadv/tile_7": {
+          "sha1": "b97730b46dd8cca4657c9dc01a2735f1946e8dcd",
+          "ts": "2026-08-14T16:26:23+00:00"
+        },
+        "roadv/tile_8": {
+          "sha1": "061e75101610dc656b339ea6a0159cd9991e0170",
+          "ts": "2026-08-14T16:26:24+00:00"
+        },
+        "roadv/tile_9": {
+          "sha1": "dba7ad41540f26be09b00c72e05a3c6f01478c8b",
+          "ts": "2026-08-14T16:26:24+00:00"
+        },
+        "roadv/tile_10": {
+          "sha1": "5598d45ac21ecd68ff35d00c0a0efb28c346ce32",
+          "ts": "2026-08-14T16:26:24+00:00"
+        },
+        "roadv/tile_11": {
+          "sha1": "f16e981023b4b2193e2efc4c70ae945bf127fa36",
+          "ts": "2026-08-14T16:26:24+00:00"
+        },
+        "roadv/tile_12": {
+          "sha1": "a74493ef6b4e09a1f46b8727549e6d14e1487e0f",
+          "ts": "2026-08-14T16:26:24+00:00"
+        },
+        "roadv/tile_13": {
+          "sha1": "01af35e15da8db52f3c90219a90b894430579808",
+          "ts": "2026-08-14T16:26:24+00:00"
+        },
+        "roadv/tile_14": {
+          "sha1": "a4ee7ce623ea00e489092f9687e1f52f0c75d743",
+          "ts": "2026-08-14T16:26:24+00:00"
+        },
+        "roadv/tile_15": {
+          "sha1": "f481077b873fd0e598e1138ebb26adb970e15f6c",
+          "ts": "2026-08-14T16:26:24+00:00"
+        },
+        "roadv/tile_16": {
+          "sha1": "3359b40b830fc72f043695d07a8afb49ab2cbd52",
+          "ts": "2026-08-14T16:26:24+00:00"
+        },
+        "roadv/tile_17": {
+          "sha1": "23c3960df598c128a824d40751d27787ab805c8e",
+          "ts": "2026-08-14T16:26:24+00:00"
+        }
+      },
+      "regen_of": "0ed68dc8-907b-4f9f-ab8d-51adb3a91818",
+      "completed": "2026-08-14T16:25:56+00:00"
+    }
+  ],
+  "validation": {
+    "pass": true,
+    "report": "ALL FIVE SHEETS PASS gate mode. Cracked_Desert_floor (full 18-slot): rim 1.072, seam 0.93x, spread 0.0418, midtone 0.586, palette 96, structure 0. Desert_transitions_01 (unchanged, accepted): rim 1.035, class dev 0.0007. Desert_transitions_12 (REGEN 3ebebe2d adopted wholesale, 16/16 corners verified; anchors re-measured zone1 0.5791/zone2 0.5575): rim 1.067, class dev 0.0014, dark_ridge 483 WARN (boundary crack seams, cf. playbook). Desert_to_compound (cherry-pick: accepted 4fc84c45 tiles + 145f940e tiles 6,7; 16/16 corners verified): rim 1.033, class dev 0.0009. Desert_road (VERIFIED record f9426fe8 replacing rejected 0ed68dc8; posted --biome desert after own-mean run hit midtone 0.662 FAIL; old-style art raw mean 0.646 = +0.071 vs new floor): rim 1.061, midtone 0.591. REVIEW STATE: base slots 0-2,8-15 accept per coordinator; slots 3,4-7,16,17 + rebuilt trans12/cross/road sheets await coordinator re-review. trans01 upper anchor (zone1 proxy 0.575) is 0.0041 below measured zone1 0.5791 - within class tol, left untouched. Corner mapping unchanged and re-verified on both regen sets.",
+    "ts": "2026-08-14T16:30:21+00:00"
+  },
+  "review": {
+    "slots": {
+      "0": {
+        "verdict": "accept",
+        "reason": "coordinator review: zone0 base accepted",
+        "job_id": "7f8d0504-c27b-4f86-9a3e-5f7db6efca09",
+        "ts": "2026-08-14T16:30:19+00:00"
+      },
+      "1": {
+        "verdict": "accept",
+        "reason": "coordinator review: zone0 base accepted",
+        "job_id": "7f8d0504-c27b-4f86-9a3e-5f7db6efca09",
+        "ts": "2026-08-14T16:30:19+00:00"
+      },
+      "2": {
+        "verdict": "accept",
+        "reason": "coordinator review: zone0 base accepted",
+        "job_id": "7f8d0504-c27b-4f86-9a3e-5f7db6efca09",
+        "ts": "2026-08-14T16:30:20+00:00"
+      },
+      "12": {
+        "verdict": "accept",
+        "reason": "coordinator review: zone0 accent accepted",
+        "job_id": "7f8d0504-c27b-4f86-9a3e-5f7db6efca09",
+        "ts": "2026-08-14T16:30:20+00:00"
+      },
+      "13": {
+        "verdict": "accept",
+        "reason": "coordinator review: zone0 accent accepted",
+        "job_id": "7f8d0504-c27b-4f86-9a3e-5f7db6efca09",
+        "ts": "2026-08-14T16:30:20+00:00"
+      },
+      "8": {
+        "verdict": "accept",
+        "reason": "coordinator review: zone2 base accepted",
+        "job_id": "9f2929bf-d28c-4425-adb0-7236d62d7668",
+        "ts": "2026-08-14T16:30:20+00:00"
+      },
+      "9": {
+        "verdict": "accept",
+        "reason": "coordinator review: zone2 base accepted",
+        "job_id": "9f2929bf-d28c-4425-adb0-7236d62d7668",
+        "ts": "2026-08-14T16:30:20+00:00"
+      },
+      "10": {
+        "verdict": "accept",
+        "reason": "coordinator review: zone2 base accepted",
+        "job_id": "9f2929bf-d28c-4425-adb0-7236d62d7668",
+        "ts": "2026-08-14T16:30:20+00:00"
+      },
+      "11": {
+        "verdict": "accept",
+        "reason": "coordinator review: zone2 base accepted",
+        "job_id": "9f2929bf-d28c-4425-adb0-7236d62d7668",
+        "ts": "2026-08-14T16:30:21+00:00"
+      },
+      "14": {
+        "verdict": "accept",
+        "reason": "coordinator review: zone1 accent accepted",
+        "job_id": "9f2929bf-d28c-4425-adb0-7236d62d7668",
+        "ts": "2026-08-14T16:30:21+00:00"
+      },
+      "15": {
+        "verdict": "accept",
+        "reason": "coordinator review: zone1 accent accepted",
+        "job_id": "9f2929bf-d28c-4425-adb0-7236d62d7668",
+        "ts": "2026-08-14T16:30:21+00:00"
+      },
+      "3": {
+        "verdict": "accept",
+        "reason": "wind-scour replacement, warm-pale, clean edges",
+        "job_id": "98e8044c-74dd-4a51-ae7a-6fd76fd52c8b",
+        "ts": "2026-08-14T16:35:12+00:00"
+      },
+      "4": {
+        "verdict": "accept",
+        "reason": "zone1 bases from repair job, match zone family",
+        "job_id": "2714708d-0aa0-4e8a-9667-5fa5ab094808",
+        "ts": "2026-08-14T16:35:12+00:00"
+      },
+      "5": {
+        "verdict": "accept",
+        "reason": "zone1 bases from repair job, match zone family",
+        "job_id": "2714708d-0aa0-4e8a-9667-5fa5ab094808",
+        "ts": "2026-08-14T16:35:13+00:00"
+      },
+      "6": {
+        "verdict": "accept",
+        "reason": "zone1 bases from repair job, match zone family",
+        "job_id": "2714708d-0aa0-4e8a-9667-5fa5ab094808",
+        "ts": "2026-08-14T16:35:13+00:00"
+      },
+      "7": {
+        "verdict": "accept",
+        "reason": "zone1 bases from repair job, match zone family",
+        "job_id": "2714708d-0aa0-4e8a-9667-5fa5ab094808",
+        "ts": "2026-08-14T16:35:13+00:00"
+      },
+      "16": {
+        "verdict": "accept",
+        "reason": "zone2 accents from repair job, centred and legible",
+        "job_id": "98e8044c-74dd-4a51-ae7a-6fd76fd52c8b",
+        "ts": "2026-08-14T16:35:13+00:00"
+      },
+      "17": {
+        "verdict": "accept",
+        "reason": "zone2 accents from repair job, centred and legible",
+        "job_id": "98e8044c-74dd-4a51-ae7a-6fd76fd52c8b",
+        "ts": "2026-08-14T16:35:13+00:00"
+      }
+    }
+  },
+  "promoted": {
+    "to": "assets\\Tiles\\Environments\\Desert",
+    "ts": "2026-08-14T16:36:47+00:00"
+  }
+}

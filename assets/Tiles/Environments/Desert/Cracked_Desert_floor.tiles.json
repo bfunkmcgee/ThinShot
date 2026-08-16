@@ -1,0 +1,980 @@
+{
+  "sheet": "Cracked_Desert_floor.png",
+  "tile_size": [
+    128,
+    60
+  ],
+  "slots": [
+    {
+      "rect": [
+        0,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        421,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        421,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        421,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        421,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        550,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        550,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    }
+  ],
+  "sets": [
+    {
+      "lower": "zone0",
+      "upper": "zone1",
+      "sheet": "res://assets/Tiles/Environments/Desert/Desert_transitions_01.png",
+      "tiles": [
+        {
+          "rect": [
+            0,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        }
+      ]
+    },
+    {
+      "lower": "zone1",
+      "upper": "zone2",
+      "sheet": "res://assets/Tiles/Environments/Desert/Desert_transitions_12.png",
+      "tiles": [
+        {
+          "rect": [
+            0,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        }
+      ]
+    },
+    {
+      "lower": "desert",
+      "upper": "compound",
+      "sheet": "res://assets/Tiles/Environments/Desert/Desert_to_compound.png",
+      "tiles": [
+        {
+          "rect": [
+            0,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            129,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            258,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            387,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            0,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            129,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            258,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            387,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            0,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            129,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            258,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            387,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            0,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            129,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            258,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            387,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        }
+      ]
+    }
+  ],
+  "provenance": {
+    "batch": "2026-08-14_desert-redo",
+    "job_ids": [
+      "7f8d0504-c27b-4f86-9a3e-5f7db6efca09",
+      "9f2929bf-d28c-4425-adb0-7236d62d7668",
+      "2714708d-0aa0-4e8a-9667-5fa5ab094808",
+      "98e8044c-74dd-4a51-ae7a-6fd76fd52c8b"
+    ],
+    "seed": 101,
+    "style_hash": "9749f0d1281a90947170e5daf0e454d446ad37c9",
+    "merged_sets": {
+      "note": "transition sets merged from standalone post/ sidecars on 2026-08-14 (tiles arrays copied verbatim; per-set sheet points at promoted res:// path)",
+      "sources": {
+        "Desert_transitions_01.png": {
+          "sidecar": "Desert_transitions_01.tiles.json",
+          "job_ids": [
+            "280a1c45-34f4-43d3-8c4e-d30de60f97cb"
+          ],
+          "seed": 201
+        },
+        "Desert_transitions_12.png": {
+          "sidecar": "Desert_transitions_12.tiles.json",
+          "job_ids": [
+            "3ebebe2d-c02c-40cf-9b9e-39a9029d1463"
+          ],
+          "seed": 1202
+        },
+        "Desert_to_compound.png": {
+          "sidecar": "Desert_to_compound.tiles.json",
+          "job_ids": [
+            "4fc84c45-a197-459d-a1f3-cdef4e3b2622",
+            "145f940e-4bc5-4f20-82c6-24653e6db64b"
+          ],
+          "seed": 205
+        }
+      }
+    }
+  },
+  "metrics": {
+    "slot_mean_lum": [
+      0.5841,
+      0.5843,
+      0.5825,
+      0.5822,
+      0.5859,
+      0.5782,
+      0.5769,
+      0.5755,
+      0.5606,
+      0.5572,
+      0.5602,
+      0.5522,
+      0.5807,
+      0.5821,
+      0.5794,
+      0.5743,
+      0.5727,
+      0.5441
+    ]
+  }
+}

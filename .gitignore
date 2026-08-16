@@ -24,3 +24,11 @@ data_*/
 .DS_Store
 Thumbs.db
 *.swp
+
+# Python bytecode from tools/
+__pycache__/
+
+artgen/staging/
+
+# Local Claude Code permissions stay per-machine
+.claude/settings.local.json

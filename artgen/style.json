@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "diamond_mask": "artgen/reference/diamond_mask.png",
+  "tile": { "w": 128, "h": 60, "gen": 128, "stride": 129 },
+  "sheet_grid": { "cols": 4, "rows": 5, "rows_y": [34, 163, 292, 421, 550] },
+  "thresholds": {
+    "seam_ratio_max": 1.5,
+    "rim_ratio_min": 0.90,
+    "rim_ratio_max": 1.10,
+    "lum_spread_max": 0.08,
+    "transition_class_tol": 0.03,
+    "palette_per_tile_max": 96,
+    "midtone_min": 0.35,
+    "midtone_max": 0.65
+  },
+  "post": {
+    "rim_fill_band_px": 3,
+    "rim_fill_interior_px": 4,
+    "edge_band_px": 6,
+    "edge_band_max_blend": 0.35,
+    "keep_deviation": 0.15,
+    "zoom_crop_scale": 1.08,
+    "symmetric_centroid_max_px": 2.0
+  },
+  "biomes": {
+    "desert":   { "lum_mean": 0.575, "seed": 101 },
+    "salt":     { "lum_mean": 0.601, "seed": 102 },
+    "ash":      { "lum_mean": 0.400, "desat": 0.45, "seed": 103 },
+    "compound": { "lum_mean": 0.548, "seed": 104 }
+  }
+}

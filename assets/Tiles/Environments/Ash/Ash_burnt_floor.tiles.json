@@ -1,0 +1,746 @@
+{
+  "sheet": "Ash_burnt_floor.png",
+  "tile_size": [
+    128,
+    60
+  ],
+  "slots": [
+    {
+      "rect": [
+        0,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        34,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        163,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        292,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "base",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        421,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        421,
+        128,
+        60
+      ],
+      "zone": 0,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        258,
+        421,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        387,
+        421,
+        128,
+        60
+      ],
+      "zone": 1,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        0,
+        550,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    },
+    {
+      "rect": [
+        129,
+        550,
+        128,
+        60
+      ],
+      "zone": 2,
+      "role": "accent",
+      "symmetric": true,
+      "tall": false
+    }
+  ],
+  "sets": [
+    {
+      "lower": "zone0",
+      "upper": "zone1",
+      "sheet": "res://assets/Tiles/Environments/Ash/Ash_transitions_01.png",
+      "tiles": [
+        {
+          "rect": [
+            0,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        }
+      ]
+    },
+    {
+      "lower": "zone1",
+      "upper": "zone2",
+      "sheet": "res://assets/Tiles/Environments/Ash/Ash_transitions_12.png",
+      "tiles": [
+        {
+          "rect": [
+            0,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            34,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            163,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "upper",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            292,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "upper",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            0,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            129,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "upper",
+            "bottom": "lower"
+          }
+        },
+        {
+          "rect": [
+            258,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "upper"
+          }
+        },
+        {
+          "rect": [
+            387,
+            421,
+            128,
+            60
+          ],
+          "corners": {
+            "top": "lower",
+            "right": "lower",
+            "left": "lower",
+            "bottom": "lower"
+          }
+        }
+      ]
+    }
+  ],
+  "provenance": {
+    "batch": "2026-08-14_ash-redo",
+    "job_ids": [
+      "b7bfe8ae-311d-47cb-8180-6150b9dcabef",
+      "aee25e6b-c294-40ba-b0d4-0fc893488867",
+      "eb2a41c0-abdb-4e25-bf23-dc74024d827b",
+      "46bc609b-ad2c-46fb-bc9e-27a52179a0b0"
+    ],
+    "seed": 103,
+    "style_hash": "2ae80721d5ed0f3ffd5576abfcf36fd749fef922",
+    "merged_sets": {
+      "note": "transition sets merged from standalone work/ sidecars on 2026-08-14 REPAIR pass (tiles arrays copied verbatim; per-set sheet points at promoted res:// path); per-corner-class anchors re-measured from the FINISHED repaired base sheet (zone0 0.4100, zone1 0.3998, zone2 0.4042). trans12 raws = cherry-pick: original 5c499556 set for all masks except 3; mask 3 synthesized as horizontal mirror of accepted tile_5 (mask 5 L-R flip = mask 3) because both 5c499556 and regen 671b8181 returned pure-char art at tile_3; 671b8181 (seed 1207) REJECTED wholesale: pure-tile dupes (t0/7/13/15 all crust-plates, no char reference), flat untextured washes (t1/4/12), terrain style drift. tile_7 top corner kept from 5c499556: crust present as dark cracks without pink - accepted weak.",
+      "sources": {
+        "Ash_transitions_01.png": {
+          "sidecar": "Ash_transitions_01.tiles.json",
+          "job_ids": [
+            "83e7282c-cdc4-4ce9-97f7-ed121bf4db43"
+          ],
+          "seed": 206
+        },
+        "Ash_transitions_12.png": {
+          "sidecar": "Ash_transitions_12.tiles.json",
+          "job_ids": [
+            "5c499556-0b26-4d12-b562-13ed624dc1db"
+          ],
+          "seed": 207
+        }
+      }
+    },
+    "repairs": {
+      "note": "slots 4,5,7,8,9,11 re-posted single-slot with --zoom-crop 1.08 (pale baked edge-highlight wider than the 3px rim-fill band on zoneB/zoneC raws); rim worst 1.207 -> 1.100. metrics.slot_mean_lum refreshed from the repaired sheet.",
+      "ts": "2026-08-14",
+      "second_pass": "2026-08-14 repair batch (job 46bc609b, seed 1105): slot 7 <- zoneBfix/tile_2 plain (lighting violation fixed: centroid 2.2px down-right -> 0.1px neutral; rim 1.0962 -> ~1.013); slot 4 <- zoneBfix/tile_3 --zoom-crop (rim 1.1004 hairline deviation -> ~1.05, deviation cleared); slot 15 <- zoneBfix/tile_5 plain (bone accent legibility, clear improvement; metrics equal or better); slot 14 kept (alternate branch no clear improvement); zoneBfix/tile_0,1 unused (t0 marginal rim gain, t1 rim 1.29). slot_mean_lum + symmetric flags refreshed; zone anchors re-measured: zone0 0.4100 zone1 0.3998 zone2 0.4042"
+    }
+  },
+  "metrics": {
+    "slot_mean_lum": [
+      0.4102,
+      0.4148,
+      0.4055,
+      0.4096,
+      0.3999,
+      0.4111,
+      0.3875,
+      0.4006,
+      0.4206,
+      0.4059,
+      0.3816,
+      0.4088,
+      0.4098,
+      0.4128,
+      0.3802,
+      0.4109,
+      0.3951,
+      0.3891
+    ]
+  }
+}
