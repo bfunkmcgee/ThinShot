@@ -5,7 +5,7 @@ extends SceneTree
 ## wall placed where the rule needs a wall, rather than whichever rock a
 ## shipped level happens to have near a spawn.
 ##
-## Seven things are checked, and they are the seven the game rests on:
+## Eight things are checked, and they are the ones the game rests on:
 ##   1. flanking and cover are mutually exclusive - a flanked target has NONE,
 ##      takes the flank bonus, and does NOT also charge the full-cover penalty
 ##   2. the long-shot threshold is `attack_range / 2` in INTEGER division, so a
@@ -16,6 +16,10 @@ extends SceneTree
 ##   6. peek_origin leans around the END of a wall run and not around its MIDDLE
 ##   7. the promise equals the round: shot_preview and damage_for return the
 ##      same number over every combination of flank, cover, perk and bonus
+##   8. cover_at and effective_cover are one rule: swept over every cell,
+##      shooter, facing and arc width, and against the spelling effective_cover
+##      had before it was decomposed - so the AI, which can only ask the
+##      cell-and-facing form, is scoring what the resolver will apply
 ##
 ## Nothing here needs a scene, a save, or a turn. Board's spatial predicates run
 ## on a detached `Board.new()` (tools/check_cover_rules.gd sweeps all seven maps
@@ -77,6 +81,13 @@ func _flanking(a: Node2D, t: Node2D) -> bool:
 
 func _cover(board: Board, a: Node2D, t: Node2D) -> int:
 	return _rules.call("effective_cover", board, a, t)
+
+
+## The same rule with no units in it - a cell, a facing, an arc, and where the
+## shot comes from. The AI scores candidate cells through this one.
+func _cover_at(board: Board, cell: Vector2i, facing_sector: int, arc_half: int,
+		from_cell: Vector2i) -> int:
+	return _rules.call("cover_at", board, cell, facing_sector, arc_half, from_cell)
 
 
 func _peeking(board: Board, a: Node2D, t: Node2D) -> bool:
@@ -177,6 +188,76 @@ func _sweep_exclusive(board: Board, label: String) -> void:
 	shooter.free()
 
 
+## The spelling `effective_cover` had before it was decomposed, with
+## `covers_sector`'s body written out in place so this depends on neither of the
+## two statics the decomposition introduced. Kept for the same reason
+## `_old_resolver_order` is kept: "expressing the rule through cover_at moved no
+## number" is a claim, and only a sweep that finds no daylight is a proof.
+func _old_effective_cover(board: Board, a: Node2D, t: Node2D) -> int:
+	var sector := Board.sector_from_to(t.cell, a.cell)
+	var in_arc: bool = sector < 0 \
+			or absi(wrapi(sector - int(t.facing_sector) + 4, 0, 8) - 4) <= int(t.arc_half)
+	if not in_arc:
+		return Board.CoverLevel.NONE
+	return board.cover_between(a.cell, t.cell)
+
+
+## The decomposition, proved. `Rules.effective_cover` is now a single call to
+## `Rules.cover_at` with a live target's own cell, facing and arc, which is what
+## lets the AI ask the identical question about a cell it has not moved to yet.
+## Three answers are compared at every combination of target cell, shooter cell,
+## facing and arc width the board admits: the historical spelling above, the
+## current `effective_cover`, and `cover_at` called with the target's numbers by
+## hand. All three must agree everywhere.
+##
+## Arc widths run 0..4 rather than only the two the game issues (1, and 2 for a
+## Sentinel), because `cover_at` takes the width as an argument and a caller is
+## free to hand it any of them - 0 is a single sector, 4 is the whole circle and
+## means cover always applies.
+func _sweep_cover_at(board: Board, label: String) -> void:
+	var target: Node2D = _mk(KIND_SCOUT, Vector2i.ZERO)
+	var shooter: Node2D = _mk(KIND_SCOUT, Vector2i.ZERO)
+	var combos := 0
+	var with_cover := 0
+	var drift_live := 0   # cover_at disagreeing with effective_cover
+	var drift_old := 0    # effective_cover disagreeing with the old spelling
+	for ty in board.size.y:
+		for tx in board.size.x:
+			var t := Vector2i(tx, ty)
+			if not board.is_walkable(t):
+				continue
+			target.cell = t
+			for sy in board.size.y:
+				for sx in board.size.x:
+					var s := Vector2i(sx, sy)
+					if not board.is_walkable(s):
+						continue
+					shooter.cell = s
+					for sector in 8:
+						target.facing_sector = sector
+						for half in 5:
+							target.arc_half = half
+							combos += 1
+							var live := _cover(board, shooter, target)
+							if _cover_at(board, t, sector, half, s) != live:
+								drift_live += 1
+							if _old_effective_cover(board, shooter, target) != live:
+								drift_old += 1
+							if live != Board.CoverLevel.NONE:
+								with_cover += 1
+	_check(drift_live == 0,
+			"%s: cover_at answers exactly what effective_cover does (%d of %d combinations differed)"
+			% [label, drift_live, combos])
+	_check(drift_old == 0,
+			"%s: and both answer what the pre-decomposition spelling did (%d differed)"
+			% [label, drift_old])
+	_check(with_cover > 0,
+			"%s: the sweep found cover to check, not just empty ground (%d of %d combinations had some)"
+			% [label, with_cover, combos])
+	target.free()
+	shooter.free()
+
+
 func _run() -> void:
 	await process_frame  # let the autoloads finish _ready()
 	_rules = load("res://scripts/Rules.gd") as GDScript
@@ -252,6 +333,7 @@ func _test_flank_excludes_cover() -> void:
 	# target that were somehow both would silently be granted the bonus and
 	# excused the penalty. Sweep it.
 	_sweep_exclusive(board, "one wall")
+	_sweep_cover_at(board, "one wall")
 
 	shooter.free()
 	target.free()
@@ -520,6 +602,7 @@ func _test_peek_asymmetry() -> void:
 			% [_k.PEEK_ACCURACY, _chance(board, shooter, target)])
 
 	_sweep_exclusive(board, "one long wall")
+	_sweep_cover_at(board, "one long wall")
 
 	shooter.free()
 	target.free()

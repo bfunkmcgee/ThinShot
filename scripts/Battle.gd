@@ -3207,14 +3207,23 @@ func _nearest(from_cell: Vector2i, candidates: Array[Unit]) -> Unit:
 ## How exposed a cell is to scout fire: 2 per clean firing line, 1 per line
 ## that has to cross junk (those shots only land for half damage). This is
 ## what makes the goblins actually value the cover on the map.
-func _exposure_at(cell: Vector2i, scouts: Array[Unit]) -> int:
+##
+## The goblin is the TARGET of every shot counted here, so the facing that
+## decides its cover is its own - the one it would be holding on arrival, which
+## is why `_best_ai_dest` works `end_sector` out before it calls this. A cell
+## with a wall behind the goblin's back is not cover, and used to score as if it
+## were: this asked `board.cover_between`, which does not know which way anyone
+## is looking, while the shot it was predicting resolves through
+## Rules.effective_cover, which does. Both go through Rules.cover_at now.
+func _exposure_at(cell: Vector2i, facing_sector: int, arc_half: int,
+		scouts: Array[Unit]) -> int:
 	var score := 0
 	for scout in scouts:
 		if Board.manhattan(cell, scout.cell) <= scout.attack_range \
 				and board.can_engage(scout.cell, cell):
 			# Now measured from the cover the cell itself would give, which is
 			# what makes the AI move wall to wall rather than just away.
-			match board.cover_between(scout.cell, cell):
+			match Rules.cover_at(board, cell, facing_sector, arc_half, scout.cell):
 				Board.CoverLevel.FULL:
 					score += 0
 				Board.CoverLevel.HALF:
@@ -3240,22 +3249,38 @@ func _best_ai_dest(goblin: Unit, reach: Dictionary, scouts: Array[Unit],
 	var best := Vector2i(-1, -1)
 	var best_score := 999999
 	for cell: Vector2i in candidates:
-		var score := Board.manhattan(cell, chase_cell)
-		score += exposure_weight * _exposure_at(cell, scouts)
+		# Which way the goblin would be looking once it got here, worked out
+		# before anything is scored because its own facing decides the cover it
+		# would have (see _exposure_at). A goblin with a shot turns to take it;
+		# one without walks in facing the way it came. Neither is on the unit
+		# yet, which is what Rules.cover_at exists to be asked about.
 		var shots := _shootable_from(cell, goblin.attack_range, scouts)
+		var mark: Unit = null
 		var end_sector := -1
 		if not shots.is_empty():
-			var mark := _nearest(cell, shots)
+			mark = _nearest(cell, shots)
 			end_sector = Board.sector_from_to(cell, mark.cell)
+		elif reach.has(cell):
+			end_sector = Board.sector_from_to(reach[cell], cell)
+		# Standing still with no shot ends the turn on overwatch, which picks its
+		# own sector later; the facing we can honestly predict there is the one
+		# the goblin already has.
+		var end_facing := end_sector if end_sector >= 0 else goblin.facing_sector
+		var score := Board.manhattan(cell, chase_cell)
+		score += exposure_weight * _exposure_at(cell, end_facing, goblin.arc_half, scouts)
+		if mark != null:
 			score -= 1000
-			# A clean firing position beats one where the target is dug in.
-			if board.cover_between(cell, mark.cell) != Board.CoverLevel.NONE:
+			# A clean firing position beats one where the target is dug in. The
+			# target is a live scout standing where it stands, so the facing that
+			# decides ITS cover is its real one, read off the unit - the opposite
+			# perspective to the exposure term above, and the reason both are
+			# asked through the same function rather than through cover_between.
+			if Rules.cover_at(board, mark.cell, mark.facing_sector, mark.arc_half,
+					cell) != Board.CoverLevel.NONE:
 				score += 400
 			# Shooting someone in the back bypasses their cover.
 			if not mark.covers_sector(Board.sector_from_to(mark.cell, cell)):
 				score -= 60
-		elif reach.has(cell):
-			end_sector = Board.sector_from_to(reach[cell], cell)
 		# Do not turn your back on the rest of the squad.
 		if end_sector >= 0:
 			for scout in scouts:

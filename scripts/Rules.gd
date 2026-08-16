@@ -70,10 +70,51 @@ static func is_flanking(attacker: Unit, target: Unit) -> bool:
 ## target has NONE, whatever it is standing beside. Both the hit roll and the
 ## damage rule lean on that, and it is why they can test the two conditions in
 ## either order and still agree.
+##
+## Both of those are properties of the target and where the shot comes from,
+## not of the Unit object, so the rule is written one level down in `cover_at`
+## and this is the call that reads a live target's numbers off it.
 static func effective_cover(board: Board, attacker: Unit, target: Unit) -> Board.CoverLevel:
-	if is_flanking(attacker, target):
+	return cover_at(board, target.cell, target.facing_sector, target.arc_half,
+			attacker.cell)
+
+
+## The same question with the units taken out of it: a unit standing at `cell`,
+## facing `facing_sector` with a front arc `arc_half` sectors wide either side,
+## shot at from `from_cell` - what cover applies?
+##
+## This exists because the AI has to ask it about a cell nothing is standing on
+## yet, with a facing nothing is holding yet, and `effective_cover` can only be
+## asked about a Unit that is already there. Battle's `_best_ai_dest` works out
+## an `end_sector` for each candidate cell for exactly that reason. Before this,
+## the AI gave up and scored `board.cover_between` instead - facing-blind, a
+## model the resolver does not use - so goblins took cover that would not be
+## there when the shot came.
+##
+## `effective_cover` is now one call to this, so there is a single
+## implementation of the COVER rule and no way for the AI's model and the
+## resolver's to drift apart again.
+##
+## The arc line is Unit.covers_sector's test written out rather than called.
+## That is not an oversight and not a second rule: the whole value of this
+## function is that it needs no Unit - it takes four numbers and a bare Board,
+## so a sweep with nothing in the scene tree can ask it (which is how
+## tools/measure_phantom_cover.gd measures the shipped maps, and it runs before
+## the autoloads exist, where naming Unit fails outright). Unit.gd is
+## deliberately independent of Board and cannot host the test either. If the arc
+## rule ever changes, it changes in both places - and tools/test_rules.gd sweeps
+## every cell, facing and arc width against a third, independent spelling of it,
+## so a one-sided edit is caught rather than shipped.
+static func cover_at(board: Board, cell: Vector2i, facing_sector: int,
+		arc_half: int, from_cell: Vector2i) -> Board.CoverLevel:
+	# Sector pointing from the target toward the shot - the direction the target
+	# would have to be facing to be behind its cover rather than against it.
+	# -1 is the same cell, which counts as inside the arc; cover_between returns
+	# NONE for that pair anyway.
+	var sector := Board.sector_from_to(cell, from_cell)
+	if sector >= 0 and absi(wrapi(sector - facing_sector + 4, 0, 8) - 4) > arc_half:
 		return Board.CoverLevel.NONE
-	return board.cover_between(attacker.cell, target.cell)
+	return board.cover_between(from_cell, cell)
 
 
 ## True when the shooter has to lean around its own full cover to take this
