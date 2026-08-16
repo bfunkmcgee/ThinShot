@@ -1,0 +1,37 @@
+{
+  "group_id": null,
+  "objects": [
+    {
+      "id": "4dab8114-f082-4887-a4fe-1b58617049ff",
+      "name": null,
+      "prompt": "Desert Makeshift Junk Statue",
+      "size": {
+        "width": 256,
+        "height": 256
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_Makeshift_Junk_Statue/rotations/unknown.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "c1034c81-800f-4654-aeeb-e1d1bcfeaced",
+      "name": null,
+      "prompt": "Desert Makeshift Junk Statue",
+      "size": {
+        "width": 256,
+        "height": 256
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "torn_state/rotations/unknown.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-07-30T00:00:00.000000"
+}

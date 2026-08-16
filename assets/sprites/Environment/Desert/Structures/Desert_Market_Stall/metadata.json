@@ -1,0 +1,29 @@
+{
+  "group_id": null,
+  "objects": [
+    {
+      "id": "e883c114-1b05-46a1-9438-5965d27de20f",
+      "name": null,
+      "prompt": "Desert Market Stall makeshift",
+      "size": {
+        "width": 97,
+        "height": 97
+      },
+      "directions": 8,
+      "view": "low top-down",
+      "rotations": {
+        "east": "rotations/east.png",
+        "west": "rotations/west.png",
+        "north": "rotations/north.png",
+        "south": "rotations/south.png",
+        "north-east": "rotations/north-east.png",
+        "north-west": "rotations/north-west.png",
+        "south-east": "rotations/south-east.png",
+        "south-west": "rotations/south-west.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-07-30T00:00:00.000000"
+}

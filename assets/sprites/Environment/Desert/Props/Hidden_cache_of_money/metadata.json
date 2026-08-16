@@ -1,0 +1,106 @@
+{
+  "group_id": null,
+  "objects": [
+    {
+      "id": "fa858e90-733b-47a2-8728-128436e21a57",
+      "name": null,
+      "prompt": "Hidden cache of money",
+      "size": {
+        "width": 64,
+        "height": 64
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Hidden_cache_of_money/rotations/unknown.png"
+      },
+      "animations": {
+        "normal_to_open": {
+          "directions": {
+            "unknown": {
+              "frames": [
+                "Hidden_cache_of_money/animations/normal_to_open/unknown/frame_000.png",
+                "Hidden_cache_of_money/animations/normal_to_open/unknown/frame_001.png",
+                "Hidden_cache_of_money/animations/normal_to_open/unknown/frame_002.png",
+                "Hidden_cache_of_money/animations/normal_to_open/unknown/frame_003.png",
+                "Hidden_cache_of_money/animations/normal_to_open/unknown/frame_004.png",
+                "Hidden_cache_of_money/animations/normal_to_open/unknown/frame_005.png",
+                "Hidden_cache_of_money/animations/normal_to_open/unknown/frame_006.png",
+                "Hidden_cache_of_money/animations/normal_to_open/unknown/frame_007.png",
+                "Hidden_cache_of_money/animations/normal_to_open/unknown/frame_008.png"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "3fad8e94-9fa6-4dcf-a2ce-29da7f82f13d",
+      "name": null,
+      "prompt": "Hidden cache of money",
+      "size": {
+        "width": 64,
+        "height": 64
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Hidden_cache_of_money_1/rotations/unknown.png"
+      },
+      "animations": {
+        "normal_idle": {
+          "directions": {
+            "unknown": {
+              "frames": [
+                "Hidden_cache_of_money_1/animations/normal_idle/unknown/frame_000.png",
+                "Hidden_cache_of_money_1/animations/normal_idle/unknown/frame_001.png",
+                "Hidden_cache_of_money_1/animations/normal_idle/unknown/frame_002.png",
+                "Hidden_cache_of_money_1/animations/normal_idle/unknown/frame_003.png",
+                "Hidden_cache_of_money_1/animations/normal_idle/unknown/frame_004.png",
+                "Hidden_cache_of_money_1/animations/normal_idle/unknown/frame_005.png",
+                "Hidden_cache_of_money_1/animations/normal_idle/unknown/frame_006.png",
+                "Hidden_cache_of_money_1/animations/normal_idle/unknown/frame_007.png",
+                "Hidden_cache_of_money_1/animations/normal_idle/unknown/frame_008.png"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "d211d9fb-dc07-4777-87a9-6ec006d9236f",
+      "name": null,
+      "prompt": "Hidden cache of money",
+      "size": {
+        "width": 64,
+        "height": 64
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Hidden_cache_of_money_2/rotations/unknown.png"
+      },
+      "animations": {
+        "normal_idle": {
+          "directions": {
+            "unknown": {
+              "frames": [
+                "Hidden_cache_of_money_2/animations/normal_idle/unknown/frame_000.png",
+                "Hidden_cache_of_money_2/animations/normal_idle/unknown/frame_001.png",
+                "Hidden_cache_of_money_2/animations/normal_idle/unknown/frame_002.png",
+                "Hidden_cache_of_money_2/animations/normal_idle/unknown/frame_003.png",
+                "Hidden_cache_of_money_2/animations/normal_idle/unknown/frame_004.png",
+                "Hidden_cache_of_money_2/animations/normal_idle/unknown/frame_005.png",
+                "Hidden_cache_of_money_2/animations/normal_idle/unknown/frame_006.png",
+                "Hidden_cache_of_money_2/animations/normal_idle/unknown/frame_007.png",
+                "Hidden_cache_of_money_2/animations/normal_idle/unknown/frame_008.png"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-07-30T00:00:00.000000"
+}

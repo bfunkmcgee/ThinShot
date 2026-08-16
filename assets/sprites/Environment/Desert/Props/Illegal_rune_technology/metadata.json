@@ -1,0 +1,73 @@
+{
+  "group_id": null,
+  "objects": [
+    {
+      "id": "e0808d1a-a7ca-48bc-827a-0c0c709fecb1",
+      "name": null,
+      "prompt": "Illegal rune technology desert",
+      "size": {
+        "width": 96,
+        "height": 96
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Illegal_rune_technology/rotations/unknown.png"
+      },
+      "animations": {
+        "normal_idle": {
+          "directions": {
+            "unknown": {
+              "frames": [
+                "Illegal_rune_technology/animations/normal_idle/unknown/frame_000.png",
+                "Illegal_rune_technology/animations/normal_idle/unknown/frame_001.png",
+                "Illegal_rune_technology/animations/normal_idle/unknown/frame_002.png",
+                "Illegal_rune_technology/animations/normal_idle/unknown/frame_003.png",
+                "Illegal_rune_technology/animations/normal_idle/unknown/frame_004.png",
+                "Illegal_rune_technology/animations/normal_idle/unknown/frame_005.png",
+                "Illegal_rune_technology/animations/normal_idle/unknown/frame_006.png",
+                "Illegal_rune_technology/animations/normal_idle/unknown/frame_007.png",
+                "Illegal_rune_technology/animations/normal_idle/unknown/frame_008.png"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "3f080f89-4c26-4ab8-9029-053870e1c007",
+      "name": null,
+      "prompt": "Illegal rune technology desert",
+      "size": {
+        "width": 96,
+        "height": 96
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Illegal_rune_technology_1/rotations/unknown.png"
+      },
+      "animations": {
+        "normal_idle": {
+          "directions": {
+            "unknown": {
+              "frames": [
+                "Illegal_rune_technology_1/animations/normal_idle/unknown/frame_000.png",
+                "Illegal_rune_technology_1/animations/normal_idle/unknown/frame_001.png",
+                "Illegal_rune_technology_1/animations/normal_idle/unknown/frame_002.png",
+                "Illegal_rune_technology_1/animations/normal_idle/unknown/frame_003.png",
+                "Illegal_rune_technology_1/animations/normal_idle/unknown/frame_004.png",
+                "Illegal_rune_technology_1/animations/normal_idle/unknown/frame_005.png",
+                "Illegal_rune_technology_1/animations/normal_idle/unknown/frame_006.png",
+                "Illegal_rune_technology_1/animations/normal_idle/unknown/frame_007.png",
+                "Illegal_rune_technology_1/animations/normal_idle/unknown/frame_008.png"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-07-30T00:00:00.000000"
+}

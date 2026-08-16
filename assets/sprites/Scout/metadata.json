@@ -1,0 +1,815 @@
+{
+  "group_id": "21dc2863-b71c-4442-b0c2-927d3ee09568",
+  "states": [
+    {
+      "character": {
+        "id": "f7aac71a-11ef-43db-ab39-caffcae2431b",
+        "name": "A modern soldier in tactical",
+        "prompt": "A modern soldier in tactical desert camouflage fatigues, wearing a ballistic vest, a tactical helmet with mounted goggles, and combat boots, standing in a ready stance with a rifle held firmly across the chest, crisp black outline.",
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-28T10:53:51.832743+00:00"
+      },
+      "folder": "",
+      "frames": {
+        "rotations": {},
+        "animations": {
+          "standing_idle": {
+            "south": [
+              "animations/standing_idle/south/frame_000.png",
+              "animations/standing_idle/south/frame_001.png",
+              "animations/standing_idle/south/frame_002.png",
+              "animations/standing_idle/south/frame_003.png",
+              "animations/standing_idle/south/frame_004.png",
+              "animations/standing_idle/south/frame_005.png",
+              "animations/standing_idle/south/frame_006.png",
+              "animations/standing_idle/south/frame_007.png",
+              "animations/standing_idle/south/frame_008.png"
+            ],
+            "south-east": [
+              "animations/standing_idle/south-east/frame_000.png",
+              "animations/standing_idle/south-east/frame_001.png",
+              "animations/standing_idle/south-east/frame_002.png",
+              "animations/standing_idle/south-east/frame_003.png",
+              "animations/standing_idle/south-east/frame_004.png",
+              "animations/standing_idle/south-east/frame_005.png",
+              "animations/standing_idle/south-east/frame_006.png",
+              "animations/standing_idle/south-east/frame_007.png",
+              "animations/standing_idle/south-east/frame_008.png"
+            ],
+            "east": [
+              "animations/standing_idle/east/frame_000.png",
+              "animations/standing_idle/east/frame_001.png",
+              "animations/standing_idle/east/frame_002.png",
+              "animations/standing_idle/east/frame_003.png",
+              "animations/standing_idle/east/frame_004.png",
+              "animations/standing_idle/east/frame_005.png",
+              "animations/standing_idle/east/frame_006.png",
+              "animations/standing_idle/east/frame_007.png",
+              "animations/standing_idle/east/frame_008.png"
+            ],
+            "north-east": [
+              "animations/standing_idle/north-east/frame_000.png",
+              "animations/standing_idle/north-east/frame_001.png",
+              "animations/standing_idle/north-east/frame_002.png",
+              "animations/standing_idle/north-east/frame_003.png",
+              "animations/standing_idle/north-east/frame_004.png",
+              "animations/standing_idle/north-east/frame_005.png",
+              "animations/standing_idle/north-east/frame_006.png",
+              "animations/standing_idle/north-east/frame_007.png",
+              "animations/standing_idle/north-east/frame_008.png"
+            ],
+            "north": [
+              "animations/standing_idle/north/frame_000.png",
+              "animations/standing_idle/north/frame_001.png",
+              "animations/standing_idle/north/frame_002.png",
+              "animations/standing_idle/north/frame_003.png",
+              "animations/standing_idle/north/frame_004.png",
+              "animations/standing_idle/north/frame_005.png",
+              "animations/standing_idle/north/frame_006.png",
+              "animations/standing_idle/north/frame_007.png",
+              "animations/standing_idle/north/frame_008.png"
+            ],
+            "north-west": [
+              "animations/standing_idle/north-west/frame_000.png",
+              "animations/standing_idle/north-west/frame_001.png",
+              "animations/standing_idle/north-west/frame_002.png",
+              "animations/standing_idle/north-west/frame_003.png",
+              "animations/standing_idle/north-west/frame_004.png",
+              "animations/standing_idle/north-west/frame_005.png",
+              "animations/standing_idle/north-west/frame_006.png",
+              "animations/standing_idle/north-west/frame_007.png",
+              "animations/standing_idle/north-west/frame_008.png"
+            ],
+            "west": [
+              "animations/standing_idle/west/frame_000.png",
+              "animations/standing_idle/west/frame_001.png",
+              "animations/standing_idle/west/frame_002.png",
+              "animations/standing_idle/west/frame_003.png",
+              "animations/standing_idle/west/frame_004.png",
+              "animations/standing_idle/west/frame_005.png",
+              "animations/standing_idle/west/frame_006.png",
+              "animations/standing_idle/west/frame_007.png",
+              "animations/standing_idle/west/frame_008.png"
+            ],
+            "south-west": [
+              "animations/standing_idle/south-west/frame_000.png",
+              "animations/standing_idle/south-west/frame_001.png",
+              "animations/standing_idle/south-west/frame_002.png",
+              "animations/standing_idle/south-west/frame_003.png",
+              "animations/standing_idle/south-west/frame_004.png",
+              "animations/standing_idle/south-west/frame_005.png",
+              "animations/standing_idle/south-west/frame_006.png",
+              "animations/standing_idle/south-west/frame_007.png",
+              "animations/standing_idle/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_alt": {
+            "south": [
+              "animations/standing_idle_alt/south/frame_000.png",
+              "animations/standing_idle_alt/south/frame_001.png",
+              "animations/standing_idle_alt/south/frame_002.png",
+              "animations/standing_idle_alt/south/frame_003.png",
+              "animations/standing_idle_alt/south/frame_004.png",
+              "animations/standing_idle_alt/south/frame_005.png",
+              "animations/standing_idle_alt/south/frame_006.png",
+              "animations/standing_idle_alt/south/frame_007.png",
+              "animations/standing_idle_alt/south/frame_008.png"
+            ],
+            "south-east": [
+              "animations/standing_idle_alt/south-east/frame_000.png",
+              "animations/standing_idle_alt/south-east/frame_001.png",
+              "animations/standing_idle_alt/south-east/frame_002.png",
+              "animations/standing_idle_alt/south-east/frame_003.png",
+              "animations/standing_idle_alt/south-east/frame_004.png",
+              "animations/standing_idle_alt/south-east/frame_005.png",
+              "animations/standing_idle_alt/south-east/frame_006.png",
+              "animations/standing_idle_alt/south-east/frame_007.png",
+              "animations/standing_idle_alt/south-east/frame_008.png"
+            ],
+            "east": [
+              "animations/standing_idle_alt/east/frame_000.png",
+              "animations/standing_idle_alt/east/frame_001.png",
+              "animations/standing_idle_alt/east/frame_002.png",
+              "animations/standing_idle_alt/east/frame_003.png",
+              "animations/standing_idle_alt/east/frame_004.png",
+              "animations/standing_idle_alt/east/frame_005.png",
+              "animations/standing_idle_alt/east/frame_006.png",
+              "animations/standing_idle_alt/east/frame_007.png",
+              "animations/standing_idle_alt/east/frame_008.png"
+            ],
+            "north-east": [
+              "animations/standing_idle_alt/north-east/frame_000.png",
+              "animations/standing_idle_alt/north-east/frame_001.png",
+              "animations/standing_idle_alt/north-east/frame_002.png",
+              "animations/standing_idle_alt/north-east/frame_003.png",
+              "animations/standing_idle_alt/north-east/frame_004.png",
+              "animations/standing_idle_alt/north-east/frame_005.png",
+              "animations/standing_idle_alt/north-east/frame_006.png",
+              "animations/standing_idle_alt/north-east/frame_007.png",
+              "animations/standing_idle_alt/north-east/frame_008.png"
+            ],
+            "north": [
+              "animations/standing_idle_alt/north/frame_000.png",
+              "animations/standing_idle_alt/north/frame_001.png",
+              "animations/standing_idle_alt/north/frame_002.png",
+              "animations/standing_idle_alt/north/frame_003.png",
+              "animations/standing_idle_alt/north/frame_004.png",
+              "animations/standing_idle_alt/north/frame_005.png",
+              "animations/standing_idle_alt/north/frame_006.png",
+              "animations/standing_idle_alt/north/frame_007.png",
+              "animations/standing_idle_alt/north/frame_008.png"
+            ],
+            "north-west": [
+              "animations/standing_idle_alt/north-west/frame_000.png",
+              "animations/standing_idle_alt/north-west/frame_001.png",
+              "animations/standing_idle_alt/north-west/frame_002.png",
+              "animations/standing_idle_alt/north-west/frame_003.png",
+              "animations/standing_idle_alt/north-west/frame_004.png",
+              "animations/standing_idle_alt/north-west/frame_005.png",
+              "animations/standing_idle_alt/north-west/frame_006.png",
+              "animations/standing_idle_alt/north-west/frame_007.png",
+              "animations/standing_idle_alt/north-west/frame_008.png"
+            ],
+            "west": [
+              "animations/standing_idle_alt/west/frame_000.png",
+              "animations/standing_idle_alt/west/frame_001.png",
+              "animations/standing_idle_alt/west/frame_002.png",
+              "animations/standing_idle_alt/west/frame_003.png",
+              "animations/standing_idle_alt/west/frame_004.png",
+              "animations/standing_idle_alt/west/frame_005.png",
+              "animations/standing_idle_alt/west/frame_006.png",
+              "animations/standing_idle_alt/west/frame_007.png",
+              "animations/standing_idle_alt/west/frame_008.png"
+            ],
+            "south-west": [
+              "animations/standing_idle_alt/south-west/frame_000.png",
+              "animations/standing_idle_alt/south-west/frame_001.png",
+              "animations/standing_idle_alt/south-west/frame_002.png",
+              "animations/standing_idle_alt/south-west/frame_003.png",
+              "animations/standing_idle_alt/south-west/frame_004.png",
+              "animations/standing_idle_alt/south-west/frame_005.png",
+              "animations/standing_idle_alt/south-west/frame_006.png",
+              "animations/standing_idle_alt/south-west/frame_007.png",
+              "animations/standing_idle_alt/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_damage": {
+            "south": [
+              "animations/standing_idle_damage/south/frame_000.png",
+              "animations/standing_idle_damage/south/frame_001.png",
+              "animations/standing_idle_damage/south/frame_002.png",
+              "animations/standing_idle_damage/south/frame_003.png",
+              "animations/standing_idle_damage/south/frame_004.png",
+              "animations/standing_idle_damage/south/frame_005.png",
+              "animations/standing_idle_damage/south/frame_006.png",
+              "animations/standing_idle_damage/south/frame_007.png",
+              "animations/standing_idle_damage/south/frame_008.png"
+            ],
+            "south-east": [
+              "animations/standing_idle_damage/south-east/frame_000.png",
+              "animations/standing_idle_damage/south-east/frame_001.png",
+              "animations/standing_idle_damage/south-east/frame_002.png",
+              "animations/standing_idle_damage/south-east/frame_003.png",
+              "animations/standing_idle_damage/south-east/frame_004.png",
+              "animations/standing_idle_damage/south-east/frame_005.png",
+              "animations/standing_idle_damage/south-east/frame_006.png",
+              "animations/standing_idle_damage/south-east/frame_007.png",
+              "animations/standing_idle_damage/south-east/frame_008.png"
+            ],
+            "east": [
+              "animations/standing_idle_damage/east/frame_000.png",
+              "animations/standing_idle_damage/east/frame_001.png",
+              "animations/standing_idle_damage/east/frame_002.png",
+              "animations/standing_idle_damage/east/frame_003.png",
+              "animations/standing_idle_damage/east/frame_004.png",
+              "animations/standing_idle_damage/east/frame_005.png",
+              "animations/standing_idle_damage/east/frame_006.png",
+              "animations/standing_idle_damage/east/frame_007.png",
+              "animations/standing_idle_damage/east/frame_008.png"
+            ],
+            "north-east": [
+              "animations/standing_idle_damage/north-east/frame_000.png",
+              "animations/standing_idle_damage/north-east/frame_001.png",
+              "animations/standing_idle_damage/north-east/frame_002.png",
+              "animations/standing_idle_damage/north-east/frame_003.png",
+              "animations/standing_idle_damage/north-east/frame_004.png",
+              "animations/standing_idle_damage/north-east/frame_005.png",
+              "animations/standing_idle_damage/north-east/frame_006.png",
+              "animations/standing_idle_damage/north-east/frame_007.png",
+              "animations/standing_idle_damage/north-east/frame_008.png"
+            ],
+            "north": [
+              "animations/standing_idle_damage/north/frame_000.png",
+              "animations/standing_idle_damage/north/frame_001.png",
+              "animations/standing_idle_damage/north/frame_002.png",
+              "animations/standing_idle_damage/north/frame_003.png",
+              "animations/standing_idle_damage/north/frame_004.png",
+              "animations/standing_idle_damage/north/frame_005.png",
+              "animations/standing_idle_damage/north/frame_006.png",
+              "animations/standing_idle_damage/north/frame_007.png",
+              "animations/standing_idle_damage/north/frame_008.png"
+            ],
+            "north-west": [
+              "animations/standing_idle_damage/north-west/frame_000.png",
+              "animations/standing_idle_damage/north-west/frame_001.png",
+              "animations/standing_idle_damage/north-west/frame_002.png",
+              "animations/standing_idle_damage/north-west/frame_003.png",
+              "animations/standing_idle_damage/north-west/frame_004.png",
+              "animations/standing_idle_damage/north-west/frame_005.png",
+              "animations/standing_idle_damage/north-west/frame_006.png",
+              "animations/standing_idle_damage/north-west/frame_007.png",
+              "animations/standing_idle_damage/north-west/frame_008.png"
+            ],
+            "west": [
+              "animations/standing_idle_damage/west/frame_000.png",
+              "animations/standing_idle_damage/west/frame_001.png",
+              "animations/standing_idle_damage/west/frame_002.png",
+              "animations/standing_idle_damage/west/frame_003.png",
+              "animations/standing_idle_damage/west/frame_004.png",
+              "animations/standing_idle_damage/west/frame_005.png",
+              "animations/standing_idle_damage/west/frame_006.png",
+              "animations/standing_idle_damage/west/frame_007.png",
+              "animations/standing_idle_damage/west/frame_008.png"
+            ],
+            "south-west": [
+              "animations/standing_idle_damage/south-west/frame_000.png",
+              "animations/standing_idle_damage/south-west/frame_001.png",
+              "animations/standing_idle_damage/south-west/frame_002.png",
+              "animations/standing_idle_damage/south-west/frame_003.png",
+              "animations/standing_idle_damage/south-west/frame_004.png",
+              "animations/standing_idle_damage/south-west/frame_005.png",
+              "animations/standing_idle_damage/south-west/frame_006.png",
+              "animations/standing_idle_damage/south-west/frame_007.png",
+              "animations/standing_idle_damage/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_reload": {
+            "south": [
+              "animations/standing_idle_reload/south/frame_000.png",
+              "animations/standing_idle_reload/south/frame_001.png",
+              "animations/standing_idle_reload/south/frame_002.png",
+              "animations/standing_idle_reload/south/frame_003.png",
+              "animations/standing_idle_reload/south/frame_004.png",
+              "animations/standing_idle_reload/south/frame_005.png",
+              "animations/standing_idle_reload/south/frame_006.png",
+              "animations/standing_idle_reload/south/frame_007.png",
+              "animations/standing_idle_reload/south/frame_008.png"
+            ],
+            "south-east": [
+              "animations/standing_idle_reload/south-east/frame_000.png",
+              "animations/standing_idle_reload/south-east/frame_001.png",
+              "animations/standing_idle_reload/south-east/frame_002.png",
+              "animations/standing_idle_reload/south-east/frame_003.png",
+              "animations/standing_idle_reload/south-east/frame_004.png",
+              "animations/standing_idle_reload/south-east/frame_005.png",
+              "animations/standing_idle_reload/south-east/frame_006.png",
+              "animations/standing_idle_reload/south-east/frame_007.png",
+              "animations/standing_idle_reload/south-east/frame_008.png"
+            ],
+            "east": [
+              "animations/standing_idle_reload/east/frame_000.png",
+              "animations/standing_idle_reload/east/frame_001.png",
+              "animations/standing_idle_reload/east/frame_002.png",
+              "animations/standing_idle_reload/east/frame_003.png",
+              "animations/standing_idle_reload/east/frame_004.png",
+              "animations/standing_idle_reload/east/frame_005.png",
+              "animations/standing_idle_reload/east/frame_006.png",
+              "animations/standing_idle_reload/east/frame_007.png",
+              "animations/standing_idle_reload/east/frame_008.png"
+            ],
+            "north-east": [
+              "animations/standing_idle_reload/north-east/frame_000.png",
+              "animations/standing_idle_reload/north-east/frame_001.png",
+              "animations/standing_idle_reload/north-east/frame_002.png",
+              "animations/standing_idle_reload/north-east/frame_003.png",
+              "animations/standing_idle_reload/north-east/frame_004.png",
+              "animations/standing_idle_reload/north-east/frame_005.png",
+              "animations/standing_idle_reload/north-east/frame_006.png",
+              "animations/standing_idle_reload/north-east/frame_007.png",
+              "animations/standing_idle_reload/north-east/frame_008.png"
+            ],
+            "north": [
+              "animations/standing_idle_reload/north/frame_000.png",
+              "animations/standing_idle_reload/north/frame_001.png",
+              "animations/standing_idle_reload/north/frame_002.png",
+              "animations/standing_idle_reload/north/frame_003.png",
+              "animations/standing_idle_reload/north/frame_004.png",
+              "animations/standing_idle_reload/north/frame_005.png",
+              "animations/standing_idle_reload/north/frame_006.png",
+              "animations/standing_idle_reload/north/frame_007.png",
+              "animations/standing_idle_reload/north/frame_008.png"
+            ],
+            "north-west": [
+              "animations/standing_idle_reload/north-west/frame_000.png",
+              "animations/standing_idle_reload/north-west/frame_001.png",
+              "animations/standing_idle_reload/north-west/frame_002.png",
+              "animations/standing_idle_reload/north-west/frame_003.png",
+              "animations/standing_idle_reload/north-west/frame_004.png",
+              "animations/standing_idle_reload/north-west/frame_005.png",
+              "animations/standing_idle_reload/north-west/frame_006.png",
+              "animations/standing_idle_reload/north-west/frame_007.png",
+              "animations/standing_idle_reload/north-west/frame_008.png"
+            ],
+            "west": [
+              "animations/standing_idle_reload/west/frame_000.png",
+              "animations/standing_idle_reload/west/frame_001.png",
+              "animations/standing_idle_reload/west/frame_002.png",
+              "animations/standing_idle_reload/west/frame_003.png",
+              "animations/standing_idle_reload/west/frame_004.png",
+              "animations/standing_idle_reload/west/frame_005.png",
+              "animations/standing_idle_reload/west/frame_006.png",
+              "animations/standing_idle_reload/west/frame_007.png",
+              "animations/standing_idle_reload/west/frame_008.png"
+            ],
+            "south-west": [
+              "animations/standing_idle_reload/south-west/frame_000.png",
+              "animations/standing_idle_reload/south-west/frame_001.png",
+              "animations/standing_idle_reload/south-west/frame_002.png",
+              "animations/standing_idle_reload/south-west/frame_003.png",
+              "animations/standing_idle_reload/south-west/frame_004.png",
+              "animations/standing_idle_reload/south-west/frame_005.png",
+              "animations/standing_idle_reload/south-west/frame_006.png",
+              "animations/standing_idle_reload/south-west/frame_007.png",
+              "animations/standing_idle_reload/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_to_dead": {
+            "south": [
+              "animations/standing_idle_to_dead/south/frame_000.png",
+              "animations/standing_idle_to_dead/south/frame_001.png",
+              "animations/standing_idle_to_dead/south/frame_002.png",
+              "animations/standing_idle_to_dead/south/frame_003.png",
+              "animations/standing_idle_to_dead/south/frame_004.png",
+              "animations/standing_idle_to_dead/south/frame_005.png",
+              "animations/standing_idle_to_dead/south/frame_006.png",
+              "animations/standing_idle_to_dead/south/frame_007.png",
+              "animations/standing_idle_to_dead/south/frame_008.png"
+            ],
+            "south-east": [
+              "animations/standing_idle_to_dead/south-east/frame_000.png",
+              "animations/standing_idle_to_dead/south-east/frame_001.png",
+              "animations/standing_idle_to_dead/south-east/frame_002.png",
+              "animations/standing_idle_to_dead/south-east/frame_003.png",
+              "animations/standing_idle_to_dead/south-east/frame_004.png",
+              "animations/standing_idle_to_dead/south-east/frame_005.png",
+              "animations/standing_idle_to_dead/south-east/frame_006.png",
+              "animations/standing_idle_to_dead/south-east/frame_007.png",
+              "animations/standing_idle_to_dead/south-east/frame_008.png"
+            ],
+            "east": [
+              "animations/standing_idle_to_dead/east/frame_000.png",
+              "animations/standing_idle_to_dead/east/frame_001.png",
+              "animations/standing_idle_to_dead/east/frame_002.png",
+              "animations/standing_idle_to_dead/east/frame_003.png",
+              "animations/standing_idle_to_dead/east/frame_004.png",
+              "animations/standing_idle_to_dead/east/frame_005.png",
+              "animations/standing_idle_to_dead/east/frame_006.png",
+              "animations/standing_idle_to_dead/east/frame_007.png",
+              "animations/standing_idle_to_dead/east/frame_008.png"
+            ],
+            "north-east": [
+              "animations/standing_idle_to_dead/north-east/frame_000.png",
+              "animations/standing_idle_to_dead/north-east/frame_001.png",
+              "animations/standing_idle_to_dead/north-east/frame_002.png",
+              "animations/standing_idle_to_dead/north-east/frame_003.png",
+              "animations/standing_idle_to_dead/north-east/frame_004.png",
+              "animations/standing_idle_to_dead/north-east/frame_005.png",
+              "animations/standing_idle_to_dead/north-east/frame_006.png",
+              "animations/standing_idle_to_dead/north-east/frame_007.png",
+              "animations/standing_idle_to_dead/north-east/frame_008.png"
+            ],
+            "north": [
+              "animations/standing_idle_to_dead/north/frame_000.png",
+              "animations/standing_idle_to_dead/north/frame_001.png",
+              "animations/standing_idle_to_dead/north/frame_002.png",
+              "animations/standing_idle_to_dead/north/frame_003.png",
+              "animations/standing_idle_to_dead/north/frame_004.png",
+              "animations/standing_idle_to_dead/north/frame_005.png",
+              "animations/standing_idle_to_dead/north/frame_006.png",
+              "animations/standing_idle_to_dead/north/frame_007.png",
+              "animations/standing_idle_to_dead/north/frame_008.png"
+            ],
+            "north-west": [
+              "animations/standing_idle_to_dead/north-west/frame_000.png",
+              "animations/standing_idle_to_dead/north-west/frame_001.png",
+              "animations/standing_idle_to_dead/north-west/frame_002.png",
+              "animations/standing_idle_to_dead/north-west/frame_003.png",
+              "animations/standing_idle_to_dead/north-west/frame_004.png",
+              "animations/standing_idle_to_dead/north-west/frame_005.png",
+              "animations/standing_idle_to_dead/north-west/frame_006.png",
+              "animations/standing_idle_to_dead/north-west/frame_007.png",
+              "animations/standing_idle_to_dead/north-west/frame_008.png"
+            ],
+            "west": [
+              "animations/standing_idle_to_dead/west/frame_000.png",
+              "animations/standing_idle_to_dead/west/frame_001.png",
+              "animations/standing_idle_to_dead/west/frame_002.png",
+              "animations/standing_idle_to_dead/west/frame_003.png",
+              "animations/standing_idle_to_dead/west/frame_004.png",
+              "animations/standing_idle_to_dead/west/frame_005.png",
+              "animations/standing_idle_to_dead/west/frame_006.png",
+              "animations/standing_idle_to_dead/west/frame_007.png",
+              "animations/standing_idle_to_dead/west/frame_008.png"
+            ],
+            "south-west": [
+              "animations/standing_idle_to_dead/south-west/frame_000.png",
+              "animations/standing_idle_to_dead/south-west/frame_001.png",
+              "animations/standing_idle_to_dead/south-west/frame_002.png",
+              "animations/standing_idle_to_dead/south-west/frame_003.png",
+              "animations/standing_idle_to_dead/south-west/frame_004.png",
+              "animations/standing_idle_to_dead/south-west/frame_005.png",
+              "animations/standing_idle_to_dead/south-west/frame_006.png",
+              "animations/standing_idle_to_dead/south-west/frame_007.png",
+              "animations/standing_idle_to_dead/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_to_ready_to_fire": {
+            "south": [
+              "animations/standing_idle_to_ready_to_fire/south/frame_000.png",
+              "animations/standing_idle_to_ready_to_fire/south/frame_001.png",
+              "animations/standing_idle_to_ready_to_fire/south/frame_002.png",
+              "animations/standing_idle_to_ready_to_fire/south/frame_003.png",
+              "animations/standing_idle_to_ready_to_fire/south/frame_004.png",
+              "animations/standing_idle_to_ready_to_fire/south/frame_005.png",
+              "animations/standing_idle_to_ready_to_fire/south/frame_006.png",
+              "animations/standing_idle_to_ready_to_fire/south/frame_007.png",
+              "animations/standing_idle_to_ready_to_fire/south/frame_008.png"
+            ],
+            "south-east": [
+              "animations/standing_idle_to_ready_to_fire/south-east/frame_000.png",
+              "animations/standing_idle_to_ready_to_fire/south-east/frame_001.png",
+              "animations/standing_idle_to_ready_to_fire/south-east/frame_002.png",
+              "animations/standing_idle_to_ready_to_fire/south-east/frame_003.png",
+              "animations/standing_idle_to_ready_to_fire/south-east/frame_004.png",
+              "animations/standing_idle_to_ready_to_fire/south-east/frame_005.png",
+              "animations/standing_idle_to_ready_to_fire/south-east/frame_006.png",
+              "animations/standing_idle_to_ready_to_fire/south-east/frame_007.png",
+              "animations/standing_idle_to_ready_to_fire/south-east/frame_008.png"
+            ],
+            "east": [
+              "animations/standing_idle_to_ready_to_fire/east/frame_000.png",
+              "animations/standing_idle_to_ready_to_fire/east/frame_001.png",
+              "animations/standing_idle_to_ready_to_fire/east/frame_002.png",
+              "animations/standing_idle_to_ready_to_fire/east/frame_003.png",
+              "animations/standing_idle_to_ready_to_fire/east/frame_004.png",
+              "animations/standing_idle_to_ready_to_fire/east/frame_005.png",
+              "animations/standing_idle_to_ready_to_fire/east/frame_006.png",
+              "animations/standing_idle_to_ready_to_fire/east/frame_007.png",
+              "animations/standing_idle_to_ready_to_fire/east/frame_008.png"
+            ],
+            "north-east": [
+              "animations/standing_idle_to_ready_to_fire/north-east/frame_000.png",
+              "animations/standing_idle_to_ready_to_fire/north-east/frame_001.png",
+              "animations/standing_idle_to_ready_to_fire/north-east/frame_002.png",
+              "animations/standing_idle_to_ready_to_fire/north-east/frame_003.png",
+              "animations/standing_idle_to_ready_to_fire/north-east/frame_004.png",
+              "animations/standing_idle_to_ready_to_fire/north-east/frame_005.png",
+              "animations/standing_idle_to_ready_to_fire/north-east/frame_006.png",
+              "animations/standing_idle_to_ready_to_fire/north-east/frame_007.png",
+              "animations/standing_idle_to_ready_to_fire/north-east/frame_008.png"
+            ],
+            "north": [
+              "animations/standing_idle_to_ready_to_fire/north/frame_000.png",
+              "animations/standing_idle_to_ready_to_fire/north/frame_001.png",
+              "animations/standing_idle_to_ready_to_fire/north/frame_002.png",
+              "animations/standing_idle_to_ready_to_fire/north/frame_003.png",
+              "animations/standing_idle_to_ready_to_fire/north/frame_004.png",
+              "animations/standing_idle_to_ready_to_fire/north/frame_005.png",
+              "animations/standing_idle_to_ready_to_fire/north/frame_006.png",
+              "animations/standing_idle_to_ready_to_fire/north/frame_007.png",
+              "animations/standing_idle_to_ready_to_fire/north/frame_008.png"
+            ],
+            "north-west": [
+              "animations/standing_idle_to_ready_to_fire/north-west/frame_000.png",
+              "animations/standing_idle_to_ready_to_fire/north-west/frame_001.png",
+              "animations/standing_idle_to_ready_to_fire/north-west/frame_002.png",
+              "animations/standing_idle_to_ready_to_fire/north-west/frame_003.png",
+              "animations/standing_idle_to_ready_to_fire/north-west/frame_004.png",
+              "animations/standing_idle_to_ready_to_fire/north-west/frame_005.png",
+              "animations/standing_idle_to_ready_to_fire/north-west/frame_006.png",
+              "animations/standing_idle_to_ready_to_fire/north-west/frame_007.png",
+              "animations/standing_idle_to_ready_to_fire/north-west/frame_008.png"
+            ],
+            "west": [
+              "animations/standing_idle_to_ready_to_fire/west/frame_000.png",
+              "animations/standing_idle_to_ready_to_fire/west/frame_001.png",
+              "animations/standing_idle_to_ready_to_fire/west/frame_002.png",
+              "animations/standing_idle_to_ready_to_fire/west/frame_003.png",
+              "animations/standing_idle_to_ready_to_fire/west/frame_004.png",
+              "animations/standing_idle_to_ready_to_fire/west/frame_005.png",
+              "animations/standing_idle_to_ready_to_fire/west/frame_006.png",
+              "animations/standing_idle_to_ready_to_fire/west/frame_007.png",
+              "animations/standing_idle_to_ready_to_fire/west/frame_008.png"
+            ],
+            "south-west": [
+              "animations/standing_idle_to_ready_to_fire/south-west/frame_000.png",
+              "animations/standing_idle_to_ready_to_fire/south-west/frame_001.png",
+              "animations/standing_idle_to_ready_to_fire/south-west/frame_002.png",
+              "animations/standing_idle_to_ready_to_fire/south-west/frame_003.png",
+              "animations/standing_idle_to_ready_to_fire/south-west/frame_004.png",
+              "animations/standing_idle_to_ready_to_fire/south-west/frame_005.png",
+              "animations/standing_idle_to_ready_to_fire/south-west/frame_006.png",
+              "animations/standing_idle_to_ready_to_fire/south-west/frame_007.png",
+              "animations/standing_idle_to_ready_to_fire/south-west/frame_008.png"
+            ]
+          },
+          "Standing_idle_walk": {
+            "south": [
+              "animations/Standing_idle_walk/south/frame_000.png",
+              "animations/Standing_idle_walk/south/frame_001.png",
+              "animations/Standing_idle_walk/south/frame_002.png",
+              "animations/Standing_idle_walk/south/frame_003.png",
+              "animations/Standing_idle_walk/south/frame_004.png",
+              "animations/Standing_idle_walk/south/frame_005.png",
+              "animations/Standing_idle_walk/south/frame_006.png",
+              "animations/Standing_idle_walk/south/frame_007.png",
+              "animations/Standing_idle_walk/south/frame_008.png"
+            ],
+            "south-east": [
+              "animations/Standing_idle_walk/south-east/frame_000.png",
+              "animations/Standing_idle_walk/south-east/frame_001.png",
+              "animations/Standing_idle_walk/south-east/frame_002.png",
+              "animations/Standing_idle_walk/south-east/frame_003.png",
+              "animations/Standing_idle_walk/south-east/frame_004.png",
+              "animations/Standing_idle_walk/south-east/frame_005.png",
+              "animations/Standing_idle_walk/south-east/frame_006.png",
+              "animations/Standing_idle_walk/south-east/frame_007.png",
+              "animations/Standing_idle_walk/south-east/frame_008.png"
+            ],
+            "east": [
+              "animations/Standing_idle_walk/east/frame_000.png",
+              "animations/Standing_idle_walk/east/frame_001.png",
+              "animations/Standing_idle_walk/east/frame_002.png",
+              "animations/Standing_idle_walk/east/frame_003.png",
+              "animations/Standing_idle_walk/east/frame_004.png",
+              "animations/Standing_idle_walk/east/frame_005.png",
+              "animations/Standing_idle_walk/east/frame_006.png",
+              "animations/Standing_idle_walk/east/frame_007.png",
+              "animations/Standing_idle_walk/east/frame_008.png"
+            ],
+            "north-east": [
+              "animations/Standing_idle_walk/north-east/frame_000.png",
+              "animations/Standing_idle_walk/north-east/frame_001.png",
+              "animations/Standing_idle_walk/north-east/frame_002.png",
+              "animations/Standing_idle_walk/north-east/frame_003.png",
+              "animations/Standing_idle_walk/north-east/frame_004.png",
+              "animations/Standing_idle_walk/north-east/frame_005.png",
+              "animations/Standing_idle_walk/north-east/frame_006.png",
+              "animations/Standing_idle_walk/north-east/frame_007.png",
+              "animations/Standing_idle_walk/north-east/frame_008.png"
+            ],
+            "north": [
+              "animations/Standing_idle_walk/north/frame_000.png",
+              "animations/Standing_idle_walk/north/frame_001.png",
+              "animations/Standing_idle_walk/north/frame_002.png",
+              "animations/Standing_idle_walk/north/frame_003.png",
+              "animations/Standing_idle_walk/north/frame_004.png",
+              "animations/Standing_idle_walk/north/frame_005.png",
+              "animations/Standing_idle_walk/north/frame_006.png",
+              "animations/Standing_idle_walk/north/frame_007.png",
+              "animations/Standing_idle_walk/north/frame_008.png"
+            ],
+            "north-west": [
+              "animations/Standing_idle_walk/north-west/frame_000.png",
+              "animations/Standing_idle_walk/north-west/frame_001.png",
+              "animations/Standing_idle_walk/north-west/frame_002.png",
+              "animations/Standing_idle_walk/north-west/frame_003.png",
+              "animations/Standing_idle_walk/north-west/frame_004.png",
+              "animations/Standing_idle_walk/north-west/frame_005.png",
+              "animations/Standing_idle_walk/north-west/frame_006.png",
+              "animations/Standing_idle_walk/north-west/frame_007.png",
+              "animations/Standing_idle_walk/north-west/frame_008.png"
+            ],
+            "west": [
+              "animations/Standing_idle_walk/west/frame_000.png",
+              "animations/Standing_idle_walk/west/frame_001.png",
+              "animations/Standing_idle_walk/west/frame_002.png",
+              "animations/Standing_idle_walk/west/frame_003.png",
+              "animations/Standing_idle_walk/west/frame_004.png",
+              "animations/Standing_idle_walk/west/frame_005.png",
+              "animations/Standing_idle_walk/west/frame_006.png",
+              "animations/Standing_idle_walk/west/frame_007.png",
+              "animations/Standing_idle_walk/west/frame_008.png"
+            ],
+            "south-west": [
+              "animations/Standing_idle_walk/south-west/frame_000.png",
+              "animations/Standing_idle_walk/south-west/frame_001.png",
+              "animations/Standing_idle_walk/south-west/frame_002.png",
+              "animations/Standing_idle_walk/south-west/frame_003.png",
+              "animations/Standing_idle_walk/south-west/frame_004.png",
+              "animations/Standing_idle_walk/south-west/frame_005.png",
+              "animations/Standing_idle_walk/south-west/frame_006.png",
+              "animations/Standing_idle_walk/south-west/frame_007.png",
+              "animations/Standing_idle_walk/south-west/frame_008.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "afeaf9d2-a010-4228-b015-acc57331ebe1",
+        "name": "soldier in combat st",
+        "prompt": "A modern soldier in tactical desert camouflage fatigues, wearing a ballistic vest, a tactical helmet with mounted goggles, and combat boots, standing in a ready stance with a rifle held firmly across the chest, crisp black outline.",
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-29T19:41:09.986037+00:00"
+      },
+      "folder": "Standing_Ready_to_fire_stance",
+      "frames": {
+        "rotations": {
+          "south": "Standing_Ready_to_fire_stance/rotations/south.png",
+          "south-east": "Standing_Ready_to_fire_stance/rotations/south-east.png",
+          "east": "Standing_Ready_to_fire_stance/rotations/east.png",
+          "north-east": "Standing_Ready_to_fire_stance/rotations/north-east.png",
+          "north": "Standing_Ready_to_fire_stance/rotations/north.png",
+          "north-west": "Standing_Ready_to_fire_stance/rotations/north-west.png",
+          "west": "Standing_Ready_to_fire_stance/rotations/west.png",
+          "south-west": "Standing_Ready_to_fire_stance/rotations/south-west.png"
+        },
+        "animations": {
+          "standing_ready_to_fire_idle": {
+            "south": [
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south/frame_000.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south/frame_001.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south/frame_002.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south/frame_003.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south/frame_004.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south/frame_005.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south/frame_006.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south/frame_007.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south/frame_008.png"
+            ],
+            "south-east": [
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-east/frame_000.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-east/frame_001.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-east/frame_002.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-east/frame_003.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-east/frame_004.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-east/frame_005.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-east/frame_006.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-east/frame_007.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-east/frame_008.png"
+            ],
+            "east": [
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/east/frame_000.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/east/frame_001.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/east/frame_002.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/east/frame_003.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/east/frame_004.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/east/frame_005.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/east/frame_006.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/east/frame_007.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/east/frame_008.png"
+            ],
+            "north-east": [
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-east/frame_000.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-east/frame_001.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-east/frame_002.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-east/frame_003.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-east/frame_004.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-east/frame_005.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-east/frame_006.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-east/frame_007.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-east/frame_008.png"
+            ],
+            "north": [
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north/frame_000.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north/frame_001.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north/frame_002.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north/frame_003.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north/frame_004.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north/frame_005.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north/frame_006.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north/frame_007.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north/frame_008.png"
+            ],
+            "north-west": [
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-west/frame_000.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-west/frame_001.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-west/frame_002.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-west/frame_003.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-west/frame_004.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-west/frame_005.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-west/frame_006.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-west/frame_007.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/north-west/frame_008.png"
+            ],
+            "west": [
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/west/frame_000.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/west/frame_001.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/west/frame_002.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/west/frame_003.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/west/frame_004.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/west/frame_005.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/west/frame_006.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/west/frame_007.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/west/frame_008.png"
+            ],
+            "south-west": [
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-west/frame_000.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-west/frame_001.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-west/frame_002.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-west/frame_003.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-west/frame_004.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-west/frame_005.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-west/frame_006.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-west/frame_007.png",
+              "Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle/south-west/frame_008.png"
+            ]
+          }
+        }
+      },
+      "note": "Shipped aim art verified pixel-exact against this state ('soldier in combat st'): east/west/north rotations are its cloud rotations, the other five rotations are frame_000 of its aim-idle animation, and all 72 aim-idle frames match. The two 'Ready to fire stance' states (9ea3b6d4, 68d75ed1) in the same group do NOT match the shipped art."
+    },
+    {
+      "character": {
+        "id": "5bece237-89ba-4d22-85a4-aa2b242d07c9",
+        "name": "Lying dead",
+        "prompt": "A modern soldier in tactical desert camouflage fatigues, wearing a ballistic vest, a tactical helmet with mounted goggles, and combat boots, standing in a ready stance with a rifle held firmly across the chest, crisp black outline.",
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-06-30T12:01:37.230695+00:00"
+      },
+      "folder": "dead_stance",
+      "frames": {
+        "rotations": {
+          "south": "dead_stance/rotations/south.png",
+          "south-east": "dead_stance/rotations/south-east.png",
+          "east": "dead_stance/rotations/east.png",
+          "north-east": "dead_stance/rotations/north-east.png",
+          "north": "dead_stance/rotations/north.png",
+          "north-west": "dead_stance/rotations/north-west.png",
+          "west": "dead_stance/rotations/west.png",
+          "south-west": "dead_stance/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-08-15T12:53:09.700507",
+  "backfill": {
+    "date": "2026-08-15",
+    "method": "ids verified pixel-exact against the PixelLab character-group export bundles (read-only); frames scanned from disk",
+    "notes": [
+      "Main state lives at the unit root (folder ''), not in a named subfolder; it ships no static rotations of its own."
+    ]
+  }
+}

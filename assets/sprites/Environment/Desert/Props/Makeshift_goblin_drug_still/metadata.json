@@ -1,0 +1,73 @@
+{
+  "group_id": null,
+  "objects": [
+    {
+      "id": "f13591a1-f17e-4a97-bd0f-84c4c08a934e",
+      "name": null,
+      "prompt": "Makeshift desert goblin drug lab",
+      "size": {
+        "width": 80,
+        "height": 80
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Makeshift_goblin_drug_still/rotations/unknown.png"
+      },
+      "animations": {
+        "normal_idle": {
+          "directions": {
+            "unknown": {
+              "frames": [
+                "Makeshift_goblin_drug_still/animations/normal_idle/unknown/frame_000.png",
+                "Makeshift_goblin_drug_still/animations/normal_idle/unknown/frame_001.png",
+                "Makeshift_goblin_drug_still/animations/normal_idle/unknown/frame_002.png",
+                "Makeshift_goblin_drug_still/animations/normal_idle/unknown/frame_003.png",
+                "Makeshift_goblin_drug_still/animations/normal_idle/unknown/frame_004.png",
+                "Makeshift_goblin_drug_still/animations/normal_idle/unknown/frame_005.png",
+                "Makeshift_goblin_drug_still/animations/normal_idle/unknown/frame_006.png",
+                "Makeshift_goblin_drug_still/animations/normal_idle/unknown/frame_007.png",
+                "Makeshift_goblin_drug_still/animations/normal_idle/unknown/frame_008.png"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "7be86be6-381f-47da-83b7-ea19b9b98042",
+      "name": null,
+      "prompt": "Makeshift desert goblin drug lab",
+      "size": {
+        "width": 80,
+        "height": 80
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Makeshift_goblin_drug_still_1/rotations/unknown.png"
+      },
+      "animations": {
+        "normal_idle": {
+          "directions": {
+            "unknown": {
+              "frames": [
+                "Makeshift_goblin_drug_still_1/animations/normal_idle/unknown/frame_000.png",
+                "Makeshift_goblin_drug_still_1/animations/normal_idle/unknown/frame_001.png",
+                "Makeshift_goblin_drug_still_1/animations/normal_idle/unknown/frame_002.png",
+                "Makeshift_goblin_drug_still_1/animations/normal_idle/unknown/frame_003.png",
+                "Makeshift_goblin_drug_still_1/animations/normal_idle/unknown/frame_004.png",
+                "Makeshift_goblin_drug_still_1/animations/normal_idle/unknown/frame_005.png",
+                "Makeshift_goblin_drug_still_1/animations/normal_idle/unknown/frame_006.png",
+                "Makeshift_goblin_drug_still_1/animations/normal_idle/unknown/frame_007.png",
+                "Makeshift_goblin_drug_still_1/animations/normal_idle/unknown/frame_008.png"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-07-30T00:00:00.000000"
+}

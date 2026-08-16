@@ -1,0 +1,824 @@
+{
+  "group_id": "220870e8-358c-4c44-a5d5-22ddf13337dd",
+  "states": [
+    {
+      "character": {
+        "id": "f9cebd91-c646-40f2-8bd9-d9f23aeeb75d",
+        "name": "Soldier wears a high",
+        "prompt": "A modern soldier in tactical desert camouflage fatigues, wearing a ballistic vest, a tactical helmet with mounted goggles, and combat boots, standing in a ready stance with a rifle held firmly across the chest, crisp black outline.",
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-07-30T01:24:24.160324+00:00"
+      },
+      "folder": "Rodar_Akai",
+      "frames": {
+        "rotations": {
+          "south": "Rodar_Akai/rotations/south.png",
+          "south-east": "Rodar_Akai/rotations/south-east.png",
+          "east": "Rodar_Akai/rotations/east.png",
+          "north-east": "Rodar_Akai/rotations/north-east.png",
+          "north": "Rodar_Akai/rotations/north.png",
+          "north-west": "Rodar_Akai/rotations/north-west.png",
+          "west": "Rodar_Akai/rotations/west.png",
+          "south-west": "Rodar_Akai/rotations/south-west.png"
+        },
+        "animations": {
+          "standing_idle": {
+            "south": [
+              "Rodar_Akai/animations/standing_idle/south/frame_000.png",
+              "Rodar_Akai/animations/standing_idle/south/frame_001.png",
+              "Rodar_Akai/animations/standing_idle/south/frame_002.png",
+              "Rodar_Akai/animations/standing_idle/south/frame_003.png",
+              "Rodar_Akai/animations/standing_idle/south/frame_004.png",
+              "Rodar_Akai/animations/standing_idle/south/frame_005.png",
+              "Rodar_Akai/animations/standing_idle/south/frame_006.png",
+              "Rodar_Akai/animations/standing_idle/south/frame_007.png",
+              "Rodar_Akai/animations/standing_idle/south/frame_008.png"
+            ],
+            "south-east": [
+              "Rodar_Akai/animations/standing_idle/south-east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle/south-east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle/south-east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle/south-east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle/south-east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle/south-east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle/south-east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle/south-east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle/south-east/frame_008.png"
+            ],
+            "east": [
+              "Rodar_Akai/animations/standing_idle/east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle/east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle/east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle/east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle/east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle/east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle/east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle/east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle/east/frame_008.png"
+            ],
+            "north-east": [
+              "Rodar_Akai/animations/standing_idle/north-east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle/north-east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle/north-east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle/north-east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle/north-east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle/north-east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle/north-east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle/north-east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle/north-east/frame_008.png"
+            ],
+            "north": [
+              "Rodar_Akai/animations/standing_idle/north/frame_000.png",
+              "Rodar_Akai/animations/standing_idle/north/frame_001.png",
+              "Rodar_Akai/animations/standing_idle/north/frame_002.png",
+              "Rodar_Akai/animations/standing_idle/north/frame_003.png",
+              "Rodar_Akai/animations/standing_idle/north/frame_004.png",
+              "Rodar_Akai/animations/standing_idle/north/frame_005.png",
+              "Rodar_Akai/animations/standing_idle/north/frame_006.png",
+              "Rodar_Akai/animations/standing_idle/north/frame_007.png",
+              "Rodar_Akai/animations/standing_idle/north/frame_008.png"
+            ],
+            "north-west": [
+              "Rodar_Akai/animations/standing_idle/north-west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle/north-west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle/north-west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle/north-west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle/north-west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle/north-west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle/north-west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle/north-west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle/north-west/frame_008.png"
+            ],
+            "west": [
+              "Rodar_Akai/animations/standing_idle/west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle/west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle/west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle/west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle/west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle/west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle/west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle/west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle/west/frame_008.png"
+            ],
+            "south-west": [
+              "Rodar_Akai/animations/standing_idle/south-west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle/south-west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle/south-west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle/south-west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle/south-west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle/south-west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle/south-west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle/south-west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_alt": {
+            "south": [
+              "Rodar_Akai/animations/standing_idle_alt/south/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_alt/south/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_alt/south/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_alt/south/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_alt/south/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_alt/south/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_alt/south/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_alt/south/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_alt/south/frame_008.png"
+            ],
+            "south-east": [
+              "Rodar_Akai/animations/standing_idle_alt/south-east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-east/frame_008.png"
+            ],
+            "east": [
+              "Rodar_Akai/animations/standing_idle_alt/east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_alt/east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_alt/east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_alt/east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_alt/east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_alt/east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_alt/east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_alt/east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_alt/east/frame_008.png"
+            ],
+            "north-east": [
+              "Rodar_Akai/animations/standing_idle_alt/north-east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-east/frame_008.png"
+            ],
+            "north": [
+              "Rodar_Akai/animations/standing_idle_alt/north/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_alt/north/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_alt/north/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_alt/north/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_alt/north/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_alt/north/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_alt/north/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_alt/north/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_alt/north/frame_008.png"
+            ],
+            "north-west": [
+              "Rodar_Akai/animations/standing_idle_alt/north-west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_alt/north-west/frame_008.png"
+            ],
+            "west": [
+              "Rodar_Akai/animations/standing_idle_alt/west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_alt/west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_alt/west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_alt/west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_alt/west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_alt/west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_alt/west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_alt/west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_alt/west/frame_008.png"
+            ],
+            "south-west": [
+              "Rodar_Akai/animations/standing_idle_alt/south-west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_alt/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_damage": {
+            "south": [
+              "Rodar_Akai/animations/standing_idle_damage/south/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_damage/south/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_damage/south/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_damage/south/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_damage/south/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_damage/south/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_damage/south/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_damage/south/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_damage/south/frame_008.png"
+            ],
+            "south-east": [
+              "Rodar_Akai/animations/standing_idle_damage/south-east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-east/frame_008.png"
+            ],
+            "east": [
+              "Rodar_Akai/animations/standing_idle_damage/east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_damage/east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_damage/east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_damage/east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_damage/east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_damage/east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_damage/east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_damage/east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_damage/east/frame_008.png"
+            ],
+            "north-east": [
+              "Rodar_Akai/animations/standing_idle_damage/north-east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-east/frame_008.png"
+            ],
+            "north": [
+              "Rodar_Akai/animations/standing_idle_damage/north/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_damage/north/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_damage/north/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_damage/north/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_damage/north/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_damage/north/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_damage/north/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_damage/north/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_damage/north/frame_008.png"
+            ],
+            "north-west": [
+              "Rodar_Akai/animations/standing_idle_damage/north-west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_damage/north-west/frame_008.png"
+            ],
+            "west": [
+              "Rodar_Akai/animations/standing_idle_damage/west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_damage/west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_damage/west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_damage/west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_damage/west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_damage/west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_damage/west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_damage/west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_damage/west/frame_008.png"
+            ],
+            "south-west": [
+              "Rodar_Akai/animations/standing_idle_damage/south-west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_damage/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_reload": {
+            "south": [
+              "Rodar_Akai/animations/standing_idle_reload/south/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_reload/south/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_reload/south/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_reload/south/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_reload/south/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_reload/south/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_reload/south/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_reload/south/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_reload/south/frame_008.png"
+            ],
+            "south-east": [
+              "Rodar_Akai/animations/standing_idle_reload/south-east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-east/frame_008.png"
+            ],
+            "east": [
+              "Rodar_Akai/animations/standing_idle_reload/east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_reload/east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_reload/east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_reload/east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_reload/east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_reload/east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_reload/east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_reload/east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_reload/east/frame_008.png"
+            ],
+            "north-east": [
+              "Rodar_Akai/animations/standing_idle_reload/north-east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-east/frame_008.png"
+            ],
+            "north": [
+              "Rodar_Akai/animations/standing_idle_reload/north/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_reload/north/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_reload/north/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_reload/north/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_reload/north/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_reload/north/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_reload/north/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_reload/north/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_reload/north/frame_008.png"
+            ],
+            "north-west": [
+              "Rodar_Akai/animations/standing_idle_reload/north-west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_reload/north-west/frame_008.png"
+            ],
+            "west": [
+              "Rodar_Akai/animations/standing_idle_reload/west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_reload/west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_reload/west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_reload/west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_reload/west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_reload/west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_reload/west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_reload/west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_reload/west/frame_008.png"
+            ],
+            "south-west": [
+              "Rodar_Akai/animations/standing_idle_reload/south-west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_reload/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_to_dead": {
+            "south": [
+              "Rodar_Akai/animations/standing_idle_to_dead/south/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south/frame_008.png"
+            ],
+            "south-east": [
+              "Rodar_Akai/animations/standing_idle_to_dead/south-east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-east/frame_008.png"
+            ],
+            "east": [
+              "Rodar_Akai/animations/standing_idle_to_dead/east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/east/frame_008.png"
+            ],
+            "north-east": [
+              "Rodar_Akai/animations/standing_idle_to_dead/north-east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-east/frame_008.png"
+            ],
+            "north": [
+              "Rodar_Akai/animations/standing_idle_to_dead/north/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north/frame_008.png"
+            ],
+            "north-west": [
+              "Rodar_Akai/animations/standing_idle_to_dead/north-west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/north-west/frame_008.png"
+            ],
+            "west": [
+              "Rodar_Akai/animations/standing_idle_to_dead/west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/west/frame_008.png"
+            ],
+            "south-west": [
+              "Rodar_Akai/animations/standing_idle_to_dead/south-west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_dead/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_to_readyToFire": {
+            "south": [
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south/frame_008.png"
+            ],
+            "south-east": [
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-east/frame_008.png"
+            ],
+            "east": [
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/east/frame_008.png"
+            ],
+            "north-east": [
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-east/frame_008.png"
+            ],
+            "north": [
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north/frame_008.png"
+            ],
+            "north-west": [
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/north-west/frame_008.png"
+            ],
+            "west": [
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/west/frame_008.png"
+            ],
+            "south-west": [
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_to_readyToFire/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_walk": {
+            "south": [
+              "Rodar_Akai/animations/standing_idle_walk/south/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_walk/south/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_walk/south/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_walk/south/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_walk/south/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_walk/south/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_walk/south/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_walk/south/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_walk/south/frame_008.png"
+            ],
+            "south-east": [
+              "Rodar_Akai/animations/standing_idle_walk/south-east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-east/frame_008.png"
+            ],
+            "east": [
+              "Rodar_Akai/animations/standing_idle_walk/east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_walk/east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_walk/east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_walk/east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_walk/east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_walk/east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_walk/east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_walk/east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_walk/east/frame_008.png"
+            ],
+            "north-east": [
+              "Rodar_Akai/animations/standing_idle_walk/north-east/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-east/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-east/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-east/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-east/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-east/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-east/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-east/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-east/frame_008.png"
+            ],
+            "north": [
+              "Rodar_Akai/animations/standing_idle_walk/north/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_walk/north/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_walk/north/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_walk/north/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_walk/north/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_walk/north/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_walk/north/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_walk/north/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_walk/north/frame_008.png"
+            ],
+            "north-west": [
+              "Rodar_Akai/animations/standing_idle_walk/north-west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_walk/north-west/frame_008.png"
+            ],
+            "west": [
+              "Rodar_Akai/animations/standing_idle_walk/west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_walk/west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_walk/west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_walk/west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_walk/west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_walk/west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_walk/west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_walk/west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_walk/west/frame_008.png"
+            ],
+            "south-west": [
+              "Rodar_Akai/animations/standing_idle_walk/south-west/frame_000.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-west/frame_001.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-west/frame_002.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-west/frame_003.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-west/frame_004.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-west/frame_005.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-west/frame_006.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-west/frame_007.png",
+              "Rodar_Akai/animations/standing_idle_walk/south-west/frame_008.png"
+            ]
+          }
+        }
+      },
+      "note": "Cloud state name is 'Soldier wears a high'; folder renamed on disk."
+    },
+    {
+      "character": {
+        "id": "5b6ffc0a-a24f-4952-9f7a-4af055699d59",
+        "name": "ReadyToFire_Stance",
+        "prompt": "A modern soldier in tactical desert camouflage fatigues, wearing a ballistic vest, a tactical helmet with mounted goggles, and combat boots, standing in a ready stance with a rifle held firmly across the chest, crisp black outline.",
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-07-30T17:08:16.927683+00:00"
+      },
+      "folder": "ReadyToFire_Stance",
+      "frames": {
+        "rotations": {
+          "south": "ReadyToFire_Stance/rotations/south.png",
+          "south-east": "ReadyToFire_Stance/rotations/south-east.png",
+          "east": "ReadyToFire_Stance/rotations/east.png",
+          "north-east": "ReadyToFire_Stance/rotations/north-east.png",
+          "north": "ReadyToFire_Stance/rotations/north.png",
+          "north-west": "ReadyToFire_Stance/rotations/north-west.png",
+          "west": "ReadyToFire_Stance/rotations/west.png",
+          "south-west": "ReadyToFire_Stance/rotations/south-west.png"
+        },
+        "animations": {
+          "standing-readyToFire_idle": {
+            "south": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_008.png"
+            ],
+            "south-east": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_008.png"
+            ],
+            "east": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_008.png"
+            ],
+            "north-east": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_008.png"
+            ],
+            "north": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_008.png"
+            ],
+            "north-west": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_008.png"
+            ],
+            "west": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_008.png"
+            ],
+            "south-west": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_008.png"
+            ]
+          }
+        }
+      },
+      "note": "south and north rotations differ from the cloud art - locally corrected (the main state carries fix_aimidle_* animation groups from that pass); the other six match pixel-exact."
+    },
+    {
+      "character": {
+        "id": "b82a7b59-c7d8-43d3-8d13-6cd5e3e9ce61",
+        "name": "Dead_stance",
+        "prompt": "A modern soldier in tactical desert camouflage fatigues, wearing a ballistic vest, a tactical helmet with mounted goggles, and combat boots, standing in a ready stance with a rifle held firmly across the chest, crisp black outline.",
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-07-30T17:08:19.002480+00:00"
+      },
+      "folder": "Dead_stance",
+      "frames": {
+        "rotations": {
+          "south": "Dead_stance/rotations/south.png",
+          "south-east": "Dead_stance/rotations/south-east.png",
+          "east": "Dead_stance/rotations/east.png",
+          "north-east": "Dead_stance/rotations/north-east.png",
+          "north": "Dead_stance/rotations/north.png",
+          "north-west": "Dead_stance/rotations/north-west.png",
+          "west": "Dead_stance/rotations/west.png",
+          "south-west": "Dead_stance/rotations/south-west.png"
+        },
+        "animations": {}
+      },
+      "note": "Shipped rotations are frame_008 of standing_idle_to_dead (verified 8/8), not this character's own cloud rotations."
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-08-15T12:50:52.377044",
+  "backfill": {
+    "date": "2026-08-15",
+    "method": "ids verified pixel-exact against the PixelLab character-group export bundles (read-only); frames scanned from disk",
+    "notes": []
+  }
+}
