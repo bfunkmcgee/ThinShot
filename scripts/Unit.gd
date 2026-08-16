@@ -614,6 +614,11 @@ var routing := false
 # back to a fighter nothing happened to, so the squad cannot shoot a man to the
 # edge of breaking and then have him steady himself on his own turn.
 var morale_pressed := false
+# Cut short by a reaction: a round landed while this unit was crossing a watched
+# lane. The advance stopped on the cell it was hit on and the activation stopped
+# with it - see Rules.reaction_interrupts. Cleared by start_turn(), alongside
+# moved and acted, because it is the same kind of fact as those two.
+var interrupted := false
 # A civilian who is not an objective: present, in the way, and killable. The
 # prisoners in the pens are the other kind - huddled where they were left,
 # waiting to be reached, and protected by every rule that can protect them.
@@ -1561,6 +1566,7 @@ func set_done(value: bool) -> void:
 func start_turn() -> void:
 	moved = false
 	acted = false
+	interrupted = false
 	suppression = maxi(suppression - 1, 0)
 	rally_bonus = 0  # Rally's steadying lasts until the soldier's own turn
 	modulate = Color.WHITE

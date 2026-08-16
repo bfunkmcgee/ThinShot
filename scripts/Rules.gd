@@ -251,6 +251,32 @@ static func shot_preview(board: Board, attacker: Unit, target: Unit,
 	}
 
 
+# --- Reactions ---------------------------------------------------------------
+
+## Does a reaction shot that CONNECTS stop the unit it hit?
+##
+## Yes. The advance ends on the cell the round found, and the activation ends
+## with it: no walking the rest of the path, and no shot at the end of it. A
+## soldier who has just been hit is not finishing the thought he was having.
+##
+## A MISS does nothing, and that asymmetry is the whole texture of the rule.
+## Overwatch is not a wall, it is a bet: the watcher spends a turn to buy a
+## chance, and the dice decide whether the advance dies on the wire or walks
+## through it. Making a miss interrupt would turn a covered lane into a hard
+## barrier and end the game's only real reason to accept a risky crossing.
+##
+## Symmetrical by construction, because it is asked about a hit rather than
+## about a team. A goblin caught crossing a scout's lane stops where a scout
+## caught crossing a goblin's does.
+##
+## This lives here as a rule rather than as an `if hit` inside the movement
+## loop for the reason everything else in this file does: it is a rule, it
+## decides what a turn is worth, and somebody tuning the game should find it by
+## reading rather than by grepping the controller for `overwatch`.
+static func reaction_interrupts(hit: bool) -> bool:
+	return hit
+
+
 # --- Morale ------------------------------------------------------------------
 #
 # There was no morale in this game. Suppression is a pin, not a fear: it costs

@@ -417,6 +417,15 @@ campaign and playing again starts you with five fresh recruits.
   with a pair. The panel names both numbers while you aim the arc. Covered ground is
   hatched on the board: amber for goblin arcs, green for your own. Unfired
   overwatch expires at the owner's next turn.
+- **A reaction that connects stops the man it hit.** He halts on the cell the
+  round found — short of wherever he was going — and his activation ends there:
+  no walking the rest of the path, and no shot at the end of it. This is what a
+  watched lane costs to cross, and it applies to both sides identically.
+
+  **A miss does nothing.** That asymmetry is the whole point. Overwatch is not a
+  wall, it is a bet: the watcher spends a turn to buy a chance, and the dice
+  decide whether the advance dies on the wire or walks through it. Being stopped
+  costs exactly one activation — the unit is free again on its next turn.
 - **Grenades** cost the attack, never the move, so a soldier can advance and
   then throw. They are **thrown at a tile rather than a unit**, cover the
   **3×3 square** around where they land, **always connect** (no hit roll), and
@@ -585,12 +594,13 @@ godot --headless --path . res://scenes/Battle.tscn --quit-after 200
 godot --headless --path . res://scenes/Battle.tscn --quit-after 200 -- --level 2
 ```
 
-The harnesses assert rather than smoke-test, and there are eleven of them:
+The harnesses assert rather than smoke-test, and there are twelve of them:
 
 ```
 godot --headless --path . -s tools/test_rules.gd         # to-hit, damage, morale, conduct
 godot --headless --path . -s tools/test_roll.gd          # who the enemy was
 godot --headless --path . -s tools/test_morale.gd        # surrender, rout, bystanders
+godot --headless --path . -s tools/test_overwatch.gd     # reactions that interrupt
 godot --headless --path . -s tools/test_menu.gd          # new campaign, the notebook
 godot --headless --path . -s tools/test_save_load.gd     # the save ladder, v1 -> v3
 godot --headless --path . -s tools/test_progression.gd   # xp, ranks, perks

@@ -1767,7 +1767,8 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 				watcher.set_overwatch(false)  # consumed, even if the shot kills
 				print("[Sandline]   overwatch! %s fires %d at %s" % [
 						watcher.cell, watcher.overwatch_rounds(), unit.cell])
-				await _resolve_reaction(watcher, unit)
+				if Rules.reaction_interrupts(await _resolve_reaction(watcher, unit)):
+					unit.interrupted = true
 			if not unit.is_alive() or state == State.GAME_OVER:
 				if selected == unit:
 					deselect()
@@ -1777,9 +1778,21 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 						_refresh_danger()
 						_update_unit_panel()
 				return
+			# A round that landed ends the advance here rather than at the
+			# destination. Everything below still runs - the unit is standing
+			# on a real cell, it may have reached a prisoner, and an extraction
+			# map has to re-test the win condition either way.
+			if unit.interrupted:
+				print("[Sandline]   %s is stopped at %s" % [
+						unit.role_name(), unit.cell])
+				break
 			unit.start_walking()
 	unit.stop_walking()
 	unit.moved = true
+	# Hit crossing the lane: the activation is over, not just the walk. For a
+	# soldier this greys him out; the AI checks the same flag before shooting.
+	if unit.interrupted:
+		unit.set_done(true)
 	_free_reached_captives(unit)
 	state = prev_state
 	# Walking is itself an objective action on an extraction map, so the win
@@ -2805,12 +2818,17 @@ func _fire_suppression_round(attacker: Unit, target: Unit) -> void:
 ## A reaction shot off overwatch. The rifle is already up, so there is no raise
 ## beat - and the gunner answers with a burst, which is what makes his watch
 ## read as covering the ground rather than guarding a line.
-func _resolve_reaction(watcher: Unit, target: Unit) -> void:
+## Returns whether any round in the volley connected. The whole burst is fired
+## either way - a machinegunner's reaction is one burst, not three decisions -
+## and the interrupt is settled once at the end of it.
+func _resolve_reaction(watcher: Unit, target: Unit) -> bool:
 	watcher.set_facing((target.position - watcher.position).normalized())
+	var connected := false
 	for i in watcher.overwatch_rounds():
 		if i > 0:
 			await get_tree().create_timer(BURST_GAP).timeout
-		await _fire_round(watcher, target)
+		if await _fire_round(watcher, target):
+			connected = true
 		# Stop on a kill, a finished battle, or an empty belt rather than
 		# firing rounds that have nowhere to go.
 		if not target.is_alive() or state == State.GAME_OVER \
@@ -2818,6 +2836,7 @@ func _resolve_reaction(watcher: Unit, target: Unit) -> void:
 			break
 	await get_tree().create_timer(LOWER_TIME).timeout
 	watcher.lower_rifle()
+	return connected
 
 
 ## The shot itself: face, (optionally) raise the rifle via the transition
@@ -2837,8 +2856,11 @@ func _resolve_shot(attacker: Unit, target: Unit, with_aim_beat: bool) -> void:
 ## Assumes the attacker is already facing the target with rifle raised.
 ## `ignore_cover` is the called shot's whole trick - the roll stays normal but
 ## the damage is never halved; `bonus_damage` carries One Shot's extra.
+## Returns whether the round CONNECTED, which is what a reaction needs to know
+## to decide whether it interrupted anybody (Rules.reaction_interrupts). Every
+## other caller is free to ignore it.
 func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0,
-		ignore_cover := false, bonus_damage := 0) -> void:
+		ignore_cover := false, bonus_damage := 0) -> bool:
 	var muzzle := attacker.muzzle_point()
 	# Leaning out: shift the muzzle toward the cell being leaned into, so the
 	# round visibly comes around the corner instead of through the wall.
@@ -2897,7 +2919,7 @@ func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0,
 		fx_ground.bullet_hole(strike, dir)
 		target.spawn_miss_text()
 		_update_unit_panel()
-		return
+		return false
 
 	# Both numbers were settled above; all that is left is to say which happened.
 	# `cover` is already NONE if this round was a called shot, so the log never
@@ -2928,6 +2950,7 @@ func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0,
 		target.lower_rifle()
 	_update_unit_panel()  # keep hovered-unit HP live even during enemy fire
 	await _hit_stop(0.09 if lethal else 0.14, 0.075 if lethal else 0.045)
+	return true
 
 
 ## Percent chance this shot connects, from Rules - which owns the arithmetic
@@ -3214,10 +3237,16 @@ func run_enemy_turn() -> void:
 					await do_move(goblin, dest)
 			shootable = _shootable_from(goblin.cell, goblin.attack_range,
 					living_soldiers(Unit.TEAM_SCOUT))
-			var shoots := goblin.is_alive() and goblin.has_ammo() and not shootable.is_empty()
+			# A reaction that landed ended this activation where it landed.
+			# do_move has already set_done() him; this is the branch that would
+			# otherwise walk straight past that and fire anyway.
+			var shoots := goblin.is_alive() and not goblin.interrupted \
+					and goblin.has_ammo() and not shootable.is_empty()
 			print("[Sandline]   goblin %d/%d %s %s -> %s%s" % [
 					acted, squad.size(), "reloads at" if reloaded else "moves",
-					from_cell, goblin.cell, ", shoots" if shoots else ""])
+					from_cell, goblin.cell,
+					" and is stopped" if goblin.interrupted
+							else (", shoots" if shoots else "")])
 			if shoots:
 				await _ai_fire(goblin, _nearest(goblin.cell, shootable))
 			elif not moved_now and goblin.is_alive() and not goblin.is_suppressed() \
