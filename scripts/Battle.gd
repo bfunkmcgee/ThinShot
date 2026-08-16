@@ -4048,4 +4048,3 @@ func show_banner(text: String) -> void:
 	tween.tween_property(turn_banner, "modulate:a", 1.0, 0.2)
 	tween.parallel().tween_property(turn_banner, "scale", Vector2.ONE, 0.25) \
 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-

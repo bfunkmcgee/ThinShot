@@ -477,6 +477,8 @@ func _full_cover_shot(battle: Node) -> Dictionary:
 
 
 func _finish() -> void:
+	_test_named_kestrels()
+
 	if _had_save:
 		var rf := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 		rf.store_string(_backup)
@@ -489,3 +491,87 @@ func _finish() -> void:
 		print("\nremoved the test save (%s)" % error_string(err))
 	print("\nRESULT: ", "FAIL" if _failed else "PASS")
 	quit(1 if _failed else 0)
+
+
+# --- 6. the Kestrels who are people rather than postings ---------------------
+
+func _test_named_kestrels() -> void:
+	print("\n[6] named Kestrels, and what permadeath means for them")
+	var game: Node = root.get_node("/root/Game")
+	var consts: Dictionary = (load("res://scripts/Game.gd") as GDScript) \
+			.get_script_constant_map()
+	var named: Dictionary = consts["NAMED_KESTRELS"]
+	var given: Dictionary = consts["GIVEN_NAMES"]
+	var surnames: Array = consts["SURNAMES"]
+
+	# The invariant the old code kept by hand for "Akai" alone, now swept: a
+	# named person must never be mintable by the random pool, or the campaign
+	# could field two Josen Marrs.
+	var collisions: Array[String] = []
+	var missing_given: Array[String] = []
+	for kind: int in named:
+		for name: String in named[kind]:
+			if surnames.has(name):
+				collisions.append(name)
+			if not given.has(name):
+				missing_given.append(name)
+	_check(collisions.is_empty(),
+			"no named Kestrel is also in the random pool (%s)" % [collisions])
+	_check(missing_given.is_empty(),
+			"every named Kestrel has a given name (%s)" % [missing_given])
+	_check(given.size() == _named_total(named),
+			"and GIVEN_NAMES has no entries for people who do not exist (%d/%d)"
+			% [given.size(), _named_total(named)])
+
+	# Formation order: the named ones fill their kind's slots first.
+	game.roster = []
+	game._next_id = 1
+	game.ensure_roster(Levels.LEVELS[0])
+	var by_kind := {}
+	for soldier: Dictionary in game.roster:
+		var k: int = int(soldier.kind)
+		if not by_kind.has(k):
+			by_kind[k] = []
+		by_kind[k].append(str(soldier.surname))
+	for kind: int in named:
+		var first: String = str(named[kind][0])
+		_check((by_kind.get(kind, []) as Array).has(first),
+				"%s formed into kind %d (%s)" % [first, kind, by_kind.get(kind, [])])
+	_check(game.is_named_kestrel(game.roster[0])
+			and game.full_name(game.roster[0]).contains(" "),
+			"full_name reads as a person (%s)" % game.full_name(game.roster[0]))
+
+	# The weight of it: a named Kestrel who dies does NOT come back, and the
+	# replacement is a stranger off the levy post.
+	var josen: Dictionary = {}
+	for soldier: Dictionary in game.roster:
+		if str(soldier.surname) == "Marr":
+			josen = soldier
+	_check(not josen.is_empty(), "Josen Marr is on the roster")
+	josen["alive"] = false
+	var before: int = game.roster.size()
+	game.ensure_roster(Levels.LEVELS[0])
+	var marrs := 0
+	for soldier: Dictionary in game.roster:
+		if str(soldier.surname) == "Marr":
+			marrs += 1
+	_check(marrs == 1, "after his death there is still exactly one Marr (%d)" % marrs)
+	_check(game.roster.size() == before,
+			"and ensure_roster did not quietly recruit over him (%d)"
+			% game.roster.size())
+
+	# The garrison DOES replace him - with somebody else.
+	var replacements: Array = game.recruit_to_strength(Levels.LEVELS[0])
+	_check(replacements.size() == 1,
+			"the levy post offers one replacement (%d)" % replacements.size())
+	if replacements.size() == 1:
+		var who: String = str((replacements[0] as Dictionary).surname)
+		_check(who != "Marr" and not game.is_named_kestrel(replacements[0]),
+				"and it is a stranger, not Josen again (%s)" % who)
+
+
+func _named_total(named: Dictionary) -> int:
+	var n := 0
+	for kind: int in named:
+		n += (named[kind] as Array).size()
+	return n

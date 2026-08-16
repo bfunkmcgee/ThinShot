@@ -598,6 +598,10 @@ func _open_soldier(id: int) -> void:
 		"%s  -  %d xp%s" % [Game.rank_title(int(soldier.rank)), xp,
 				"" if to_next < 0 else "  (%d to the next rank)" % to_next],
 	]
+	# The named Kestrels are people the campaign is about, so the tent they are
+	# standing in says so. A replacement off the levy post gets his posting.
+	if Game.is_named_kestrel(soldier):
+		lines.insert(0, Game.full_name(soldier))
 	if perks.is_empty():
 		lines.append("No specialty yet.")
 	else:

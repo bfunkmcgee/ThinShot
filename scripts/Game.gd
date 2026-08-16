@@ -278,8 +278,33 @@ const XP_SURVIVE := 3
 const SURNAMES: Array[String] = [
 	"VANCE", "ORTIZ", "KELLER", "MBEKI", "DRAKE", "SOLIS", "HARGREAVE",
 	"NAKAMURA", "REYES", "FINCH", "ODUYA", "BRANDT", "ILIC", "MARSH",
-	"QUINN", "TAVARES", "WOLFE", "ABARA", "KESTREL", "DUNMORE",
+	"QUINN", "TAVARES", "WOLFE", "ABARA", "DUNMORE", "SERRANO",
 ]
+
+# The Kestrels who are people rather than postings, by raw Kind ordinal - keyed
+# that way for the same reason CLASS_PERK_RANKS is (see its comment).
+#
+# Filled IN ORDER before the random pool for their kind, so the squad the player
+# meets is the squad the campaign is about. Once one of them is on the roster he
+# is never recruited again, dead or alive: that is the whole weight of
+# permadeath here. Lose Josen Marr and the next body at the levy post is a
+# stranger with a surname out of SURNAMES, and Josen is simply gone.
+#
+# Mixed case on purpose. SURNAMES are shouted all-caps because they are postings;
+# these read as names because they are.
+const NAMED_KESTRELS := {
+	9: ["Akai"],    # HERO
+	2: ["Meshan"],  # MACHINEGUNNER
+	0: ["Marr"],    # SCOUT
+}
+
+## Given names, for the places that are talking about a person rather than
+## filling a slot. Surname-keyed because that is what the roster stores.
+const GIVEN_NAMES := {
+	"Akai": "Rodar",
+	"Meshan": "Brukk",
+	"Marr": "Josen",
+}
 
 
 func _ready() -> void:
@@ -455,6 +480,41 @@ func soldiers_of_kind(kind: int) -> Array:
 	return out
 
 
+## The next name for a kind: the first named Kestrel of that kind the campaign
+## has not already fielded, and a random surname once they are all accounted
+## for.
+##
+## "Accounted for" includes the dead. A unique person is never re-recruited -
+## the roster keeps its fallen forever, so this reads the whole of it and not
+## just the living.
+func _next_name_for(kind: int) -> String:
+	var fielded := {}
+	for soldier: Dictionary in roster:
+		fielded[str(soldier.get("surname", ""))] = true
+	for name: String in NAMED_KESTRELS.get(kind, []):
+		if not fielded.has(name):
+			return name
+	return _unused_surname()
+
+
+## What to call a soldier when the game is talking about a person rather than
+## filling a slot: "Josen Marr" for the named, "Cpl. KELLER" for everybody else.
+##
+## The rank is deliberately dropped for the named ones. A rank is what the Crown
+## calls you; these six have names, which is the point of them.
+func full_name(soldier: Dictionary) -> String:
+	var surname := str(soldier.get("surname", ""))
+	if GIVEN_NAMES.has(surname):
+		return "%s %s" % [GIVEN_NAMES[surname], surname]
+	return soldier_label(soldier)
+
+
+## Whether this soldier is one of the named Kestrels rather than a replacement
+## drawn off the levy post.
+func is_named_kestrel(soldier: Dictionary) -> bool:
+	return GIVEN_NAMES.has(str(soldier.get("surname", "")))
+
+
 func _unused_surname() -> String:
 	var taken := {}
 	for soldier: Dictionary in roster:
@@ -471,10 +531,7 @@ func _unused_surname() -> String:
 func _recruit(kind: int) -> Dictionary:
 	var soldier := {
 		"id": _next_id,
-		# Rodar is a person, not a posting: he arrives under his own name.
-		# "Akai" is not in SURNAMES, so the random pool can never mint a
-		# second one - keep it that way if the pool ever grows.
-		"surname": "Akai" if kind == Unit.Kind.HERO else _unused_surname(),
+		"surname": _next_name_for(kind),
 		"kind": kind,
 		"xp": 0,
 		"rank": 0,
