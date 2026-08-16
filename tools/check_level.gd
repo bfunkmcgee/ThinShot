@@ -164,6 +164,7 @@ func _check_map(job: Dictionary) -> void:
 		_check_sightlines(data)
 		_check_enclosures(data)
 		_check_drum_chains(data)
+		_check_kill_floor(data)
 	_check_zones(job)
 
 
@@ -189,7 +190,54 @@ func _objective_cells(data: Dictionary) -> Array:
 	return out
 
 
+## Enemy spawn keys, paired with the Unit.Kind ordinal each one fields. Raw
+## ordinals for the same reason test_rules.gd uses them: this tool runs under
+## `-s` and must not drag Unit.gd into a compile that happens before the
+## autoloads exist.
+const ENEMY_KIND_OF := {
+	"goblin_spawns": 3,
+	"smg_spawns": 4,
+	"smg_alt_spawns": 5,
+	"novice_spawns": 6,
+	"bolt_spawns": 7,
+}
+
+
 # ------------------------------------------------------------------- checks --
+
+
+## 0. The kill floor. A mission that asks the squad to CLEAR ground has to
+## contain somebody who will not leave it, or a good enough player could finish
+## it having killed nobody - and the game would be quietly promising that
+## restraint is always on the table. It is not, and the campaign has a mission
+## whose whole point is that it is not.
+##
+## Only eliminate missions are checked. The destroy, extract and rescue maps are
+## deliberately free of this: those CAN be completed without killing, which is
+## the other half of the same design and the reason the floor is per-objective
+## rather than per-map.
+##
+## Rules.never_breaks is the authority on who holds; this only asks whether the
+## map fields one of them.
+func _check_kill_floor(data: Dictionary) -> void:
+	var eliminates := false
+	for obj in data.get("objectives", []):
+		if str(obj.get("kind", "")) == "eliminate":
+			eliminates = true
+	if not eliminates:
+		print("  ok - kill floor n/a (no eliminate objective: winnable without killing)")
+		return
+	var rules: GDScript = load("res://scripts/Rules.gd") as GDScript
+	var holders := 0
+	var held_by: Array[String] = []
+	for key: String in ENEMY_KIND_OF:
+		var n: int = data.get(key, []).size()
+		if n > 0 and rules.call("never_breaks", int(ENEMY_KIND_OF[key])):
+			holders += n
+			held_by.append("%s x%d" % [key, n])
+	_pass(holders > 0,
+			"kill floor: %d unbreakable enemy(s) on an eliminate map%s"
+					% [holders, "" if held_by.is_empty() else " (%s)" % ", ".join(held_by)])
 
 
 ## 1. Shipped levels get the engine's own validator - no point duplicating what

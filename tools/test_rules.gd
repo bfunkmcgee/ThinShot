@@ -273,6 +273,8 @@ func _run() -> void:
 	_test_executioner()
 	_test_peek_asymmetry()
 	_test_preview_matches_resolution()
+	_test_morale()
+	_test_conduct()
 
 	print("\nRESULT: ", "FAIL" if _failed else "PASS")
 	quit(1 if _failed else 0)
@@ -761,3 +763,142 @@ func _test_preview_matches_resolution() -> void:
 	shooter.free()
 	target.free()
 	board.free()
+
+
+# --- 9. morale, and the two ways a fight ends for one soldier ----------------
+
+func _test_morale() -> void:
+	print("\n[9] a unit breaks, and the squad decides which way")
+	var bolt: int = int(_k.KIND_GOBLIN_BOLT)
+	var smg := 4  # GOBLIN_SMG, and nothing special about it - that is the point
+
+	# The wound is the big term, and it only lands at half HP or less.
+	var grazed: int = _rules.call("morale_after_round", 100, 3, 4)
+	var hurt: int = _rules.call("morale_after_round", 100, 2, 4)
+	_check(grazed == 100 - int(_k.MORALE_HIT),
+			"a round that leaves him standing costs the hit only (%d)" % grazed)
+	_check(hurt == 100 - int(_k.MORALE_HIT) - int(_k.MORALE_WOUNDED),
+			"a round that halves him costs the wound as well (%d)" % hurt)
+	_check(int(_k.MORALE_WOUNDED) > int(_k.MORALE_HIT),
+			"and the wound is the larger of the two, which is the design")
+
+	# Halving is integer, matching the cover rule: 5 HP is "half or less" at 2.
+	_check(_rules.call("morale_after_round", 100, 2, 5) < grazed
+			and _rules.call("morale_after_round", 100, 3, 5) == grazed,
+			"half of an odd pool rounds down, exactly like cover's >>")
+
+	# Morale is bounded at both ends and cannot be banked.
+	_check(_rules.call("morale_after_round", 5, 1, 4) == 0,
+			"morale floors at 0 rather than going negative")
+	_check(_rules.call("morale_recovered", int(_k.MORALE_MAX)) == int(_k.MORALE_MAX),
+			"a quiet turn cannot bank calm past MORALE_MAX")
+
+	# Witnessing is a radius, and the edge of it is inclusive.
+	var w: int = int(_k.MORALE_WITNESS)
+	_check(_rules.call("morale_after_ally_down", 100, w) < 100
+			and _rules.call("morale_after_ally_down", 100, w + 1) == 100,
+			"an ally dies inside %d tiles and is felt, outside it is not" % w)
+
+	# The break, and the two exhaustive outcomes on the far side of it.
+	var brk: int = int(_k.MORALE_BREAK)
+	var guns: int = int(_k.MORALE_SURRENDER_GUNS)
+	_check(_rules.call("is_broken", brk) and not _rules.call("is_broken", brk + 1),
+			"MORALE_BREAK is inclusive: %d breaks, %d does not" % [brk, brk + 1])
+	_check(_rules.call("breaks_to_surrender", smg, brk, guns)
+			and not _rules.call("breaks_to_rout", smg, brk, guns),
+			"broken with %d guns on him: he surrenders, and does not also rout" % guns)
+	_check(_rules.call("breaks_to_rout", smg, brk, guns - 1)
+			and not _rules.call("breaks_to_surrender", smg, brk, guns - 1),
+			"broken with %d: he runs, because there is nobody to give up to" % (guns - 1))
+
+	# Exhaustive and mutually exclusive over every morale and every gun count,
+	# for every kind. This is what lets the controller ask one question.
+	var overlap: Array[String] = []
+	var gap: Array[String] = []
+	for kind in 10:
+		for m in range(0, int(_k.MORALE_MAX) + 1):
+			for g in 4:
+				var s: bool = _rules.call("breaks_to_surrender", kind, m, g)
+				var r: bool = _rules.call("breaks_to_rout", kind, m, g)
+				if s and r:
+					overlap.append("kind %d m%d g%d" % [kind, m, g])
+				var should_break: bool = _rules.call("is_broken", m) \
+						and not _rules.call("never_breaks", kind)
+				if should_break and not (s or r):
+					gap.append("kind %d m%d g%d" % [kind, m, g])
+	_check(overlap.is_empty(),
+			"no unit both surrenders and routs, over every kind/morale/guns (%s)"
+			% [overlap.slice(0, 3)])
+	_check(gap.is_empty(),
+			"and every breakable unit that breaks does one of them (%s)"
+			% [gap.slice(0, 3)])
+
+	# The kill floor. One class holds, and it is the one the bolt already rooted.
+	_check(_rules.call("never_breaks", bolt),
+			"the Marksman never breaks - the kill floor has somebody standing on it")
+	var breakers := 0
+	for kind in 10:
+		if not _rules.call("never_breaks", kind):
+			breakers += 1
+	_check(breakers == 9, "and he is the only one (%d of 10 can break)" % breakers)
+	_check(not _rules.call("breaks_to_surrender", bolt, 0, 9)
+			and not _rules.call("breaks_to_rout", bolt, 0, 9),
+			"at zero morale with nine guns on him he still does neither")
+
+
+# --- 10. conduct: the clean kill is free, and Strain never clears ------------
+
+func _test_conduct() -> void:
+	print("\n[10] killing armed men is free; the chosen acts are not")
+	var conduct: Dictionary = _k.Conduct
+	var costs: Dictionary = _k.CONDUCT_COST
+
+	# The rule the whole after-action rests on.
+	var clean: int = int(conduct.COMBATANT_KILLED)
+	_check(_rules.call("standing_cost", clean) == 0
+			and _rules.call("strain_cost", clean) == 0,
+			"killing an armed, fighting combatant costs 0 Standing and 0 Strain")
+	_check(_rules.call("standing_after", 50, clean) == 50,
+			"...so a firefight leaves the settlement's opinion where it was")
+	_check(_rules.call("strain_after", int(_k.STRAIN_START), clean)
+			== int(_k.STRAIN_START),
+			"...and the theater's, too")
+
+	# Every OTHER entry is a chosen act and every one of them costs something.
+	var free_acts: Array[String] = []
+	for name: String in conduct:
+		var c: int = int(conduct[name])
+		if c == clean:
+			continue
+		if _rules.call("standing_cost", c) <= 0 and _rules.call("strain_cost", c) <= 0:
+			free_acts.append(name)
+	_check(free_acts.is_empty(),
+			"every act that is not a clean kill costs something (%s)" % [free_acts])
+	_check(costs.size() == conduct.size(),
+			"and the table prices every Conduct there is (%d of %d)"
+			% [costs.size(), conduct.size()])
+
+	# Firing on a man with his hands up is the worst of the firing entries.
+	_check(_rules.call("standing_cost", int(conduct.SURRENDERED_FIRED_ON))
+			> _rules.call("standing_cost", int(conduct.ROUTING_FIRED_ON)),
+			"shooting the surrendered costs more than shooting the running")
+
+	# The floor. This is the assertion the plan asks for by name.
+	var floor_at: int = int(_k.STRAIN_FLOOR)
+	_check(floor_at > 0, "the Strain floor is above zero (%d)" % floor_at)
+	var strain: int = int(_k.STRAIN_START)
+	for i in 200:
+		strain = _rules.call("strain_decayed", strain)
+	_check(strain == floor_at,
+			"200 clean missions walk Strain to the floor and stop there (%d)" % strain)
+	var floored := true
+	for s in range(0, int(_k.STRAIN_MAX) + 1):
+		if int(_rules.call("strain_decayed", s)) < floor_at:
+			floored = false
+		for name: String in conduct:
+			if int(_rules.call("strain_after", s, int(conduct[name]))) < floor_at:
+				floored = false
+	_check(floored,
+			"no conduct and no decay puts Strain under the floor, from any value")
+	_check(int(_k.STRAIN_START) > floor_at,
+			"a campaign opens above the floor, so good conduct has somewhere to go")

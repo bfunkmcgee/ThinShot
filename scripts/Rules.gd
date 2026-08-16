@@ -249,3 +249,220 @@ static func shot_preview(board: Board, attacker: Unit, target: Unit,
 		"flanking": is_flanking(attacker, target),
 		"peeking": is_peeking(board, attacker, target),
 	}
+
+
+# --- Morale ------------------------------------------------------------------
+#
+# There was no morale in this game. Suppression is a pin, not a fear: it costs
+# accuracy and movement and expires on a counter, and a suppressed goblin has
+# never once considered leaving. Everything below is new, and it is written the
+# way the shooting rules are - as arithmetic over plain numbers, with no Unit
+# in any signature - so tools/test_rules.gd can pin it without a scene.
+#
+# Morale is the enemy's only. The squad is five volunteers and a conscript with
+# a campaign behind them; the Thirst is a levy fighting forty miles from a well
+# that stopped being theirs eleven days ago. Giving both sides the same meter
+# would say they are the same kind of formation, and they are not.
+
+const MORALE_MAX := 100
+## At or below this a unit breaks. Which of the two ways it breaks is
+## `breaks_to_surrender` below, and that is decided by the squad, not the unit.
+const MORALE_BREAK := 30
+
+## Taking a round. Flat, because a graze that misses the bone still arrives at
+## the same speed as one that does not.
+const MORALE_HIT := 15
+## Additionally, once the round leaves the unit on half its HP or less. This is
+## the wound rather than the noise, and it is deliberately the largest single
+## term: a hurt soldier a long way from home is the case morale exists for.
+const MORALE_WOUNDED := 25
+## Watching somebody die within this many tiles.
+const MORALE_ALLY_DOWN := 12
+const MORALE_WITNESS := 4
+## Being under a beaten zone, charged once per turn it is still pinned.
+const MORALE_SUPPRESSED := 20
+## Given back at the top of the unit's turn when nothing happened to it. Small
+## on purpose: it lets a lull un-break a unit that was never really committed,
+## and never outruns a squad that keeps up the pressure.
+const MORALE_RECOVER := 5
+
+## How many of your soldiers must have a shot on a broken unit before it has
+## somebody to surrender TO. Below this it runs instead, because a man alone in
+## the open with nobody covering him has no way to give up safely and every
+## reason to think the offer will not be heard.
+const MORALE_SURRENDER_GUNS := 2
+
+
+## What a round does to the morale of the soldier who took it. `hp_left` is
+## after the damage, so a round that kills is never asked about.
+static func morale_after_round(morale: int, hp_left: int, max_hp: int) -> int:
+	var out := morale - MORALE_HIT
+	# Integer halving, matching the cover rule's `>>` - "half or less" is one
+	# comparison in a game where every max_hp is small and mostly even.
+	if hp_left <= max_hp >> 1:
+		out -= MORALE_WOUNDED
+	return maxi(out, 0)
+
+
+## Watching an ally go down `dist` tiles away. Outside MORALE_WITNESS the unit
+## did not see it happen and pays nothing.
+static func morale_after_ally_down(morale: int, dist: int) -> int:
+	if dist > MORALE_WITNESS:
+		return morale
+	return maxi(morale - MORALE_ALLY_DOWN, 0)
+
+
+## Charged once per turn the unit begins still pinned.
+static func morale_after_suppression(morale: int) -> int:
+	return maxi(morale - MORALE_SUPPRESSED, 0)
+
+
+## A quiet turn. Never past MORALE_MAX, so a unit cannot bank calm.
+static func morale_recovered(morale: int) -> int:
+	return mini(morale + MORALE_RECOVER, MORALE_MAX)
+
+
+## Has this unit stopped fighting? Says nothing about which way - see below.
+static func is_broken(morale: int) -> bool:
+	return morale <= MORALE_BREAK
+
+
+## Some of them do not break, and the game needs that to be true of at least one
+## class on every map that asks the squad to clear it. Otherwise a player who
+## plays well enough could finish a combat mission having killed nobody, and the
+## game would be telling him restraint is always available - which is the exact
+## lie the Codex's counterweight mission exists to prevent.
+##
+## It is the Marksman, and the reason is already in his stat line rather than
+## bolted onto it. He is the only one of them who was trained rather than
+## pressed, and the bolt roots him: he reloads after every round, reloading
+## costs the move, so he has never been able to leave a firefight he is winning.
+## "He does not run" is a description of a unit that already cannot.
+##
+## Takes the raw Kind ordinal rather than a Unit, both to keep this file's
+## no-Unit-in-signatures habit and because saves speak in ordinals anyway.
+const KIND_GOBLIN_BOLT := 7
+
+static func never_breaks(kind: int) -> bool:
+	return kind == KIND_GOBLIN_BOLT
+
+
+## A broken unit surrenders when somebody is there to take it and runs when
+## nobody is. `guns` is how many living soldiers currently have a shot on it.
+##
+## The two are exhaustive and mutually exclusive over a broken unit, which is
+## what lets the controller ask one question and get an action rather than
+## asking two and reconciling them.
+static func breaks_to_surrender(kind: int, morale: int, guns: int) -> bool:
+	if never_breaks(kind) or not is_broken(morale):
+		return false
+	return guns >= MORALE_SURRENDER_GUNS
+
+
+static func breaks_to_rout(kind: int, morale: int, guns: int) -> bool:
+	if never_breaks(kind) or not is_broken(morale):
+		return false
+	return guns < MORALE_SURRENDER_GUNS
+
+
+# --- Conduct, Standing, and Strain -------------------------------------------
+#
+# The after-action has two panels that are never summed. THE OPERATION is
+# graded and killing armed men is how it is earned; THE ROLL is reported and
+# never ranked. These are the numbers behind the second panel, and the first
+# rule of them is the one that is easiest to get wrong:
+#
+#   Killing an armed, fighting combatant costs NOTHING. Not Standing, not
+#   Strain, not the rating. A hard-fought firefight can be a perfect operation.
+#
+# Everything that does cost is a CHOSEN act - something the player did that he
+# had the option not to do, with a soldier who was no longer fighting or was
+# never fighting at all. That distinction is the whole design, so it is spelled
+# as data below rather than as branches somewhere in the controller.
+
+enum Conduct {
+	## The baseline, and the one that is free. Named rather than left implicit
+	## so the zero is visible in the table instead of being an absence.
+	COMBATANT_KILLED,
+	## Firing on a unit that had already stopped: running, hands up, or down.
+	ROUTING_FIRED_ON,
+	SURRENDERED_FIRED_ON,
+	WOUNDED_FIRED_ON,
+	## A civilian killed by anyone on the squad's side, by round or by blast.
+	CIVILIAN_KILLED,
+	## Water, homes, and aid. Destroying a well is the one act in the game that
+	## does what the Charter dispute is about.
+	WELL_DESTROYED,
+	HOME_DESTROYED,
+	AID_DESTROYED,
+	## Leaving their dead where they fell when the squad could have allowed
+	## them to be collected.
+	DEAD_LEFT,
+}
+
+## Standing is per settlement and Strain is theater-wide, so an act can cost
+## one, both, or - for a clean kill - neither. Read as {Conduct: [standing, strain]}.
+##
+## Reconciling two lines of the plan that pull against each other: Strain is
+## described as driven "only by Crown-attributed goblin deaths", and separately
+## a clean combat kill is required to cost zero. Both hold at once only if the
+## deaths that drive Strain are the ones the district counts as something other
+## than a battle - the routing, the surrendered, the wounded, the bystanders.
+## That is what this table says, and it is why COMBATANT_KILLED is 0/0.
+const CONDUCT_COST := {
+	Conduct.COMBATANT_KILLED: [0, 0],
+	Conduct.ROUTING_FIRED_ON: [8, 5],
+	Conduct.SURRENDERED_FIRED_ON: [15, 10],
+	Conduct.WOUNDED_FIRED_ON: [6, 4],
+	Conduct.CIVILIAN_KILLED: [20, 12],
+	Conduct.WELL_DESTROYED: [25, 15],
+	Conduct.HOME_DESTROYED: [12, 8],
+	Conduct.AID_DESTROYED: [12, 8],
+	Conduct.DEAD_LEFT: [5, 3],
+}
+
+## Standing runs 0..100 per settlement and starts here: they have met the Crown
+## before and it went the way it went.
+const STANDING_START := 50
+const STANDING_MAX := 100
+
+## Strain runs 0..100 theater-wide, and never reaches 0.
+const STRAIN_MAX := 100
+## The floor, and the most important number in this section. Strain cannot be
+## cleared by conduct, ever, because none of it is about conduct: an Accord
+## counterinsurgency is standing on ground whose Assembly filed an objection,
+## and the best-behaved squad in the theater does not make that untrue. A player
+## who reaches zero has found a bug in the theme, which is why the clamp is a
+## rule with an assertion rather than a `maxi` somewhere in Game.gd.
+const STRAIN_FLOOR := 1
+## Where a campaign opens - above the floor, so good conduct has somewhere to go.
+const STRAIN_START := 12
+
+## Given back per mission completed without a conduct entry against it. Strain
+## decays toward the floor and never through it.
+const STRAIN_DECAY := 3
+
+
+static func standing_cost(conduct: Conduct) -> int:
+	return int(CONDUCT_COST[conduct][0])
+
+
+static func strain_cost(conduct: Conduct) -> int:
+	return int(CONDUCT_COST[conduct][1])
+
+
+## Standing after an act. Clamped both ends; a settlement's opinion is bounded.
+static func standing_after(standing: int, conduct: Conduct) -> int:
+	return clampi(standing - standing_cost(conduct), 0, STANDING_MAX)
+
+
+## Strain after an act. The floor is applied here and nowhere else, so there is
+## one place capable of getting it wrong.
+static func strain_after(strain: int, conduct: Conduct) -> int:
+	return clampi(strain + strain_cost(conduct), STRAIN_FLOOR, STRAIN_MAX)
+
+
+## A clean mission, which walks Strain back down toward - never through - the
+## floor.
+static func strain_decayed(strain: int) -> int:
+	return clampi(strain - STRAIN_DECAY, STRAIN_FLOOR, STRAIN_MAX)
