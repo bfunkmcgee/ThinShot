@@ -418,6 +418,8 @@ func _ready() -> void:
 		_spawn_unit(Unit.Kind.GOBLIN_BOLT, spawn)
 	for spawn: Vector2i in level.get("prisoner_spawns", []):
 		_spawn_unit(Unit.Kind.CIVILIAN, spawn)
+	for spawn: Vector2i in level.get("bystander_spawns", []):
+		_spawn_bystander(spawn)
 	end_turn_button.pressed.connect(end_player_turn)
 	overwatch_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.OVERWATCH))
 	face_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.FACE))
@@ -869,6 +871,23 @@ func _spawn_unit(kind: Unit.Kind, spawn_cell: Vector2i, soldier := {}) -> void:
 	unit.corpse_shadow_color = board.shadow_tone(Unit.CORPSE_SHADOW_COLOR.a)
 	unit.died.connect(_on_unit_died)
 	unit.wounded.connect(_on_unit_wounded)
+
+
+## Somebody who lives here. Same body as a prisoner and none of the protection:
+## on their feet from the start rather than huddled, no objective pointing at
+## them, and nothing in the game arranging for them to survive.
+##
+## release() is what puts a civilian on their feet, and it is the entire reason
+## this reuses the prisoner plumbing instead of adding a kind - which would have
+## meant appending to Unit.Kind and climbing the save version for a unit that
+## never appears on a roster.
+func _spawn_bystander(spawn_cell: Vector2i) -> void:
+	_spawn_unit(Unit.Kind.CIVILIAN, spawn_cell)
+	var unit := unit_at(spawn_cell)
+	if unit == null:
+		return
+	unit.bystander = true
+	unit.release()
 
 
 ## Walk a level's spawn list for one scout role alongside the roster slots for
@@ -2149,6 +2168,10 @@ func _objective_complete(index: int) -> bool:
 					return false
 			var zone: Array = obj.get("cells", [])
 			for scout in living_units(Unit.TEAM_SCOUT):
+				# Bystanders are nobody's to extract. They live here; the
+				# squad is the one leaving.
+				if scout.bystander:
+					continue
 				if not zone.has(scout.cell):
 					return false
 			return true
@@ -2651,10 +2674,12 @@ func do_throw_frag(thrower: Unit, cell: Vector2i) -> void:
 func _apply_blast(blast: Dictionary, center: Vector2, source: Unit, what: String) -> void:
 	var caught: Array[Unit] = []
 	for unit in living_units(Unit.TEAM_GOBLIN) + living_units(Unit.TEAM_SCOUT):
-		# Prisoners come through a blast untouched. Being able to frag the
-		# person you came to rescue is the kind of thing that turns a rescue
-		# into a chore, and the Thirst wants them alive anyway.
-		if blast.has(unit.cell) and unit.is_combatant():
+		# Only the prisoners come through untouched - Unit.is_blast_immune()
+		# owns that rule now. A man with his hands up does NOT: he can be shot
+		# with a rifle, so a grenade going around him would be the inconsistency
+		# rather than the mercy. Neither does a bystander, which is the whole
+		# of what makes one.
+		if blast.has(unit.cell) and not unit.is_blast_immune():
 			caught.append(unit)
 	# The whole footprint resolves before anyone asks who won. `caught` lists
 	# goblins first, so a blast that kills the last goblin AND a scout would

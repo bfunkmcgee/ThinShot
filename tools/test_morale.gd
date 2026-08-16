@@ -16,6 +16,8 @@ extends SceneTree
 ##      it, whether or not everybody is dead
 ##   5. shooting a man with his hands up is allowed, and is recorded
 ##   6. the Marksman never breaks, which is what holds the kill floor up
+##   7. morale is given back only to a fighter nothing happened to
+##   8. bystanders: killable, uncounted, and not what a blast goes around
 ##
 ## The save is backed up in _init() before the Game autoload can touch it, the
 ## way tools/test_progression.gd does - a test that fights battles commits
@@ -115,6 +117,7 @@ func _run() -> void:
 	await _test_clear_means_still_fighting()
 	await _test_marksman_holds()
 	await _test_recovery_needs_a_quiet_turn()
+	await _test_bystanders()
 
 	# Moving and surrendering play pooled SFX. Sfx assigns `player.stream` and
 	# never clears it, so whichever player went last is still holding its WAV
@@ -362,4 +365,74 @@ func _test_recovery_needs_a_quiet_turn() -> void:
 	await battle._resolve_morale(edge, 3, 9)
 	_check(edge.has_stopped(),
 			"a fighter shot exactly to MORALE_BREAK breaks, rather than steadying past it")
+	await _dismiss(battle)
+
+
+# --- 8. the people who were only ever standing there -------------------------
+
+func _test_bystanders() -> void:
+	print("
+[8] a bystander is a civilian nobody arranged to protect")
+	var battle: Node = await _battle(4)  # THE CISTERN
+	var conduct: Dictionary = _rules.get_script_constant_map()["Conduct"]
+
+	var bystanders: Array = []
+	for u in battle.living_units(TEAM_SCOUT):
+		if u.bystander:
+			bystanders.append(u)
+	_check(bystanders.size() == 2,
+			"THE CISTERN fields %d of them" % bystanders.size())
+	var one: Node2D = bystanders[0]
+	_check(one.is_civilian() and not one.captive,
+			"on their feet from the start rather than huddled")
+	_check(battle.captives().is_empty(),
+			"and invisible to the rescue plumbing they are built on")
+	_check(not one.is_combatant(),
+			"never a combatant, so the Thirst does not shoot at them either")
+
+	print("
+     what a blast goes around, and what it does not")
+	_check(not one.is_blast_immune(), "a bystander is NOT blast-immune")
+	# The prisoners on the rescue map still are - that rule did not move.
+	var pens: Node = await _battle(5)  # THE HOLDING PENS
+	var prisoner: Node2D = pens.captives()[0]
+	_check(prisoner.is_blast_immune(),
+			"a prisoner the squad came to fetch still is")
+	await _dismiss(pens)
+	# And the bug this pass fixed: a man with his hands up can be shot with a
+	# rifle, so a grenade going around him would be the inconsistency.
+	var fighter: Node2D = null
+	for u in battle.living_units(TEAM_GOBLIN):
+		if u.kind != KIND_GOBLIN_BOLT:
+			fighter = u
+			break
+	fighter.surrender()
+	_check(not fighter.is_blast_immune(),
+			"and a fighter with his hands up is not blast-immune either")
+
+	print("
+     killing one is recorded, and costs")
+	var before: int = battle.roll.size()
+	one.take_damage(one.hp)
+	await process_frame
+	_check(battle.roll.size() == before + 1, "it reaches THE ROLL")
+	var entry: Dictionary = battle.roll.back()
+	_check(int(entry.conduct) == int(conduct.CIVILIAN_KILLED),
+			"as a civilian killed")
+	_check(_rules.call("standing_cost", int(conduct.CIVILIAN_KILLED)) > 0
+			and _rules.call("strain_cost", int(conduct.CIVILIAN_KILLED)) > 0,
+			"which costs both Standing and Strain, unlike a clean kill")
+
+	print("
+     and nobody has to walk them out")
+	# THE CISTERN wins by getting the SQUAD to the east edge. The surviving
+	# bystander must not be able to hold that objective open.
+	var zone: Array = battle._objectives()[0].get("cells", [])
+	for scout in battle.living_soldiers(TEAM_SCOUT):
+		_place(battle, scout, zone[battle.living_soldiers(TEAM_SCOUT).find(scout)])
+	var survivor: Node2D = bystanders[1]
+	_check(not zone.has(survivor.cell),
+			"the surviving bystander is nowhere near the extraction zone")
+	_check(battle._objective_complete(0),
+			"and the squad still extracts")
 	await _dismiss(battle)

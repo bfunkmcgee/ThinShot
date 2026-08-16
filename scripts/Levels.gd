@@ -389,6 +389,14 @@ const LEVELS: Array[Dictionary] = [
 		"smg_alt_spawns": [Vector2i(10, 2), Vector2i(10, 6)],
 		"novice_spawns": [Vector2i(13, 3), Vector2i(13, 6), Vector2i(12, 9)],
 		"bolt_spawns": [Vector2i(14, 4)],
+		# The family the Charter says this water belongs to. No objective points
+		# at them, nothing in the game arranges for them to survive, and the
+		# squad's orders are to pass through rather than stop. They are placed
+		# where the fighting is - one beside the gate defender at (7,3), one in
+		# the southern approach - so that a frag thrown at a real target is a
+		# decision rather than a formality. THE ROLL is the only thing that
+		# will mention them afterwards.
+		"bystander_spawns": [Vector2i(7, 2), Vector2i(8, 7)],
 		"structures": [
 			{"kind": "hut_1", "anchor": Vector2i(13, 0), "size": Vector2i(2, 2)},
 		],
@@ -648,7 +656,7 @@ static func _validate(index: int) -> bool:
 			+ data.get("gunner_spawns", []) + data.goblin_spawns \
 			+ data.get("smg_spawns", []) + data.get("smg_alt_spawns", []) \
 			+ data.get("novice_spawns", []) + data.get("bolt_spawns", []) \
-			+ data.get("prisoner_spawns", [])
+			+ data.get("prisoner_spawns", []) + data.get("bystander_spawns", [])
 	var seen_spawn := {}
 	for spawn: Vector2i in spawns:
 		ok = _check(walkable.call(spawn), "%s: spawn %s not walkable" % [label, spawn]) and ok
@@ -856,7 +864,9 @@ static func _validate_objectives(data: Dictionary, label: String,
 						"%s: cache %s sits on a spawn" % [label, cell]) and ok
 		if kind == "extract":
 			# Everyone who has to be standing in it at once - the squad, plus
-			# any prisoner walking out with them.
+			# any prisoner walking out with them. Bystanders are deliberately
+			# NOT counted: they live here and the squad is the one leaving, so
+			# the extract objective steps over them (see Battle).
 			var needed: int = squad_size(data) \
 					+ int(data.get("prisoner_spawns", []).size())
 			ok = _check(cells.size() >= needed,

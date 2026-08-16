@@ -614,6 +614,12 @@ var routing := false
 # back to a fighter nothing happened to, so the squad cannot shoot a man to the
 # edge of breaking and then have him steady himself on his own turn.
 var morale_pressed := false
+# A civilian who is not an objective: present, in the way, and killable. The
+# prisoners in the pens are the other kind - huddled where they were left,
+# waiting to be reached, and protected by every rule that can protect them.
+# A bystander gets none of that. Nobody sent the squad to fetch him and nobody
+# will notice if he is still standing at the end except THE ROLL.
+var bystander := false
 var _body_tween: Tween = null
 var _marker_tween: Tween = null
 
@@ -1089,6 +1095,17 @@ func is_combatant() -> bool:
 ## is_combatant(), which a fighter with his hands up also fails.
 func is_civilian() -> bool:
 	return kind == Kind.CIVILIAN
+
+
+## Who a blast goes around. Exactly one group: the prisoners the squad was sent
+## to fetch. Being able to frag the person you came to rescue turns a rescue
+## into a chore, and the Thirst wants them alive anyway.
+##
+## Everybody else in the footprint takes it - including a fighter with his hands
+## up, and including a bystander who was only ever standing there. Both of those
+## are the point. A grenade does not ask, which is why THE ROLL does.
+func is_blast_immune() -> bool:
+	return captive or (is_civilian() and not bystander)
 
 
 ## Has stopped fighting and is trying to leave. Still a legal target - the game

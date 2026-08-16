@@ -51,7 +51,8 @@ const DRUM_NEAR_SPAWN := 3
 const SQUAD_KEYS := ["scout_spawns", "lead_spawns", "gunner_spawns"]
 const ENEMY_KEYS := ["goblin_spawns", "smg_spawns", "smg_alt_spawns",
 		"novice_spawns", "bolt_spawns"]
-const SPAWN_KEYS := SQUAD_KEYS + ENEMY_KEYS + ["prisoner_spawns"]
+const SPAWN_KEYS := SQUAD_KEYS + ENEMY_KEYS + ["prisoner_spawns",
+		"bystander_spawns"]
 
 var failed := false
 var warnings := 0
