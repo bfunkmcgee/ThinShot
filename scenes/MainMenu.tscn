@@ -1,0 +1,201 @@
+[gd_scene format=3 uid="uid://b1sandlinemenu01"]
+
+[ext_resource type="Script" path="res://scripts/MainMenu.gd" id="1_menu"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.055, 0.047, 0.039, 1)
+
+[node name="Title" type="Label" parent="."]
+anchor_right = 1.0
+offset_top = 132.0
+offset_bottom = 240.0
+theme_override_colors/font_color = Color(0.96, 0.9, 0.72, 1)
+theme_override_font_sizes/font_size = 88
+text = "SANDLINE"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Tagline" type="Label" parent="."]
+anchor_right = 1.0
+offset_top = 244.0
+offset_bottom = 282.0
+theme_override_colors/font_color = Color(0.62, 0.86, 0.95, 1)
+theme_override_font_sizes/font_size = 24
+text = "A dry country, and an argument about water three centuries old."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Status" type="Label" parent="."]
+anchor_right = 1.0
+offset_top = 300.0
+offset_bottom = 342.0
+theme_override_colors/font_color = Color(0.78, 0.72, 0.55, 1)
+theme_override_font_sizes/font_size = 22
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Buttons" type="VBoxContainer" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -230.0
+offset_top = 396.0
+offset_right = 230.0
+offset_bottom = 760.0
+theme_override_constants/separation = 18
+
+[node name="ContinueButton" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(460, 72)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 30
+text = "Continue"
+
+[node name="NewButton" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(460, 72)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 30
+text = "New Campaign"
+
+[node name="NotebookButton" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(460, 72)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 30
+text = "The Notebook"
+
+[node name="QuitButton" type="Button" parent="Buttons"]
+custom_minimum_size = Vector2(460, 72)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 30
+text = "Quit"
+
+[node name="Hint" type="Label" parent="."]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -72.0
+offset_bottom = -30.0
+theme_override_colors/font_color = Color(0.55, 0.51, 0.43, 1)
+theme_override_font_sizes/font_size = 20
+text = "ESC in camp returns here"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Notebook" type="ColorRect" parent="."]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.035, 0.03, 0.025, 1)
+
+[node name="NotebookTitle" type="Label" parent="Notebook"]
+anchor_right = 1.0
+offset_top = 48.0
+offset_bottom = 120.0
+theme_override_colors/font_color = Color(0.96, 0.9, 0.72, 1)
+theme_override_font_sizes/font_size = 48
+text = "THE NOTEBOOK"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NotebookLead" type="Label" parent="Notebook"]
+anchor_right = 1.0
+offset_top = 124.0
+offset_bottom = 162.0
+theme_override_colors/font_color = Color(0.62, 0.86, 0.95, 1)
+theme_override_font_sizes/font_size = 22
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="Notebook"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -620.0
+offset_top = 186.0
+offset_right = 620.0
+offset_bottom = 900.0
+horizontal_scroll_mode = 0
+
+[node name="NotebookBody" type="Label" parent="Notebook/Scroll"]
+custom_minimum_size = Vector2(1240, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.88, 0.84, 0.72, 1)
+theme_override_font_sizes/font_size = 22
+text = ""
+autowrap_mode = 3
+
+[node name="NotebookBack" type="Button" parent="Notebook"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -160.0
+offset_top = -132.0
+offset_right = 160.0
+offset_bottom = -60.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 28
+text = "Back"
+
+[node name="Confirm" type="ColorRect" parent="."]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.035, 0.03, 0.025, 1)
+
+[node name="ConfirmTitle" type="Label" parent="Confirm"]
+anchor_right = 1.0
+offset_top = 336.0
+offset_bottom = 408.0
+theme_override_colors/font_color = Color(1, 0.78, 0.4, 1)
+theme_override_font_sizes/font_size = 44
+text = "START OVER?"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ConfirmBody" type="Label" parent="Confirm"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -540.0
+offset_top = 424.0
+offset_right = 540.0
+offset_bottom = 600.0
+theme_override_colors/font_color = Color(0.88, 0.84, 0.72, 1)
+theme_override_font_sizes/font_size = 24
+text = ""
+autowrap_mode = 3
+horizontal_alignment = 1
+
+[node name="ConfirmNo" type="Button" parent="Confirm"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -340.0
+offset_top = 640.0
+offset_right = -20.0
+offset_bottom = 712.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 28
+text = "Keep it"
+
+[node name="ConfirmYes" type="Button" parent="Confirm"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 20.0
+offset_top = 640.0
+offset_right = 340.0
+offset_bottom = 712.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 28
+text = "Erase and begin"

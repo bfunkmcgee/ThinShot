@@ -540,8 +540,15 @@ func _update_prompt() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("cancel") and modal.visible:
-		_close_modal()
+	if event.is_action_pressed("cancel"):
+		# Closes whatever is open; from the camp itself it goes back to the
+		# front door, which is the only way to reach the notebook mid-campaign.
+		# Nothing is lost either way - the campaign is saved as it changes, not
+		# on the way out.
+		if modal.visible:
+			_close_modal()
+		else:
+			Game.go_to_menu()
 		return
 	if not event.is_action_pressed("interact") or modal.visible:
 		return

@@ -543,6 +543,28 @@ clean kills charges nobody and walks Strain down instead.
 cross-linked by settlement, carried in the save. The panel shows three names and
 says where the rest of them are.
 
+## The main menu
+
+The game opens on the front door rather than in the garrison.
+
+- **Continue** — picks the campaign back up exactly where it stopped, in the
+  garrison or the field camp depending on where the operation left it. Offered
+  only when there is a squad on disk to continue.
+- **New Campaign** — a fresh seed, an empty roster, an empty notebook, and both
+  theater counters back where they start. There is one save slot, so if a
+  campaign is in progress this asks first and tells you what it is about to
+  erase, including how many names go with it.
+- **The Notebook** — Dava's record, readable without loading anything and
+  without starting anything. Everyone the campaign has met, grouped by the
+  settlement they came from, with what became of them and which mission it
+  happened on; each district's standing sits with its own dead, and Alliance
+  Strain is at the bottom. A document you can only reach by playing is a
+  scoreboard with extra steps.
+
+**Esc** in either camp returns here, which is how the notebook is read
+mid-campaign. Nothing is lost by leaving: the campaign is saved as it changes,
+not on the way out.
+
 ## Running it
 
 1. Install a **Godot 4.x standard build** (no .NET needed):
@@ -556,20 +578,44 @@ even when a scene fails to compile, so grep the output for `SCRIPT ERROR`
 rather than trusting the exit code alone:
 
 ```
-godot --headless --path . --quit-after 200                        # the garrison
-godot --headless --path . --quit-after 200 -- --field             # the field camp
+godot --headless --path . --quit-after 200                        # the main menu
+godot --headless --path . res://scenes/Camp.tscn --quit-after 200  # the garrison
+godot --headless --path . res://scenes/Camp.tscn --quit-after 200 -- --field
 godot --headless --path . res://scenes/Battle.tscn --quit-after 200
 godot --headless --path . res://scenes/Battle.tscn --quit-after 200 -- --level 2
 ```
+
+The harnesses assert rather than smoke-test, and there are eleven of them:
+
+```
+godot --headless --path . -s tools/test_rules.gd         # to-hit, damage, morale, conduct
+godot --headless --path . -s tools/test_roll.gd          # who the enemy was
+godot --headless --path . -s tools/test_morale.gd        # surrender, rout, bystanders
+godot --headless --path . -s tools/test_menu.gd          # new campaign, the notebook
+godot --headless --path . -s tools/test_save_load.gd     # the save ladder, v1 -> v3
+godot --headless --path . -s tools/test_progression.gd   # xp, ranks, perks
+godot --headless --path . -s tools/test_hero_gameover.gd # Rodar ends the campaign
+godot --headless --path . -s tools/check_level.gd -- --all
+godot --headless --path . -s tools/check_briefing_fit.gd
+godot --headless --path . -s tools/check_cover_rules.gd
+godot --headless --path . -s tools/check_tile_catalog.gd
+```
+
+Every one of them prints `RESULT: PASS` or `RESULT: FAIL`. Grep for **both**
+`RESULT` and `SCRIPT ERROR` — a call on a freed instance logs and returns null
+rather than halting, so a harness can pass while the thing it is driving is
+quietly erroring.
 
 ## Project layout
 
 ```
 scenes/
-  Camp.tscn       # main scene: the real-time base camp between missions
+  MainMenu.tscn   # main scene: continue, new campaign, the notebook
+  Camp.tscn       # the real-time base camp between missions
   Battle.tscn     # a mission: board, camera, y-sorted entities, UI
   Unit.tscn       # one combatant (Node2D + Sprite2D)
 scripts/
+  MainMenu.gd     # the front door and the notebook reader
   Camp.gd         # camp: walk controller, follow camera, squad, fixtures
   CampData.gd     # the camp's map, fixture spots + boot validator
   Battle.gd       # controller: turn state machine, input, AI, campaign flow

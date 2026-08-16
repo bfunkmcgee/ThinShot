@@ -9,6 +9,7 @@ extends Node
 ## Battle maps roster entries onto the level's spawn slots at spawn time and
 ## Unit.apply_progression() stamps the earned stats on.
 
+const MENU_SCENE := "res://scenes/MainMenu.tscn"
 const CAMP_SCENE := "res://scenes/Camp.tscn"
 const BATTLE_SCENE := "res://scenes/Battle.tscn"
 
@@ -388,6 +389,11 @@ func set_loadout(frag_count: int) -> void:
 # mid-freeze would otherwise hand the next scene to the player in slow motion.
 
 
+func go_to_menu() -> void:
+	Engine.time_scale = 1.0
+	get_tree().change_scene_to_file(MENU_SCENE)
+
+
 func go_to_camp() -> void:
 	Engine.time_scale = 1.0
 	get_tree().change_scene_to_file(CAMP_SCENE)
@@ -575,6 +581,63 @@ func recruit_to_strength(level_data: Dictionary) -> Array:
 	if not taken.is_empty():
 		save()
 	return taken
+
+
+## Throw this campaign away and open a fresh one.
+##
+## Every piece of campaign state is listed here explicitly rather than being
+## reset by re-running _ready() or by newing a second Game: this is an autoload,
+## the scene tree keeps the one instance for the life of the process, and a
+## field that gets added later and forgotten here would survive a "new campaign"
+## and quietly haunt the next one. tools/test_menu.gd asserts against the saved
+## payload's own key list so that forgetting one is a failing test rather than a
+## ghost.
+##
+## Refuses if saving is locked. That lock means the file on disk was written by
+## a newer build, and wiping the campaign in memory while being unable to
+## replace the file would leave the player with neither.
+##
+## Returns whether the campaign was actually replaced.
+func new_campaign() -> bool:
+	if _save_locked:
+		push_error("[Sandline] %s was written by a newer build - refusing to start over it"
+				% SAVE_PATH)
+		return false
+	current_operation = 0
+	current_level = 0
+	in_the_field = false
+	frags = 2
+	smokes = LOADOUT_SLOTS - frags
+	roster.clear()
+	_snapshot.clear()
+	pending_promotions.clear()
+	mission_xp.clear()
+	mission_dead.clear()
+	_next_id = 1
+	mission_attempts = 0
+	district_standing.clear()
+	alliance_strain = STRAIN_START
+	notebook.clear()
+	# A new campaign is a different campaign, so it fights different dice.
+	campaign_seed = _mint_campaign_seed()
+	save()
+	print("[Sandline] new campaign, seed %d" % campaign_seed)
+	return true
+
+
+## A one-line description of what is on disk, for the menu to print. Empty when
+## there is nothing to continue.
+func campaign_summary() -> String:
+	if roster.is_empty():
+		return ""
+	var alive := 0
+	for soldier: Dictionary in roster:
+		if bool(soldier.get("alive", false)):
+			alive += 1
+	return "%s  -  MISSION %d OF %d  -  %d SOLDIER%s" % [
+		operation().name, mission_number(), mission_count(),
+		alive, "" if alive == 1 else "S",
+	]
 
 
 func reset_roster() -> void:
