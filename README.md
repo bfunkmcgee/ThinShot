@@ -552,6 +552,38 @@ clean kills charges nobody and walks Strain down instead.
 cross-linked by settlement, carried in the save. The panel shows three names and
 says where the rest of them are.
 
+## Kestrel Squad
+
+Eight people. Five slots.
+
+Rodar Akai holds the lead slot and Brukk Meshan has the gun. The other six
+compete for the mission's **three rifle slots**, and you choose which three at
+the briefing table before every mission:
+
+| Kestrel | Role | The trade |
+|---|---|---|
+| **Josen Marr** | Rifleman | The baseline. 8 HP, move 5, range 4, 90% |
+| **Essa Vane** | Grenadier | A tile slower and 86%, for a frag the squad would not otherwise have |
+| **Sillae Vekh** | Marksman | Six tiles and 4 damage, on six HP and two rounds |
+| **Halvik Dunn** | Breacher | 11 HP, the deepest pool there is — and range 3, so he has to close |
+| **Dava Ren** | Medic | The worst shot of the six, and the only one who arrives able to patch a wound |
+| **Fen Ost** | Technician | The widest watch in the squad, thin in a firefight |
+
+None of them is an upgrade on the rifleman — every one pays for what it does,
+and the test suite sweeps for domination so it stays that way. Each also
+**starts holding the perk that is their specialty**, so the choice matters on
+mission one rather than after a promotion.
+
+The squad did not get bigger, it got **deeper**, and that is what makes
+permadeath bite. Losing Dava does not leave a gap in the line — the levy post
+will send somebody. It leaves the squad without the only pair of hands that
+could patch one, and the medic who arrives is not her.
+
+**Sillae Vekh reads the theater back to you.** Talk to her in camp and she says
+what the districts are saying, and how much of it she is still being told —
+which degrades as Alliance Strain climbs. The consequence arrives as worse
+intelligence rather than as a bar going red.
+
 ## The main menu
 
 The game opens on the front door rather than in the garrison.

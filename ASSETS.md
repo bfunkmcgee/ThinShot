@@ -67,6 +67,7 @@ worth more than a fourth goblin.
 | 17 | **Dead scrub, bones, tyre ruts, scorch decals** — 48×48 each, 4–6 of them | Cheap density. The prop scatter system already places these deterministically by cell. | drop-in |
 | 18 | **Thirst claim-stakes / well-markers** — 48×48, ideally with a 9-frame sway | The Thirst is a dispossessed people with a grievance on record, and nothing on the map says so. Staked claim-markers and Assembly tally-boards around the Scrapline would sell it - the Charter made visible on the ground they are fighting over. | drop-in |
 | 19 | **Sandstorm overlay** — tileable band or a few drifting sheets | Weather that **cuts sight range** — reusing the exact `has_line_of_sight` path smoke already goes through, so it is far cheaper than it sounds, and it makes a mission feel like a different fight. | medium |
+| 20 | **Kestrel specialist sprites** — Halvik Dunn (breacher), Dava Ren (medic), Fen Ost (technician), and ideally Essa Vane (grenadier) and Sillae Vekh (marksman) | All five specialist Kestrels wear the rifleman's 8-direction sets today (`Unit._use_rifleman_art`). They are mechanically distinct — own stats, own perk tree, own starting specialty — and visually identical, so the player cannot tell who is standing where on the board. Swapping real art in touches that one function and nothing else. | medium |
 
 ## Tier 5 — polish
 

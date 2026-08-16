@@ -103,6 +103,65 @@ text = ""
 horizontal_alignment = 1
 autowrap_mode = 3
 
+[node name="Roster" type="VBoxContainer" parent="UI/Modal/Center/Box"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="Slot0" type="Button" parent="UI/Modal/Center/Box/Roster"]
+custom_minimum_size = Vector2(980, 54)
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+theme_override_font_sizes/font_size = 21
+text = ""
+alignment = 0
+
+[node name="Slot1" type="Button" parent="UI/Modal/Center/Box/Roster"]
+custom_minimum_size = Vector2(980, 54)
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+theme_override_font_sizes/font_size = 21
+text = ""
+alignment = 0
+
+[node name="Slot2" type="Button" parent="UI/Modal/Center/Box/Roster"]
+custom_minimum_size = Vector2(980, 54)
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+theme_override_font_sizes/font_size = 21
+text = ""
+alignment = 0
+
+[node name="Slot3" type="Button" parent="UI/Modal/Center/Box/Roster"]
+custom_minimum_size = Vector2(980, 54)
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+theme_override_font_sizes/font_size = 21
+text = ""
+alignment = 0
+
+[node name="Slot4" type="Button" parent="UI/Modal/Center/Box/Roster"]
+custom_minimum_size = Vector2(980, 54)
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+theme_override_font_sizes/font_size = 21
+text = ""
+alignment = 0
+
+[node name="Slot5" type="Button" parent="UI/Modal/Center/Box/Roster"]
+custom_minimum_size = Vector2(980, 54)
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+theme_override_font_sizes/font_size = 21
+text = ""
+alignment = 0
+
 [node name="Choices" type="HBoxContainer" parent="UI/Modal/Center/Box"]
 layout_mode = 2
 mouse_filter = 2

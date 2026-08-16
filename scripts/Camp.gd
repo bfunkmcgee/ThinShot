@@ -112,6 +112,11 @@ const INTERACT_RANGE := 74.0
 @onready var modal_body: Label = $UI/Modal/Center/Box/BodyLabel
 @onready var choice_a: Button = $UI/Modal/Center/Box/Choices/ChoiceAButton
 @onready var choice_b: Button = $UI/Modal/Center/Box/Choices/ChoiceBButton
+@onready var roster_box: VBoxContainer = $UI/Modal/Center/Box/Roster
+
+# The rifle-slot candidates currently listed, parallel to the roster buttons.
+# Rebuilt every time the briefing opens, because people die between missions.
+var _deploy_candidates: Array = []
 @onready var close_button: Button = $UI/Modal/Center/Box/CloseButton
 
 var player: Unit = null
@@ -179,9 +184,12 @@ func _squad_summary() -> String:
 		if bool(soldier.alive):
 			alive += 1
 	var pending: int = Game.pending_promotions.size()
+	# "On the roster", not "in the squad". Since Phase 3 those are different
+	# numbers - eight people, five of whom go - and the camp should not imply
+	# the whole of it walks out.
 	if pending > 0:
-		return "%d in the squad  -  %d awaiting promotion" % [alive, pending]
-	return "%d in the squad" % alive
+		return "%d on the roster  -  %d awaiting promotion" % [alive, pending]
+	return "%d on the roster" % alive
 
 
 # ------------------------------------------------------------------ scenery --
@@ -569,6 +577,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _open_modal(title: String, body: String, a := "", b := "") -> void:
+	# Only the briefing shows it, and _open_briefing turns it back on after
+	# calling this. Everything else - a soldier, the stores, the levy post -
+	# gets a clean panel.
+	roster_box.visible = false
+	choice_a.disabled = false
 	modal_title.text = title
 	modal_body.text = body
 	choice_a.text = a
@@ -602,6 +615,13 @@ func _open_soldier(id: int) -> void:
 	# standing in says so. A replacement off the levy post gets his posting.
 	if Game.is_named_kestrel(soldier):
 		lines.insert(0, Game.full_name(soldier))
+	# Sillae Vekh reads the theater back to you. The plan is explicit that she
+	# ships with or before Alliance Strain, because a meter with no face is a
+	# number - so the number lives in her mouth rather than on a status bar,
+	# and what she is willing to say about it is what it costs.
+	if str(soldier.get("surname", "")) == "Vekh":
+		lines.append("")
+		lines.append(_sillae_reads_the_district())
 	if perks.is_empty():
 		lines.append("No specialty yet.")
 	else:
@@ -665,17 +685,132 @@ func _open_recruit() -> void:
 			"SIGN THEM ON\nBring the squad back to strength", "")
 
 
+## What Sillae will tell you about the theater, which is a function of how much
+## the theater is willing to tell her.
+##
+## Her cooperation degrades as Strain climbs (GS1 SS.4). That is not a penalty
+## bolted on - it is the interface itself getting worse, so the player reads the
+## consequence in the quality of his own intelligence rather than in a bar going
+## red. Bands rather than a number, because she is a person and not a gauge.
+func _sillae_reads_the_district() -> String:
+	var strain: int = Game.alliance_strain
+	var worst := ""
+	var worst_at := 101
+	for settlement: String in Game.district_standing:
+		var standing: int = Game.standing_of(settlement)
+		if standing < worst_at:
+			worst_at = standing
+			worst = settlement
+	if strain <= 15:
+		if worst.is_empty():
+			return "\"Nobody out there has an opinion about us yet. Enjoy it.\""
+		return "\"%s is the one to watch - they are at %d with us. Everywhere else still talks to me.\"" \
+				% [worst, worst_at]
+	if strain <= 35:
+		if worst.is_empty():
+			return "\"People are quieter than they were. Nothing I can point at.\""
+		return "\"%s has stopped volunteering things. I can still get an answer if I ask twice.\"" % worst
+	if strain <= 60:
+		return "\"I am getting told what I already know. Whatever is moving out there, we are hearing it late.\""
+	return "\"I have nothing for you. Not nothing to say - nothing given. That is what %d of Strain buys.\"" \
+			% strain
+
+
+## The briefing, and the decision that goes with it: who is walking into it.
+##
+## The orders and the roster live on the same panel deliberately. Choosing three
+## of six is a tactical read of the mission - a rescue wants the medic, a
+## demolition wants the breacher - and asking for it on a separate screen with
+## the briefing already dismissed would make it a chore instead of a choice.
 func _open_briefing() -> void:
 	var level: Dictionary = Game.data()
 	var op: Dictionary = Game.operation()
 	_choice_action = "deploy"
 	_choice_args = []
-	var body := "%s\n\n%s\n\n%s\n\nORDERS:  %s" % [
+	# The operation, the ground, and the order - not the full briefing. Six
+	# roster rows and a button need the room, and Battle reads the whole
+	# briefing out again on the first turn, so nothing is lost by not printing
+	# it twice. What is here is what the choice below is made on.
+	var body := "%s\n\n%s\n\nORDERS:  %s" % [
 			op.get("summary", ""), level.get("fiction", ""),
-			level.get("briefing", ""), level.get("orders", "")]
+			level.get("orders", "")]
 	_open_modal("%s  -  MISSION %d OF %d\n%s" % [
 			op.name, Game.mission_number(), Game.mission_count(), level.name],
-			body, "DEPLOY\nTake the squad out", "")
+			body, "DEPLOY", "")
+	_build_deployment_rows()
+
+
+## Fill the roster rows from the living rifle-slot candidates, pre-ticking
+## whoever went last time (Game.deployment tops that up if somebody has died).
+func _build_deployment_rows() -> void:
+	_deploy_candidates = Game.rifle_candidates()
+	var going := Game.deployment(_rifle_slots())
+	var rows := roster_box.get_children()
+	for i in rows.size():
+		var row: Button = rows[i]
+		row.visible = i < _deploy_candidates.size()
+		if not row.visible:
+			continue
+		var soldier: Dictionary = _deploy_candidates[i]
+		row.set_pressed_no_signal(going.has(soldier))
+		row.text = _deployment_row_text(soldier, row.button_pressed)
+		if not row.toggled.is_connected(_on_deploy_toggled):
+			row.toggled.connect(_on_deploy_toggled)
+	roster_box.visible = true
+	_refresh_deploy_button()
+
+
+## One line per Kestrel: who, what they do, and what they have learned. Enough
+## to choose on without opening five soldier panels first.
+## A toggled button in this theme is one shade lighter, which is not enough to
+## read at a glance when the decision is which three of six go. The row says it
+## in words instead.
+func _deployment_row_text(soldier: Dictionary, going: bool) -> String:
+	var parts: Array[String] = [
+		"GOING " if going else "      ",
+		"%-14s" % Game.full_name(soldier),
+		"%-20s" % Unit.kind_role_name(int(soldier.kind)),
+		"%-16s" % Game.rank_title(int(soldier.rank)),
+	]
+	var perks: Array = soldier.get("perks", [])
+	var named: Array[String] = []
+	for key: String in perks:
+		named.append(str(Game.PERKS[key].name))
+	parts.append("-" if named.is_empty() else ", ".join(named))
+	return "  ".join(parts)
+
+
+func _rifle_slots() -> int:
+	return Game.data().scout_spawns.size()
+
+
+func _chosen_ids() -> Array:
+	var ids: Array = []
+	var rows := roster_box.get_children()
+	for i in rows.size():
+		var row: Button = rows[i]
+		if row.visible and row.button_pressed and i < _deploy_candidates.size():
+			ids.append(int(_deploy_candidates[i].id))
+	return ids
+
+
+func _on_deploy_toggled(_pressed: bool) -> void:
+	var rows := roster_box.get_children()
+	for i in rows.size():
+		var row: Button = rows[i]
+		if row.visible and i < _deploy_candidates.size():
+			row.text = _deployment_row_text(_deploy_candidates[i], row.button_pressed)
+	_refresh_deploy_button()
+
+
+## DEPLOY only lights up on exactly the right number. Fewer would walk into a
+## mission short-handed for no reason; more has nowhere to stand.
+func _refresh_deploy_button() -> void:
+	var slots := _rifle_slots()
+	var chosen := _chosen_ids().size()
+	choice_a.disabled = chosen != slots
+	choice_a.text = "DEPLOY\n%d of %d chosen" % [chosen, slots] if chosen != slots \
+			else "DEPLOY\nTake the squad out"
 
 
 func _on_choice(slot: int) -> void:
@@ -702,6 +837,9 @@ func _on_choice(slot: int) -> void:
 			get_tree().reload_current_scene()
 			print("[Sandline] %d levy/levies reported" % taken.size())
 		"deploy":
+			# Recorded before the scene changes: Battle reads the choice back
+			# out of Game when it fills the rifle slots.
+			Game.set_deployment(_chosen_ids())
 			print("[Sandline] deploying: %s mission %d/%d" % [
 					Game.operation().name, Game.mission_number(), Game.mission_count()])
 			Game.go_to_battle()
