@@ -8,6 +8,12 @@ extends SceneTree
 ## loads as 3.0 compares wrong in rank_for_xp() and rank_title(), a kind that
 ## loads as 2.0 misses every `match` on Unit.Kind, and neither fails loudly.
 ##
+## Sections 7-11 are the version machinery rather than the round trip: that a
+## newer save is refused AND left unwritten, that an older one climbs the
+## migration ladder with its roster intact, that a version this build cannot
+## start from is still refused, that the ladder has no missing rungs, and that
+## the newer-save lock never sticks to a session that did not meet one.
+##
 ## Any real save is backed up and restored, so this is safe to run on a machine
 ## someone is actually playing on.
 ##
@@ -16,6 +22,20 @@ extends SceneTree
 const GAME := preload("res://scripts/Game.gd")
 
 var _failed := false
+
+
+## What is actually on disk, as a Dictionary - {} if the file is gone or is not
+## an object. The version assertions read the FILE rather than the Game that
+## wrote it, because "did save() touch this" is a question only the file can
+## answer.
+func _read_json(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+	var f := FileAccess.open(path, FileAccess.READ)
+	var text := f.get_as_text()
+	f.close()
+	var parsed: Variant = JSON.parse_string(text)
+	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
 
 
 func _check(ok: bool, label: String) -> void:
@@ -164,11 +184,116 @@ func _init() -> void:
 	_check(game.load_save() == false, "load_save() refused the corrupt file")
 	_check(game.current_level == before_level, "state left untouched by the failure")
 
-	print("\n[7] a save from an unknown version is refused")
+	print("\n[7] a save from an unknown version is refused - and left alone")
 	var vf := FileAccess.open(game.SAVE_PATH, FileAccess.WRITE)
 	vf.store_string(JSON.stringify({"version": 999, "roster": []}))
 	vf.close()
 	_check(game.load_save() == false, "load_save() refused a future version")
+	# Refusing to READ it is only half the job. What a real session does next is
+	# form a squad from the empty roster the refusal left and checkpoint it -
+	# straight over the campaign it just declined to understand. So the refusal
+	# has to reach into save() as well, and this is the regression test for it:
+	# after the refusal, saving must not touch the file.
+	game.save()
+	var kept: Dictionary = _read_json(game.SAVE_PATH)
+	_check(int(kept.get("version", 0)) == 999,
+			"save() left the newer file alone (version %s)" % kept.get("version", "gone"))
+
+	print("\n[8] a version-1 save climbs the ladder to %d" % game.SAVE_VERSION)
+	# Written by hand in the version-1 shape - no campaign_seed, no
+	# mission_attempts - because that is what is genuinely sitting on players'
+	# disks. A fresh Game: the one above is locked for good, which is the point
+	# of it.
+	var g2: Node = GAME.new()
+	var mf := FileAccess.open(g2.SAVE_PATH, FileAccess.WRITE)
+	mf.store_string(JSON.stringify({
+		"version": 1,
+		"current_operation": 1,
+		"current_level": 4,
+		"in_the_field": true,
+		"frags": 3,
+		"smokes": 1,
+		"next_id": 3,
+		"roster": [
+			{"id": 1, "surname": "KELLER", "kind": 0, "xp": 14, "rank": 2,
+					"perks": ["sprinter", "flanker"], "alive": true},
+			{"id": 2, "surname": "Akai", "kind": 9, "xp": 26, "rank": 3,
+					"perks": ["called_shot"], "alive": true},
+		],
+		"pending_promotions": [],
+	}, "\t"))
+	mf.close()
+	_check(g2.load_save(), "load_save() accepted the v1 save")
+	var climbed_ids: Array = []
+	for s: Dictionary in g2.roster:
+		climbed_ids.append(int(s.id))
+	_check(climbed_ids == [1, 2], "both soldiers survived the climb (got %s)" % [climbed_ids])
+	_check((g2.soldier_by_id(1).get("perks", []) as Array) == ["sprinter", "flanker"]
+			and (g2.soldier_by_id(2).get("perks", []) as Array) == ["called_shot"],
+			"perks came through the migration intact")
+	_check(int(g2.soldier_by_id(2).get("kind", -1)) == 9
+			and int(g2.soldier_by_id(1).get("xp", -1)) == 14,
+			"kinds and xp came through the migration intact")
+	_check(g2.current_level == 4 and g2.current_operation == 1
+			and g2.frags == 3 and g2.in_the_field,
+			"the v1 fields were not disturbed by the climb")
+	# What v2 actually carries.
+	_check(g2.campaign_seed != 0, "the climb minted a campaign_seed (%s)" % g2.campaign_seed)
+	_check(g2.mission_attempts == 0,
+			"mission_attempts starts at 0 (got %s)" % g2.mission_attempts)
+	_check(g2.battle_seed() != 0, "battle_seed() has something to work with")
+	var minted: int = g2.campaign_seed
+	# The climb checkpoints itself, before anything else in the session has a
+	# reason to save. Without that the file would be climbed again at every
+	# launch - and the v1 rung mints a seed, so "again" means a different
+	# campaign every time.
+	var checkpointed: Dictionary = _read_json(g2.SAVE_PATH)
+	_check(int(checkpointed.get("version", 0)) == g2.SAVE_VERSION
+			and int(checkpointed.get("campaign_seed", 0)) == minted,
+			"load_save() wrote the climb back out (version %s, seed %s)"
+			% [checkpointed.get("version", "?"), checkpointed.get("campaign_seed", "?")])
+	g2.save()
+	var upgraded: Dictionary = _read_json(g2.SAVE_PATH)
+	_check(int(upgraded.get("version", 0)) == g2.SAVE_VERSION,
+			"the file on disk is now version %s (got %s)"
+			% [g2.SAVE_VERSION, upgraded.get("version", "?")])
+	_check(int(upgraded.get("campaign_seed", 0)) == minted,
+			"...carrying the seed it was minted with")
+	_check(g2.load_save() and g2.campaign_seed == minted,
+			"a second load re-reads that seed rather than minting another")
+
+	print("\n[9] a version-0 or unversioned save is still refused")
+	# The ladder is a way forward for saves this build understands, not a way in
+	# for anything that happens to parse.
+	for junk: Dictionary in [
+			{"roster": [{"id": 1, "surname": "GHOST", "kind": 0}]},
+			{"version": 0, "roster": [{"id": 1, "surname": "GHOST", "kind": 0}]},
+			{"version": "one", "roster": [{"id": 1, "surname": "GHOST", "kind": 0}]}]:
+		var jf := FileAccess.open(g2.SAVE_PATH, FileAccess.WRITE)
+		jf.store_string(JSON.stringify(junk))
+		jf.close()
+		_check(g2.load_save() == false,
+				"refused version %s" % junk.get("version", "<missing>"))
+	_check(g2.roster.size() == 2 and g2.campaign_seed == minted,
+			"the refusals left the loaded campaign untouched")
+	_check(g2._save_locked == false, "an old save does not lock saving")
+
+	print("\n[10] the ladder has no gaps")
+	# A missing rung is a bug in Game.gd, not a bad save: SAVE_VERSION raised
+	# without the step that reaches it. Every version from 1 up must be able to
+	# take one step forward.
+	for v in range(1, g2.SAVE_VERSION):
+		_check(not (g2._migrate_step({}, v) as Dictionary).is_empty(),
+				"there is a step out of version %d" % v)
+
+	print("\n[11] the lock is not sticky")
+	g2.frags = 1
+	g2.smokes = 3
+	g2.save()
+	var rewritten: Dictionary = _read_json(g2.SAVE_PATH)
+	_check(int(rewritten.get("frags", -1)) == 1,
+			"an unlocked Game still writes (frags %s)" % rewritten.get("frags", "?"))
+	g2.free()
 
 	# --- restore whatever was there before ---
 	if had_save:

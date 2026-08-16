@@ -286,6 +286,11 @@ var _kick_tween: Tween = null
 # cost nothing - which is also what makes seeding it reproducible.
 var _rules_rng := RandomNumberGenerator.new()
 var _vis_rng := RandomNumberGenerator.new()
+# What _rules_rng was started from: Game.battle_seed(), or whatever `-- --seed N`
+# pinned instead. Kept because it goes on the results panel - a bug report that
+# carries this number is a battle somebody can play back, rather than a story
+# about some goblin who hit three times running.
+var rules_seed := 0
 # Seed for every scenery-variant hash stream, so prop picks decorrelate from
 # cell coordinates without losing determinism. Levels may pin it with a
 # "prop_seed" key; otherwise it derives from the zone seed.
@@ -365,11 +370,15 @@ var _resolving_blast := false
 
 
 func _ready() -> void:
-	_rules_rng.randomize()
+	# Cosmetics stay on the clock - nothing reads them back, and a puff of smoke
+	# that lands in the same place twice is not a feature. The rules stream is
+	# seeded from the campaign instead, inside _apply_cmdline_overrides(): the
+	# seed depends on which mission this is, so it cannot be settled until
+	# --level has had its say.
 	_vis_rng.randomize()
 	Engine.time_scale = 1.0  # a reload mid-hit-stop must never persist
 	Levels.validate_all()  # push_error-based, so it reports in release too
-	_apply_cmdline_level()
+	_apply_cmdline_overrides()
 	level = Game.data()
 	# Bring the squad up to strength (replacing anyone lost) and snapshot it,
 	# so a failed mission can be rolled back wholesale.
@@ -448,15 +457,34 @@ func _ready() -> void:
 	_apply_cmdline_screenshot()
 
 
-## Boot straight into a level: `godot --path . -- --level 2`. Everything after
-## the bare `--` is ours. Exists so a headless run can smoke-test a level other
-## than the first one, which is otherwise only reachable by playing to it.
-func _apply_cmdline_level() -> void:
+## The two switches that decide which battle this is:
+## `godot --path . -- --level 2 --seed 12345`. Everything after the bare `--`
+## is ours.
+##
+## --level boots straight into a mission, so a headless run can smoke-test one
+## other than the first, which is otherwise only reachable by playing to it.
+## --seed pins the rules stream, which is how a battle out of a bug report gets
+## fought a second time: the results panel prints the number, this reads it back.
+##
+## The seed is settled AFTER the loop rather than inside it, because the seed
+## the campaign would have chosen depends on which mission this is - so
+## `--seed` has to be able to win no matter which order the two arrive in.
+func _apply_cmdline_overrides() -> void:
 	var args := OS.get_cmdline_user_args()
+	var pinned := 0
+	var was_pinned := false
 	for i in args.size():
-		if args[i] == "--level" and i + 1 < args.size():
-			Game.select_level(int(args[i + 1]) - 1)
-			return
+		if i + 1 >= args.size():
+			continue
+		match args[i]:
+			"--level":
+				Game.select_level(int(args[i + 1]) - 1)
+			"--seed":
+				pinned = int(args[i + 1])
+				was_pinned = true
+	rules_seed = pinned if was_pinned else Game.battle_seed()
+	_rules_rng.seed = rules_seed
+	print("[ThinShot] rules seed %d%s" % [rules_seed, " (--seed)" if was_pinned else ""])
 
 
 ## Save one settled frame to disk and quit:
@@ -2779,7 +2807,7 @@ func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0,
 	if not flanking:
 		covered_cell = board.cover_source(attacker.cell, target.cell)
 	var chance: int = shot.chance
-	var hit := _rules_rng.randi_range(1, 100) <= chance
+	var hit := Rules.roll_hits(_rules_rng, chance)
 	# A miss sails past the target and off to one side.
 	var impact_point := chest if hit else chest + dir * 54.0 \
 			+ dir.orthogonal() * _vis_rng.randf_range(-34.0, 34.0)
@@ -3381,6 +3409,10 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 	if not Game.pending_promotions.is_empty():
 		debrief_label.text += "\n\n%d PROMOTION(S) TO HAND OUT BACK AT CAMP" % \
 				Game.pending_promotions.size()
+	# The number this battle's dice came out of, on the one screen a player is
+	# looking at when a battle goes wrong. `-- --seed N` deals the same hand
+	# again, so a report that quotes it is a report that can be reproduced.
+	debrief_label.text += "\n\nSEED %d" % rules_seed
 	if panel_delay > 0.0:
 		get_tree().create_timer(panel_delay).timeout.connect(
 				_present_game_over.bind(won))

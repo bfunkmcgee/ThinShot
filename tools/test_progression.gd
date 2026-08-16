@@ -110,6 +110,22 @@ func _run() -> void:
 	await process_frame  # let the autoloads finish _ready()
 	var game: Node = root.get_node("/root/Game")
 
+	# The ordinals every save on disk is written in, and Game.CLASS_PERK_RANKS is
+	# keyed by. Inserting a kind mid-enum would renumber every soldier in every
+	# campaign - a scout would load as a goblin - and nothing else in the game
+	# would notice. Read off the script rather than named, for the header's
+	# reason: `Unit` in source compiles Unit.gd before the autoloads exist.
+	print("\n[0] the Kind ordinals the saves are written in")
+	var ordinals: Dictionary = (load("res://scripts/Unit.gd") as GDScript) \
+			.get_script_constant_map()["Kind"]
+	_check(int(ordinals.SCOUT) == KIND_SCOUT
+			and int(ordinals.TEAM_LEAD) == KIND_TEAM_LEAD
+			and int(ordinals.MACHINEGUNNER) == KIND_MACHINEGUNNER,
+			"SCOUT 0, TEAM_LEAD 1, MACHINEGUNNER 2 (got %d/%d/%d)"
+			% [ordinals.SCOUT, ordinals.TEAM_LEAD, ordinals.MACHINEGUNNER])
+	_check(int(ordinals.CIVILIAN) == 8 and int(ordinals.HERO) == KIND_HERO,
+			"CIVILIAN 8, HERO 9 (got %d/%d)" % [ordinals.CIVILIAN, ordinals.HERO])
+
 	print("\n[1] table integrity: 2 known choices per class per rank, short blurbs")
 	for kind in [KIND_SCOUT, KIND_MACHINEGUNNER, KIND_HERO]:
 		for rank in [1, 2, 3, 4]:

@@ -22,6 +22,23 @@ var current_level := 0
 # and whether replacements are available.
 var in_the_field := false
 
+# This campaign's own number, minted once and then never touched again. It is
+# what makes a battle reproducible: the dice a mission rolls are derived from
+# the save rather than from the wall clock, so the same campaign at the same
+# mission on the same attempt fights the same fight - and a bug report can
+# carry the seed instead of a description of what the goblins did.
+#
+# 0 means "never minted", which is why every mint below refuses to return it:
+# a campaign that landed on 0 would be re-minted on every load and would never
+# settle on an identity at all.
+var campaign_seed := 0
+# How many times this campaign has thrown a mission away - lost, retried, or
+# abandoned. Part of the battle seed on purpose: a retry has to be a DIFFERENT
+# battle, or a player who reloads into the same rolls is not retrying, he is
+# rewinding. Counted for the campaign rather than per mission, because what it
+# has to do is move.
+var mission_attempts := 0
+
 # Squad ordnance, set at the camp's stores tent. The slots are a fixed budget
 # split between the two grenades, so choosing is a real decision and never an
 # increase in power - the 2/2 default is exactly what the squad carried before
@@ -241,6 +258,12 @@ const SURNAMES: Array[String] = [
 func _ready() -> void:
 	_rng.randomize()
 	load_save()
+	# A campaign that has never been saved has no identity yet. load_save() mints
+	# one for every file it reads; this covers the first launch, where there is
+	# no file to read and the first save() has not happened yet. Without it the
+	# opening mission of every fresh campaign would roll the same dice.
+	if campaign_seed == 0:
+		campaign_seed = _mint_campaign_seed()
 
 
 func data() -> Dictionary:
@@ -279,6 +302,19 @@ func is_last_of_operation() -> bool:
 
 func is_last_operation() -> bool:
 	return current_operation >= Levels.OPERATIONS.size() - 1
+
+
+## The number Battle starts its rules stream from. Four things decide it, and
+## each one is there for a reason: the campaign, so two players do not fight
+## identical wars; the operation and the mission, so the second map is not a
+## replay of the first; and the attempt count, so a mission thrown away and
+## fought again rolls new dice. Everything in it is saved, which is what makes
+## the battle reproducible from the file rather than from the session.
+##
+## Not the turn number and not the clock: this is read once, at the top of
+## _ready, and a battle's whole sequence of rolls follows from it.
+func battle_seed() -> int:
+	return hash([campaign_seed, current_operation, current_level, mission_attempts])
 
 
 func select_level(index: int) -> void:
@@ -602,6 +638,11 @@ func abort_mission() -> void:
 	# perk of anyone who deployed with one unspent and then lost the mission.
 	mission_xp.clear()
 	mission_dead.clear()
+	# The one place an attempt is spent without being kept. Counted here rather
+	# than in begin_mission so that battle_seed() only moves when a mission is
+	# actually being fought AGAIN - a first attempt and the campaign's state
+	# going into it are the same thing.
+	mission_attempts += 1
 	save()
 
 
@@ -630,7 +671,10 @@ func choose_perk(id: int, perk: String) -> void:
 
 
 const SAVE_PATH := "user://campaign.json"
-const SAVE_VERSION := 1
+# Raise this in the same commit that adds the migration step reaching it, and
+# never one without the other - _migrate_step() is what turns a number into a
+# shape the rest of this file can read.
+const SAVE_VERSION := 2
 
 # Raised, and never lowered again, when load_save() finds a campaign written by
 # a build newer than this one. Refusing to READ such a file is only half the
@@ -662,6 +706,9 @@ func save() -> void:
 		"next_id": _next_id,
 		"roster": roster,
 		"pending_promotions": pending_promotions,
+		# v2: what makes a battle reproducible from the file. See battle_seed().
+		"campaign_seed": campaign_seed,
+		"mission_attempts": mission_attempts,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f == null:
@@ -670,6 +717,92 @@ func save() -> void:
 		return
 	f.store_string(JSON.stringify(payload, "\t"))
 	f.close()
+
+
+# ---------------------------------------------------------------- migration --
+# Old saves climb a ladder of one-version steps until they are shaped like the
+# current one, and only then is anything read out of them. Two jobs that sound
+# alike are deliberately kept apart:
+#
+#   a migration RESHAPES - it is allowed to know what version 1 looked like,
+#   because a file that says "version 1" is a promise about its own shape;
+#   _read_roster SANITISES - it trusts nothing, rebuilds every soldier field by
+#   field, whitelists perks and dedups ids, and it runs LAST, on whatever the
+#   ladder produced. A hand-edited v1 save is still a hand-edited save after
+#   climbing, and still has to get past the gate.
+#
+# The rungs are written as a `match` rather than a table of Callables because
+# GDScript constants cannot hold one, and because this codebase does no
+# metaprogramming anywhere else - a reader looking for what version 1 became
+# should find a function named after the answer.
+
+
+## One rung: a version-`from` payload in, a version-`from + 1` payload out.
+## Returns {} when there is no such rung.
+##
+## An empty return is a bug in THIS FILE, not a bad save: it means SAVE_VERSION
+## was raised without adding the step that reaches it. tools/test_save_load.gd
+## walks every rung from 1 to SAVE_VERSION for exactly that reason.
+##
+## Never edit a step that has shipped. Every save in the wild that was going to
+## climb it already has, and its stamped version now says so - so changing what
+## the step does cannot reach those files, it can only disagree with them.
+## Getting a rung wrong after release is fixed by adding the NEXT one.
+func _migrate_step(payload: Dictionary, from: int) -> Dictionary:
+	match from:
+		1:
+			return _migrate_1_to_2(payload)
+	return {}
+
+
+## Climb from `from` up to SAVE_VERSION, stamping the version as it goes so a
+## half-finished climb can never be mistaken for a finished one.
+##
+## Forward only. A newer-than-us save is refused by load_save() before it gets
+## here and is never handed to the ladder; there is no downward rung and there
+## should not be, because this build cannot write the shape a newer one reads.
+## Returns {} the moment a rung is missing - a partly-migrated campaign is not
+## something to adopt and hope about.
+func _migrate(payload: Dictionary, from: int) -> Dictionary:
+	if from > SAVE_VERSION:
+		push_error("[ThinShot] refusing to migrate save version %d down to %d"
+				% [from, SAVE_VERSION])
+		return {}
+	var out := payload
+	var at := from
+	while at < SAVE_VERSION:
+		out = _migrate_step(out, at)
+		if out.is_empty():
+			push_error("[ThinShot] no migration step from save version %d - the ladder in Game.gd has a gap"
+					% at)
+			return {}
+		at += 1
+		out["version"] = at
+	return out
+
+
+## v1 -> v2: the campaign gains an identity.
+##
+## v1 saves were written before battles were reproducible, so they carry neither
+## field. The seed is minted here - a campaign in progress gets a new one and
+## keeps it forever after, which means its NEXT mission is seeded and the ones
+## already fought stay unrepeatable. mission_attempts starts at 0 rather than at
+## a guess: what a v1 save never recorded cannot be recovered, and the only
+## thing the count has to do is move from here on.
+func _migrate_1_to_2(payload: Dictionary) -> Dictionary:
+	payload["campaign_seed"] = _mint_campaign_seed()
+	payload["mission_attempts"] = 0
+	return payload
+
+
+## A campaign's number. Never 0 - that is the "not minted yet" sentinel, and a
+## campaign that landed on it would be re-minted on every single load.
+func _mint_campaign_seed() -> int:
+	var minted := 0
+	while minted == 0:
+		minted = hash([Time.get_unix_time_from_system(), Time.get_ticks_usec(),
+				_rng.randi()])
+	return minted
 
 
 ## Restore a saved campaign. Returns false - leaving every field untouched at
@@ -703,10 +836,29 @@ func load_save() -> bool:
 		push_warning("[ThinShot] save is version %d, this build reads %d - leaving it alone"
 				% [version, SAVE_VERSION])
 		return false
-	if version != SAVE_VERSION:
+	# Below the first version the game ever wrote - which is also where a version
+	# that is not a number at all lands, int() answering 0 for it. There is no
+	# rung to start from, so this is refused like a corrupt file: no lock, start
+	# fresh. See the asymmetry note above for why that is safe here and is not
+	# safe for a newer save.
+	if version < 1:
 		push_warning("[ThinShot] save is version %s, this build reads %d - starting fresh"
 				% [payload.get("version", "?"), SAVE_VERSION])
 		return false
+	# Old, but a shape this build knows how to bring forward. The ladder runs on
+	# the RAW payload, before a single field is read out of it, so everything
+	# below this point - _read_roster included - only ever sees a current-shaped
+	# save and needs to know nothing about the versions that came before.
+	var climbed := false
+	if version < SAVE_VERSION:
+		var migrated := _migrate(payload, version)
+		if migrated.is_empty():
+			push_warning("[ThinShot] cannot bring save version %d up to %d - starting fresh"
+					% [version, SAVE_VERSION])
+			return false
+		payload = migrated
+		climbed = true
+		print("[ThinShot] save migrated from version %d to %d" % [version, SAVE_VERSION])
 
 	var loaded := _read_roster(payload.get("roster", []))
 	if loaded.is_empty():
@@ -727,12 +879,31 @@ func load_save() -> bool:
 	# file straight back out again while we are still reading it.
 	frags = clampi(int(payload.get("frags", 2)), 0, LOADOUT_SLOTS)
 	smokes = LOADOUT_SLOTS - frags
+	# The v2 fields. Read with defaults like everything else here rather than
+	# trusted to exist: the ladder above guarantees they are present, and a
+	# hand-edited file guarantees nothing. A seed that arrives as 0 - deleted,
+	# blanked, or never minted - is minted now, because 0 is the one value that
+	# means "this campaign has no identity yet".
+	campaign_seed = int(payload.get("campaign_seed", 0))
+	mission_attempts = maxi(int(payload.get("mission_attempts", 0)), 0)
+	if campaign_seed == 0:
+		campaign_seed = _mint_campaign_seed()
 	# Per-mission scratch is never saved, and must not survive a load either.
 	_snapshot.clear()
 	mission_xp.clear()
 	mission_dead.clear()
 	print("[ThinShot] campaign loaded: %d soldier(s), %s mission %d/%d" % [
 			roster.size(), operation().name, mission_number(), mission_count()])
+	# A climb is checkpointed once, here, and this is the one write load_save()
+	# does. Not tidiness: the v1 rung MINTS the campaign seed, and nothing else
+	# on the way from the garrison to a mission is guaranteed to save - so a
+	# migration left in memory would be redone at every launch, with a different
+	# seed each time, and the campaign would never settle on the identity the
+	# whole feature is about. Written last, after the payload has been fully
+	# adopted AND sanitised, so what lands on disk is the campaign this build
+	# actually loaded rather than the file it read.
+	if climbed:
+		save()
 	return true
 
 

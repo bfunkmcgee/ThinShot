@@ -122,6 +122,25 @@ static func hit_chance(board: Board, attacker: Unit, target: Unit,
 	return clampi(chance, MIN_HIT_CHANCE, MAX_HIT_CHANCE)
 
 
+## The roll. Every shot in the game comes through this one line, and that is the
+## whole point of it having a name: the single stochastic step in a game of
+## otherwise exact arithmetic should be findable by reading rather than by
+## grepping for `randi` and hoping the list is short.
+##
+## The generator is passed in for the same reason the board is - Battle keeps
+## two streams and only one of them is allowed to decide anything (see its
+## _rules_rng comment), and a rule that reached for a global would quietly draw
+## from whichever one was handy.
+##
+## `randi_range(1, 100) <= chance` is the shape, exactly. It is a percentage
+## against a uniform d100: at chance 20 twenty of the hundred outcomes land, at
+## 99 all but one does. Any other spelling - randf(), 0..99, `<` - shifts the
+## distribution by a point somewhere, and hit_chance's clamp is calibrated
+## against this one.
+static func roll_hits(rng: RandomNumberGenerator, chance: int) -> bool:
+	return rng.randi_range(1, 100) <= chance
+
+
 # --- The round ---------------------------------------------------------------
 
 ## The cover this shot has to get through. `effective_cover` already answers
