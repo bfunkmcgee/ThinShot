@@ -75,17 +75,20 @@ const ROCK_OFFSET := Vector2(0, -18)
 const JUNK_OFFSET := Vector2(0, -20)
 const PLANT_OFFSET := Vector2(0, -17)
 const WALL_OFFSET := Vector2(0, -15)
-const CRATE_OFFSET := Vector2(0, -37)
-# Authored at 72px; like the pile and the tables, drawn 1:1.
-const STORES_OFFSET := Vector2(0, -23)
+# The pile, the loose crates and both tables are all nearest-downsampled into
+# the 48px class now, so everything standing in camp draws at PROP_SCALE and
+# the offsets are halved to match - the painted bases stay on their cells.
+const CRATE_OFFSET := Vector2(0, -18)
+const STORES_OFFSET := Vector2(0, -12)
 # Measured from opaque bounds like every other prop: the painted feet land on
-# the cell centre, sunk a pixel so nothing floats. Both tables are authored at
-# 96px, so like the crates they are drawn 1:1 rather than at PROP_SCALE.
-const BRIEFING_OFFSET_GARRISON := Vector2(0, -46)
-const BRIEFING_OFFSET_FIELD := Vector2(0, -40)
+# the cell centre, sunk a pixel so nothing floats.
+const BRIEFING_OFFSET_GARRISON := Vector2(0, -23)
+const BRIEFING_OFFSET_FIELD := Vector2(0, -20)
 const PROP_SCALE := Vector2(2, 2)
-const HAZE_BANDS := 5
-const HAZE_MAX := 0.20
+# Battle and camp share one zoom so a soldier is the same size on screen at
+# home as in the fight: native texel density, where a floor texel is one
+# screen pixel. The garrison world (1536x720) fits a 1920x1080 view at 1.0.
+const CAMP_ZOOM := Board.MAX_ZOOM
 
 # Walking speed in screen pixels per second along the horizontal. Vertical is
 # squashed to the tile ratio so a step "up" covers the same ground as a step
@@ -112,6 +115,10 @@ const INTERACT_RANGE := 74.0
 @onready var close_button: Button = $UI/Modal/Center/Box/CloseButton
 
 var player: Unit = null
+# Seed for the scenery-variant hash streams, mirroring Battle: derived from
+# the biome's floor seed via CampData.map_for, so each biome's camp dresses
+# itself differently and deterministically.
+var _prop_seed := 0
 # Which camp this is, and the layout that goes with it.
 var in_field := false
 var camp: Dictionary = {}
@@ -133,8 +140,9 @@ func _ready() -> void:
 	in_field = Game.in_the_field or OS.get_cmdline_user_args().has("--field")
 	camp = CampData.map_for(in_field, Game.biome())
 	spots = CampData.spots_for(in_field)
-	board.show_grid = false  # a camp is a place, not a tactical grid
 	board.set_level(camp)
+	_prop_seed = int(camp.get("prop_seed",
+			int(camp.get("zone_seed", 91)) * 977 + 101))
 	_spawn_props()
 	# The roster forms here on a fresh campaign, before the first mission ever
 	# runs, so the squad the player meets in camp is the squad that deploys.
@@ -147,11 +155,15 @@ func _ready() -> void:
 	modal.visible = false
 	title_label.text = "FIELD CAMP" if in_field else "GARRISON"
 	_refresh_subtitle()
+	# Same texel density as the battle: _clamped_camera divides the viewport
+	# by zoom, so the clamping adapts on its own.
+	camera.zoom = Vector2(CAMP_ZOOM, CAMP_ZOOM)
 	_snap_camera()
 	print("[ThinShot] %s: %d soldier(s), %s mission %d/%d '%s'" % [
 			"field camp" if in_field else "garrison", Game.roster.size(),
 			Game.operation().name, Game.mission_number(), Game.mission_count(),
 			Game.data().name])
+	_apply_cmdline_screenshot()
 
 
 func _refresh_subtitle() -> void:
@@ -178,7 +190,7 @@ func _squad_summary() -> String:
 func _dust_material(cell: Vector2i) -> ShaderMaterial:
 	var span := maxi(board.size.x + board.size.y - 2, 1)
 	var depth := 1.0 - float(cell.x + cell.y) / float(span)
-	var band := clampi(int(depth * float(HAZE_BANDS)), 0, HAZE_BANDS - 1)
+	var band := clampi(int(depth * float(Board.HAZE_BANDS)), 0, Board.HAZE_BANDS - 1)
 	if not _dust_materials.has(band):
 		# The camp dresses itself from the operation's biome, so its air has to
 		# follow the same ground its floor does.
@@ -188,13 +200,20 @@ func _dust_material(cell: Vector2i) -> ShaderMaterial:
 		mat.set_shader_parameter("tint", mood.tint)
 		mat.set_shader_parameter("haze_color", mood.haze)
 		mat.set_shader_parameter("haze",
-				HAZE_MAX * (float(band) + 0.5) / float(HAZE_BANDS))
+				Board.HAZE_MAX * (float(band) + 0.5) / float(Board.HAZE_BANDS))
 		_dust_materials[band] = mat
 	return _dust_materials[band]
 
 
 func _spawn_prop(texture: Texture2D, offset: Vector2, cell: Vector2i,
-		scale := PROP_SCALE) -> Sprite2D:
+		scale := PROP_SCALE, expected := PROP_SCALE) -> Sprite2D:
+	# One texel density in camp too: each prop draws at the class its art was
+	# authored for - today all 48px-class at 2x. The guard checks the call
+	# against its declared class, not a hard-coded 2x, so hi-res 1x art can
+	# land per-prop without losing the stray-scale alarm.
+	if OS.is_debug_build() and scale != expected:
+		push_error("[Camp] prop at %s spawned at %s - normalise the art to the "
+				% [cell, scale] + "%s class instead" % expected)
 	var prop := Sprite2D.new()
 	prop.texture = texture
 	prop.offset = offset
@@ -216,25 +235,36 @@ func _wall_texture(cell: Vector2i) -> Texture2D:
 	return WALL_TEX_X_RUN if has_x else WALL_TEX_Y_RUN
 
 
+## Hash-stream salts, matching Battle's for the streams both scenes have.
+const SALT_ROCK := 4
+const SALT_JUNK := 5
+const SALT_PLANT := 6
+const SALT_CRATE := 8
+
+
+## A deterministic pick out of `count` variants for this cell and stream.
+func _prop_pick(cell: Vector2i, salt: int, count: int) -> int:
+	return mini(int(Board._hash01(cell, _prop_seed + salt) * count), count - 1)
+
+
 func _spawn_props() -> void:
 	for y in board.size.y:
 		for x in board.size.x:
 			var cell := Vector2i(x, y)
 			match board.map_char(cell):
 				"#":
-					_spawn_prop(ROCK_TEXTURES[(x * 7 + y * 13) % ROCK_TEXTURES.size()],
-							ROCK_OFFSET, cell)
+					_spawn_prop(ROCK_TEXTURES[_prop_pick(cell, SALT_ROCK,
+							ROCK_TEXTURES.size())], ROCK_OFFSET, cell)
 				"j":
-					_spawn_prop(JUNK_TEXTURES[(x * 11 + y * 17) % JUNK_TEXTURES.size()],
-							JUNK_OFFSET, cell)
+					_spawn_prop(JUNK_TEXTURES[_prop_pick(cell, SALT_JUNK,
+							JUNK_TEXTURES.size())], JUNK_OFFSET, cell)
 				"p":
-					_spawn_prop(PLANT_TEXTURES[(x * 5 + y * 23) % PLANT_TEXTURES.size()],
-							PLANT_OFFSET, cell)
+					_spawn_prop(PLANT_TEXTURES[_prop_pick(cell, SALT_PLANT,
+							PLANT_TEXTURES.size())], PLANT_OFFSET, cell)
 				"W":
 					_spawn_prop(_wall_texture(cell), WALL_OFFSET, cell)
 	for cell: Vector2i in spots.dressing:
-		# Crates are authored at 96px against the 48px everything else uses.
-		_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, cell, Vector2.ONE)
+		_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, cell)
 	for s: Dictionary in camp.structures:
 		_spawn_structure(s)
 
@@ -264,12 +294,13 @@ func _spawn_structure(s: Dictionary) -> void:
 # -------------------------------------------------------------------- squad --
 
 
-## Who the player walks around as: the chain of command, in order. Nobody is
-## replaced until the operation is over, so the camp has to cope with the Team
-## Lead being dead - the machinegunner takes it, then a rifleman, and within a
-## role the senior survivor.
+## Who the player walks around as: the chain of command, in order. Rodar Akai
+## leads it while he lives (and a lost mission un-kills him, so in camp he
+## always does). TEAM_LEAD stays as a fallback for any roster the hero
+## migration has not touched; then the machinegunner, then a rifleman, and
+## within a role the senior survivor.
 const AVATAR_ORDER: Array[int] = [
-	Unit.Kind.TEAM_LEAD, Unit.Kind.MACHINEGUNNER, Unit.Kind.SCOUT,
+	Unit.Kind.HERO, Unit.Kind.TEAM_LEAD, Unit.Kind.MACHINEGUNNER, Unit.Kind.SCOUT,
 ]
 
 
@@ -347,9 +378,9 @@ func _build_fixtures() -> void:
 	# patch of sand and a prompt appeared. Variant keyed off the cell so the
 	# two camps do not put out the same crate.
 	_spawn_prop(
-			STORES_TEXTURES[(spots.stores.x * 5 + spots.stores.y * 3)
-					% STORES_TEXTURES.size()],
-			STORES_OFFSET, spots.stores, Vector2.ONE)
+			STORES_TEXTURES[_prop_pick(spots.stores, SALT_CRATE,
+					STORES_TEXTURES.size())],
+			STORES_OFFSET, spots.stores)
 	# Replacements are a garrison thing. Out on operation the squad fights
 	# with whoever walked away from the last mission.
 	var post: Vector2i = spots.recruit
@@ -359,13 +390,13 @@ func _build_fixtures() -> void:
 			"pos": board.cell_to_global(post),
 			"label": "the assignment post", "id": 0,
 		})
-		_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, post, Vector2.ONE)
+		_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, post)
 	# The table itself, so the fixture is the thing it is named after rather than
 	# a crate standing in for one.
 	_spawn_prop(
 			BRIEFING_TEX_FIELD if in_field else BRIEFING_TEX_GARRISON,
 			BRIEFING_OFFSET_FIELD if in_field else BRIEFING_OFFSET_GARRISON,
-			spots.briefing, Vector2.ONE)
+			spots.briefing)
 
 
 # ----------------------------------------------------------------- movement --
@@ -572,7 +603,12 @@ func _open_soldier(id: int) -> void:
 		if int(promotion.id) != id:
 			continue
 		var rank := int(promotion.rank)
-		var choices: Array = Game.PERK_RANKS[rank]
+		# The choice comes from this soldier's CLASS tree. _read_promotions
+		# already dropped anything the class cannot answer, but a promotion
+		# queued in-session for an unexpected kind must not crash the modal.
+		var choices: Array = Game.perk_choices(int(soldier.kind), rank)
+		if choices.size() < 2:
+			continue
 		lines.append("")
 		lines.append("PROMOTED TO %s - choose a specialty." % Game.rank_title(rank).to_upper())
 		_choice_action = "perk"
@@ -659,3 +695,30 @@ func _on_choice(slot: int) -> void:
 					Game.operation().name, Game.mission_number(), Game.mission_count()])
 			Game.go_to_battle()
 
+
+# -------------------------------------------------------------------- debug --
+
+
+## Save one settled frame to disk and quit, mirroring Battle's flag:
+## `godot --path . -- --field --screenshot out.png`. Windowed only - headless
+## runs on a dummy rasterizer that renders nothing.
+func _apply_cmdline_screenshot() -> void:
+	var args := OS.get_cmdline_user_args()
+	for i in args.size():
+		if args[i] == "--screenshot" and i + 1 < args.size():
+			_capture_screenshot(args[i + 1])
+			return
+
+
+func _capture_screenshot(path: String) -> void:
+	if DisplayServer.get_name() == "headless":
+		push_error("[ThinShot] --screenshot needs a window; headless renders nothing")
+		get_tree().quit(1)
+		return
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var err := image.save_png(path)
+	print("[ThinShot] screenshot -> %s (%s) zoom=%s" % [
+			path, "saved" if err == OK else error_string(err), camera.zoom])
+	get_tree().quit(0 if err == OK else 1)

@@ -6,19 +6,22 @@ placeholder art). One desert skirmish: the **Desert Scouts** against the
 
 ## The game
 
-| | Team Lead | Machinegunner | Desert Scout | Chorister | Raider | Skirmisher | Novice | Cantor |
+| | Rodar Akai | Machinegunner | Desert Scout | Chorister | Raider | Skirmisher | Novice | Cantor |
 |---|---|---|---|---|---|---|---|---|
 | Side | you | you | you | AI | AI | AI | AI | AI |
 | Per battle | 1 | 1 | 3 | 3–4 | 1 | 1–2 | 3 | 1 |
 | Weapon | battle rifle | belt-fed MG | carbine | scavenged rifle | submachine gun | submachine gun | revolver | bolt rifle |
-| HP | 8 | 8 | 8 | 4 | 4 | 3 | **2** | 4 |
-| Move | 4 | 3 | 5 | 4 | **5** | **6** | **5** | 3 |
+| HP | **10** | 8 | 8 | 4 | 4 | 3 | **2** | 4 |
+| Move | 5 | 3 | 5 | 4 | **5** | **6** | **5** | 3 |
 | Attack range | **6** | 4 | 4 | 3 | **2** | **2** | 3 | **5** |
 | Damage/round | **4** (2 in cover) | 2 (1) | 2 (1) | 2 (1) | 2 (1) | 2 (1) | 2 (1) | **4** (2) |
-| Accuracy | 92% | 78% | 90% | 60% | 58% | 52% | **48%** | 70% |
-| Magazine | 2 | **6** | 3 | ∞ | ∞ | ∞ | ∞ | **1** |
+| Accuracy | **95%** | 78% | 90% | 60% | 58% | 52% | **48%** | 70% |
+| Magazine | 3 | **6** | 3 | ∞ | ∞ | ∞ | ∞ | **1** |
 | Fire modes | single | **burst, full auto** | single, burst | single | **burst** | **burst** | single | single |
-| Ability | — | **suppressive fire** | — | — | — | — | — | — |
+| Ability | *(his perk tree)* | **suppressive fire** | — | — | — | — | — | — |
+
+(The Scout Team Lead is retired: Rodar Akai fills his slot — same spawn, same
+job, stronger soldier. An old save's lead becomes Rodar, record intact.)
 
 The squad also carries **ordnance the Choir has nothing like** — two frags and
 two smokes for the whole battle, pooled, thrown by whichever soldier is in the
@@ -28,9 +31,11 @@ does not roll to hit.
 
 A five-soldier squad, each with a job:
 
-- **Team Lead** — designated marksman. A battle rifle reaching half again as
-  far as a carbine, dropping a healthy goblin in one hit. Paid for with a
-  two-round magazine, a slower advance, and no burst.
+- **Rodar Akai, Hero of the Scouts** — designated marksman and the squad's
+  leader. A battle rifle reaching half again as far as a carbine, dropping a
+  healthy goblin in one hit — held by a veteran who starts at the accuracy cap,
+  so his whole progression is his perk tree. If he falls, the mission is lost
+  on the spot.
 - **Machinegunner** — area control. No semi-automatic setting at all: his
   lightest option is a two-round burst, and **full auto (A)** walks four rounds
   across a target at reduced accuracy. **His overwatch is not a sentry post**:
@@ -58,17 +63,17 @@ the bottom of it — shirtless, handed whatever
 sidearm was left over, and pushed out front as a screen. Two HP means a single
 carbine round puts one down, and at 48% they mostly miss. They are dangerous
 only because there are always more of them, and because every round you spend
-on one is a round your Team Lead did not spend on something that matters.
+on one is a round Rodar did not spend on something that matters.
 
 One goblin in the rabble is not a joke. The **Cantor** is the Choir's
 designated marksman: a bolt rifle reaching five tiles — further than anything
-you carry except the Team Lead's — at 70% and four damage a round, which is
+you carry except Rodar's — at 70% and four damage a round, which is
 half a scout. He is the counter-sniper the campaign builds toward, and he
 answers to exactly one weakness. **One round in the rifle**, and the bolt
 worked by hand between shots, so he reloads after every single one. Reloading
 costs the move, so the Cantor is **rooted for as long as he keeps firing**: he
-will trade with you every turn, from the same tile, forever. Kill him with the
-Team Lead (six tiles out-reaches him, and four damage drops him in one), break
+will trade with you every turn, from the same tile, forever. Kill him with
+Rodar (six tiles out-reaches him, and four damage drops him in one), break
 line of sight and make him choose between shooting and repositioning, or eat a
 scout's worth of damage crossing his lane.
 
@@ -166,8 +171,8 @@ command signs on however many bodies you are short. What a death takes
 permanently is the rank, the specialties and the kills; what it does not take
 is the campaign.
 
-Both camps are **real time and directly controlled** — you walk the Scout Team
-Lead around with **WASD or the arrows**, and press **E** at anything worth
+Both camps are **real time and directly controlled** — you walk Rodar Akai
+around with **WASD or the arrows**, and press **E** at anything worth
 using:
 
 - **Your squad** stand around the camp. Walk up to one to read their record —
@@ -182,7 +187,7 @@ using:
 - **The assignment post** — garrison only — signs on replacements for anyone
   lost, green: no rank, no specialty, nothing the squad lost with them.
 
-Who you walk around as follows the chain of command: **the Team Lead, then the
+Who you walk around as follows the chain of command: **Rodar Akai, then the
 machinegunner, then a rifleman**, and within a role the senior survivor. Nobody
 is replaced until the operation is over, so somebody always has to take it.
 
@@ -206,27 +211,63 @@ soldiers, never a wounded start.
 |---|---|---|
 | Scout | 0 | — |
 | Corporal | 6 | +3 acc, +1 HP, **choose a specialty** |
-| Sergeant | 14 | +3 acc, +1 HP |
+| Sergeant | 14 | +3 acc, +1 HP, **choose a specialty** |
 | Staff Sergeant | 26 | +3 acc, +1 HP, **choose a specialty** |
-| Master Sergeant | 40 | +3 acc, +1 HP |
+| Master Sergeant | 40 | +3 acc, +1 HP, **choose a specialty** |
 
 Rank gains are cumulative, and accuracy is capped at 95% — nobody ever becomes
 a sure thing. Because of the cap the machinegunner (78%) gains far more from
-rank than the team lead (92%), so the squad evens out as it matures.
+rank than Rodar, who starts capped — which is why his specialties, not his
+accuracy, are his whole progression.
 
-**XP:** 3 a kill, 4 a demolished cache, 3 for walking off the map alive.
+**XP:** 3 a kill, 4 a demolished cache, 4 a rescue, 3 for walking off the map
+alive.
 
-**Specialties**, chosen at Corporal and again at Staff Sergeant:
+**Specialties** are a two-way choice at every rank — four picks over a full
+career — and **each class chooses from its own tree**:
 
-- **Marksman** — shots past half range stop losing accuracy. Turns a scout into
-  something that can answer the Cantor.
-- **Sprinter** — +1 tile of movement, permanently.
-- **Sentinel** — overwatch covers 180° instead of 135°.
-- **Hustle** — **V**: give up the shot to move a second time. The extraction
-  run on Outpost 7 is exactly what it is for.
+**Scout — the skirmisher:**
+
+- Corporal: **Sprinter** (+1 tile of movement, permanently) or **Quick Hands**
+  (reload without giving up the move).
+- Sergeant: **Snap Burst** (burst fire on the move — no bracing needed) or
+  **Field Dressing** (**Q**: patch yourself up 3 HP, once per battle; costs the
+  shot).
+- Staff Sergeant: **Hustle** (**V**: give up the shot to move a second time —
+  the extraction run on Outpost 7 is exactly what it is for) or **Flanker**
+  (flanking shots hit 10% harder still).
+- Master Sergeant: **Ranger** (+1 move *and* +1 range) or **Executioner**
+  (+1 damage on flanking shots).
+
+**Machinegunner — area denial:**
+
+- Corporal: **Bipod** (overwatch answers with three rounds instead of two) or
+  **Pack Mule** (two more rounds in the belt).
+- Sergeant: **Wide Sweep** (suppression pins everything within three tiles
+  instead of two) or **Grenadier** (the squad carries one more frag).
+- Staff Sergeant: **Sentinel** (a wider overwatch arc) or **Locked Belts**
+  (suppression pins for an extra turn).
+- Master Sergeant: **Protective Fire** (unfired overwatch carries over to the
+  next turn — taking any order breaks it) or **Walking Fire** (full auto after
+  moving, at another −10% per round).
+
+**Rodar Akai — the marksman-leader:**
+
+- Corporal: **Called Shot** (**Q**: a whole-turn aimed round that ignores cover
+  entirely — the roll is normal, the damage is never halved) or **Iron Will**
+  (+2 HP).
+- Sergeant: **Rally** (**T**: clear every pin within four tiles and steady the
+  squad's aim +10% until their next turn; once per battle, costs the shot) or
+  **Marksman** (shots past half range stop losing accuracy).
+- Staff Sergeant: **Inspiration** (every soldier within four tiles of him
+  shoots 5% better, always) or **Deep Pockets** (+2 rounds in the magazine).
+- Master Sergeant: **One Shot** (Called Shot hits +2 harder) or **Untouchable**
+  (the first killing blow each battle leaves him at 1 HP — the campaign-ending
+  bullet, refused once).
 
 Rank shows as chevrons beside a soldier's HP pips, and the info panel carries
-their name, XP, and specialties.
+their name, XP, and specialties. When a selected soldier owns an active
+specialty, its button appears in the bottom row (**Q** and **T**).
 
 **A failed mission counts for nothing.** XP earned in an attempt you lose is
 rolled back when you retry, and so are the casualties — so you can never farm a
@@ -255,8 +296,12 @@ campaign and playing again starts you with five fresh recruits.
 - **S** or the **Suppress** button — arm the machinegunner's suppressive fire
   (highlights turn blue). Hovering a target draws the beaten zone and counts
   how many goblins it would pin.
-- **V** — **Hustle** (Staff Sergeant specialty only): give up this soldier's
-  shot to move a second time.
+- **V** — **Hustle** (scout specialty): give up this soldier's shot to move a
+  second time.
+- **Q / T** — the selected soldier's **active specialties** (Called Shot,
+  Rally, Field Dressing), on the two ability buttons that appear when a
+  soldier owns one. Called Shot aims like a throw: arm it, then click the
+  enemy; the panel quotes the odds and the unhalved damage before you commit.
 - **X** or the **Demolish** button — set charges on an objective the selected
   scout is standing on or beside. Costs the attack, needs no ammunition.
   Targets in reach get a bright rim, and a beacon floats over any still

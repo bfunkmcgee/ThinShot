@@ -49,10 +49,11 @@ var mission_dead: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
 
 # Ranks are cumulative: every one adds ACCURACY_PER_RANK and HP_PER_RANK.
-# Ranks 1 and 3 additionally offer a choice of two specialties. Thresholds are
-# tuned to the campaign's real size - 31 goblins and 5 caches across three
-# maps, split five ways - so an average soldier makes Corporal after the first
-# mission and Staff Sergeant by the end, and a standout makes Master Sergeant.
+# Every rank past the first additionally offers a choice of two specialties
+# from the soldier's own class tree. Thresholds are tuned to the campaign's
+# real size - 31 goblins and 5 caches across three maps, split five ways - so
+# an average soldier makes Corporal after the first mission and Staff Sergeant
+# by the end, and a standout makes Master Sergeant.
 const RANKS: Array[Dictionary] = [
 	{"title": "Scout", "abbrev": "", "xp": 0},
 	{"title": "Corporal", "abbrev": "Cpl.", "xp": 6},
@@ -66,15 +67,50 @@ const HP_PER_RANK := 1
 # reach 104%.
 const ACCURACY_CAP := 95
 
-# Which ranks let the player choose, and what they choose between. Every perk
-# hangs off machinery the game already has rather than adding a subsystem.
-const PERK_RANKS := {
-	1: ["marksman", "sprinter"],
-	3: ["sentinel", "hustle"],
+# Which ranks let a soldier choose, and what they choose between - one tree
+# per class, a two-way choice at EVERY rank. Every perk hangs off machinery
+# the game already has rather than adding a subsystem.
+#
+# Keyed by the raw Unit.Kind ordinal (0 SCOUT, 2 MACHINEGUNNER, 9 HERO) rather
+# than the enum name: saves already store the ordinal, and a constant here must
+# not drag Unit.gd into this script's compile (the `-s` test harness preloads
+# Game.gd before the autoloads exist - see tools/test_save_load.gd).
+#
+# TEAM_LEAD (1) is retired and deliberately has no table of his own:
+# commit_mission simply never queues a choice for one. Anything that still asks
+# about a lead is answered with the hero's tree via perk_choices(), because a
+# pre-Rodar save's lead is converted in place to the HERO the moment a camp or
+# battle wants him - his queued promotion must survive the load that precedes
+# that conversion.
+const CLASS_PERK_RANKS := {
+	0: {  # SCOUT - the skirmisher
+		1: ["sprinter", "quick_hands"],
+		2: ["snap_burst", "field_dressing"],
+		3: ["hustle", "flanker"],
+		4: ["ranger", "executioner"],
+	},
+	2: {  # MACHINEGUNNER - area denial
+		1: ["bipod", "pack_mule"],
+		2: ["wide_sweep", "grenadier"],
+		3: ["sentinel", "locked_belts"],
+		4: ["protective_fire", "walking_fire"],
+	},
+	9: {  # HERO - the marksman-leader; his tree IS his progression, since
+		  # Rodar arrives already at the accuracy cap
+		1: ["called_shot", "iron_will"],
+		2: ["rally", "marksman"],
+		3: ["inspiration", "deep_pockets"],
+		4: ["one_shot", "untouchable"],
+	},
 }
 const PERKS := {
 	# Blurbs are kept short deliberately: they are rendered on fixed-width
-	# buttons with no autowrap, so a long one would clip.
+	# buttons with no autowrap, so a long one would clip. Keep them under 48
+	# characters - tools/test_progression.gd enforces it.
+	#
+	# The four pre-tree keys (marksman, sprinter, sentinel, hustle) must keep
+	# their exact strings forever: _read_roster whitelists against this table,
+	# so renaming one silently deletes the pick from every save that holds it.
 	"marksman": {
 		"name": "Marksman",
 		"blurb": "No accuracy loss at long range.",
@@ -85,13 +121,110 @@ const PERKS := {
 	},
 	"sentinel": {
 		"name": "Sentinel",
-		"blurb": "Overwatch covers 180 degrees.",
+		"blurb": "A wider overwatch arc.",
 	},
 	"hustle": {
 		"name": "Hustle",
 		"blurb": "Give up the shot to move again (V).",
 	},
+	# --- scout tree ---
+	"quick_hands": {
+		"name": "Quick Hands",
+		"blurb": "Reload without giving up the move.",
+	},
+	"snap_burst": {
+		"name": "Snap Burst",
+		"blurb": "Burst fire on the move.",
+	},
+	"field_dressing": {
+		"name": "Field Dressing",
+		"blurb": "Patch yourself up (Q). Once per battle.",
+	},
+	"flanker": {
+		"name": "Flanker",
+		"blurb": "Flanking shots hit 10 harder.",
+	},
+	"ranger": {
+		"name": "Ranger",
+		"blurb": "+1 move and +1 range.",
+	},
+	"executioner": {
+		"name": "Executioner",
+		"blurb": "+1 damage on flanking shots.",
+	},
+	# --- machinegunner tree ---
+	"bipod": {
+		"name": "Bipod",
+		"blurb": "Overwatch fires three rounds.",
+	},
+	"pack_mule": {
+		"name": "Pack Mule",
+		"blurb": "Two more rounds in the belt.",
+	},
+	"wide_sweep": {
+		"name": "Wide Sweep",
+		"blurb": "Suppression pins a wider area.",
+	},
+	"grenadier": {
+		"name": "Grenadier",
+		"blurb": "The squad carries one more frag.",
+	},
+	"locked_belts": {
+		"name": "Locked Belts",
+		"blurb": "Suppression pins for an extra turn.",
+	},
+	"protective_fire": {
+		"name": "Protective Fire",
+		"blurb": "Unfired overwatch carries over.",
+	},
+	"walking_fire": {
+		"name": "Walking Fire",
+		"blurb": "Full auto on the move, -10 acc.",
+	},
+	# --- hero tree ---
+	"called_shot": {
+		"name": "Called Shot",
+		"blurb": "Aimed shot ignores cover (Q).",
+	},
+	"iron_will": {
+		"name": "Iron Will",
+		"blurb": "+2 HP.",
+	},
+	"rally": {
+		"name": "Rally",
+		"blurb": "Steady the squad (T). Once per battle.",
+	},
+	"inspiration": {
+		"name": "Inspiration",
+		"blurb": "Allies within 4 tiles shoot 5 better.",
+	},
+	"deep_pockets": {
+		"name": "Deep Pockets",
+		"blurb": "+2 rounds in the magazine.",
+	},
+	"one_shot": {
+		"name": "One Shot",
+		"blurb": "Called Shot hits +2 harder.",
+	},
+	"untouchable": {
+		"name": "Untouchable",
+		"blurb": "First killing blow leaves 1 HP. Once a battle.",
+	},
 }
+
+
+## The two specialties a soldier of this kind chooses between at this rank, or
+## [] when that rank and class offer no choice. The one indirection every
+## consumer goes through - commit_mission queueing, _read_promotions
+## validating, and the camp modal filling its two buttons.
+static func perk_choices(kind: int, rank: int) -> Array:
+	# The retired TEAM_LEAD answers with the hero's tree: an old save's lead
+	# becomes Rodar in ensure_roster(), and his unspent promotion has to
+	# survive the load_save() that runs first.
+	if kind == 1:  # Unit.Kind.TEAM_LEAD, as a raw ordinal like the table keys
+		kind = 9   # Unit.Kind.HERO
+	var table: Dictionary = CLASS_PERK_RANKS.get(kind, {})
+	return table.get(rank, [])
 
 const XP_KILL := 3
 const XP_CACHE := 4
@@ -107,6 +240,7 @@ const SURNAMES: Array[String] = [
 
 func _ready() -> void:
 	_rng.randomize()
+	load_save()
 
 
 func data() -> Dictionary:
@@ -182,6 +316,7 @@ func advance_mission() -> bool:
 func set_loadout(frag_count: int) -> void:
 	frags = clampi(frag_count, 0, LOADOUT_SLOTS)
 	smokes = LOADOUT_SLOTS - frags
+	save()
 
 
 # -------------------------------------------------------------- transitions --
@@ -268,7 +403,10 @@ func _unused_surname() -> String:
 func _recruit(kind: int) -> Dictionary:
 	var soldier := {
 		"id": _next_id,
-		"surname": _unused_surname(),
+		# Rodar is a person, not a posting: he arrives under his own name.
+		# "Akai" is not in SURNAMES, so the random pool can never mint a
+		# second one - keep it that way if the pool ever grows.
+		"surname": "Akai" if kind == Unit.Kind.HERO else _unused_surname(),
 		"kind": kind,
 		"xp": 0,
 		"rank": 0,
@@ -298,22 +436,49 @@ func _ever_of_kind(kind: int) -> int:
 ## loses the mission, and a lost mission is rolled back wholesale, so a won
 ## mission always leaves at least one of them standing.
 func ensure_roster(level_data: Dictionary) -> void:
+	# The lead slot belongs to Rodar Akai now: same spawn key, same job,
+	# stronger soldier. TEAM_LEAD is never requested again.
 	var wanted := {
-		Unit.Kind.TEAM_LEAD: level_data.get("lead_spawns", []).size(),
+		Unit.Kind.HERO: level_data.get("lead_spawns", []).size(),
 		Unit.Kind.MACHINEGUNNER: level_data.get("gunner_spawns", []).size(),
 		Unit.Kind.SCOUT: level_data.scout_spawns.size(),
 	}
+	var formed := false
+	# Saves from before Rodar existed hold an alive TEAM_LEAD in the slot he
+	# now fills. Convert that soldier in place - id, xp, rank and perks kept -
+	# rather than recruiting a stranger beside him: the player's veteran lead
+	# BECOMES Rodar, and an orphaned lead would otherwise still stand around
+	# camp next to him. Done here rather than in load_save() because both Camp
+	# and Battle call this before touching the roster, and only here is
+	# "a hero is wanted" actually known.
+	if int(wanted[Unit.Kind.HERO]) > 0 and _ever_of_kind(Unit.Kind.HERO) == 0:
+		for soldier: Dictionary in roster:
+			if int(soldier.kind) == Unit.Kind.TEAM_LEAD and bool(soldier.alive):
+				soldier.kind = Unit.Kind.HERO
+				soldier.surname = "Akai"
+				formed = true
+				print("[ThinShot] the team lead steps forward: Rodar Akai")
+				break
 	for kind: int in wanted:
 		for i in maxi(int(wanted[kind]) - _ever_of_kind(kind), 0):
 			var soldier := _recruit(kind)
+			formed = true
 			print("[ThinShot] new recruit: %s (%s)" % [
 					soldier.surname, Unit.kind_role_name(kind)])
+	# Surnames are drawn at random, so a squad that is not written down is a
+	# different five people next launch. Nothing earned is being captured here -
+	# this runs before begin_mission() - so it is safe to checkpoint.
+	if formed:
+		save()
 
 
-## How many bodies short of a full squad the roster is, by role.
+## How many bodies short of a full squad the roster is, by role. The hero's
+## slot is deliberately absent: a unique named character is never re-recruited.
+## The garrison cannot replace Rodar Akai - his death ends the mission on the
+## spot, and abort_mission() un-kills him on the loss path, so a roster that
+## reaches camp always still has him.
 func vacancies(level_data: Dictionary) -> Dictionary:
 	var wanted := {
-		Unit.Kind.TEAM_LEAD: level_data.get("lead_spawns", []).size(),
 		Unit.Kind.MACHINEGUNNER: level_data.get("gunner_spawns", []).size(),
 		Unit.Kind.SCOUT: level_data.scout_spawns.size(),
 	}
@@ -345,6 +510,8 @@ func recruit_to_strength(level_data: Dictionary) -> Array:
 			taken.append(soldier)
 			print("[ThinShot] garrison assigns %s (%s)" % [
 					soldier.surname, Unit.kind_role_name(kind)])
+	if not taken.is_empty():
+		save()
 	return taken
 
 
@@ -354,6 +521,10 @@ func reset_roster() -> void:
 	pending_promotions.clear()
 	mission_xp.clear()
 	_next_id = 1
+	# Persist the wipe immediately. This is the one place the campaign throws
+	# the squad away, and a save left holding the old one would resurrect five
+	# dead soldiers on the next launch.
+	save()
 
 
 # ----------------------------------------------------------------- missions --
@@ -369,9 +540,15 @@ func _deep_copy(source: Array) -> Array:
 
 
 ## Snapshot the squad so a failed mission can be rolled back wholesale.
+## Deliberately does NOT clear pending_promotions: nothing queues a promotion
+## during a mission (only commit_mission does, at the end of one), so anything
+## still queued here is an unspent pick carried in from the last debrief, and
+## commit_mission only ever queues newly-crossed ranks - it can never re-offer
+## one. Clearing here silently destroyed the pick of anyone who walked to the
+## briefing table instead of to the promoted soldier. Camp._on_choice removes
+## each entry as it is spent.
 func begin_mission() -> void:
 	_snapshot = _deep_copy(roster)
-	pending_promotions.clear()
 	mission_xp.clear()
 	mission_dead.clear()
 
@@ -404,12 +581,13 @@ func commit_mission() -> void:
 			continue
 		soldier.rank = new_rank
 		print("[ThinShot] %s promoted to %s" % [soldier.surname, rank_title(new_rank)])
-		# Every rank crossed that offers a choice queues one, so a soldier who
-		# jumps two ranks at once still gets both picks.
+		# Every rank crossed that offers this soldier's class a choice queues
+		# one, so a soldier who jumps two ranks at once still gets both picks.
 		for rank in range(old_rank + 1, new_rank + 1):
-			if PERK_RANKS.has(rank):
+			if not perk_choices(int(soldier.kind), rank).is_empty():
 				pending_promotions.append({"id": int(soldier.id), "rank": rank})
 	_snapshot.clear()
+	save()
 
 
 ## Mission lost, retried, or abandoned via the level buttons: put the squad back
@@ -418,9 +596,13 @@ func abort_mission() -> void:
 	if _snapshot.is_empty():
 		return
 	roster = _deep_copy(_snapshot)
-	pending_promotions.clear()
+	# Same reasoning as begin_mission: the queue can only hold carry-over from
+	# an earlier debrief, and the snapshot being restored already contains the
+	# rank that earned it, so the pick is still owed. Clearing it here lost the
+	# perk of anyone who deployed with one unspent and then lost the mission.
 	mission_xp.clear()
 	mission_dead.clear()
+	save()
 
 
 func choose_perk(id: int, perk: String) -> void:
@@ -429,3 +611,173 @@ func choose_perk(id: int, perk: String) -> void:
 		return
 	(soldier.perks as Array).append(perk)
 	print("[ThinShot] %s takes %s" % [soldier.surname, PERKS[perk].name])
+	save()
+
+
+# -------------------------------------------------------------- persistence --
+# The campaign is saved at mission granularity and never mid-battle. A battle
+# is already a transaction - begin_mission() snapshots the squad and
+# abort_mission() rolls it back wholesale - so the boundary between missions is
+# the one point where the roster is unambiguously settled. Saving inside one
+# would mean either reproducing the board state on load or lying about it, and
+# a mission is short enough that it is not worth either.
+#
+# Everything here is a plain int, bool, String or Array of those, so JSON is
+# enough. The one trap is that JSON has a single number type: every int comes
+# back as a float, and a rank that loads as 3.0 breaks the integer comparisons
+# in rank_for_xp in ways that are miserable to track down. So nothing is read
+# back raw - every field is coerced through int()/bool()/str() below.
+
+
+const SAVE_PATH := "user://campaign.json"
+const SAVE_VERSION := 1
+
+
+func has_save() -> bool:
+	return FileAccess.file_exists(SAVE_PATH)
+
+
+func save() -> void:
+	var payload := {
+		"version": SAVE_VERSION,
+		"current_operation": current_operation,
+		"current_level": current_level,
+		"in_the_field": in_the_field,
+		"frags": frags,
+		"smokes": smokes,
+		"next_id": _next_id,
+		"roster": roster,
+		"pending_promotions": pending_promotions,
+	}
+	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if f == null:
+		push_error("[ThinShot] cannot write %s: %s" % [
+				SAVE_PATH, error_string(FileAccess.get_open_error())])
+		return
+	f.store_string(JSON.stringify(payload, "\t"))
+	f.close()
+
+
+## Restore a saved campaign. Returns false - leaving every field untouched at
+## its default - when there is no save, or when the file is unreadable or from
+## a version this build does not understand. A corrupt save must never be worse
+## than a missing one.
+func load_save() -> bool:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return false
+	var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	if f == null:
+		push_error("[ThinShot] cannot read %s: %s" % [
+				SAVE_PATH, error_string(FileAccess.get_open_error())])
+		return false
+	var text := f.get_as_text()
+	f.close()
+	var parsed: Variant = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		push_error("[ThinShot] %s is not valid JSON - ignoring it" % SAVE_PATH)
+		return false
+	var payload: Dictionary = parsed
+	if int(payload.get("version", 0)) != SAVE_VERSION:
+		push_warning("[ThinShot] save is version %s, this build reads %d - starting fresh"
+				% [payload.get("version", "?"), SAVE_VERSION])
+		return false
+
+	var loaded := _read_roster(payload.get("roster", []))
+	if loaded.is_empty():
+		push_warning("[ThinShot] save has no roster - starting fresh")
+		return false
+	roster = loaded
+	# Ids must stay unique or soldier_by_id() starts returning the wrong person.
+	_next_id = maxi(int(payload.get("next_id", 1)), _highest_id() + 1)
+	pending_promotions = _read_promotions(payload.get("pending_promotions", []))
+	# Clamped rather than trusted: a save written against a longer LEVELS table
+	# would otherwise index straight off the end of it in data().
+	current_level = clampi(int(payload.get("current_level", 0)),
+			0, Levels.LEVELS.size() - 1)
+	current_operation = clampi(int(payload.get("current_operation", 0)),
+			0, Levels.OPERATIONS.size() - 1)
+	in_the_field = bool(payload.get("in_the_field", false))
+	# set_loadout()'s body, inlined: going through the setter would write the
+	# file straight back out again while we are still reading it.
+	frags = clampi(int(payload.get("frags", 2)), 0, LOADOUT_SLOTS)
+	smokes = LOADOUT_SLOTS - frags
+	# Per-mission scratch is never saved, and must not survive a load either.
+	_snapshot.clear()
+	mission_xp.clear()
+	mission_dead.clear()
+	print("[ThinShot] campaign loaded: %d soldier(s), %s mission %d/%d" % [
+			roster.size(), operation().name, mission_number(), mission_count()])
+	return true
+
+
+func delete_save() -> void:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return
+	var err := DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
+	if err != OK:
+		push_error("[ThinShot] cannot delete %s: %s" % [SAVE_PATH, error_string(err)])
+
+
+func _highest_id() -> int:
+	var top := 0
+	for soldier: Dictionary in roster:
+		top = maxi(top, int(soldier.id))
+	return top
+
+
+## Rebuild the roster field by field rather than adopting whatever the file
+## holds, so a hand-edited save cannot introduce keys the rest of the game does
+## not expect, or a perk string that no longer exists.
+func _read_roster(raw: Variant) -> Array:
+	var out: Array = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	var seen_ids := {}
+	for entry: Variant in raw:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var soldier: Dictionary = entry
+		var id := int(soldier.get("id", 0))
+		if id <= 0 or seen_ids.has(id):
+			continue
+		seen_ids[id] = true
+		var perks: Array = []
+		var raw_perks: Variant = soldier.get("perks", [])
+		if typeof(raw_perks) == TYPE_ARRAY:
+			for p: Variant in raw_perks:
+				var perk := str(p)
+				if PERKS.has(perk) and not perks.has(perk):
+					perks.append(perk)
+		out.append({
+			"id": id,
+			"surname": str(soldier.get("surname", "SCOUT-%d" % id)),
+			"kind": int(soldier.get("kind", Unit.Kind.SCOUT)),
+			"xp": maxi(int(soldier.get("xp", 0)), 0),
+			"rank": clampi(int(soldier.get("rank", 0)), 0, RANKS.size() - 1),
+			"perks": perks,
+			"alive": bool(soldier.get("alive", true)),
+		})
+	return out
+
+
+func _read_promotions(raw: Variant) -> Array:
+	var out: Array = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for entry: Variant in raw:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var promotion: Dictionary = entry
+		var id := int(promotion.get("id", 0))
+		var rank := int(promotion.get("rank", 0))
+		# Drop anything that no longer names a living soldier, or a rank that
+		# offers that soldier's class no choice - otherwise the camp opens a
+		# modal it cannot fill. Runs after the roster is adopted, so the kind
+		# lookup always sees the loaded soldier.
+		var soldier := soldier_by_id(id)
+		if soldier.is_empty() or not bool(soldier.alive):
+			continue
+		if perk_choices(int(soldier.kind), rank).is_empty():
+			continue
+		out.append({"id": id, "rank": rank})
+	return out

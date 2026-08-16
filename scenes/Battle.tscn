@@ -20,35 +20,63 @@ y_sort_enabled = true
 
 [node name="TurnBanner" type="Label" parent="UI"]
 anchor_right = 1.0
-offset_top = 6.0
-offset_bottom = 40.0
+offset_top = 9.0
+offset_bottom = 60.0
 theme_override_colors/font_color = Color(0.96, 0.9, 0.72, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 39
 text = "DESERT SCOUTS' TURN"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="ObjectiveLabel" type="Label" parent="UI"]
 anchor_right = 1.0
-offset_top = 40.0
-offset_bottom = 64.0
+offset_top = 60.0
+offset_bottom = 96.0
 theme_override_colors/font_color = Color(1, 0.78, 0.4, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 22
 text = ""
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Ability1Button" type="Button" parent="UI"]
+visible = false
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -812.0
+offset_top = -186.0
+offset_right = -670.0
+offset_bottom = -114.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+text = "Ability (Q)"
+
+[node name="Ability2Button" type="Button" parent="UI"]
+visible = false
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -655.0
+offset_top = -186.0
+offset_right = -513.0
+offset_bottom = -114.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+text = "Ability (T)"
 
 [node name="DemolishButton" type="Button" parent="UI"]
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -333.0
-offset_top = -124.0
-offset_right = -238.0
-offset_bottom = -76.0
+offset_left = -498.0
+offset_top = -186.0
+offset_right = -356.0
+offset_bottom = -114.0
 focus_mode = 0
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "Demolish (X)"
 
 [node name="FaceButton" type="Button" parent="UI"]
@@ -56,13 +84,13 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -858.0
-offset_top = -70.0
-offset_right = -763.0
-offset_bottom = -22.0
+offset_left = -1283.0
+offset_top = -105.0
+offset_right = -1141.0
+offset_bottom = -33.0
 focus_mode = 0
 toggle_mode = true
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "Face (F)"
 
 [node name="ReloadButton" type="Button" parent="UI"]
@@ -70,12 +98,12 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -753.0
-offset_top = -70.0
-offset_right = -658.0
-offset_bottom = -22.0
+offset_left = -1126.0
+offset_top = -105.0
+offset_right = -984.0
+offset_bottom = -33.0
 focus_mode = 0
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "Reload (R)"
 
 [node name="BurstButton" type="Button" parent="UI"]
@@ -83,13 +111,13 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -648.0
-offset_top = -70.0
-offset_right = -553.0
-offset_bottom = -22.0
+offset_left = -969.0
+offset_top = -105.0
+offset_right = -827.0
+offset_bottom = -33.0
 focus_mode = 0
 toggle_mode = true
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "Burst (B)"
 
 [node name="AutoButton" type="Button" parent="UI"]
@@ -97,13 +125,13 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -543.0
-offset_top = -70.0
-offset_right = -448.0
-offset_bottom = -22.0
+offset_left = -812.0
+offset_top = -105.0
+offset_right = -670.0
+offset_bottom = -33.0
 focus_mode = 0
 toggle_mode = true
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "Auto (A)"
 
 [node name="SuppressButton" type="Button" parent="UI"]
@@ -111,13 +139,13 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -438.0
-offset_top = -70.0
-offset_right = -343.0
-offset_bottom = -22.0
+offset_left = -655.0
+offset_top = -105.0
+offset_right = -513.0
+offset_bottom = -33.0
 focus_mode = 0
 toggle_mode = true
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "Suppress (S)"
 
 [node name="DangerButton" type="Button" parent="UI"]
@@ -125,13 +153,13 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -333.0
-offset_top = -70.0
-offset_right = -238.0
-offset_bottom = -22.0
+offset_left = -498.0
+offset_top = -105.0
+offset_right = -356.0
+offset_bottom = -33.0
 focus_mode = 0
 toggle_mode = true
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "Danger (D)"
 
 [node name="FragButton" type="Button" parent="UI"]
@@ -139,13 +167,13 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -228.0
-offset_top = -124.0
-offset_right = -133.0
-offset_bottom = -76.0
+offset_left = -341.0
+offset_top = -186.0
+offset_right = -199.0
+offset_bottom = -114.0
 focus_mode = 0
 toggle_mode = true
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "Frag 2 (G)"
 
 [node name="SmokeButton" type="Button" parent="UI"]
@@ -153,32 +181,32 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -123.0
-offset_top = -124.0
-offset_right = -28.0
-offset_bottom = -76.0
+offset_left = -184.0
+offset_top = -186.0
+offset_right = -42.0
+offset_bottom = -114.0
 focus_mode = 0
 toggle_mode = true
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "Smoke 2 (C)"
 
 [node name="UnitPanel" type="PanelContainer" parent="UI"]
 visible = false
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = -150.0
-offset_right = 300.0
-offset_bottom = -16.0
+offset_left = 24.0
+offset_top = -225.0
+offset_right = 450.0
+offset_bottom = -24.0
 mouse_filter = 2
 
 [node name="Margin" type="MarginContainer" parent="UI/UnitPanel"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 15
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 15
 
 [node name="Rows" type="VBoxContainer" parent="UI/UnitPanel/Margin"]
 layout_mode = 2
@@ -186,28 +214,28 @@ layout_mode = 2
 [node name="NameLabel" type="Label" parent="UI/UnitPanel/Margin/Rows"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.96, 0.9, 0.72, 1)
-theme_override_font_sizes/font_size = 19
+theme_override_font_sizes/font_size = 29
 text = "Desert Scout"
 
 [node name="ProgressLabel" type="Label" parent="UI/UnitPanel/Margin/Rows"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.78, 0.72, 0.55, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "Desert Scout"
 
 [node name="HpLabel" type="Label" parent="UI/UnitPanel/Margin/Rows"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 22
 text = "HP 3 / 3"
 
 [node name="StatsLabel" type="Label" parent="UI/UnitPanel/Margin/Rows"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 22
 text = "Move 4   Range 4   Dmg 1"
 
 [node name="StatusLabel" type="Label" parent="UI/UnitPanel/Margin/Rows"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 22
 text = "Ready"
 
 [node name="OverwatchButton" type="Button" parent="UI"]
@@ -215,13 +243,13 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -228.0
-offset_top = -70.0
-offset_right = -133.0
-offset_bottom = -22.0
+offset_left = -341.0
+offset_top = -105.0
+offset_right = -199.0
+offset_bottom = -33.0
 focus_mode = 0
 toggle_mode = true
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "Watch (W)"
 
 [node name="EndTurnButton" type="Button" parent="UI"]
@@ -229,12 +257,12 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -123.0
-offset_top = -70.0
-offset_right = -28.0
-offset_bottom = -22.0
+offset_left = -184.0
+offset_top = -105.0
+offset_right = -42.0
+offset_bottom = -33.0
 focus_mode = 0
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 20
 text = "End (E)"
 
 [node name="GameOver" type="ColorRect" parent="UI"]
@@ -245,9 +273,9 @@ color = Color(0, 0, 0, 0.62)
 
 [node name="ResultLabel" type="Label" parent="UI/GameOver"]
 anchor_right = 1.0
-offset_top = 18.0
-offset_bottom = 74.0
-theme_override_font_sizes/font_size = 40
+offset_top = 27.0
+offset_bottom = 111.0
+theme_override_font_sizes/font_size = 60
 text = "RESULT"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -255,12 +283,12 @@ vertical_alignment = 1
 [node name="NarrativeLabel" type="Label" parent="UI/GameOver"]
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -400.0
-offset_top = 84.0
-offset_right = 400.0
-offset_bottom = 282.0
+offset_left = -600.0
+offset_top = 126.0
+offset_right = 600.0
+offset_bottom = 423.0
 theme_override_colors/font_color = Color(0.88, 0.84, 0.72, 1)
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 26
 text = ""
 autowrap_mode = 3
 horizontal_alignment = 1
@@ -268,12 +296,12 @@ horizontal_alignment = 1
 [node name="DebriefLabel" type="Label" parent="UI/GameOver"]
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -340.0
-offset_top = 290.0
-offset_right = 340.0
-offset_bottom = 400.0
+offset_left = -510.0
+offset_top = 435.0
+offset_right = 510.0
+offset_bottom = 600.0
 theme_override_colors/font_color = Color(0.7, 0.82, 0.9, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 22
 text = ""
 horizontal_alignment = 1
 vertical_alignment = 2
@@ -283,12 +311,12 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -90.0
-offset_top = 48.0
-offset_right = 90.0
-offset_bottom = 96.0
+offset_left = -135.0
+offset_top = 72.0
+offset_right = 135.0
+offset_bottom = 144.0
 focus_mode = 0
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 30
 text = "Restart"
 
 [node name="Level1Button" type="Button" parent="UI/GameOver"]
@@ -296,12 +324,12 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -150.0
-offset_top = 112.0
-offset_right = -56.0
-offset_bottom = 152.0
+offset_left = -225.0
+offset_top = 168.0
+offset_right = -84.0
+offset_bottom = 228.0
 focus_mode = 0
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 26
 text = "Level 1"
 
 [node name="Level2Button" type="Button" parent="UI/GameOver"]
@@ -309,12 +337,12 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -47.0
-offset_top = 112.0
-offset_right = 47.0
-offset_bottom = 152.0
+offset_left = -71.0
+offset_top = 168.0
+offset_right = 71.0
+offset_bottom = 228.0
 focus_mode = 0
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 26
 text = "Level 2"
 
 [node name="Level3Button" type="Button" parent="UI/GameOver"]
@@ -322,12 +350,12 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = 56.0
-offset_top = 112.0
-offset_right = 150.0
-offset_bottom = 152.0
+offset_left = 84.0
+offset_top = 168.0
+offset_right = 225.0
+offset_bottom = 228.0
 focus_mode = 0
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 26
 text = "Level 3"
 
 [node name="Briefing" type="ColorRect" parent="UI"]
@@ -339,21 +367,21 @@ color = Color(0.03, 0.025, 0.02, 0.93)
 [node name="Center" type="CenterContainer" parent="UI/Briefing"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 48.0
-offset_top = 48.0
-offset_right = -48.0
-offset_bottom = -48.0
+offset_left = 72.0
+offset_top = 72.0
+offset_right = -72.0
+offset_bottom = -72.0
 mouse_filter = 2
 
 [node name="Box" type="VBoxContainer" parent="UI/Briefing/Center"]
-custom_minimum_size = Vector2(820, 0)
+custom_minimum_size = Vector2(1230, 0)
 mouse_filter = 2
 theme_override_constants/separation = 16
 
 [node name="MissionLabel" type="Label" parent="UI/Briefing/Center/Box"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.66, 0.5, 1)
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 26
 text = "MISSION 1"
 horizontal_alignment = 1
 autowrap_mode = 3
@@ -361,7 +389,7 @@ autowrap_mode = 3
 [node name="TitleLabel" type="Label" parent="UI/Briefing/Center/Box"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.5, 1)
-theme_override_font_sizes/font_size = 46
+theme_override_font_sizes/font_size = 69
 text = "DRY WASH"
 horizontal_alignment = 1
 autowrap_mode = 3
@@ -369,7 +397,7 @@ autowrap_mode = 3
 [node name="FictionLabel" type="Label" parent="UI/Briefing/Center/Box"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.86, 0.95, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 24
 text = ""
 horizontal_alignment = 1
 autowrap_mode = 3
@@ -377,7 +405,7 @@ autowrap_mode = 3
 [node name="BodyLabel" type="Label" parent="UI/Briefing/Center/Box"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.88, 0.84, 0.72, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 27
 text = ""
 horizontal_alignment = 1
 autowrap_mode = 3
@@ -385,15 +413,15 @@ autowrap_mode = 3
 [node name="OrdersLabel" type="Label" parent="UI/Briefing/Center/Box"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.62, 0.24, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 33
 text = ""
 horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="BeginButton" type="Button" parent="UI/Briefing/Center/Box"]
-custom_minimum_size = Vector2(220, 48)
+custom_minimum_size = Vector2(330, 72)
 layout_mode = 2
 size_flags_horizontal = 4
 focus_mode = 0
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 30
 text = "Move Out"

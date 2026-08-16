@@ -17,6 +17,10 @@ enum Kind {
 	# Not a soldier. Carries no weapon, is never shot at, and until somebody
 	# reaches them, does not move either.
 	CIVILIAN,
+	# Rodar Akai, the hero of the scouts. Appended last and must STAY last:
+	# saves store the raw ordinal, so inserting mid-enum would quietly turn
+	# every saved soldier into somebody else.
+	HERO,
 }
 
 const LEAD_ROOT := "res://assets/sprites/Scout_TeamLead"
@@ -26,19 +30,12 @@ const REV_ROOT := "res://assets/sprites/Goblin_revolver"
 const SMGA_ROOT := "res://assets/sprites/Goblin_SMG_alt"
 const BOLT_ROOT := "res://assets/sprites/Goblin_BoltRifle"
 const CIVILIAN_ROOT := "res://assets/sprites/Civilian"
+const RODAR_ROOT := "res://assets/sprites/Rodar_Akai"
+const SCOUT_ROOT := "res://assets/sprites/Scout"
 
 # Directional pixel-art frames, indexed by 45-degree compass sector of the
 # screen-space facing vector: 0=E, 1=SE, 2=S, 3=SW, 4=W, 5=NW, 6=N, 7=NE.
-const SCOUT_FRAMES: Array[Texture2D] = [
-	preload("res://assets/sprites/Scout/east.png"),
-	preload("res://assets/sprites/Scout/south-east.png"),
-	preload("res://assets/sprites/Scout/south.png"),
-	preload("res://assets/sprites/Scout/south-west.png"),
-	preload("res://assets/sprites/Scout/west.png"),
-	preload("res://assets/sprites/Scout/north-west.png"),
-	preload("res://assets/sprites/Scout/north.png"),
-	preload("res://assets/sprites/Scout/north-east.png"),
-]
+static var SCOUT_FRAMES: Array[Texture2D] = _load_rotation_frames(SCOUT_ROOT)
 const GOBLIN_FRAMES: Array[Texture2D] = [
 	preload("res://assets/sprites/Goblin/east.png"),
 	preload("res://assets/sprites/Goblin/south-east.png"),
@@ -49,16 +46,8 @@ const GOBLIN_FRAMES: Array[Texture2D] = [
 	preload("res://assets/sprites/Goblin/north.png"),
 	preload("res://assets/sprites/Goblin/north-east.png"),
 ]
-const SCOUT_AIM_FRAMES: Array[Texture2D] = [
-	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/east.png"),
-	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/south-east.png"),
-	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/south.png"),
-	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/south-west.png"),
-	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/west.png"),
-	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/north-west.png"),
-	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/north.png"),
-	preload("res://assets/sprites/Scout/Standing_Ready_to_fire_stance/rotations/north-east.png"),
-]
+static var SCOUT_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		SCOUT_ROOT + "/Standing_Ready_to_fire_stance/rotations")
 const GOBLIN_AIM_FRAMES: Array[Texture2D] = [
 	preload("res://assets/sprites/Goblin/Standing_Ready_to_fire_stance/rotations/east.png"),
 	preload("res://assets/sprites/Goblin/Standing_Ready_to_fire_stance/rotations/south-east.png"),
@@ -79,35 +68,35 @@ const DIR_NAMES: Array[String] = [
 # 9-frame animation cycles per direction, loaded once per class. Note the
 # exact folder casing differs between the two walk sets.
 static var SCOUT_WALK_FRAMES: Array = _load_dir_frames(
-		"res://assets/sprites/Scout/animations/Standing_idle_walk")
+		SCOUT_ROOT + "/animations/Standing_idle_walk")
 static var GOBLIN_WALK_FRAMES: Array = _load_dir_frames(
 		"res://assets/sprites/Goblin/animations/standing_idle_walk")
 static var SCOUT_IDLE_FRAMES: Array = _load_dir_frames(
-		"res://assets/sprites/Scout/animations/standing_idle")
+		SCOUT_ROOT + "/animations/standing_idle")
 static var GOBLIN_IDLE_FRAMES: Array = _load_dir_frames(
 		"res://assets/sprites/Goblin/animations/standing_idle")
 static var SCOUT_RAISE_FRAMES: Array = _load_dir_frames(
-		"res://assets/sprites/Scout/animations/standing_idle_to_ready_to_fire")
+		SCOUT_ROOT + "/animations/standing_idle_to_ready_to_fire")
 static var GOBLIN_RAISE_FRAMES: Array = _load_dir_frames(
 		"res://assets/sprites/Goblin/animations/standing_idle_to_Standing_Ready_to_fire")
 static var SCOUT_AIM_IDLE_FRAMES: Array = _load_dir_frames(
-		"res://assets/sprites/Scout/Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle")
+		SCOUT_ROOT + "/Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle")
 static var GOBLIN_AIM_IDLE_FRAMES: Array = _load_dir_frames(
 		"res://assets/sprites/Goblin/Standing_Ready_to_fire_stance/animations/standing_ready_to_fire_idle")
 static var SCOUT_DEATH_FRAMES: Array = _load_dir_frames(
-		"res://assets/sprites/Scout/animations/standing_idle_to_dead")
+		SCOUT_ROOT + "/animations/standing_idle_to_dead")
 static var GOBLIN_DEATH_FRAMES: Array = _load_dir_frames(
 		"res://assets/sprites/Goblin/animations/standing_idle_to_dead")
 static var SCOUT_IDLE_ALT_FRAMES: Array = _load_dir_frames(
-		"res://assets/sprites/Scout/animations/standing_idle_alt")
+		SCOUT_ROOT + "/animations/standing_idle_alt")
 static var GOBLIN_IDLE_ALT_FRAMES: Array = _load_dir_frames(
 		"res://assets/sprites/Goblin/animations/standing_idle_alt")
 static var SCOUT_HURT_FRAMES: Array = _load_dir_frames(
-		"res://assets/sprites/Scout/animations/standing_idle_damage")
+		SCOUT_ROOT + "/animations/standing_idle_damage")
 static var GOBLIN_HURT_FRAMES: Array = _load_dir_frames(
 		"res://assets/sprites/Goblin/animations/standing_idle_damage")
 static var SCOUT_RELOAD_FRAMES: Array = _load_dir_frames(
-		"res://assets/sprites/Scout/animations/standing_idle_reload")
+		SCOUT_ROOT + "/animations/standing_idle_reload")
 static var GOBLIN_RELOAD_FRAMES: Array = _load_dir_frames(
 		"res://assets/sprites/Goblin/animations/standing_idle_reload")
 
@@ -260,6 +249,31 @@ static var BOLT_HURT_FRAMES: Array = _load_dir_frames(
 static var BOLT_RELOAD_FRAMES: Array = _load_dir_frames(
 		BOLT_ROOT + "/Goblin_BoltRifle/animations/standing_idle_reload")
 
+# Rodar Akai. A battle rifle like the team lead's, but his sheets ship on the
+# canonical layout, so the paths read like the goblins' rather than the lead's.
+static var RODAR_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		RODAR_ROOT + "/Rodar_Akai/rotations")
+static var RODAR_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		RODAR_ROOT + "/ReadyToFire_Stance/rotations")
+static var RODAR_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		RODAR_ROOT + "/Dead_stance/rotations")
+static var RODAR_IDLE_FRAMES: Array = _load_dir_frames(
+		RODAR_ROOT + "/Rodar_Akai/animations/standing_idle")
+static var RODAR_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		RODAR_ROOT + "/Rodar_Akai/animations/standing_idle_alt")
+static var RODAR_WALK_FRAMES: Array = _load_dir_frames(
+		RODAR_ROOT + "/Rodar_Akai/animations/standing_idle_walk")
+static var RODAR_RAISE_FRAMES: Array = _load_dir_frames(
+		RODAR_ROOT + "/Rodar_Akai/animations/standing_idle_to_readyToFire")
+static var RODAR_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		RODAR_ROOT + "/ReadyToFire_Stance/animations/standing-readyToFire_idle")
+static var RODAR_DEATH_FRAMES: Array = _load_dir_frames(
+		RODAR_ROOT + "/Rodar_Akai/animations/standing_idle_to_dead")
+static var RODAR_HURT_FRAMES: Array = _load_dir_frames(
+		RODAR_ROOT + "/Rodar_Akai/animations/standing_idle_damage")
+static var RODAR_RELOAD_FRAMES: Array = _load_dir_frames(
+		RODAR_ROOT + "/Rodar_Akai/animations/standing_idle_reload")
+
 # The prisoner. Two poses that matter: huddled where the Choir left them, and
 # on their feet once somebody has reached them. free() swaps between the sets.
 static var CIVILIAN_COWER_FRAMES: Array[Texture2D] = _load_rotation_frames(
@@ -281,7 +295,7 @@ static var CIVILIAN_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
 # game state, mirroring Sfx and Fx.
 static var _vis_rng := RandomNumberGenerator.new()
 static var SCOUT_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
-		"res://assets/sprites/Scout/dead_stance/rotations")
+		SCOUT_ROOT + "/dead_stance/rotations")
 static var GOBLIN_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
 		"res://assets/sprites/Goblin/Dead_stance/rotations")
 
@@ -300,6 +314,11 @@ const ARC_HALF_SECTORS := 1
 # reach, and two rounds in the reaction instead of one.
 const OVERWATCH_RANGE_BONUS := 2
 const OVERWATCH_VOLLEY := 2
+
+# Manhattan radius of suppressive fire's beaten zone. Wide on purpose: it
+# deals no damage, so its whole value is how much ground it shuts down at
+# once. Queried through suppress_radius(), which Wide Sweep grows.
+const SUPPRESS_RADIUS := 2
 
 const WALK_FPS := 18.0
 const IDLE_FPS := 8.0
@@ -334,6 +353,19 @@ const LEAD_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(-6, -60),   # north
 	Vector2(30, -52),   # north-east
 ]
+# Rodar's battle rifle. The southern three are taken from the team lead's
+# hand-corrected values, since with the rifle aimed at the camera the scan
+# lands on boots for those poses.
+const RODAR_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(38, -40),   # east
+	Vector2(34, -20),   # south-east
+	Vector2(-12, -20),  # south
+	Vector2(-36, -20),  # south-west
+	Vector2(-38, -36),  # west
+	Vector2(-38, -40),  # north-west
+	Vector2(-6, -62),   # north
+	Vector2(38, -40),   # north-east
+]
 # Belt-fed weapon held low across the body. South and south-west are
 # hand-corrected off the scan, which lands on boots for those poses.
 const GUNNER_MUZZLE_OFFSETS: Array[Vector2] = [
@@ -360,8 +392,8 @@ const SMG_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(32, -44),   # north-east
 ]
 # The alt raider is scrawnier and holds the same weapon tighter, so its
-# muzzle sits a little closer in. Measured off 56x56 sheets against the
-# SPRITE_OFFSET_56 anchor; the southern three are taken from the raider's
+# muzzle sits a little closer in. Measured off 56x56 sheets against its own
+# SPRITE_SPECS anchor; the southern three are taken from the raider's
 # hand-corrected values, since with the weapon aimed at the camera the scan
 # lands on boots for those poses.
 const SMGA_MUZZLE_OFFSETS: Array[Vector2] = [
@@ -411,14 +443,18 @@ const GOBLIN_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(32, -40),   # north-east
 ]
 
-# Both sets have their figure's feet ~15px below canvas center; 2x scale puts
-# a ~30px figure at ~60px on screen, sitting on the diamond center.
-const SPRITE_SCALE := Vector2(2, 2)
-const SPRITE_OFFSET := Vector2(0, -15)
-# The alt raider ships on 56x56 sheets rather than 64x64. Its figure is the
-# same size, but the tighter canvas puts the boots two screen pixels high on
-# the shared anchor, so it gets its own.
-const SPRITE_OFFSET_56 := Vector2(0, -14)
+# Per-kind sprite draw spec: the scale a kind's sheets are authored for and
+# the offset that sits its figure's feet on the diamond centre. Legacy
+# sheets have the feet ~15px below canvas centre and draw at 2x, putting a
+# ~30px figure at ~60px on screen; the alt raider's tighter 56x56 canvas
+# rides its boots one texel higher, so its offset is one short. As hi-res
+# art lands, that unit's entry flips to scale (1, 1) with the offset doubled
+# (0, -2x the texel figure) - same screen anchor, native pixels. Kinds
+# without an entry use DEFAULT.
+const SPRITE_SPECS: Dictionary = {
+	"DEFAULT": {"scale": Vector2(2, 2), "offset": Vector2(0, -15)},
+	Kind.GOBLIN_SMG_ALT: {"scale": Vector2(2, 2), "offset": Vector2(0, -14)},
+}
 
 const PIP_SIZE := Vector2(7, 5)
 const PIP_GAP := 2.0
@@ -512,6 +548,15 @@ var arc_half := ARC_HALF_SECTORS
 var arc_preview_sector := -1  # >= 0 while the player is aiming an arc
 var overwatching := false
 var suppression := 0  # team-turns of being pinned down remaining
+# Per-battle ability state. Units are rebuilt from scratch every battle, so
+# plain vars ARE the once-per-battle charges - nothing here persists or saves.
+var field_dressing_used := false
+var rally_used := false
+var untouchable_used := false
+# Rally's steadying hand: added straight into hit_chance, cleared in this
+# soldier's own start_turn - so it covers the rest of the player turn it was
+# given in and any overwatch reaction fired during the enemy turn after.
+var rally_bonus := 0
 var anim := Anim.IDLE
 var anim_time := 0.0
 var anim_frame := 0
@@ -521,8 +566,10 @@ var marker_y := 0.0:
 	set(value):
 		marker_y = value
 		queue_redraw()
-# Sprite anchor for this unit's sheet size; setup() picks it per kind.
-var sprite_offset := SPRITE_OFFSET
+# Sprite anchor and draw scale for this unit's sheets; setup() picks them
+# per kind from SPRITE_SPECS.
+var sprite_scale: Vector2 = SPRITE_SPECS.DEFAULT.scale
+var sprite_offset: Vector2 = SPRITE_SPECS.DEFAULT.offset
 # Board.CoverLevel of the cell this unit is standing on, as a plain int so
 # Unit stays independent of Board. 0 = none, 1 = half, 2 = full.
 var cover_level := 0
@@ -541,7 +588,7 @@ var _marker_tween: Tween = null
 
 func _ready() -> void:
 	_vis_rng.randomize()
-	sprite.scale = SPRITE_SCALE
+	sprite.scale = sprite_scale
 	sprite.offset = sprite_offset
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
@@ -551,7 +598,8 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 	# Civilians count as yours: they walk out with the squad, and the Choir
 	# never shoots at them (is_combatant keeps them off the AI's target list).
 	team = TEAM_SCOUT if kind == Kind.SCOUT or kind == Kind.TEAM_LEAD \
-			or kind == Kind.MACHINEGUNNER or kind == Kind.CIVILIAN \
+			or kind == Kind.MACHINEGUNNER or kind == Kind.HERO \
+			or kind == Kind.CIVILIAN \
 			else TEAM_GOBLIN
 	cell = p_cell
 	match kind:
@@ -595,6 +643,28 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			idle_alt_frames = LEAD_IDLE_ALT_FRAMES
 			hurt_frames = LEAD_HURT_FRAMES
 			reload_frames = LEAD_RELOAD_FRAMES
+		Kind.HERO:
+			# Rodar Akai: the same designated-marksman job as the lead, done by
+			# a veteran - faster on his feet, steadier over the sights, and one
+			# more round in the magazine. Still semi-automatic only; the rifle
+			# did not change, the hands holding it did.
+			max_hp = 10
+			move_range = 5
+			attack_range = 6
+			damage = 4
+			accuracy = 95
+			mag_size = 3
+			frames = RODAR_FRAMES
+			aim_frames = RODAR_AIM_FRAMES
+			walk_frames = RODAR_WALK_FRAMES
+			idle_frames = RODAR_IDLE_FRAMES
+			raise_frames = RODAR_RAISE_FRAMES
+			aim_idle_frames = RODAR_AIM_IDLE_FRAMES
+			death_frames = RODAR_DEATH_FRAMES
+			dead_frames = RODAR_DEAD_FRAMES
+			idle_alt_frames = RODAR_IDLE_ALT_FRAMES
+			hurt_frames = RODAR_HURT_FRAMES
+			reload_frames = RODAR_RELOAD_FRAMES
 		Kind.MACHINEGUNNER:
 			# Belt-fed support weapon: no single shot, a deep magazine, and
 			# the volume of fire to pin a target. Slow to reposition.
@@ -737,8 +807,11 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			idle_alt_frames = GOBLIN_IDLE_ALT_FRAMES
 			hurt_frames = GOBLIN_HURT_FRAMES
 			reload_frames = GOBLIN_RELOAD_FRAMES
-	sprite_offset = SPRITE_OFFSET_56 if kind == Kind.GOBLIN_SMG_ALT else SPRITE_OFFSET
+	var spec: Dictionary = SPRITE_SPECS.get(kind, SPRITE_SPECS.DEFAULT)
+	sprite_scale = spec.scale
+	sprite_offset = spec.offset
 	if sprite != null:  # setup() can run before _ready() outside a live tree
+		sprite.scale = sprite_scale
 		sprite.offset = sprite_offset
 	# Face the enemy side at the start of the battle.
 	set_facing(Vector2(1, 0.5) if team == TEAM_SCOUT else Vector2(-1, 0.5))
@@ -763,7 +836,22 @@ func apply_progression(soldier: Dictionary) -> void:
 	if has_perk("sprinter"):
 		move_range += 1
 	if has_perk("sentinel"):
-		arc_half = 2  # 180 degrees of overwatch instead of 135
+		# A wider overwatch arc: 225 degrees against the base 135. (Half-width
+		# 2 sectors is 225, not the 180 the blurb used to promise - see
+		# ANALYSIS.md; the docs now say "wider" and mean it.)
+		arc_half = 2
+	if has_perk("ranger"):
+		move_range += 1
+		attack_range += 1
+	if has_perk("iron_will"):
+		max_hp += 2
+	if has_perk("pack_mule"):
+		mag_size += 2
+	if has_perk("deep_pockets"):
+		mag_size += 2
+	# The re-derive tail: setup() already set hp and ammo, so any perk above
+	# that moves max_hp or mag_size has to be re-derived here or a promoted
+	# soldier deploys wounded or short-loaded.
 	hp = max_hp
 	ammo = mag_size
 	queue_redraw()
@@ -890,6 +978,8 @@ func muzzle_point() -> Vector2:
 			offsets = SCOUT_MUZZLE_OFFSETS
 		Kind.TEAM_LEAD:
 			offsets = LEAD_MUZZLE_OFFSETS
+		Kind.HERO:
+			offsets = RODAR_MUZZLE_OFFSETS
 		Kind.MACHINEGUNNER:
 			offsets = GUNNER_MUZZLE_OFFSETS
 		Kind.GOBLIN_SMG:
@@ -916,9 +1006,10 @@ func can_burst() -> bool:
 
 
 ## Bracing is what buys the rifleman his burst. The gunner's weapon does it
-## from the hip, so he keeps burst after moving.
+## from the hip, so he keeps burst after moving - and Snap Burst teaches a
+## scout the same trick.
 func burst_requires_still() -> bool:
-	return kind == Kind.SCOUT
+	return kind == Kind.SCOUT and not has_perk("snap_burst")
 
 
 func can_full_auto() -> bool:
@@ -940,7 +1031,16 @@ func overwatch_range() -> int:
 
 
 func overwatch_rounds() -> int:
-	return OVERWATCH_VOLLEY if kind == Kind.MACHINEGUNNER else 1
+	# A Bipod steadies the reaction for one more round on top of whatever the
+	# weapon answers with - three for the gunner it is offered to.
+	var rounds := OVERWATCH_VOLLEY if kind == Kind.MACHINEGUNNER else 1
+	return rounds + (1 if has_perk("bipod") else 0)
+
+
+## How wide a diamond this unit's suppressing fire pins. Wide Sweep buys the
+## third ring out.
+func suppress_radius() -> int:
+	return SUPPRESS_RADIUS + (1 if has_perk("wide_sweep") else 0)
 
 
 ## Someone who fights. A prisoner is on your side and walks out with you, but
@@ -977,6 +1077,8 @@ static func kind_role_name(p_kind: Kind) -> String:
 	match p_kind:
 		Kind.TEAM_LEAD:
 			return "Scout Team Lead"
+		Kind.HERO:
+			return "Rodar Akai, Hero of the Scouts"
 		Kind.MACHINEGUNNER:
 			return "Scout Machinegunner"
 		Kind.GOBLIN:
@@ -1123,11 +1225,12 @@ func is_alive() -> bool:
 
 
 ## Pinned down by incoming fire: shoots worse, cannot set overwatch, and
-## cannot leave the spot it is standing on. Set to 2 so it survives the
+## cannot leave the spot it is standing on. The default 2 survives the
 ## decrement at the start of the target's own next turn and actually costs
-## them that turn.
-func suppress() -> void:
-	suppression = 2
+## them that turn; a Locked Belts gunner passes 3 to cost them two. A fresh
+## shorter pin never trims a longer one already holding.
+func suppress(turns := 2) -> void:
+	suppression = maxi(suppression, turns)
 	queue_redraw()
 
 
@@ -1156,6 +1259,25 @@ func reload() -> void:
 	queue_redraw()
 
 
+## Patch up, clamped to max_hp. Never resurrects - a corpse stays one - and
+## never shows a "+0" for a soldier already whole.
+func heal(amount: int) -> void:
+	if hp <= 0 or amount <= 0 or hp >= max_hp:
+		return
+	var gained := mini(amount, max_hp - hp)
+	hp += gained
+	_spawn_float_text("+%d" % gained, PIP_FULL, 24)
+	queue_redraw()
+
+
+## Steadied by the hero's Rally: any pin comes off and the next shots come
+## easier. The bonus fades in this soldier's own start_turn.
+func rally(bonus: int) -> void:
+	suppression = 0
+	rally_bonus = bonus
+	queue_redraw()
+
+
 ## Dry and carrying a magazine, so it cannot shoot until it reloads. Units
 ## with unlimited ammo (mag_size 0) never need one.
 func needs_reload() -> bool:
@@ -1180,7 +1302,7 @@ func set_in_cover(level: int) -> void:
 
 
 ## Kick the sprite backward off a shot and settle it. sprite.position is
-## otherwise unused (SPRITE_OFFSET lives in sprite.offset), so body motion
+## otherwise unused (the SPRITE_SPECS anchor lives in sprite.offset), so body
 ## has its own channel and never fights the animation frames.
 func recoil(dir: Vector2) -> void:
 	_body_shove(-dir * 4.0, 0.14, Tween.TRANS_QUAD)
@@ -1198,7 +1320,16 @@ func _body_shove(offset: Vector2, time: float, trans: Tween.TransitionType) -> v
 func take_damage(amount: int, from_dir := Vector2.ZERO) -> void:
 	if hp <= 0:
 		return  # already dead; never double-kill a corpse
-	_spawn_damage_number(amount)
+	if amount >= hp and has_perk("untouchable") and not untouchable_used:
+		# Untouchable: the first killing blow of the battle leaves him at
+		# exactly 1 HP. Every damage path routes through here - rounds,
+		# reactions, blasts, drums - so the guarantee holds everywhere. The
+		# second lethal hit is the real one.
+		untouchable_used = true
+		amount = hp - 1
+		_spawn_float_text("HELD ON", RANK_COLOR, 20)
+	if amount > 0:
+		_spawn_damage_number(amount)
 	hp = maxi(hp - amount, 0)
 	queue_redraw()
 	var lethal := hp == 0
@@ -1278,6 +1409,8 @@ func _spawn_damage_number(amount: int) -> void:
 
 
 func _spawn_float_text(text: String, color: Color, size: int) -> void:
+	if get_parent() == null:
+		return  # a unit outside a battle (tests, tools) has nowhere to float it
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_size_override("font_size", size)
@@ -1317,6 +1450,12 @@ func set_acting(value: bool) -> void:
 func set_done(value: bool) -> void:
 	moved = value
 	acted = value
+	if value and overwatching:
+		# Spending the activation breaks a watch carried over by Protective
+		# Fire - only that perk can produce "overwatching and not yet done".
+		# The normal overwatch order is unharmed: _commit_aim calls
+		# set_done(true) first and re-arms with set_overwatch(true) right after.
+		set_overwatch(false)
 	modulate = DONE_TINT if value else Color(1, 1, 1, modulate.a)
 	queue_redraw()
 
@@ -1325,10 +1464,14 @@ func start_turn() -> void:
 	moved = false
 	acted = false
 	suppression = maxi(suppression - 1, 0)
+	rally_bonus = 0  # Rally's steadying lasts until the soldier's own turn
 	modulate = Color.WHITE
-	if overwatching:
+	if overwatching and not has_perk("protective_fire"):
 		set_overwatch(false)  # unfired overwatch expires...
 		lower_rifle()         # ...and the rifle comes down
+	# Protective Fire: the rifle stays up and the watch stands. Taking any
+	# order breaks it - set_done(true) covers every action, and do_move
+	# breaks it for the walk itself.
 	queue_redraw()
 
 

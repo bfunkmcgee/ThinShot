@@ -4,9 +4,10 @@ extends Node2D
 
 enum State { PLAYER_TURN, ANIMATING, ENEMY_TURN, GAME_OVER }
 
-## Direction-picking modes: both preview a cone and commit on a click.
-## OVERWATCH consumes the unit's attack; FACE is free.
-enum AimMode { NONE, OVERWATCH, FACE, THROW_FRAG, THROW_SMOKE }
+## Direction-picking modes: each previews and commits on a click.
+## OVERWATCH consumes the unit's attack; FACE is free. CALLED_SHOT is the
+## hero's aimed round - armed like a throw, committed on an enemy.
+enum AimMode { NONE, OVERWATCH, FACE, THROW_FRAG, THROW_SMOKE, CALLED_SHOT }
 
 ## Which trigger setting the selected unit will use on its next shot.
 ## SUPPRESS is the machinegunner's ability rather than a trigger setting:
@@ -131,9 +132,9 @@ const RIFLE_OFFSET := Vector2(0, -1)
 # Far enough off the body that both read, close enough that they are obviously
 # the same event.
 const RIFLE_DROP := Vector2(0, 10)
-# Authored at 80px, so drawn 1:1 - at 2x a crate stack would be wider than the
-# tile it sits on.
-const CHOIR_CACHE_OFFSET := Vector2(0, -30)
+# Downsampled to 40px so it draws at the shared 2x like every other standing
+# prop - one texel density across the board.
+const CHOIR_CACHE_OFFSET := Vector2(0, -15)
 const STRUCTURE_OFFSETS := {
 	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33),
 	"tent": Vector2(0, -33), "fortress": Vector2(0, -55),
@@ -142,10 +143,9 @@ const ROCK_SCALE := Vector2(2, 2)
 
 # Scenery is pulled into one palette by a shared dust shader rather than by
 # re-authoring the art. Haze is quantised into a few depth bands so the whole
-# board needs only a handful of materials instead of one per prop.
+# board needs only a handful of materials instead of one per prop; the band
+# constants live on Board, where the FloorLayer reads the same numbers.
 const PROP_DUST := preload("res://assets/shaders/prop_dust.gdshader")
-const HAZE_BANDS := 5
-const HAZE_MAX := 0.20
 
 const PROP_ROOT := "res://assets/sprites/Environment/Desert/Props"
 
@@ -157,18 +157,17 @@ const PROP_ROOT := "res://assets/sprites/Environment/Desert/Props"
 # Ground offsets are measured from opaque bounds so each prop's base sits on
 # the cell centre, matching the rocks and junk.
 const TARGET_PROPS := {
-	# The crates are drawn at 96px against the 48px the junk props use, so at
-	# the shared 2x they came out roughly two tiles wide and towered over the
-	# squad. Drawn 1:1 the pile stands a little taller than a soldier, which is
-	# what a stack of crates should look like.
+	# The crates were authored at 96px and have been nearest-downsampled to
+	# 48, so they draw at the shared 2x like everything else and land on the
+	# same screen size as before: a pile a little taller than a soldier.
 	"crates": {
 		"dir": PROP_ROOT + "/Pile_of_desert_ammo_crates",
 		"body": "Pile_of_desert_ammo_crates",
 		"idles": [],
 		"stages": ["normal_to_destroyed"],
 		# Sprite2D applies offset before scale, so this anchor holds at any size.
-		"offset": Vector2(0, -37),
-		"scale": 1.0,
+		"offset": Vector2(0, -18),
+		"scale": 2.0,
 		"shadow": 20.0,
 	},
 	"mast": {
@@ -200,6 +199,7 @@ const ACT_LEAD_IN := 0.15  # pause after marking a goblin, before it acts
 const SWAY_SPEED := 1.6      # radians/sec of the plant sway cycle
 const SWAY_TEXELS := 1.0     # sprite texels a plant leans at full sway
 const FLANK_ACCURACY := 10   # bonus to hit from outside the target's arc
+const FLANKER_ACCURACY := 10  # the Flanker perk's extra, on top of the flank bonus
 const LONG_SHOT_PENALTY := 5  # per tile past half the shooter's range
 const SUPPRESSION_ACCURACY := 25  # to-hit penalty while pinned down
 const FULL_COVER_ACCURACY := 25   # to-hit penalty against a target behind a wall
@@ -211,10 +211,10 @@ const AUTO_GAP := 0.07   # full auto cycles faster than a burst
 const BURST_ROUNDS := 2
 const AUTO_ROUNDS := 4
 const AUTO_ACCURACY := -15  # per-round penalty for walking the gun
+const WALKING_FIRE_ACCURACY := -10  # Walking Fire's extra for full auto off the advance
 const SUPPRESS_ROUNDS := 3
-# Manhattan radius of the beaten zone. Wide on purpose: it deals no damage, so
-# its whole value is how much ground it shuts down at once.
-const SUPPRESS_RADIUS := 2
+# The beaten zone's radius lives on Unit (suppress_radius()), because Wide
+# Sweep grows it per gunner - every consumer here asks the unit.
 # Sustained fire while the pin holds. Two rounds close together, then a long
 # pause, so it reads as volleys. Well under the shot volume - it runs for a
 # whole enemy turn and must sit behind the action, not on top of it.
@@ -236,6 +236,22 @@ const FRAG_FALLOFF := 1      # lost per step out, so the four corners take 2
 const SMOKE_TURNS := 1
 const THROW_ARC_TIME := 0.42
 const THROW_ARC_HEIGHT := 90.0
+
+# Class actives - the abilities a perk hangs a button on. Fixed slots so the
+# key each blurb promises is always true: Called Shot and Field Dressing are
+# (Q) abilities, Rally is the (T) one. No class tree offers a soldier two
+# Q-abilities, so the slots can never collide on a legitimate roster.
+const ACTIVE_LABELS := {
+	"called_shot": "Called Shot",
+	"rally": "Rally",
+	"field_dressing": "Patch Up",
+}
+const FIELD_DRESSING_HEAL := 3
+const RALLY_RANGE := 4        # manhattan tiles around the hero
+const RALLY_ACCURACY := 10    # to-hit, until each soldier's own next turn
+const INSPIRATION_RANGE := 4  # manhattan tiles around the perked hero
+const INSPIRATION_ACCURACY := 5
+const CALLED_SHOT_BONUS := 2  # One Shot's extra damage on a called shot
 
 # Ignore end-turn requests this soon after control returns to the player -
 # they are almost always leftover E-mashing/clicking from the enemy turn.
@@ -259,6 +275,10 @@ var _cam_shake := Vector2.ZERO
 var _shake_tween: Tween = null
 var _kick_tween: Tween = null
 var _rng := RandomNumberGenerator.new()
+# Seed for every scenery-variant hash stream, so prop picks decorrelate from
+# cell coordinates without losing determinism. Levels may pin it with a
+# "prop_seed" key; otherwise it derives from the zone seed.
+var _prop_seed := 0
 var _swaying: Array = []
 var _animated_props: Array = []
 var structure_frames: Dictionary = {}
@@ -286,6 +306,11 @@ var _suppressor: Unit = null
 var _suppress_point := Vector2.ZERO
 var _suppress_timer := 0.0
 var _suppress_in_volley := 0
+# Set while a blast is handing out damage. A blast is the one thing that can
+# kill units on both sides in a single indivisible action, and take_damage
+# emits `died` synchronously - so without this the win check runs on the first
+# casualty and commits the mission before the rest of the footprint resolves.
+var _resolving_blast := false
 
 @onready var board: Board = $Board
 @onready var camera: Camera2D = $Camera
@@ -303,6 +328,8 @@ var _suppress_in_volley := 0
 @onready var demolish_button: Button = $UI/DemolishButton
 @onready var frag_button: Button = $UI/FragButton
 @onready var smoke_button: Button = $UI/SmokeButton
+@onready var ability_1_button: Button = $UI/Ability1Button
+@onready var ability_2_button: Button = $UI/Ability2Button
 @onready var unit_panel: PanelContainer = $UI/UnitPanel
 @onready var panel_name_label: Label = $UI/UnitPanel/Margin/Rows/NameLabel
 @onready var panel_progress_label: Label = $UI/UnitPanel/Margin/Rows/ProgressLabel
@@ -337,6 +364,7 @@ func _ready() -> void:
 	Game.ensure_roster(level)
 	Game.begin_mission()
 	board.set_level(level)
+	_prop_seed = int(level.get("prop_seed", int(level.get("zone_seed", 7)) * 977 + 101))
 	_fit_camera()
 	_setup_fx_layers()
 	_validate_spawns()
@@ -345,8 +373,9 @@ func _ready() -> void:
 	for s: Dictionary in level.structures:
 		_spawn_structure(s)
 	_spawn_caches()
-	board.prop_shadows = _prop_shadows
-	_spawn_squad(Unit.Kind.TEAM_LEAD, level.get("lead_spawns", []))
+	board.set_prop_shadows(_prop_shadows)
+	# Rodar Akai deploys in the lead slot: same spawn key, stronger soldier.
+	_spawn_squad(Unit.Kind.HERO, level.get("lead_spawns", []))
 	_spawn_squad(Unit.Kind.MACHINEGUNNER, level.get("gunner_spawns", []))
 	_spawn_squad(Unit.Kind.SCOUT, level.scout_spawns)
 	for spawn: Vector2i in level.goblin_spawns:
@@ -373,15 +402,27 @@ func _ready() -> void:
 	demolish_button.visible = not caches.is_empty()
 	frag_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.THROW_FRAG))
 	smoke_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.THROW_SMOKE))
+	ability_1_button.pressed.connect(_use_ability.bind(0))
+	ability_2_button.pressed.connect(_use_ability.bind(1))
+	# Grenadier: a gunner packing them puts one more frag in the squad's pool.
+	# Once, not per holder - the blurb promises "one more", and the pool is
+	# squad ordnance rather than anybody's webbing.
+	for soldier in living_units(Unit.TEAM_SCOUT):
+		if soldier.has_perk("grenadier"):
+			frags_left += 1
+			break
 	_sync_throw_buttons()
 	danger_button.toggled.connect(_on_danger_button_toggled)
 	restart_button.pressed.connect(_on_restart)
 	briefing_begin_button.pressed.connect(_dismiss_briefing)
 	# Hotkeys/buttons cover the first 3 levels; extend the level_N input
 	# actions and this button row alongside any new Levels.LEVELS entries.
+	# On the win screen commit_mission() has already banked the XP and cleared
+	# the rollback snapshot, so re-entering a level from here would bank it
+	# again - an unbounded XP farm. Debug builds only, same as the hotkeys.
 	var level_buttons: Array[Button] = [level_1_button, level_2_button, level_3_button]
 	for i in level_buttons.size():
-		if i < Levels.LEVELS.size():
+		if OS.is_debug_build() and i < Levels.LEVELS.size():
 			level_buttons[i].pressed.connect(_go_to_level.bind(i))
 		else:
 			level_buttons[i].visible = false
@@ -392,6 +433,7 @@ func _ready() -> void:
 	player_turn_ready_msec = Time.get_ticks_msec()
 	print("[ThinShot] level %d '%s', player turn 1 begins" % [
 			Game.current_level + 1, level.name])
+	_apply_cmdline_screenshot()
 
 
 ## Boot straight into a level: `godot --path . -- --level 2`. Everything after
@@ -405,6 +447,35 @@ func _apply_cmdline_level() -> void:
 			return
 
 
+## Save one settled frame to disk and quit:
+## `godot --path . -- --level 1 --screenshot out.png`. The art pipeline's way
+## of seeing a board. Must run WINDOWED - headless swaps in a dummy rasterizer
+## that renders nothing, so it refuses rather than writing a black frame.
+func _apply_cmdline_screenshot() -> void:
+	var args := OS.get_cmdline_user_args()
+	for i in args.size():
+		if args[i] == "--screenshot" and i + 1 < args.size():
+			_capture_screenshot(args[i + 1])
+			return
+
+
+func _capture_screenshot(path: String) -> void:
+	if DisplayServer.get_name() == "headless":
+		push_error("[ThinShot] --screenshot needs a window; headless renders nothing")
+		get_tree().quit(1)
+		return
+	# The shot exists to show the board, and the briefing would cover it.
+	if briefing_panel.visible:
+		_dismiss_briefing()
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var err := image.save_png(path)
+	print("[ThinShot] screenshot -> %s (%s) zoom=%s" % [
+			path, "saved" if err == OK else error_string(err), camera.zoom])
+	get_tree().quit(0 if err == OK else 1)
+
+
 ## Center the level on screen and zoom so it fits, leaving headroom for
 ## the banner (top) and the button row / unit panel (bottom).
 func _fit_camera() -> void:
@@ -416,11 +487,19 @@ func _fit_camera() -> void:
 	var max_y := (board.size.x - 1 + board.size.y - 1) * half_h + half_h
 	var world_size := Vector2(max_x - min_x, max_y - min_y)
 	var view := get_viewport_rect().size
-	var margin_top := 52.0
-	var margin_bottom := 96.0
-	var avail := Vector2(view.x - 40.0, view.y - margin_top - margin_bottom)
+	var margin_top := 78.0
+	var margin_bottom := 144.0
+	var avail := Vector2(view.x - 60.0, view.y - margin_top - margin_bottom)
 	var fit: float = minf(avail.x / world_size.x, avail.y / world_size.y)
-	fit = minf(fit, 1.0)
+	# Clamped at native texel density: floor texels 1:1 with screen pixels,
+	# the 2x prop/unit class at an exact integer 2. Every shipped board fits
+	# a 1920x1080 view at 1.0, so the clamp is what actually binds; the
+	# eighths snap below stays only for hypothetically bigger boards, where
+	# it keeps a fractional fit from smearing every tile seam. The logical
+	# viewport is pinned under stretch canvas_items + aspect keep, so no
+	# window resize can change `view` and no re-fit on resize is needed.
+	fit = minf(fit, Board.MAX_ZOOM)
+	fit = maxf(floorf(fit * 8.0) / 8.0, 0.25)
 	camera.zoom = Vector2(fit, fit)
 	var center_local := Vector2((min_x + max_x) / 2.0, (min_y + max_y) / 2.0)
 	var screen_center_y := margin_top + avail.y / 2.0
@@ -437,6 +516,9 @@ func _fit_camera() -> void:
 ## above them, and an additive layer for anything that glows.
 func _setup_fx_layers() -> void:
 	fx_ground = Fx.new()
+	# Between the FloorLayer (-2) and the Board's overlays (0): scorch marks
+	# and casings belong on the ground, under the highlights, not over them.
+	fx_ground.z_index = -1
 	add_child(fx_ground)
 	move_child(fx_ground, board.get_index() + 1)
 	fx_air = Fx.new()
@@ -475,6 +557,23 @@ func _validate_spawns() -> void:
 			assert(false, "Bad spawn cell: %s" % spawn)
 
 
+## One salt per hash stream, so a rock and the junk beside it never correlate.
+## The linear-congruence picks these replace repeated every few tiles along a
+## row ((x*7+y*13) % 8 has period 8); Board._hash01 does not.
+const SALT_ROCK := 4
+const SALT_JUNK := 5
+const SALT_PLANT := 6
+const SALT_SANDBAG := 7
+const SALT_CACHE := 8
+const SALT_SWAY := 9
+const SALT_STRUCT_PHASE := 10
+
+
+## A deterministic pick out of `count` variants for this cell and stream.
+func _prop_pick(cell: Vector2i, salt: int, count: int) -> int:
+	return mini(int(Board._hash01(cell, _prop_seed + salt) * count), count - 1)
+
+
 func _spawn_props() -> void:
 	for y in board.size.y:
 		for x in board.size.x:
@@ -482,11 +581,11 @@ func _spawn_props() -> void:
 			# Deterministic variant per cell so layouts are stable.
 			match board.map_char(cell):
 				"#":
-					_spawn_prop(ROCK_TEXTURES[(x * 7 + y * 13) % ROCK_TEXTURES.size()],
-							ROCK_OFFSET, cell)
+					_spawn_prop(ROCK_TEXTURES[_prop_pick(cell, SALT_ROCK,
+							ROCK_TEXTURES.size())], ROCK_OFFSET, cell)
 				"j":
-					_spawn_prop(JUNK_TEXTURES[(x * 11 + y * 17) % JUNK_TEXTURES.size()],
-							JUNK_OFFSET, cell)
+					_spawn_prop(JUNK_TEXTURES[_prop_pick(cell, SALT_JUNK,
+							JUNK_TEXTURES.size())], JUNK_OFFSET, cell)
 				"d":
 					drums[cell] = {
 						"sprite": _spawn_prop(DRUM_STILL, DRUM_OFFSET, cell),
@@ -494,22 +593,25 @@ func _spawn_props() -> void:
 					}
 				"p":
 					var plant := _spawn_prop(
-							PLANT_TEXTURES[(x * 5 + y * 23) % PLANT_TEXTURES.size()],
+							PLANT_TEXTURES[_prop_pick(cell, SALT_PLANT,
+									PLANT_TEXTURES.size())],
 							PLANT_OFFSET, cell)
 					# Phase from the cell so no two plants sway in step.
 					_swaying.append({
 						"sprite": plant,
 						"base_x": plant.position.x,
-						"phase": float((x * 7 + y * 13) % 16) / 16.0 * TAU,
+						"phase": Board._hash01(cell, _prop_seed + SALT_SWAY) * TAU,
 					})
 				"s":
 					_spawn_prop(
-							SANDBAG_TEXTURES[(x * 3 + y * 19) % SANDBAG_TEXTURES.size()],
+							SANDBAG_TEXTURES[_prop_pick(cell, SALT_SANDBAG,
+									SANDBAG_TEXTURES.size())],
 							SANDBAG_OFFSET, cell)
 				"c":
 					_spawn_prop(
-							CHOIR_CACHE_TEXTURES[(x * 13 + y * 7) % CHOIR_CACHE_TEXTURES.size()],
-							CHOIR_CACHE_OFFSET, cell, 1.0)
+							CHOIR_CACHE_TEXTURES[_prop_pick(cell, SALT_CACHE,
+									CHOIR_CACHE_TEXTURES.size())],
+							CHOIR_CACHE_OFFSET, cell)
 				"W":
 					var kind := _wall_kind(cell)
 					_spawn_prop(_wall_texture_for(kind), WALL_OFFSETS[kind], cell)
@@ -529,7 +631,7 @@ func _spawn_props() -> void:
 func _dust_material(cell: Vector2i) -> ShaderMaterial:
 	var span := maxi(board.size.x + board.size.y - 2, 1)
 	var depth := 1.0 - float(cell.x + cell.y) / float(span)  # 1 at the far corner
-	var band := clampi(int(depth * float(HAZE_BANDS)), 0, HAZE_BANDS - 1)
+	var band := clampi(int(depth * float(Board.HAZE_BANDS)), 0, Board.HAZE_BANDS - 1)
 	if not _dust_materials.has(band):
 		var mood := board.floor_mood()
 		var mat := ShaderMaterial.new()
@@ -537,19 +639,26 @@ func _dust_material(cell: Vector2i) -> ShaderMaterial:
 		mat.set_shader_parameter("tint", mood.tint)
 		mat.set_shader_parameter("haze_color", mood.haze)
 		mat.set_shader_parameter("haze",
-				HAZE_MAX * (float(band) + 0.5) / float(HAZE_BANDS))
+				Board.HAZE_MAX * (float(band) + 0.5) / float(Board.HAZE_BANDS))
 		_dust_materials[band] = mat
 	return _dust_materials[band]
 
 
 func _spawn_prop(texture: Texture2D, offset: Vector2, cell: Vector2i,
-		scale := 0.0) -> Sprite2D:
+		scale := 0.0, expected := 2.0) -> Sprite2D:
+	# Every standing prop draws at the density class its art was authored for -
+	# today that is 48px-class art doubled, everywhere. The guard compares each
+	# call against ITS declared class rather than a hard-coded 2.0, so hi-res
+	# 1x props can land per-prop without silencing the stray-scale alarm. Art
+	# that cannot draw at its class gets downsampled, not scaled; the mast and
+	# the structures stay 2x forever.
+	if OS.is_debug_build() and scale > 0.0 and not is_equal_approx(scale, expected):
+		push_error("[ThinShot] prop at %s spawned at %sx - normalise the art to "
+				% [cell, scale] + "the %sx class instead" % expected)
 	var prop := Sprite2D.new()
 	prop.texture = texture
 	prop.offset = offset
 	prop.material = _dust_material(cell)
-	# Most props are drawn at 48px and doubled; anything authored larger says
-	# so, or it would tower over the squad.
 	prop.scale = ROCK_SCALE if scale <= 0.0 else Vector2(scale, scale)
 	prop.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	prop.position = board.cell_to_global(cell)
@@ -641,8 +750,13 @@ func _load_structure_art() -> void:
 		structure_frames[kind] = _load_structure_frames(STRUCTURE_DIRS[kind])
 
 
-## Multi-tile set-piece: a y-sort root at the footprint's front cell so units
-## on nearer rows draw in front, with the sprite centered on the footprint.
+## Multi-tile set-piece, cut into one vertical strip per footprint column, each
+## under its own y-sort root at that column's front cell. A single root at the
+## footprint's front corner sorted the whole building as one plane, so a unit
+## standing beside a wide fortress popped in front of walls it was behind; per
+## column, each strip sorts against what is actually in front of IT. Strip
+## geometry is derived from where the old single sprite sat, so the reassembled
+## art is pixel-identical.
 func _spawn_structure(s: Dictionary) -> void:
 	var anchor: Vector2i = s.anchor
 	var struct_size: Vector2i = s.size
@@ -651,24 +765,38 @@ func _spawn_structure(s: Dictionary) -> void:
 	if frames.is_empty():
 		push_error("No art found for structure kind '%s'" % s.kind)
 		return
-	var root := Node2D.new()
-	root.position = board.cell_to_global(front)
-	var spr := Sprite2D.new()
-	spr.texture = frames[0]
-	spr.scale = Vector2(2, 2)
-	spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	spr.material = _dust_material(front)  # same treatment as every other prop
-	spr.offset = STRUCTURE_OFFSETS[s.kind]
-	spr.position = (board.cell_to_global(anchor) + board.cell_to_global(front)) / 2.0 \
-			- root.position
-	root.add_child(spr)
-	entities_node.add_child(root)
+	var tex: Texture2D = frames[0]
+	var strips: int = struct_size.x
+	var strip_w := tex.get_width() / float(strips)
+	# Where the single sprite's centre used to sit, in world space.
+	var centre := (board.cell_to_global(anchor) + board.cell_to_global(front)) / 2.0
+	var sprites: Array = []
+	for i in strips:
+		var root := Node2D.new()
+		root.position = board.cell_to_global(anchor + Vector2i(i, struct_size.y - 1))
+		var spr := Sprite2D.new()
+		spr.texture = tex
+		spr.region_enabled = true
+		spr.region_rect = Rect2(i * strip_w, 0.0, strip_w, tex.get_height())
+		spr.scale = Vector2(2, 2)
+		spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		spr.material = _dust_material(front)  # same treatment as every other prop
+		spr.offset = STRUCTURE_OFFSETS[s.kind]
+		# This strip's region centre, offset from the full texture's centre at
+		# the 2x draw scale, then rebased onto the strip's own root.
+		spr.position = centre - root.position \
+				+ Vector2(((float(i) + 0.5) * strip_w - tex.get_width() / 2.0) * 2.0, 0.0)
+		root.add_child(spr)
+		entities_node.add_child(root)
+		sprites.append(spr)
 	if frames.size() > 1:
 		# Phase from the anchor cell so no two structures breathe in step.
+		# One entry drives every strip - the building still animates as one.
 		_animated_props.append({
-			"sprite": spr,
+			"sprites": sprites,
 			"frames": frames,
-			"phase": float((anchor.x * 5 + anchor.y * 11) % 9) / STRUCTURE_FPS,
+			"phase": Board._hash01(anchor, _prop_seed + SALT_STRUCT_PHASE) \
+					* 9.0 / STRUCTURE_FPS,
 			"frame": -1,
 		})
 
@@ -821,6 +949,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("hustle"):
 		_try_hustle()
 		return
+	if event.is_action_pressed("ability_primary"):
+		_use_ability(0)
+		return
+	if event.is_action_pressed("ability_secondary"):
+		_use_ability(1)
+		return
 	if event.is_action_pressed("face"):
 		_try_face()
 		return
@@ -830,10 +964,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("cycle_unit"):
 		_cycle_unit()
 		return
-	for i in mini(3, Levels.LEVELS.size()):
-		if event.is_action_pressed("level_%d" % (i + 1)):
-			_go_to_level(i)
-			return
+	# Jumping levels aborts the run and rewinds the campaign, with no
+	# confirmation - a debug convenience that has no business being one
+	# unmodified keypress away during play. Editor and debug builds only.
+	if OS.is_debug_build():
+		for i in mini(3, Levels.LEVELS.size()):
+			if event.is_action_pressed("level_%d" % (i + 1)):
+				_go_to_level(i)
+				return
 	if event.is_action_pressed("cancel"):
 		if aim_mode != AimMode.NONE:
 			_cancel_aim()
@@ -910,11 +1048,24 @@ func _fire_selected_at(target: Unit) -> void:
 		FireMode.BURST:
 			do_volley(selected, target, BURST_ROUNDS, BURST_GAP, 0)
 		FireMode.AUTO:
-			do_volley(selected, target, AUTO_ROUNDS, AUTO_GAP, AUTO_ACCURACY)
+			do_volley(selected, target, AUTO_ROUNDS, AUTO_GAP,
+					_mode_accuracy(selected, FireMode.AUTO))
 		FireMode.SUPPRESS:
 			do_suppressive_fire(selected, target)
 		_:
 			do_attack(selected, target)
+
+
+## The accuracy modifier a fire mode carries for this shooter - one function,
+## so the panel's preview and the resolved volley can never disagree. Walking
+## Fire pays another 10 points for firing full auto off the advance.
+func _mode_accuracy(unit: Unit, mode: FireMode) -> int:
+	if mode != FireMode.AUTO:
+		return 0
+	var mod := AUTO_ACCURACY
+	if unit != null and unit.moved:
+		mod += WALKING_FIRE_ACCURACY  # only reachable with walking_fire
+	return mod
 
 
 func select(unit: Unit) -> void:
@@ -966,8 +1117,11 @@ func _can_use_mode(unit: Unit, mode: FireMode) -> bool:
 		FireMode.BURST:
 			return unit.can_burst() and not (unit.burst_requires_still() and unit.moved)
 		FireMode.AUTO:
-			# Walking the gun needs a firing position, never the advance.
-			return unit.can_full_auto() and not unit.moved
+			# Walking the gun needs a firing position, never the advance -
+			# unless Walking Fire taught him to do it off the hip, for another
+			# 10 points of accuracy (_mode_accuracy charges it).
+			return unit.can_full_auto() \
+					and (not unit.moved or unit.has_perk("walking_fire"))
 		FireMode.SUPPRESS:
 			return unit.can_suppress()
 	return unit.can_single_shot()
@@ -1030,6 +1184,9 @@ func _cycle_unit() -> void:
 
 ## Bottom-left stat readout: hovered unit wins over the selected one.
 func _update_unit_panel() -> void:
+	# Every state change that could move an ability's usability funnels
+	# through here already, so the two buttons ride along.
+	_refresh_ability_buttons()
 	var unit := unit_at(hover_cell) if hover_cell != Board.NO_CELL else null
 	if unit == null:
 		unit = selected
@@ -1065,6 +1222,20 @@ func _update_unit_panel() -> void:
 				unit.overwatch_range(), unit.overwatch_rounds()]
 		panel_status_label.modulate = Color("ffb84a")
 		return
+	if aim_mode == AimMode.CALLED_SHOT and selected != null:
+		# Aiming the hero's called shot: quote the round the way the other
+		# modes quote theirs - odds are the normal roll, cover buys nothing.
+		if unit.team == Unit.TEAM_GOBLIN and _can_call_shot_at(selected, unit):
+			var called_dmg := selected.damage \
+					+ (CALLED_SHOT_BONUS if selected.has_perk("one_shot") else 0)
+			panel_status_label.text = "CALLED SHOT %d%% - %d DMG, IGNORES COVER" % [
+					hit_chance(selected, unit), called_dmg]
+			panel_status_label.modulate = Color("7ae8ff")
+			return
+		if unit == selected:
+			panel_status_label.text = "PICK CALLED SHOT TARGET"
+			panel_status_label.modulate = Color("ffb84a")
+			return
 	if aim_mode == AimMode.THROW_FRAG and unit == selected:
 		panel_status_label.text = "PICK FRAG TARGET - %d CROSS / %d CORNERS" % [
 				FRAG_DAMAGE, maxi(FRAG_DAMAGE - FRAG_FALLOFF, 1)]
@@ -1085,7 +1256,7 @@ func _update_unit_panel() -> void:
 		if fire_mode == FireMode.SUPPRESS:
 			var caught := 0
 			for goblin in living_units(Unit.TEAM_GOBLIN):
-				if Board.manhattan(goblin.cell, unit.cell) <= SUPPRESS_RADIUS:
+				if Board.manhattan(goblin.cell, unit.cell) <= selected.suppress_radius():
 					caught += 1
 			panel_status_label.text = \
 					"SUPPRESS - NO DAMAGE - PINS %d: NO MOVE, -%d%% TO HIT" % [
@@ -1098,6 +1269,8 @@ func _update_unit_panel() -> void:
 		var cover := effective_cover(selected, unit)
 		if flanking:
 			note = "FLANK"
+			if selected.has_perk("executioner"):
+				dmg += 1  # quoted here so the promise matches _fire_round
 		elif cover == Board.CoverLevel.FULL:
 			dmg >>= 1
 			note = "FULL COVER"
@@ -1107,7 +1280,7 @@ func _update_unit_panel() -> void:
 		if _is_peeking(selected, unit):
 			note = "PEEK" if note == "" else "PEEK - " + note
 		var rounds := _rounds_for(fire_mode)
-		var mod: int = AUTO_ACCURACY if fire_mode == FireMode.AUTO else 0
+		var mod := _mode_accuracy(selected, fire_mode)
 		if rounds > 1:
 			var label := "AUTO" if fire_mode == FireMode.AUTO else "BURST"
 			note = "x%d %s" % [rounds, label] if note == "" \
@@ -1171,7 +1344,9 @@ func _try_reload() -> void:
 	var scout := selected
 	var prev_state := state
 	state = State.ANIMATING
-	scout.moved = true  # reloading costs the move, not the shot
+	# Reloading costs the move, not the shot - unless Quick Hands has drilled
+	# it down to costing nothing at all.
+	scout.moved = not scout.has_perk("quick_hands")
 	_set_fire_mode(_default_fire_mode(selected))
 	board.clear_highlights()
 	Sfx.play("reload")
@@ -1253,6 +1428,15 @@ func _cancel_aim() -> void:
 func _commit_aim(cell: Vector2i) -> void:
 	var unit := selected
 	var mode := aim_mode
+	if mode == AimMode.CALLED_SHOT:
+		var mark := unit_at(cell)
+		if mark == null or mark.team != Unit.TEAM_GOBLIN \
+				or not _can_call_shot_at(unit, mark):
+			return  # not a target the shot can be called on: keep aiming
+		aim_mode = AimMode.NONE
+		_sync_aim_buttons()
+		do_called_shot(unit, mark)
+		return
 	if mode == AimMode.THROW_FRAG or mode == AimMode.THROW_SMOKE:
 		if not _can_target_throw(unit, cell):
 			return  # out of range, out of sight, or solid: keep aiming
@@ -1389,6 +1573,15 @@ func _update_hover(cell: Vector2i) -> void:
 		board.set_hover(cell, [], Board.NO_CELL)
 		_update_unit_panel()
 		return
+	# Aiming a called shot: the cursor picks the enemy. A valid target gets
+	# the aim line, anything else nothing - the refusal reads as a refusal.
+	if aim_mode == AimMode.CALLED_SHOT and selected != null:
+		var mark := unit_at(cell) if cell != Board.NO_CELL else null
+		var can_call := mark != null and mark.team == Unit.TEAM_GOBLIN \
+				and _can_call_shot_at(selected, mark)
+		board.set_hover(cell, [], selected.cell if can_call else Board.NO_CELL)
+		_update_unit_panel()
+		return
 	# Aiming an overwatch arc: the cursor steers the cone, nothing else.
 	if aim_mode != AimMode.NONE and selected != null:
 		var sector := Board.sector_from_to(selected.cell, cell) if cell != Board.NO_CELL else -1
@@ -1424,7 +1617,7 @@ func _update_hover(cell: Vector2i) -> void:
 			var target := unit_at(cell)
 			aim_from = selected.cell
 			if fire_mode == FireMode.SUPPRESS:
-				beaten = _suppress_zone(cell)
+				beaten = _suppress_zone(cell, selected.suppress_radius())
 			aim_flanking = target != null and _is_flanking(selected, target)
 			aim_covered = target != null \
 					and effective_cover(selected, target) != Board.CoverLevel.NONE
@@ -1450,6 +1643,12 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 		state = prev_state
 		return
 	var path := board.reconstruct_path(came_from, dest)
+	if unit.overwatching:
+		# Only Protective Fire can produce a mover still on watch (its carried
+		# overwatch survives start_turn). The stance does not survive walking.
+		unit.set_overwatch(false)
+		unit.lower_rifle()
+		_refresh_watch_cells()
 	unit.start_walking()
 	var from_pos := unit.position
 	for step_index in path.size():
@@ -1493,6 +1692,12 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 	if check_game_over():
 		return
 	if prev_state == State.PLAYER_TURN:
+		# Moving invalidates the modes that need a still shooter (full auto
+		# always, a scout's braced burst). Every other order that does this
+		# resets the armed mode; without it the panel goes on quoting
+		# "x4 AUTO @ 58%" while _fire_selected_at silently fires 2 at 73%.
+		if selected == unit and not _can_use_mode(unit, fire_mode):
+			_set_fire_mode(_default_fire_mode(unit))
 		_refresh_danger()
 		_refresh_watch_cells()
 		_update_unit_panel()
@@ -1534,13 +1739,15 @@ func do_suppressive_fire(attacker: Unit, target: Unit) -> void:
 		if i > 0:
 			await get_tree().create_timer(AUTO_GAP).timeout
 		await _fire_suppression_round(attacker, target)
-	# Pin everything hostile inside the beaten zone.
+	# Pin everything hostile inside the beaten zone. Locked Belts keeps their
+	# heads down for an extra turn.
+	var pin_turns := 3 if attacker.has_perk("locked_belts") else 2
 	var pinned: Array[Vector2i] = []
 	for unit in living_units(_enemy_team_of(attacker)):
-		if Board.manhattan(unit.cell, target.cell) <= SUPPRESS_RADIUS:
-			unit.suppress()
+		if Board.manhattan(unit.cell, target.cell) <= attacker.suppress_radius():
+			unit.suppress(pin_turns)
 			pinned.append(unit.cell)
-	print("[ThinShot]   pinned %s" % [pinned])
+	print("[ThinShot]   pinned %s for %d turn(s)" % [pinned, pin_turns - 1])
 	# The gun does not stop. It keeps working the same ground until the
 	# gunner's next turn, which is exactly as long as the pin lasts - so the
 	# effect is visible on screen for its whole duration instead of being a
@@ -1556,13 +1763,13 @@ func do_suppressive_fire(attacker: Unit, target: Unit) -> void:
 		_update_unit_panel()
 
 
-## Every cell a burst of suppressing fire would pin, as a diamond of
-## SUPPRESS_RADIUS around the aim point. Solid cells are dropped - the rounds
-## go over the ground, not through a wall.
-func _suppress_zone(centre: Vector2i) -> Dictionary:
+## Every cell a burst of suppressing fire would pin, as a diamond of the
+## gunner's suppress_radius() around the aim point. Solid cells are dropped -
+## the rounds go over the ground, not through a wall.
+func _suppress_zone(centre: Vector2i, radius: int) -> Dictionary:
 	var zone := {}
-	for dy in range(-SUPPRESS_RADIUS, SUPPRESS_RADIUS + 1):
-		var w := SUPPRESS_RADIUS - absi(dy)
+	for dy in range(-radius, radius + 1):
+		var w := radius - absi(dy)
 		for dx in range(-w, w + 1):
 			var cell: Vector2i = centre + Vector2i(dx, dy)
 			if board.in_bounds(cell) and not board.is_blocker(cell):
@@ -1645,8 +1852,8 @@ func _credit_kill(killer: Unit, victim: Unit) -> void:
 			killer.display_name(), Game.XP_KILL])
 
 
-## Squad ordnance is shared, so a grenade charge is too. Bumps the squad's
-## frag count for a Grenadier-style perk later if one is ever added.
+## Squad ordnance is shared, so a grenade charge is too. (The Grenadier perk
+## this once anticipated exists now - see the frags_left bump in _ready.)
 func _award_xp(unit: Unit, amount: int, reason: String) -> void:
 	if unit == null or unit.soldier_id == 0:
 		return
@@ -1665,6 +1872,178 @@ func _try_hustle() -> void:
 	selected.acted = true
 	Sfx.play("select", -3.0, 0.0)
 	print("[ThinShot] %s hustles - second move, no shot" % selected.display_name())
+	_set_fire_mode(_default_fire_mode(selected))
+	_refresh_highlights()
+	_update_unit_panel()
+
+
+# ------------------------------------------------------------ class actives --
+# The abilities a perk hangs a button on. Two fixed slots: Q drives the first
+# button, T the second, and each active owns a slot so the key its blurb
+# promises is always the key that fires it.
+
+
+## The selected-unit actives by button slot: [Q-slot perk, T-slot perk], with
+## "" for a slot the soldier has nothing in. Called Shot and Field Dressing
+## are Q abilities (no legitimate soldier holds both - different classes);
+## Rally is the T one.
+func _held_actives(unit: Unit) -> Array[String]:
+	var primary := ""
+	for perk in ["called_shot", "field_dressing"]:
+		if unit.has_perk(perk):
+			primary = perk
+			break
+	return [primary, "rally" if unit.has_perk("rally") else ""]
+
+
+## Whether an active could fire right now - one function feeding both the
+## button's disabled state and the keyboard path, so they can never disagree.
+func _can_use_active(unit: Unit, perk: String) -> bool:
+	if unit == null or state != State.PLAYER_TURN or _resolving_blast:
+		return false
+	match perk:
+		"called_shot":
+			# The whole turn goes into the shot: no move first, and a pinned
+			# man cannot take the time it needs. Spends a round.
+			return not unit.moved and not unit.acted and unit.has_ammo() \
+					and not unit.is_suppressed()
+		"rally":
+			# Costs the attack and the battle's one charge. A suppressed hero
+			# CAN rally - he is within his own reach, so it is how he unpins.
+			return not unit.acted and not unit.rally_used
+		"field_dressing":
+			return not unit.acted and not unit.field_dressing_used \
+					and unit.hp < unit.max_hp
+	return false
+
+
+## Keep the two ability buttons carrying the SELECTED unit's actives: hidden
+## for a soldier with none (or no selection), disabled while unusable, and
+## wearing their charge state in the label.
+func _refresh_ability_buttons() -> void:
+	var actives: Array[String] = ["", ""]
+	if selected != null and selected.team == Unit.TEAM_SCOUT:
+		actives = _held_actives(selected)
+	var buttons: Array[Button] = [ability_1_button, ability_2_button]
+	for i in buttons.size():
+		var perk := actives[i]
+		buttons[i].visible = not perk.is_empty()
+		if perk.is_empty():
+			continue
+		var spent := (perk == "rally" and selected.rally_used) \
+				or (perk == "field_dressing" and selected.field_dressing_used)
+		buttons[i].text = str(ACTIVE_LABELS[perk]) + (" (spent)" if spent else "")
+		buttons[i].disabled = not _can_use_active(selected, perk)
+
+
+## Q (slot 0) / T (slot 1), and the two buttons: dispatch to whichever active
+## the selected soldier holds in that slot.
+func _use_ability(slot: int) -> void:
+	if state != State.PLAYER_TURN or selected == null or _resolving_blast:
+		return
+	match _held_actives(selected)[slot]:
+		"called_shot":
+			_try_called_shot()
+		"rally":
+			_try_rally()
+		"field_dressing":
+			_try_field_dressing()
+
+
+## A target Called Shot could take: a living goblin in the rifle's normal
+## reach with an engageable line. Cover is no defence against it, but it is
+## not extra reach either.
+func _can_call_shot_at(attacker: Unit, target: Unit) -> bool:
+	return target != null and target.is_alive() \
+			and target.team == Unit.TEAM_GOBLIN \
+			and Board.manhattan(attacker.cell, target.cell) <= attacker.attack_range \
+			and board.can_engage(attacker.cell, target.cell)
+
+
+## Arm the called shot: an aim mode like the throws, committed on an enemy.
+func _try_called_shot() -> void:
+	if aim_mode == AimMode.CALLED_SHOT:
+		_cancel_aim()
+		return
+	if selected == null or not selected.has_perk("called_shot") \
+			or not _can_use_active(selected, "called_shot"):
+		return
+	aim_mode = AimMode.CALLED_SHOT
+	_sync_aim_buttons()
+	_set_fire_mode(_default_fire_mode(selected))
+	board.clear_highlights()
+	show_banner("CHOOSE CALLED SHOT TARGET")
+	_update_hover(board.global_to_cell(get_global_mouse_position()))
+
+
+## Called Shot: the hero's aimed round. Takes the whole turn - no move first,
+## nothing after - and goes where the cover is not: damage is never halved.
+## The roll itself stays a normal one, full-cover penalty included.
+func do_called_shot(attacker: Unit, target: Unit) -> void:
+	var prev_state := state
+	state = State.ANIMATING
+	board.clear_highlights()
+	print("[ThinShot] called shot %s -> %s" % [attacker.cell, target.cell])
+	attacker.set_facing((target.position - attacker.position).normalized())
+	await attacker.raise_rifle()
+	await _fire_round(attacker, target, 0, true,
+			CALLED_SHOT_BONUS if attacker.has_perk("one_shot") else 0)
+	await get_tree().create_timer(LOWER_TIME).timeout
+	attacker.lower_rifle()
+	attacker.set_done(true)
+	if attacker == selected:
+		deselect()
+	if state == State.GAME_OVER:
+		return
+	state = prev_state
+	if prev_state == State.PLAYER_TURN:
+		_refresh_danger()
+		_refresh_watch_cells()
+		_update_unit_panel()
+
+
+func _try_rally() -> void:
+	if selected == null or not selected.has_perk("rally") \
+			or not _can_use_active(selected, "rally"):
+		return
+	do_rally(selected)
+
+
+## Rally: the hero steadies every soldier within reach - pins come off, and
+## their next shots land RALLY_ACCURACY better until each soldier's own next
+## turn. Costs the attack and the battle's one charge; no ammunition.
+func do_rally(hero: Unit) -> void:
+	hero.rally_used = true
+	hero.acted = true
+	var steadied := 0
+	for ally in living_soldiers(Unit.TEAM_SCOUT):
+		if Board.manhattan(ally.cell, hero.cell) <= RALLY_RANGE:
+			ally.rally(RALLY_ACCURACY)  # the hero is within 0 of himself
+			steadied += 1
+	Sfx.play("overwatch_set", 0.0, 0.3)
+	show_banner("RALLY - THE SQUAD STEADIES")
+	print("[ThinShot] %s rallies %d soldier(s)" % [hero.display_name(), steadied])
+	_set_fire_mode(_default_fire_mode(selected))
+	_refresh_highlights()
+	_update_unit_panel()
+
+
+func _try_field_dressing() -> void:
+	if selected == null or not selected.has_perk("field_dressing") \
+			or not _can_use_active(selected, "field_dressing"):
+		return
+	do_field_dressing(selected)
+
+
+## Field Dressing: the scout patches himself up FIELD_DRESSING_HEAL, capped
+## at full. Costs the attack and the battle's one charge; no ammunition.
+func do_field_dressing(medic: Unit) -> void:
+	medic.field_dressing_used = true
+	medic.acted = true
+	medic.heal(FIELD_DRESSING_HEAL)
+	Sfx.play("reload", -2.0)
+	print("[ThinShot] %s patches up to %d/%d HP" % [
+			medic.display_name(), medic.hp, medic.max_hp])
 	_set_fire_mode(_default_fire_mode(selected))
 	_refresh_highlights()
 	_update_unit_panel()
@@ -1805,7 +2184,8 @@ func _set_target_idle(target: Dictionary) -> void:
 	if target.anim == null:
 		target.anim = {
 			"sprite": target.sprite, "frames": frames,
-			"phase": float((target.cell.x * 5 + target.cell.y * 11) % 9) / STRUCTURE_FPS,
+			"phase": Board._hash01(target.cell, _prop_seed + SALT_STRUCT_PHASE) \
+					* 9.0 / STRUCTURE_FPS,
 			"frame": -1,
 		}
 		_animated_props.append(target.anim)
@@ -2205,6 +2585,12 @@ func _apply_blast(blast: Dictionary, center: Vector2, source: Unit, what: String
 		# into a chore, and the Choir wants them alive anyway.
 		if blast.has(unit.cell) and unit.is_combatant():
 			caught.append(unit)
+	# The whole footprint resolves before anyone asks who won. `caught` lists
+	# goblins first, so a blast that kills the last goblin AND a scout would
+	# otherwise commit the mission - awarding the scout his survival XP and
+	# clearing the rollback snapshot - and only then kill him, leaving him
+	# scored as a survivor in the debrief and dead on the roster.
+	_resolving_blast = true
 	for unit in caught:
 		var dmg: int = int(blast[unit.cell])
 		if dmg <= 0:
@@ -2219,6 +2605,8 @@ func _apply_blast(blast: Dictionary, center: Vector2, source: Unit, what: String
 		print("[ThinShot]   %s hits %s at %s for %d" % [
 				what, unit.display_name(), unit.cell, dmg])
 	print("[ThinShot]   %s caught %d unit(s)" % [what, caught.size()])
+	_resolving_blast = false
+	check_game_over()
 
 
 func do_throw_smoke(thrower: Unit, cell: Vector2i) -> void:
@@ -2340,7 +2728,10 @@ func _resolve_shot(attacker: Unit, target: Unit, with_aim_beat: bool) -> void:
 
 ## One round leaving the muzzle: effects, sound, cover-checked damage.
 ## Assumes the attacker is already facing the target with rifle raised.
-func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0) -> void:
+## `ignore_cover` is the called shot's whole trick - the roll stays normal but
+## the damage is never halved; `bonus_damage` carries One Shot's extra.
+func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0,
+		ignore_cover := false, bonus_damage := 0) -> void:
 	var muzzle := attacker.muzzle_point()
 	# Leaning out: shift the muzzle toward the cell being leaned into, so the
 	# round visibly comes around the corner instead of through the wall.
@@ -2392,14 +2783,18 @@ func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0) -> void:
 		_update_unit_panel()
 		return
 
-	var dmg := attacker.damage
+	var dmg := attacker.damage + bonus_damage
 	var cover := effective_cover(attacker, target)
+	if ignore_cover:
+		cover = Board.CoverLevel.NONE  # a called shot goes where the cover is not
 	if cover != Board.CoverLevel.NONE:
 		dmg >>= 1
 		print("[ThinShot]   shot %s -> %s into %s cover: %d dmg (%d%%)" % [
 				attacker.cell, target.cell,
 				"full" if cover == Board.CoverLevel.FULL else "half", dmg, chance])
 	elif flanking:
+		if attacker.has_perk("executioner"):
+			dmg += 1  # Executioner: a flanking shot lands a point harder
 		print("[ThinShot]   flanking shot %s -> %s: %d dmg (%d%%)" % [
 				attacker.cell, target.cell, dmg, chance])
 	var lethal := target.hp - dmg <= 0
@@ -2428,8 +2823,14 @@ func hit_chance(attacker: Unit, target: Unit, accuracy_mod := 0) -> int:
 	var chance := attacker.accuracy + accuracy_mod
 	if attacker.is_suppressed():
 		chance -= SUPPRESSION_ACCURACY
+	# The hero's steadying hands: Rally's transient bonus on the soldier, and
+	# Inspiration's aura for standing near a living hero who carries it.
+	chance += attacker.rally_bonus
+	chance += _inspiration_bonus(attacker)
 	if _is_flanking(attacker, target):
 		chance += FLANK_ACCURACY
+		if attacker.has_perk("flanker"):
+			chance += FLANKER_ACCURACY
 	# Half cover only costs damage, keeping the old rule intact. Full cover is
 	# what a soldier is genuinely hard to hit behind, so it costs accuracy too -
 	# that difference is the whole reason to prefer a wall to a scrap pile.
@@ -2444,6 +2845,18 @@ func hit_chance(attacker: Unit, target: Unit, accuracy_mod := 0) -> int:
 	if dist > comfortable and not attacker.has_perk("marksman"):
 		chance -= (dist - comfortable) * LONG_SHOT_PENALTY
 	return clampi(chance, 20, 99)
+
+
+## Inspiration's aura: +5 to hit while a living allied hero carrying the perk
+## stands within 4 tiles of the SHOOTER. The hero inspires himself too -
+## simpler than excluding him, and a leader who believes his own speech is
+## not a bug.
+func _inspiration_bonus(attacker: Unit) -> int:
+	for unit in living_units(attacker.team):
+		if unit.kind == Unit.Kind.HERO and unit.has_perk("inspiration") \
+				and Board.manhattan(unit.cell, attacker.cell) <= INSPIRATION_RANGE:
+			return INSPIRATION_ACCURACY
+	return 0
 
 
 ## Fire-and-forget spark on the junk cell the round passes through.
@@ -2514,7 +2927,11 @@ func _compute_danger_cells() -> Dictionary:
 					if danger.has(tile) or not board.in_bounds(tile) \
 							or not board.is_walkable(tile):
 						continue
-					if board.has_line_of_sight(origin, tile):
+					# can_engage, not has_line_of_sight: the goblins pick their
+					# targets with can_engage (via _shootable_from), so a plain
+					# LOS test here paints every lean-around-cover shot SAFE -
+					# precisely the corners the player is taught to bound between.
+					if board.can_engage(origin, tile):
 						danger[tile] = true
 	return danger
 
@@ -2600,6 +3017,8 @@ func end_player_turn() -> void:
 	demolish_button.disabled = true
 	frag_button.disabled = true
 	smoke_button.disabled = true
+	ability_1_button.disabled = true
+	ability_2_button.disabled = true
 	# Goblins refresh at the start of THEIR turn (expires last turn's
 	# unfired goblin overwatch at the right moment).
 	for goblin in living_units(Unit.TEAM_GOBLIN):
@@ -2845,7 +3264,11 @@ func _on_unit_died(unit: Unit) -> void:
 	_drop_rifle(unit)
 	_puff_on_landing(unit)
 	_refresh_objectives()  # the remaining-goblin count and extract tally move
-	check_game_over()
+	# A blast resolves as one action: _apply_blast runs the check itself once
+	# the whole footprint has been dealt, so that the last casualty on either
+	# side is counted before the mission is scored.
+	if not _resolving_blast:
+		check_game_over()
 
 
 ## Only your own dead leave a rifle. The Choir loses eleven bodies on a bad
@@ -2879,14 +3302,42 @@ func check_game_over() -> bool:
 	if living_soldiers(Unit.TEAM_SCOUT).is_empty():
 		_show_game_over("THE CHOIR SINGS ON", false)
 		return true
+	# Rodar is the campaign: if he deployed and is down, the mission is lost
+	# no matter who else is still standing. After the wipe check so a full
+	# wipe still reads as one. His corpse stays in the tree, so the fallen
+	# hero is found here rather than tracked by a flag.
+	var fallen_hero := _fallen_hero()
+	if fallen_hero != null:
+		_show_game_over("RODAR AKAI HAS FALLEN", false,
+				fallen_hero.death_landing_time())
+		return true
 	if _all_objectives_complete():
 		_show_game_over("DESERT SCOUTS WIN", true)
 		return true
 	return false
 
 
-func _show_game_over(text: String, won: bool) -> void:
+## The hero's corpse, if the battle fielded him and he is down; null while he
+## lives or when the level never deployed him (a roster short of its hero
+## simply fights without one - it must not read as an instant loss).
+func _fallen_hero() -> Unit:
+	for child in entities_node.get_children():
+		var unit := child as Unit
+		if unit != null and unit.kind == Unit.Kind.HERO and not unit.is_alive():
+			return unit
+	return null
+
+
+## panel_delay holds back only the verdict's PRESENTATION - state flips to
+## GAME_OVER immediately, so the re-entry guard and every call site see the
+## same synchronous contract as before. Used when the loss is one body
+## falling: the panel waits for it to land instead of covering the fall.
+func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 	state = State.GAME_OVER
+	# The only other teardown is at the top of end_player_turn, which sits
+	# behind a GAME_OVER early-out - so without this the machinegun keeps
+	# cycling a volley every SUSTAIN_VOLLEY_GAP behind the results panel.
+	_end_sustained_fire()
 	last_result_won = won
 	print("[ThinShot] level %d over on turn %d: %s" % [
 			Game.current_level + 1, turn_number, "WON" if won else "LOST"])
@@ -2915,11 +3366,19 @@ func _show_game_over(text: String, won: bool) -> void:
 		restart_button.text = "Return to Garrison"
 	else:
 		restart_button.text = "Back to Camp"
-	game_over_panel.visible = true
-	Sfx.play("win" if won else "lose", 0.0, 0.0)
 	if not Game.pending_promotions.is_empty():
 		debrief_label.text += "\n\n%d PROMOTION(S) TO HAND OUT BACK AT CAMP" % \
 				Game.pending_promotions.size()
+	if panel_delay > 0.0:
+		get_tree().create_timer(panel_delay).timeout.connect(
+				_present_game_over.bind(won))
+	else:
+		_present_game_over(won)
+
+
+func _present_game_over(won: bool) -> void:
+	game_over_panel.visible = true
+	Sfx.play("win" if won else "lose", 0.0, 0.0)
 
 
 ## The panel's second row: role for anyone, plus rank progress and earned
@@ -3010,6 +3469,9 @@ func _on_restart() -> void:
 	else:
 		# A lost mission is retried from the same camp it was launched from.
 		Game.in_the_field = Game.mission_number() > 1
+	# Leaving the battlefield is the campaign's real checkpoint: whichever
+	# branch ran above has just moved the squad, the operation pointer, or both.
+	Game.save()
 	Game.go_to_camp()
 
 
@@ -3050,14 +3512,21 @@ func _boil_smoke(delta: float) -> void:
 		fx_air.smoke_drift(board.cell_to_global(cell) + Vector2(0, -18))
 
 
-## Advance the huts' and outpost's breeze loops.
+## Advance the huts' and outpost's breeze loops. Structures animate a strip
+## sprite per footprint column ("sprites"); objective props still animate one
+## ("sprite") - both kinds share this list.
 func _animate_structures() -> void:
 	var t := Time.get_ticks_msec() / 1000.0
 	for entry: Dictionary in _animated_props:
 		var frames: Array = entry.frames
 		var idx: int = int((t + entry.phase) * STRUCTURE_FPS) % frames.size()
-		if idx != entry.frame:
-			entry.frame = idx
+		if idx == entry.frame:
+			continue
+		entry.frame = idx
+		if entry.has("sprites"):
+			for spr: Sprite2D in entry.sprites:
+				spr.texture = frames[idx]
+		else:
 			entry.sprite.texture = frames[idx]
 
 
