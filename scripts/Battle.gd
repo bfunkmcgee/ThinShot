@@ -198,12 +198,11 @@ const AI_BEAT := 0.12
 const ACT_LEAD_IN := 0.15  # pause after marking a goblin, before it acts
 const SWAY_SPEED := 1.6      # radians/sec of the plant sway cycle
 const SWAY_TEXELS := 1.0     # sprite texels a plant leans at full sway
-const FLANK_ACCURACY := 10   # bonus to hit from outside the target's arc
-const FLANKER_ACCURACY := 10  # the Flanker perk's extra, on top of the flank bonus
-const LONG_SHOT_PENALTY := 5  # per tile past half the shooter's range
-const SUPPRESSION_ACCURACY := 25  # to-hit penalty while pinned down
-const FULL_COVER_ACCURACY := 25   # to-hit penalty against a target behind a wall
-const PEEK_ACCURACY := 10         # to-hit penalty for leaning around your own
+# The to-hit arithmetic lives on Rules now, and the numbers it reads went with
+# it. What stays here is an alias for each constant Battle still quotes on its
+# own account - one number under two names, so the sentence the panel writes
+# and the penalty the roll applies cannot come apart.
+const SUPPRESSION_ACCURACY := Rules.SUPPRESSION_ACCURACY  # the panel says this out loud
 const PEEK_LEAN := 0.34           # how far toward the corner the body shifts
 const LOWER_TIME := 0.12  # rifle held after the shot before lowering
 const BURST_GAP := 0.13  # pause between the rounds of a burst
@@ -249,8 +248,10 @@ const ACTIVE_LABELS := {
 const FIELD_DRESSING_HEAL := 3
 const RALLY_RANGE := 4        # manhattan tiles around the hero
 const RALLY_ACCURACY := 10    # to-hit, until each soldier's own next turn
-const INSPIRATION_RANGE := 4  # manhattan tiles around the perked hero
-const INSPIRATION_ACCURACY := 5
+# Inspiration's numbers are Rules'; the search that finds the hero is Battle's,
+# so the aliases stay beside the ability they belong to.
+const INSPIRATION_RANGE := Rules.INSPIRATION_RANGE  # manhattan tiles around the perked hero
+const INSPIRATION_ACCURACY := Rules.INSPIRATION_ACCURACY
 const CALLED_SHOT_BONUS := 2  # One Shot's extra damage on a called shot
 
 # Ignore end-turn requests this soon after control returns to the player -
@@ -1281,7 +1282,7 @@ func _update_unit_panel() -> void:
 		if flanking:
 			note = "FLANK"
 			if selected.has_perk("executioner"):
-				dmg += 1  # quoted here so the promise matches _fire_round
+				dmg += Rules.EXECUTIONER_BONUS  # quoted so the promise matches _fire_round
 		elif cover == Board.CoverLevel.FULL:
 			dmg >>= 1
 			note = "FULL COVER"
@@ -2805,7 +2806,7 @@ func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0,
 				"full" if cover == Board.CoverLevel.FULL else "half", dmg, chance])
 	elif flanking:
 		if attacker.has_perk("executioner"):
-			dmg += 1  # Executioner: a flanking shot lands a point harder
+			dmg += Rules.EXECUTIONER_BONUS  # a flanking shot lands a point harder
 		print("[ThinShot]   flanking shot %s -> %s: %d dmg (%d%%)" % [
 				attacker.cell, target.cell, dmg, chance])
 	var lethal := target.hp - dmg <= 0
@@ -2827,35 +2828,13 @@ func _fire_round(attacker: Unit, target: Unit, accuracy_mod := 0,
 	await _hit_stop(0.09 if lethal else 0.14, 0.075 if lethal else 0.045)
 
 
-## Percent chance this shot connects. Cover is deliberately NOT an accuracy
-## modifier - it already halves damage, and keeping the two rules separate
-## keeps both readable. Flanking helps; so does not taking a long shot.
+## Percent chance this shot connects, from Rules - which owns the arithmetic
+## and the numbers, and knows nothing about the scene tree. Battle supplies the
+## two things it cannot reach for itself: the board, and the inspiration aura,
+## which has to be found by walking the living units.
 func hit_chance(attacker: Unit, target: Unit, accuracy_mod := 0) -> int:
-	var chance := attacker.accuracy + accuracy_mod
-	if attacker.is_suppressed():
-		chance -= SUPPRESSION_ACCURACY
-	# The hero's steadying hands: Rally's transient bonus on the soldier, and
-	# Inspiration's aura for standing near a living hero who carries it.
-	chance += attacker.rally_bonus
-	chance += _inspiration_bonus(attacker)
-	if _is_flanking(attacker, target):
-		chance += FLANK_ACCURACY
-		if attacker.has_perk("flanker"):
-			chance += FLANKER_ACCURACY
-	# Half cover only costs damage, keeping the old rule intact. Full cover is
-	# what a soldier is genuinely hard to hit behind, so it costs accuracy too -
-	# that difference is the whole reason to prefer a wall to a scrap pile.
-	elif effective_cover(attacker, target) == Board.CoverLevel.FULL:
-		chance -= FULL_COVER_ACCURACY
-	# Leaning out around your own cover is an awkward way to shoot.
-	if _is_peeking(attacker, target):
-		chance -= PEEK_ACCURACY
-	var dist := Board.manhattan(attacker.cell, target.cell)
-	var comfortable: int = attacker.attack_range / 2
-	# A Marksman has shot at that range enough times for it to stop mattering.
-	if dist > comfortable and not attacker.has_perk("marksman"):
-		chance -= (dist - comfortable) * LONG_SHOT_PENALTY
-	return clampi(chance, 20, 99)
+	return Rules.hit_chance(board, attacker, target, accuracy_mod,
+			_inspiration_bonus(attacker))
 
 
 ## Inspiration's aura: +5 to hit while a living allied hero carrying the perk
@@ -2962,26 +2941,20 @@ func _on_danger_button_toggled(pressed: bool) -> void:
 	_refresh_danger()
 
 
-## True if the shot comes from outside the target's front arc, in which case
-## cover does not protect it. Derived from cells, never live positions, so
-## the hover preview and the resolved shot always agree.
+# Three one-line forwarders into Rules, kept under their old names because a
+# controller with a board in hand should not have to say so at every call site.
+# The rules themselves, and the reasoning behind them, are in scripts/Rules.gd.
+
 func _is_flanking(attacker: Unit, target: Unit) -> bool:
-	return not target.covers_sector(Board.sector_from_to(target.cell, attacker.cell))
+	return Rules.is_flanking(attacker, target)
 
 
-## The cover that actually applies to this shot. A unit only benefits from
-## what it is facing into - shot from outside its front arc, it is caught with
-## its back to the wall rather than behind it, and the cover does nothing.
 func effective_cover(attacker: Unit, target: Unit) -> Board.CoverLevel:
-	if _is_flanking(attacker, target):
-		return Board.CoverLevel.NONE
-	return board.cover_between(attacker.cell, target.cell)
+	return Rules.effective_cover(board, attacker, target)
 
 
-## True when the shooter has to lean around its own full cover to take this
-## shot: the direct line is blocked, but an adjacent cell can see the target.
 func _is_peeking(attacker: Unit, target: Unit) -> bool:
-	return board.can_peek(attacker.cell, target.cell)
+	return Rules.is_peeking(board, attacker, target)
 
 
 ## Living enemies of the mover that are on overwatch with range, LOS, and
