@@ -22,8 +22,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from measure_rotations import ORDER  # noqa: E402
 
 FRAMES = 9
-ROTATION_SETS = ["Idle/rotations", "ReadyToFire_Stance/rotations",
-                 "Dead_stance/rotations"]
+# The base state is called `Idle` in a downloaded bundle and is renamed after
+# the unit on assembly (UNIT_ASSET_SPEC.md §4), so it is found rather than
+# named and this works on a staging tree or a shipped one.
+STATIC_SETS = ["ReadyToFire_Stance", "Dead_stance"]
 
 
 def main() -> None:
@@ -33,7 +35,15 @@ def main() -> None:
     problems = []
     total = 0
 
-    for rel in ROTATION_SETS:
+    base = next((d for d in sorted(root.iterdir())
+                 if d.is_dir() and d.name not in STATIC_SETS
+                 and (d / "rotations").is_dir()), None)
+    if base is None:
+        sys.exit("no base state (a folder with rotations/) under %s" % root)
+    rotation_sets = [base.name + "/rotations"] + \
+                    [s + "/rotations" for s in STATIC_SETS]
+
+    for rel in rotation_sets:
         d = root / rel
         if not d.is_dir():
             problems.append("%s: MISSING FOLDER" % rel)
@@ -44,7 +54,7 @@ def main() -> None:
             else:
                 problems.append("%s/%s.png missing" % (rel, name))
 
-    anim_roots = [root / "Idle" / "animations",
+    anim_roots = [base / "animations",
                   root / "ReadyToFire_Stance" / "animations"]
     sets = 0
     for ar in anim_roots:
@@ -66,7 +76,7 @@ def main() -> None:
                     problems.append("%s/%s: %d frames, want %d"
                                     % (s.name, name, n, FRAMES))
 
-    expect = len(ROTATION_SETS) * len(ORDER) + sets * len(ORDER) * FRAMES
+    expect = len(rotation_sets) * len(ORDER) + sets * len(ORDER) * FRAMES
     print("%s" % root)
     print("  %d animation set(s), %d png(s) on disk, %d expected"
           % (sets, total, expect))

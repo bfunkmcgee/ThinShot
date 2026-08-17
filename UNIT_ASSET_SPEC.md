@@ -165,24 +165,55 @@ hi-res set may be promoted.
    hi-res art lands, its entry flips to `{"scale": Vector2(1, 1), "offset":
    Vector2(0, -30)}`** (112-canvas: `(0, -28)`) — scale halves, offset
    doubles, same screen anchor, and nothing else in the unit's wiring moves.
-5. Add the unit's aim stance to `tools/measure_muzzle.gd` — entries are
+5. **Repair the four defects Pixel Lab reliably ships.** Each has a tool, each
+   writes a `note` on the affected state in `metadata.json` (§4), and all four
+   are quiet — the folder is complete and the frame counts are right in every
+   case. Run them before measuring anything, because three of them change the
+   pixels the measurement reads:
+
+   | Tool | Defect | Repair |
+   |---|---|---|
+   | `recanvas_frames.py <unit> <canvas> --fix` | A job returns on the wrong canvas (a backfill loses the request's size). One direction draws bigger and sits off its diamond. | Centred crop/pad. Refuses if it would clip the figure. |
+   | `check_dead_stance.py <unit> --all` | `create_character_state` leaves the corpse standing in some facings. | All eight rotations taken from `standing_idle_to_dead`'s last frame — which also makes the death hand-off exact. |
+   | `seal_raise_transition.py <unit> --fix` | `standing_idle_to_readyToFire` does not land on the aim rotation, so the figure snaps when the raise ends. | The animation's last frame becomes the rotation. The rotation does **not** move: the aim-idle starts on it and the muzzle offsets are measured off it. |
+   | `fix_idle_flash.py <unit> --fix` | The aim-idle is drawn firing, so the unit shoots forever while standing. | Each lit frame is replaced by its opposite number across the loop. A direction lit in more than half its frames must be regenerated. |
+
+6. Add the unit's aim stance to `tools/measure_muzzle.gd` — entries are
    `{label, canvas, scale, offset, path, unit_const}` and the tool computes
    `(p + offset − canvas/2) · scale`, so a hi-res entry is just
    `canvas: 120, scale: 1.0, offset: Vector2(0, -30)`. Run
    `godot --headless --path . -s tools/measure_muzzle.gd` and paste the
-   printed `<NAME>_MUZZLE_OFFSETS` block in. Southern facings usually need
-   hand correction — with the weapon pointed at the camera the scan lands on
-   boots. The tool's closing **delta table** (measured vs the consts baked in
-   `Unit.gd`) is where those corrections stay visible; after any regen, an
-   unexpected delta on a non-southern facing means the art moved.
-6. Validate before import: `python tools/validate_unit_sprites.py
+   printed `<NAME>_MUZZLE_OFFSETS` block in.
+
+   The plain scan takes the opaque pixel furthest along the facing, which on a
+   tall figure can be the **crown of the head** — so the tool prints a second
+   **band** opinion, restricted to the shoulder-to-hip rows where a carried
+   weapon is, and where the two disagree the band is nearly always what to
+   bake. If check [3] below reports the south or north aim pose drawn
+   *levelled* to a flank instead of foreshortened, say so in the entry's
+   `levelled` key (`{"south": LEVELLED_RIGHT}`) — the muzzle really is out
+   there, and the offset must follow the art so the flash leaves the barrel
+   the player can see. The tool's closing **delta table** compares against
+   what it recommends per facing, so `(all 8 facings match)` is the goal and
+   any delta is a hand-correction or real drift.
+7. Validate before import: `python tools/validate_unit_sprites.py
    assets/sprites/<UnitName>` — a hi-res set gates on canvas, feet, alpha,
    palette, aim, flash, endpoints **and metadata.json**. A PASS writes the
-   unit's `preview.html`.
-7. Run `godot --headless --path . --import` to generate the `.import` files.
-8. Give it stats and a spawn entry in `Levels.gd`.
+   unit's `preview.html`. Note that its check [5] flash rule is *relative to
+   each cycle's median*, so it catches a flash in one or two frames and is
+   blind to one in eight of nine; `fix_idle_flash.py` is the stricter of the
+   two and both are worth running.
+8. Run `godot --headless --path . --import` to generate the `.import` files.
+9. **Look at it.** `powershell tools/godot.ps1 --path . -s
+   tools/render_unit_check.gd -- --kinds <NAME> --zoom 3` stands the unit up
+   through the real `setup()` path in all eight facings and puts a dot on
+   `muzzle_point()`. Measurements are made on PNGs; this is where you find out
+   whether the number still lands on the barrel after Godot applies
+   `SPRITE_SPECS`.
+10. Give it stats and a spawn entry in `Levels.gd`.
 
-For a **regeneration** of an existing unit, steps 1–3 and 8 are already done:
+For a **regeneration** of an existing unit, steps 1–4 and 10 are already done:
 the work is the canonical folder layout (§4), the `SPRITE_SPECS` flip (step
-4), re-measured muzzle offsets (step 5), and the validator + the
-`make_char_viewer.py --compare <old>` page as the judge gate before the swap.
+4), the repair pass (step 5), re-measured muzzle offsets (step 6), and the
+validator + the `make_char_viewer.py --compare <old>` page as the judge gate
+before the swap.

@@ -574,6 +574,12 @@ and the test suite sweeps for domination so it stays that way. Each also
 **starts holding the perk that is their specialty**, so the choice matters on
 mission one rather than after a promotion.
 
+Each of the five specialists has **its own 8-direction sprite set**, so who is
+standing where is readable on the board without selecting anybody: Essa's
+bandolier and underbarrel launcher, Sillae's hood and long scope, Halvik's
+carrier and low helmet, Dava's blonde braid and red-cross satchel, Fen's radio
+pack.
+
 The squad did not get bigger, it got **deeper**, and that is what makes
 permadeath bite. Losing Dava does not leave a gap in the line — the levy post
 will send somebody. It leaves the squad without the only pair of hands that

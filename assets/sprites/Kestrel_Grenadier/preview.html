@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kestrel_Grenadier</title>
+<style>
+  :root {
+    --bg:#14120f; --panel:#1e1b17; --line:#332e27; --ink:#e8e2d6; --dim:#9b9184;
+    --accent:#d8a24a;
+  }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }   /* label is inline-flex, which would win otherwise */
+  body {
+    margin:0; background:var(--bg); color:var(--ink);
+    font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;
+  }
+  header {
+    position:sticky; top:0; z-index:10; background:var(--panel);
+    border-bottom:1px solid var(--line); padding:10px 16px;
+    display:flex; flex-wrap:wrap; gap:14px; align-items:center;
+  }
+  h1 { font-size:14px; margin:0 12px 0 0; color:var(--accent); font-weight:600; }
+  label { color:var(--dim); display:inline-flex; align-items:center; gap:6px; }
+  select,input[type=range],button {
+    background:#2a2620; color:var(--ink); border:1px solid var(--line);
+    border-radius:4px; padding:3px 7px; font:inherit;
+  }
+  button { cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  button.on { background:var(--accent); color:#1a160f; border-color:var(--accent); }
+  main { padding:16px; }
+  .grid {
+    display:grid; grid-template-columns:repeat(3,max-content);
+    gap:10px; justify-content:start;
+  }
+  /* keep a one-shot readable as a single filmstrip rather than letting it wrap */
+  .row { display:flex; flex-wrap:nowrap; gap:10px; overflow-x:auto; padding-bottom:4px;
+         align-items:flex-end; }
+  .cell { background:#100e0c; border:1px solid var(--line); border-radius:5px; padding:4px; }
+  .cell.center { background:transparent; border:none; }
+  .cell.old { border-color:#6a5232; }
+  .pair { display:flex; gap:4px; align-items:flex-end; }
+  .cap { color:var(--dim); font-size:11px; text-align:center; margin-top:3px; }
+  .stage { position:relative; overflow:hidden; }
+  .stage img {
+    position:absolute; inset:0; width:100%; height:100%;
+    image-rendering:pixelated; display:none;
+  }
+  .stage img.show { display:block; }
+  .guide { position:absolute; left:0; right:0; pointer-events:none; }
+  /* red reads against both the dark panel and the sand swatch */
+  .guide.foot { border-top:1px dashed rgba(255,72,72,.75); }
+  .guide.mid { position:absolute; top:0; bottom:0; border-left:1px dashed rgba(255,72,72,.35); }
+  section { margin-bottom:26px; }
+  h2 { font-size:12px; color:var(--dim); font-weight:600; letter-spacing:.08em;
+       text-transform:uppercase; margin:0 0 8px; }
+  .meta { color:var(--dim); font-size:11px; margin-left:auto; }
+  .sand { background:#c2a878 !important; }
+  .checker {
+    background-image:linear-gradient(45deg,#2a2620 25%,transparent 25%),
+      linear-gradient(-45deg,#2a2620 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#2a2620 75%),
+      linear-gradient(-45deg,transparent 75%,#2a2620 75%) !important;
+    background-size:12px 12px !important;
+    background-position:0 0,0 6px,6px -6px,-6px 0 !important;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Kestrel_Grenadier</h1>
+  <label>view
+    <select id="view">
+      <option value="spin">rotating states (turntable)</option>
+      <option value="spinanim">rotating animations (turntable)</option>
+      <option value="set">one set, all 8 facings</option>
+      <option value="all">all sets, one facing</option>
+      <option value="rot">static rotations</option>
+    </select>
+  </label>
+  <label id="setwrap">set <select id="set"></select></label>
+  <label id="dirwrap" hidden>facing <select id="dir"></select></label>
+  <label>zoom <input type="range" id="zoom" min="2" max="10" step="1" value="5"><span id="zoomv">5x</span></label>
+  <label>speed <input type="range" id="speed" min="10" max="200" step="5" value="100"><span id="speedv">100%</span></label>
+  <button id="play" class="on">pause</button>
+  <button id="step">step</button>
+  <button id="guides">guides</button>
+  <button id="bg">bg</button>
+  <span class="meta" id="meta"></span>
+</header>
+<main id="out"></main>
+<script>
+const ROT = {"standing": {"east": "Kestrel_Grenadier/rotations/east.png", "south-east": "Kestrel_Grenadier/rotations/south-east.png", "south": "Kestrel_Grenadier/rotations/south.png", "south-west": "Kestrel_Grenadier/rotations/south-west.png", "west": "Kestrel_Grenadier/rotations/west.png", "north-west": "Kestrel_Grenadier/rotations/north-west.png", "north": "Kestrel_Grenadier/rotations/north.png", "north-east": "Kestrel_Grenadier/rotations/north-east.png"}, "ReadyToFire_Stance": {"east": "ReadyToFire_Stance/rotations/east.png", "south-east": "ReadyToFire_Stance/rotations/south-east.png", "south": "ReadyToFire_Stance/rotations/south.png", "south-west": "ReadyToFire_Stance/rotations/south-west.png", "west": "ReadyToFire_Stance/rotations/west.png", "north-west": "ReadyToFire_Stance/rotations/north-west.png", "north": "ReadyToFire_Stance/rotations/north.png", "north-east": "ReadyToFire_Stance/rotations/north-east.png"}, "Dead_stance": {"east": "Dead_stance/rotations/east.png", "south-east": "Dead_stance/rotations/south-east.png", "south": "Dead_stance/rotations/south.png", "south-west": "Dead_stance/rotations/south-west.png", "west": "Dead_stance/rotations/west.png", "north-west": "Dead_stance/rotations/north-west.png", "north": "Dead_stance/rotations/north.png", "north-east": "Dead_stance/rotations/north-east.png"}};
+const ANIM = {"standing_idle": {"fps": 8, "loop": true, "dirs": {"east": ["Kestrel_Grenadier/animations/standing_idle/east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle/east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle/east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle/east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle/east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle/east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle/east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle/east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle/east/frame_008.png"], "south-east": ["Kestrel_Grenadier/animations/standing_idle/south-east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle/south-east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle/south-east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle/south-east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle/south-east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle/south-east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle/south-east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle/south-east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle/south-east/frame_008.png"], "south": ["Kestrel_Grenadier/animations/standing_idle/south/frame_000.png", "Kestrel_Grenadier/animations/standing_idle/south/frame_001.png", "Kestrel_Grenadier/animations/standing_idle/south/frame_002.png", "Kestrel_Grenadier/animations/standing_idle/south/frame_003.png", "Kestrel_Grenadier/animations/standing_idle/south/frame_004.png", "Kestrel_Grenadier/animations/standing_idle/south/frame_005.png", "Kestrel_Grenadier/animations/standing_idle/south/frame_006.png", "Kestrel_Grenadier/animations/standing_idle/south/frame_007.png", "Kestrel_Grenadier/animations/standing_idle/south/frame_008.png"], "south-west": ["Kestrel_Grenadier/animations/standing_idle/south-west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle/south-west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle/south-west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle/south-west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle/south-west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle/south-west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle/south-west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle/south-west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle/south-west/frame_008.png"], "west": ["Kestrel_Grenadier/animations/standing_idle/west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle/west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle/west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle/west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle/west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle/west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle/west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle/west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle/west/frame_008.png"], "north-west": ["Kestrel_Grenadier/animations/standing_idle/north-west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle/north-west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle/north-west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle/north-west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle/north-west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle/north-west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle/north-west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle/north-west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle/north-west/frame_008.png"], "north": ["Kestrel_Grenadier/animations/standing_idle/north/frame_000.png", "Kestrel_Grenadier/animations/standing_idle/north/frame_001.png", "Kestrel_Grenadier/animations/standing_idle/north/frame_002.png", "Kestrel_Grenadier/animations/standing_idle/north/frame_003.png", "Kestrel_Grenadier/animations/standing_idle/north/frame_004.png", "Kestrel_Grenadier/animations/standing_idle/north/frame_005.png", "Kestrel_Grenadier/animations/standing_idle/north/frame_006.png", "Kestrel_Grenadier/animations/standing_idle/north/frame_007.png", "Kestrel_Grenadier/animations/standing_idle/north/frame_008.png"], "north-east": ["Kestrel_Grenadier/animations/standing_idle/north-east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle/north-east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle/north-east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle/north-east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle/north-east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle/north-east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle/north-east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle/north-east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle/north-east/frame_008.png"]}}, "standing_idle_damage": {"fps": 18, "loop": false, "dirs": {"east": ["Kestrel_Grenadier/animations/standing_idle_damage/east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_damage/east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_damage/east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_damage/east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_damage/east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_damage/east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_damage/east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_damage/east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_damage/east/frame_008.png"], "south-east": ["Kestrel_Grenadier/animations/standing_idle_damage/south-east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-east/frame_008.png"], "south": ["Kestrel_Grenadier/animations/standing_idle_damage/south/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_damage/south/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_damage/south/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_damage/south/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_damage/south/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_damage/south/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_damage/south/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_damage/south/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_damage/south/frame_008.png"], "south-west": ["Kestrel_Grenadier/animations/standing_idle_damage/south-west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_damage/south-west/frame_008.png"], "west": ["Kestrel_Grenadier/animations/standing_idle_damage/west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_damage/west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_damage/west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_damage/west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_damage/west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_damage/west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_damage/west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_damage/west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_damage/west/frame_008.png"], "north-west": ["Kestrel_Grenadier/animations/standing_idle_damage/north-west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-west/frame_008.png"], "north": ["Kestrel_Grenadier/animations/standing_idle_damage/north/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_damage/north/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_damage/north/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_damage/north/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_damage/north/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_damage/north/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_damage/north/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_damage/north/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_damage/north/frame_008.png"], "north-east": ["Kestrel_Grenadier/animations/standing_idle_damage/north-east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_damage/north-east/frame_008.png"]}}, "standing_idle_reload": {"fps": 14, "loop": false, "dirs": {"east": ["Kestrel_Grenadier/animations/standing_idle_reload/east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_reload/east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_reload/east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_reload/east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_reload/east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_reload/east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_reload/east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_reload/east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_reload/east/frame_008.png"], "south-east": ["Kestrel_Grenadier/animations/standing_idle_reload/south-east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-east/frame_008.png"], "south": ["Kestrel_Grenadier/animations/standing_idle_reload/south/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_reload/south/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_reload/south/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_reload/south/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_reload/south/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_reload/south/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_reload/south/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_reload/south/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_reload/south/frame_008.png"], "south-west": ["Kestrel_Grenadier/animations/standing_idle_reload/south-west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_reload/south-west/frame_008.png"], "west": ["Kestrel_Grenadier/animations/standing_idle_reload/west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_reload/west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_reload/west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_reload/west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_reload/west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_reload/west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_reload/west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_reload/west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_reload/west/frame_008.png"], "north-west": ["Kestrel_Grenadier/animations/standing_idle_reload/north-west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-west/frame_008.png"], "north": ["Kestrel_Grenadier/animations/standing_idle_reload/north/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_reload/north/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_reload/north/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_reload/north/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_reload/north/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_reload/north/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_reload/north/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_reload/north/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_reload/north/frame_008.png"], "north-east": ["Kestrel_Grenadier/animations/standing_idle_reload/north-east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_reload/north-east/frame_008.png"]}}, "standing_idle_to_dead": {"fps": 14, "loop": false, "dirs": {"east": ["Kestrel_Grenadier/animations/standing_idle_to_dead/east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/east/frame_008.png"], "south-east": ["Kestrel_Grenadier/animations/standing_idle_to_dead/south-east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-east/frame_008.png"], "south": ["Kestrel_Grenadier/animations/standing_idle_to_dead/south/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south/frame_008.png"], "south-west": ["Kestrel_Grenadier/animations/standing_idle_to_dead/south-west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/south-west/frame_008.png"], "west": ["Kestrel_Grenadier/animations/standing_idle_to_dead/west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/west/frame_008.png"], "north-west": ["Kestrel_Grenadier/animations/standing_idle_to_dead/north-west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-west/frame_008.png"], "north": ["Kestrel_Grenadier/animations/standing_idle_to_dead/north/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north/frame_008.png"], "north-east": ["Kestrel_Grenadier/animations/standing_idle_to_dead/north-east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_dead/north-east/frame_008.png"]}}, "standing_idle_to_readyToFire": {"fps": 36, "loop": false, "dirs": {"east": ["Kestrel_Grenadier/animations/standing_idle_to_readyToFire/east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/east/frame_008.png"], "south-east": ["Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-east/frame_008.png"], "south": ["Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south/frame_008.png"], "south-west": ["Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/south-west/frame_008.png"], "west": ["Kestrel_Grenadier/animations/standing_idle_to_readyToFire/west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/west/frame_008.png"], "north-west": ["Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-west/frame_008.png"], "north": ["Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north/frame_008.png"], "north-east": ["Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_to_readyToFire/north-east/frame_008.png"]}}, "standing_idle_walk": {"fps": 18, "loop": true, "dirs": {"east": ["Kestrel_Grenadier/animations/standing_idle_walk/east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_walk/east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_walk/east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_walk/east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_walk/east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_walk/east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_walk/east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_walk/east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_walk/east/frame_008.png"], "south-east": ["Kestrel_Grenadier/animations/standing_idle_walk/south-east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-east/frame_008.png"], "south": ["Kestrel_Grenadier/animations/standing_idle_walk/south/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_walk/south/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_walk/south/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_walk/south/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_walk/south/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_walk/south/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_walk/south/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_walk/south/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_walk/south/frame_008.png"], "south-west": ["Kestrel_Grenadier/animations/standing_idle_walk/south-west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_walk/south-west/frame_008.png"], "west": ["Kestrel_Grenadier/animations/standing_idle_walk/west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_walk/west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_walk/west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_walk/west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_walk/west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_walk/west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_walk/west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_walk/west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_walk/west/frame_008.png"], "north-west": ["Kestrel_Grenadier/animations/standing_idle_walk/north-west/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-west/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-west/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-west/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-west/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-west/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-west/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-west/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-west/frame_008.png"], "north": ["Kestrel_Grenadier/animations/standing_idle_walk/north/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_walk/north/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_walk/north/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_walk/north/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_walk/north/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_walk/north/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_walk/north/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_walk/north/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_walk/north/frame_008.png"], "north-east": ["Kestrel_Grenadier/animations/standing_idle_walk/north-east/frame_000.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-east/frame_001.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-east/frame_002.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-east/frame_003.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-east/frame_004.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-east/frame_005.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-east/frame_006.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-east/frame_007.png", "Kestrel_Grenadier/animations/standing_idle_walk/north-east/frame_008.png"]}}, "standing-readyToFire_idle": {"fps": 8, "loop": true, "dirs": {"east": ["ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_000.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_001.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_002.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_003.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_004.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_005.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_006.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_007.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_008.png"], "south-east": ["ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_000.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_001.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_002.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_003.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_004.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_005.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_006.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_007.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_008.png"], "south": ["ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_000.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_001.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_002.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_003.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_004.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_005.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_006.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_007.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_008.png"], "south-west": ["ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_000.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_001.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_002.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_003.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_004.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_005.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_006.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_007.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_008.png"], "west": ["ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_000.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_001.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_002.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_003.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_004.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_005.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_006.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_007.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_008.png"], "north-west": ["ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_000.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_001.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_002.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_003.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_004.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_005.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_006.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_007.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_008.png"], "north": ["ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_000.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_001.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_002.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_003.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_004.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_005.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_006.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_007.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_008.png"], "north-east": ["ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_000.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_001.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_002.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_003.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_004.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_005.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_006.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_007.png", "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_008.png"]}}};
+const ORDER = ["east", "south-east", "south", "south-west", "west", "north-west", "north", "north-east"];
+const LAYOUT = ["north-west", "north", "north-east", "west", null, "east", "south-west", "south", "south-east"];
+const USPEC = {"name": "Kestrel_Grenadier", "canvas": 60, "dscale": 2, "footfrac": 0.75};   // {name, canvas, dscale, footfrac} for the unit shown
+const CMP = null;       // null, or the same shape + {rot, anim} for the OLD unit
+
+const $ = id => document.getElementById(id);
+const SPIN_FPS = 4;      // slow enough to read each facing as it comes round
+let zoom = 5, playing = true, speed = 1, showGuides = false, bgMode = 0;
+let cells = [];           // {imgs, frames, fps, loop, t, i}
+let last = performance.now();
+
+const setSel = $('set'), dirSel = $('dir'), viewSel = $('view');
+if (CMP) {
+  // the judge gate: old art at its density beside new art at its density
+  viewSel.add(new Option('compare old vs new', 'compare'), 0);
+  viewSel.value = 'compare';
+}
+Object.keys(ANIM).forEach(n => setSel.add(new Option(n, n)));
+ORDER.forEach(d => dirSel.add(new Option(d, d)));
+dirSel.value = 'south';
+
+// ?view=rot&set=standing_idle_walk&facing=north&zoom=6&guides=1&bg=1&paused=1
+const q = new URLSearchParams(location.search);
+if (q.has('view')) viewSel.value = q.get('view');
+if (q.has('set') && ANIM[q.get('set')]) setSel.value = q.get('set');
+if (q.has('facing')) dirSel.value = q.get('facing');
+if (q.has('zoom')) { zoom = +q.get('zoom'); $('zoom').value = zoom; $('zoomv').textContent = zoom + 'x'; }
+if (q.get('guides') === '1') { showGuides = true; $('guides').classList.add('on'); }
+if (q.has('bg')) { bgMode = +q.get('bg') % 3; $('bg').classList.toggle('on', bgMode !== 0); }
+if (q.get('paused') === '1') { playing = false; $('play').classList.remove('on'); $('play').textContent = 'play'; }
+
+// density-aware cell size: canvas texels x the unit's display scale, so a
+// legacy 60@2x and a hi-res 120@1x occupy identical pixels at the same zoom.
+// zoom 5 keeps its historical meaning: 5x texel size on a legacy sheet.
+function cellPx(spec) { return Math.round(spec.canvas * spec.dscale * zoom / 2); }
+
+function stage(px) {
+  const d = document.createElement('div');
+  d.className = 'stage';
+  d.style.width = d.style.height = px + 'px';
+  return d;
+}
+
+function addGuides(st, px, spec) {
+  if (!showGuides) return;
+  const foot = document.createElement('div');   // ground line: where the feet must land
+  foot.className = 'guide foot';
+  foot.style.top = (spec.footfrac * px) + 'px';
+  const mid = document.createElement('div');
+  mid.className = 'guide mid';
+  mid.style.left = (px / 2) + 'px';
+  st.append(foot, mid);
+}
+
+function bgClass(el) {
+  el.classList.remove('sand', 'checker');
+  if (bgMode === 1) el.classList.add('sand');
+  if (bgMode === 2) el.classList.add('checker');
+}
+
+// `labels`, when given, names each frame (the facing, for a turntable) and the
+// caption tracks it live so a paused spin still says which angle you are on
+function makeCell(label, frames, fps, loop, labels, spec, cls) {
+  spec = spec || USPEC;
+  const px = cellPx(spec);
+  const wrap = document.createElement('div');
+  wrap.className = 'cell' + (cls ? ' ' + cls : '');
+  const st = stage(px);
+  bgClass(st);
+  const imgs = frames.map((src, i) => {
+    const im = document.createElement('img');
+    im.src = src; im.alt = label + ' ' + i;
+    if (i === 0) im.className = 'show';
+    return im;
+  });
+  st.append(...imgs);
+  addGuides(st, px, spec);
+  const cap = document.createElement('div');
+  cap.className = 'cap';
+  cap.textContent = labels ? label + ' - ' + labels[0] : label;
+  wrap.append(st, cap);
+  cells.push({ imgs, n: frames.length, fps, loop, t: 0, i: 0, hold: 0,
+               cap, base: label, labels: labels || null });
+  return wrap;
+}
+
+function renderCompare(out) {
+  // states: old & new turning side by side, then the statics per facing
+  for (const name of Object.keys(ROT)) {
+    const sec = document.createElement('section');
+    const h = document.createElement('h2');
+    h.textContent = name + ' - old ' + CMP.canvas + 'px @' + CMP.dscale +
+      'x vs new ' + USPEC.canvas + 'px @' + USPEC.dscale + 'x';
+    const row = document.createElement('div');
+    row.className = 'row';
+    const oldF = CMP.rot[name] || {};
+    const newF = ROT[name] || {};
+    const seq = ORDER.filter(d => newF[d] || oldF[d]);
+    const oseq = seq.filter(d => oldF[d]), nseq = seq.filter(d => newF[d]);
+    if (oseq.length) row.append(makeCell('old', oseq.map(d => oldF[d]), SPIN_FPS, true, oseq, CMP, 'old'));
+    if (nseq.length) row.append(makeCell('new', nseq.map(d => newF[d]), SPIN_FPS, true, nseq, USPEC));
+    for (const d of seq) {
+      const pair = document.createElement('div');
+      pair.className = 'pair';
+      if (oldF[d]) pair.append(makeCell(d + ' old', [oldF[d]], 1, true, null, CMP, 'old'));
+      if (newF[d]) pair.append(makeCell(d + ' new', [newF[d]], 1, true, null, USPEC));
+      row.append(pair);
+    }
+    sec.append(h, row);
+    out.append(sec);
+  }
+  // animations: each set played through all facings, old beside new, in sync
+  for (const name of Object.keys(ANIM)) {
+    const a = ANIM[name], o = CMP.anim[name];
+    const sec = document.createElement('section');
+    const h = document.createElement('h2');
+    h.textContent = name + ' - ' + a.fps + ' fps - old vs new, all facings';
+    const row = document.createElement('div');
+    row.className = 'row';
+    const build = (src, spec, cls, cap) => {
+      const seq = ORDER.filter(d => src.dirs[d]);
+      const frames = [], labels = [];
+      seq.forEach(d => src.dirs[d].forEach((f, i) => {
+        frames.push(f); labels.push(d + ' f' + i);
+      }));
+      if (frames.length) row.append(makeCell(cap, frames, a.fps, true, labels, spec, cls));
+    };
+    if (o) build(o, CMP, 'old', 'old');
+    build(a, USPEC, null, 'new');
+    sec.append(h, row);
+    out.append(sec);
+  }
+  $('meta').textContent = 'compare: ' + CMP.name + ' (old) vs ' + USPEC.name + ' (new)';
+}
+
+function render() {
+  cells = [];
+  const out = $('out');
+  out.innerHTML = '';
+  const view = viewSel.value;
+  $('setwrap').hidden = view !== 'set';
+  $('dirwrap').hidden = view !== 'all';
+
+  if (view === 'compare' && CMP) {
+    renderCompare(out);
+  } else if (view === 'spin') {
+    // each state turns through its 8 facings in place: the view that exposes
+    // identity drift, a weapon jumping sides, or a palette shift between angles
+    const sec = document.createElement('section');
+    const h = document.createElement('h2');
+    h.textContent = 'states turning through all 8 facings - ' + SPIN_FPS + ' fps';
+    const row = document.createElement('div');
+    row.className = 'row';
+    for (const [name, frames] of Object.entries(ROT)) {
+      const seq = ORDER.filter(d => frames[d]);
+      if (seq.length) row.append(makeCell(name, seq.map(d => frames[d]), SPIN_FPS, true, seq));
+    }
+    sec.append(h, row);
+    out.append(sec);
+    $('meta').textContent = Object.keys(ROT).length + ' states turning';
+  } else if (view === 'spinanim') {
+    // play a set right through, then step to the next facing and play again
+    const sec = document.createElement('section');
+    const h = document.createElement('h2');
+    h.textContent = 'each animation played once per facing, cycling through all 8';
+    const row = document.createElement('div');
+    row.className = 'row';
+    for (const [name, a] of Object.entries(ANIM)) {
+      const seq = ORDER.filter(d => a.dirs[d]);
+      const frames = [], labels = [];
+      seq.forEach(d => a.dirs[d].forEach((f, i) => {
+        frames.push(f); labels.push(d + ' f' + i);
+      }));
+      if (frames.length) row.append(makeCell(name, frames, a.fps, true, labels));
+    }
+    sec.append(h, row);
+    out.append(sec);
+    $('meta').textContent = Object.keys(ANIM).length + ' sets x 8 facings';
+  } else if (view === 'set') {
+    const name = setSel.value, a = ANIM[name];
+    const sec = document.createElement('section');
+    const h = document.createElement('h2');
+    h.textContent = name + ' - ' + a.fps + ' fps - ' + (a.loop ? 'loop' : 'one-shot');
+    const g = document.createElement('div');
+    g.className = 'grid';
+    LAYOUT.forEach(d => {
+      if (d === null) {
+        const spacer = document.createElement('div');
+        spacer.className = 'cell center';
+        g.append(spacer);
+        return;
+      }
+      const f = a.dirs[d];
+      g.append(f ? makeCell(d, f, a.fps, a.loop) : document.createElement('div'));
+    });
+    sec.append(h, g);
+    out.append(sec);
+    $('meta').textContent = Object.keys(a.dirs).length + ' facings x ' +
+      (a.dirs[ORDER[0]] || []).length + ' frames';
+  } else if (view === 'all') {
+    const d = dirSel.value;
+    for (const [name, a] of Object.entries(ANIM)) {
+      if (!a.dirs[d]) continue;
+      const sec = document.createElement('section');
+      const h = document.createElement('h2');
+      h.textContent = name + ' - ' + a.fps + ' fps - ' + (a.loop ? 'loop' : 'one-shot');
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.append(makeCell(d, a.dirs[d], a.fps, a.loop));
+      // also lay the frames out flat so a one-shot can be read end to end
+      a.dirs[d].forEach((src, i) => {
+        row.append(makeCell('f' + i, [src], 1, true));
+      });
+      sec.append(h, row);
+      out.append(sec);
+    }
+    $('meta').textContent = Object.keys(ANIM).length + ' sets';
+  } else {
+    for (const [name, frames] of Object.entries(ROT)) {
+      const sec = document.createElement('section');
+      const h = document.createElement('h2');
+      h.textContent = name + ' / rotations';
+      const row = document.createElement('div');
+      row.className = 'row';
+      ORDER.forEach(d => { if (frames[d]) row.append(makeCell(d, [frames[d]], 1, true)); });
+      sec.append(h, row);
+      out.append(sec);
+    }
+    $('meta').textContent = Object.keys(ROT).length + ' rotation sets';
+  }
+}
+
+function tick(now) {
+  const dt = (now - last) / 1000;
+  last = now;
+  if (playing) {
+    for (const c of cells) {
+      if (c.n < 2) continue;
+      c.t += dt * c.fps * speed;
+      if (c.t >= 1) {
+        const adv = Math.floor(c.t);
+        c.t -= adv;
+        let next = c.i + adv;
+        if (!c.loop && next >= c.n - 1) {
+          // hold the final pose briefly so the ending is readable, then replay
+          next = c.n - 1;
+          c.hold += dt + adv / (c.fps * speed);
+          if (c.hold > 0.6) { next = 0; c.hold = 0; }
+        } else {
+          next %= c.n;
+        }
+        if (next !== c.i) {
+          c.imgs[c.i].classList.remove('show');
+          c.imgs[next].classList.add('show');
+          c.i = next;
+          if (c.labels) c.cap.textContent = c.base + ' - ' + c.labels[next];
+        }
+      }
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+$('zoom').oninput = e => { zoom = +e.target.value; $('zoomv').textContent = zoom + 'x'; render(); };
+$('speed').oninput = e => { speed = +e.target.value / 100; $('speedv').textContent = e.target.value + '%'; };
+$('play').onclick = e => { playing = !playing; e.target.classList.toggle('on', playing); e.target.textContent = playing ? 'pause' : 'play'; };
+$('step').onclick = () => {
+  playing = false; $('play').classList.remove('on'); $('play').textContent = 'play';
+  for (const c of cells) {
+    if (c.n < 2) continue;
+    c.imgs[c.i].classList.remove('show');
+    c.i = (c.i + 1) % c.n;
+    c.imgs[c.i].classList.add('show');
+    if (c.labels) c.cap.textContent = c.base + ' - ' + c.labels[c.i];
+  }
+};
+$('guides').onclick = e => { showGuides = !showGuides; e.target.classList.toggle('on', showGuides); render(); };
+$('bg').onclick = e => { bgMode = (bgMode + 1) % 3; e.target.classList.toggle('on', bgMode !== 0); render(); };
+viewSel.onchange = setSel.onchange = dirSel.onchange = render;
+
+render();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

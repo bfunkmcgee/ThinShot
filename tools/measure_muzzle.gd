@@ -16,7 +16,21 @@ extends SceneTree
 ## After the measured blocks it prints a delta table against the consts
 ## currently baked into scripts/Unit.gd, so hand-corrections (the southern
 ## facings, mostly - aimed at the camera, the scan lands on boots) and any
-## future drift are one glance.
+## future drift are one glance. It compares against the value this tool
+## recommends for each facing, which is the band scan wherever there is one.
+##
+## v3 adds a second opinion for the six facings that have a horizontal
+## component: the farthest-along-facing pixel is whatever sticks out most in
+## that direction, which on a tall silhouette can be the crown of the head
+## rather than the weapon. Dava's medic caught this - her north-west and
+## north-east both scanned to her hair, 12 texels above the submachine gun.
+## So each such facing also gets a BAND scan: the extreme pixel restricted to
+## the shoulder-to-waist rows, where a carried weapon always is. When the two
+## disagree the band line prints, and it is nearly always the one to bake.
+##
+## North and south get a band scan only where an entry's `levelled` key says
+## the pose was drawn with the weapon off to a flank instead of foreshortened.
+## See LEVELLED_LEFT below.
 ##
 ## Run: godot --headless --path . -s tools/measure_muzzle.gd
 
@@ -24,6 +38,26 @@ const DIRS := [
 	"east", "south-east", "south", "south-west",
 	"west", "north-west", "north", "north-east",
 ]
+
+# The band as a fraction of the figure's own height, so it holds on the 56,
+# 60 and 64 canvases alike: shoulder down to hip.
+const BAND_FROM := 0.28
+const BAND_TO := 0.66
+const BAND_SIDE := {0: 1, 1: 1, 7: 1, 4: -1, 3: -1, 5: -1}  # sector -> +right/-left
+
+# North and south are not in BAND_SIDE because a correctly drawn barrel is
+# foreshortened at or away from the camera there, leaving no flank to scan.
+# Pixel Lab often draws them levelled off sideways instead - all five Kestrels
+# came back that way and validate_unit_sprites.py check [3] flags every one -
+# and then the muzzle genuinely is out on one flank.
+#
+# Which flank is a fact about the art, so an entry states it in `levelled`
+# rather than the tool guessing. Guessing was tried: comparing how far each
+# side reaches past centre separates the north poses cleanly but not the south
+# ones, where the free arm swings out far enough to bury the signal. An entry
+# without the key measures as before, which is every shipped unit.
+const LEVELLED_LEFT := -1
+const LEVELLED_RIGHT := 1
 
 # NOTE: GOBLIN_SMG_ALT keeps offset (0,-15) here although its live
 # SPRITE_SPECS anchor is (0,-14): v1 baked the -30 screen shift into every
@@ -61,14 +95,69 @@ const AIM_STANCES := [
 	{"label": "RODAR", "canvas": 60, "scale": 2.0, "offset": Vector2(0, -15),
 		"path": "res://assets/sprites/Rodar_Akai/ReadyToFire_Stance/rotations/%s.png",
 		"unit_const": "RODAR_MUZZLE_OFFSETS"},
+	# The five specialist Kestrels. Same 60-canvas legacy density as the
+	# rifleman they were generated against, so they ride SPRITE_SPECS DEFAULT.
+	#
+	# Every one of them has its south aim pose drawn levelled to the right
+	# instead of foreshortened at the camera. Three also carry a visible weapon
+	# levelled left on north; Halvik and Fen are drawn as a plain back view with
+	# no weapon at all there, so they take the ordinary centred, head-height
+	# north that every shipped unit uses for a barrel pointing away.
+	{"label": "KESTREL_GRENADIER", "canvas": 60, "scale": 2.0, "offset": Vector2(0, -15),
+		"path": "res://assets/sprites/Kestrel_Grenadier/ReadyToFire_Stance/rotations/%s.png",
+		"levelled": {"south": LEVELLED_RIGHT, "north": LEVELLED_LEFT},
+		"unit_const": "GRENADIER_MUZZLE_OFFSETS"},
+	{"label": "KESTREL_MARKSMAN", "canvas": 60, "scale": 2.0, "offset": Vector2(0, -15),
+		"path": "res://assets/sprites/Kestrel_Marksman/ReadyToFire_Stance/rotations/%s.png",
+		"levelled": {"south": LEVELLED_RIGHT, "north": LEVELLED_LEFT},
+		"unit_const": "MARKSMAN_MUZZLE_OFFSETS"},
+	{"label": "KESTREL_BREACHER", "canvas": 60, "scale": 2.0, "offset": Vector2(0, -15),
+		"path": "res://assets/sprites/Kestrel_Breacher/ReadyToFire_Stance/rotations/%s.png",
+		"levelled": {"south": LEVELLED_RIGHT},
+		"unit_const": "BREACHER_MUZZLE_OFFSETS"},
+	{"label": "KESTREL_MEDIC", "canvas": 60, "scale": 2.0, "offset": Vector2(0, -15),
+		"path": "res://assets/sprites/Kestrel_Medic/ReadyToFire_Stance/rotations/%s.png",
+		"levelled": {"south": LEVELLED_RIGHT, "north": LEVELLED_LEFT},
+		"unit_const": "MEDIC_MUZZLE_OFFSETS"},
+	{"label": "KESTREL_TECHNICIAN", "canvas": 60, "scale": 2.0, "offset": Vector2(0, -15),
+		"path": "res://assets/sprites/Kestrel_Technician/ReadyToFire_Stance/rotations/%s.png",
+		"levelled": {"south": LEVELLED_RIGHT},
+		"unit_const": "TECHNICIAN_MUZZLE_OFFSETS"},
 ]
 
 const UNIT_GD := "res://scripts/Unit.gd"
 
 
+func _band_pixel(img: Image, side: int) -> Vector2:
+	## The extreme pixel on `side` (+1 right / -1 left) within the figure's
+	## shoulder-to-hip rows. Returns (-1, -1) if the band holds nothing.
+	var top := img.get_height()
+	var bottom := -1
+	for y in img.get_height():
+		for x in img.get_width():
+			if img.get_pixel(x, y).a > 0.5:
+				top = mini(top, y)
+				bottom = maxi(bottom, y)
+				break
+	if bottom < 0:
+		return Vector2(-1, -1)
+	var span := float(bottom - top + 1)
+	var lo := top + int(span * BAND_FROM)
+	var hi := top + int(span * BAND_TO)
+	var best := Vector2(-1, -1)
+	for y in range(lo, hi + 1):
+		for x in img.get_width():
+			if img.get_pixel(x, y).a <= 0.5:
+				continue
+			if best.x < 0 or (side > 0 and x > best.x) or (side < 0 and x < best.x):
+				best = Vector2(x, y)
+	return best
+
+
 func _measure(entry: Dictionary) -> Array:
-	## Returns [Vector2 node-space muzzle, Vector2 raw pixel] per direction,
-	## or [] where the sprite is missing.
+	## Returns [Vector2 node-space muzzle, Vector2 raw pixel, Vector2 band
+	## node-space or (INF, INF) where there is none] per direction, or [] where
+	## the sprite is missing.
 	var out: Array = []
 	var canvas: float = entry.canvas
 	var center := Vector2(canvas / 2.0, canvas / 2.0)
@@ -89,7 +178,16 @@ func _measure(entry: Dictionary) -> Array:
 						best_dot = d
 						best = Vector2(x, y)
 		var node: Vector2 = (best + entry.offset - center) * float(entry.scale)
-		out.append([node, best])
+		var band := Vector2(INF, INF)
+		var bp := Vector2(-1, -1)
+		var levelled: Dictionary = entry.get("levelled", {})
+		if BAND_SIDE.has(i):
+			bp = _band_pixel(img, BAND_SIDE[i])
+		elif levelled.has(DIRS[i]):
+			bp = _band_pixel(img, levelled[DIRS[i]])
+		if bp.x >= 0:
+			band = (bp + entry.offset - center) * float(entry.scale)
+		out.append([node, best, band])
 	return out
 
 
@@ -129,6 +227,11 @@ func _init() -> void:
 			var best: Vector2 = rows[i][1]
 			print("\tVector2(%d, %d),  # %s  px(%d, %d)" % [
 					node.x, node.y, DIRS[i], best.x, best.y])
+			var band: Vector2 = rows[i][2]
+			if band.x != INF and band != node:
+				print("\t\t# band says Vector2(%d, %d) - the scan found something"
+						% [band.x, band.y]
+						+ " outside the weapon rows, so prefer the band.")
 
 	# ---- delta vs the consts actually baked into Unit.gd -------------------
 	var baked := _baked_consts()
@@ -146,7 +249,13 @@ func _init() -> void:
 			if measured[entry.label][i].is_empty() or i >= vals.size():
 				print("\t%-12s -- missing" % DIRS[i])
 				continue
+			# Compare against what the tool would have you bake, not against the
+			# plain scan - otherwise every band-sourced facing shows a delta
+			# forever and real drift has nowhere to stand out.
 			var m_v: Vector2 = measured[entry.label][i][0]
+			var band_v: Vector2 = measured[entry.label][i][2]
+			if band_v.x != INF:
+				m_v = band_v
 			var b_v: Vector2 = vals[i]
 			var d := m_v - b_v
 			if d == Vector2.ZERO:

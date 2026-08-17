@@ -57,6 +57,12 @@ const BOLT_ROOT := "res://assets/sprites/Goblin_BoltRifle"
 const CIVILIAN_ROOT := "res://assets/sprites/Civilian"
 const RODAR_ROOT := "res://assets/sprites/Rodar_Akai"
 const SCOUT_ROOT := "res://assets/sprites/Scout"
+# The five specialist Kestrels, each a full unit of its own.
+const GRENADIER_ROOT := "res://assets/sprites/Kestrel_Grenadier"
+const MARKSMAN_ROOT := "res://assets/sprites/Kestrel_Marksman"
+const BREACHER_ROOT := "res://assets/sprites/Kestrel_Breacher"
+const MEDIC_ROOT := "res://assets/sprites/Kestrel_Medic"
+const TECHNICIAN_ROOT := "res://assets/sprites/Kestrel_Technician"
 
 # Directional pixel-art frames, indexed by 45-degree compass sector of the
 # screen-space facing vector: 0=E, 1=SE, 2=S, 3=SW, 4=W, 5=NW, 6=N, 7=NE.
@@ -468,6 +474,81 @@ const GOBLIN_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(32, -40),   # north-east
 ]
 
+# The five specialist Kestrels. Measured by tools/measure_muzzle.gd, which for
+# these units leans on its band scan far more than the shipped set did, for two
+# reasons worth knowing before touching these numbers:
+#
+#  - The plain scan takes the opaque pixel furthest along the facing, and on a
+#    tall silhouette that can be the crown of the head. Dava's northern
+#    diagonals scanned to her hair, twelve texels above the gun.
+#  - Pixel Lab drew the south and north aim poses with the weapon levelled off
+#    to one flank instead of foreshortened at or away from the camera
+#    (validate_unit_sprites.py check [3] flags all five). The muzzle really is
+#    out on that flank, so the offset follows the art rather than the ideal
+#    pose - a flash has to come out of the barrel the player can see. Halvik
+#    and Fen keep a centred north because theirs simply is not drawn there.
+# Essa's tactical rifle with an underbarrel launcher.
+const GRENADIER_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(38, -38),  # east
+	Vector2(34, -26),  # south-east (band scan)
+	Vector2(26, -30),  # south (band scan: this pose is drawn levelled, not foreshortened)
+	Vector2(-38, -26),  # south-west (band scan)
+	Vector2(-44, -38),  # west
+	Vector2(-40, -40),  # north-west (band scan)
+	Vector2(-32, -48),  # north (band scan: this pose is drawn levelled, not foreshortened)
+	Vector2(38, -40),  # north-east (band scan)
+]
+
+# Sillae's long scoped rifle - the longest reach of the five, which is why
+# east, west and both northern diagonals sit level at -42.
+const MARKSMAN_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(38, -42),  # east
+	Vector2(38, -24),  # south-east (band scan)
+	Vector2(36, -36),  # south (band scan: this pose is drawn levelled, not foreshortened)
+	Vector2(-38, -26),  # south-west (band scan)
+	Vector2(-38, -42),  # west
+	Vector2(-38, -42),  # north-west
+	Vector2(-36, -48),  # north (band scan: this pose is drawn levelled, not foreshortened)
+	Vector2(38, -42),  # north-east
+]
+
+# Halvik's shotgun, short and held low across the carrier.
+const BREACHER_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(34, -40),  # east
+	Vector2(34, -32),  # south-east (band scan)
+	Vector2(28, -40),  # south (band scan: this pose is drawn levelled, not foreshortened)
+	Vector2(-40, -32),  # south-west (band scan)
+	Vector2(-40, -38),  # west
+	Vector2(-36, -42),  # north-west (band scan)
+	Vector2(-8, -62),  # north
+	Vector2(32, -42),  # north-east (band scan)
+]
+
+# Dava's submachine gun, held tight to the chest beside the satchel.
+const MEDIC_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(32, -38),  # east
+	Vector2(30, -36),  # south-east (band scan)
+	Vector2(26, -38),  # south (band scan: this pose is drawn levelled, not foreshortened)
+	Vector2(-32, -36),  # south-west (band scan)
+	Vector2(-32, -38),  # west
+	Vector2(-28, -40),  # north-west (band scan)
+	Vector2(-26, -36),  # north (band scan: this pose is drawn levelled, not foreshortened)
+	Vector2(26, -40),  # north-east (band scan)
+]
+
+# Fen's carbine. The radio pack rides high on his back, which is why the
+# northern diagonals read further out than the weapon alone.
+const TECHNICIAN_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(34, -38),  # east
+	Vector2(32, -28),  # south-east (band scan)
+	Vector2(24, -36),  # south (band scan: this pose is drawn levelled, not foreshortened)
+	Vector2(-34, -26),  # south-west (band scan)
+	Vector2(-38, -38),  # west
+	Vector2(-30, -46),  # north-west (band scan)
+	Vector2(-8, -60),  # north
+	Vector2(28, -46),  # north-east (band scan)
+]
+
 # Per-kind sprite draw spec: the scale a kind's sheets are authored for and
 # the offset that sits its figure's feet on the diamond centre. Legacy
 # sheets have the feet ~15px below canvas centre and draw at 2x, putting a
@@ -659,25 +740,6 @@ func _ready() -> void:
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
 
-## The five specialist Kestrels wear the rifleman's sprites.
-##
-## This is a shortcut and it is written down as one (ASSETS.md). What separates
-## them is stats and perk trees - rules, which is where the difference belongs -
-## and swapping real art in later touches this function and nothing else.
-func _use_rifleman_art() -> void:
-	frames = SCOUT_FRAMES
-	aim_frames = SCOUT_AIM_FRAMES
-	walk_frames = SCOUT_WALK_FRAMES
-	idle_frames = SCOUT_IDLE_FRAMES
-	raise_frames = SCOUT_RAISE_FRAMES
-	aim_idle_frames = SCOUT_AIM_IDLE_FRAMES
-	death_frames = SCOUT_DEATH_FRAMES
-	dead_frames = SCOUT_DEAD_FRAMES
-	idle_alt_frames = SCOUT_IDLE_ALT_FRAMES
-	hurt_frames = SCOUT_HURT_FRAMES
-	reload_frames = SCOUT_RELOAD_FRAMES
-
-
 func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 	kind = p_kind
 	# Civilians count as yours: they walk out with the squad, and the Thirst
@@ -759,8 +821,9 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 		# better. Choosing at the garrison has to be a decision rather than a
 		# ranking, or the deployment screen is a formality with checkboxes.
 		#
-		# They all wear the rifleman's sprites for now - a recorded shortcut,
-		# see ASSETS.md - so the frame lines below are identical on purpose.
+		# Each has its own 8-direction set: three rotation stances and seven
+		# animation sets, generated against the shipped rifleman as the style
+		# anchor so they stand in the same world.
 		Kind.GRENADIER:
 			# Essa Vane. Carries the squad's ordnance, which is heavy: a tile
 			# slower and a little worse over the sights, for a frag the squad
@@ -772,7 +835,20 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			damage = 2
 			accuracy = 86
 			mag_size = 3
-			_use_rifleman_art()
+			frames = GRENADIER_FRAMES
+			aim_frames = GRENADIER_AIM_FRAMES
+			walk_frames = GRENADIER_WALK_FRAMES
+			idle_frames = GRENADIER_IDLE_FRAMES
+			raise_frames = GRENADIER_RAISE_FRAMES
+			aim_idle_frames = GRENADIER_AIM_IDLE_FRAMES
+			death_frames = GRENADIER_DEATH_FRAMES
+			dead_frames = GRENADIER_DEAD_FRAMES
+			hurt_frames = GRENADIER_HURT_FRAMES
+			reload_frames = GRENADIER_RELOAD_FRAMES
+			# Assigned explicitly: the field DEFAULTS to the rifleman's, so
+			# leaving it alone would have every Kestrel flashing somebody
+			# else's animation one idle cycle in seven.
+			idle_alt_frames = GRENADIER_IDLE_ALT_FRAMES
 		Kind.MARKSMAN:
 			# Sillae Vekh. Rodar's job at a Kestrel's pay grade: the reach and
 			# the damage, none of the armour, and two rounds rather than three.
@@ -784,7 +860,20 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			damage = 4
 			accuracy = 88
 			mag_size = 2
-			_use_rifleman_art()
+			frames = MARKSMAN_FRAMES
+			aim_frames = MARKSMAN_AIM_FRAMES
+			walk_frames = MARKSMAN_WALK_FRAMES
+			idle_frames = MARKSMAN_IDLE_FRAMES
+			raise_frames = MARKSMAN_RAISE_FRAMES
+			aim_idle_frames = MARKSMAN_AIM_IDLE_FRAMES
+			death_frames = MARKSMAN_DEATH_FRAMES
+			dead_frames = MARKSMAN_DEAD_FRAMES
+			hurt_frames = MARKSMAN_HURT_FRAMES
+			reload_frames = MARKSMAN_RELOAD_FRAMES
+			# Assigned explicitly: the field DEFAULTS to the rifleman's, so
+			# leaving it alone would have every Kestrel flashing somebody
+			# else's animation one idle cycle in seven.
+			idle_alt_frames = MARKSMAN_IDLE_ALT_FRAMES
 		Kind.BREACHER:
 			# Halvik Dunn. Built to go through a gate first and be standing
 			# afterwards: the deepest HP pool in the squad, bought with reach.
@@ -795,7 +884,20 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			damage = 2
 			accuracy = 84
 			mag_size = 3
-			_use_rifleman_art()
+			frames = BREACHER_FRAMES
+			aim_frames = BREACHER_AIM_FRAMES
+			walk_frames = BREACHER_WALK_FRAMES
+			idle_frames = BREACHER_IDLE_FRAMES
+			raise_frames = BREACHER_RAISE_FRAMES
+			aim_idle_frames = BREACHER_AIM_IDLE_FRAMES
+			death_frames = BREACHER_DEATH_FRAMES
+			dead_frames = BREACHER_DEAD_FRAMES
+			hurt_frames = BREACHER_HURT_FRAMES
+			reload_frames = BREACHER_RELOAD_FRAMES
+			# Assigned explicitly: the field DEFAULTS to the rifleman's, so
+			# leaving it alone would have every Kestrel flashing somebody
+			# else's animation one idle cycle in seven.
+			idle_alt_frames = BREACHER_IDLE_ALT_FRAMES
 		Kind.MEDIC:
 			# Dava Ren. The notebook is hers. She keeps the squad standing
 			# rather than putting anything down - the worst shot of the six and
@@ -806,7 +908,20 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			damage = 2
 			accuracy = 82
 			mag_size = 3
-			_use_rifleman_art()
+			frames = MEDIC_FRAMES
+			aim_frames = MEDIC_AIM_FRAMES
+			walk_frames = MEDIC_WALK_FRAMES
+			idle_frames = MEDIC_IDLE_FRAMES
+			raise_frames = MEDIC_RAISE_FRAMES
+			aim_idle_frames = MEDIC_AIM_IDLE_FRAMES
+			death_frames = MEDIC_DEATH_FRAMES
+			dead_frames = MEDIC_DEAD_FRAMES
+			hurt_frames = MEDIC_HURT_FRAMES
+			reload_frames = MEDIC_RELOAD_FRAMES
+			# Assigned explicitly: the field DEFAULTS to the rifleman's, so
+			# leaving it alone would have every Kestrel flashing somebody
+			# else's animation one idle cycle in seven.
+			idle_alt_frames = MEDIC_IDLE_ALT_FRAMES
 		Kind.TECHNICIAN:
 			# Fen Ost. Reads ground rather than holds it: the widest watch in
 			# the squad for its own turn, thin in a firefight, and the man who
@@ -818,7 +933,20 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			damage = 2
 			accuracy = 88
 			mag_size = 3
-			_use_rifleman_art()
+			frames = TECHNICIAN_FRAMES
+			aim_frames = TECHNICIAN_AIM_FRAMES
+			walk_frames = TECHNICIAN_WALK_FRAMES
+			idle_frames = TECHNICIAN_IDLE_FRAMES
+			raise_frames = TECHNICIAN_RAISE_FRAMES
+			aim_idle_frames = TECHNICIAN_AIM_IDLE_FRAMES
+			death_frames = TECHNICIAN_DEATH_FRAMES
+			dead_frames = TECHNICIAN_DEAD_FRAMES
+			hurt_frames = TECHNICIAN_HURT_FRAMES
+			reload_frames = TECHNICIAN_RELOAD_FRAMES
+			# Assigned explicitly: the field DEFAULTS to the rifleman's, so
+			# leaving it alone would have every Kestrel flashing somebody
+			# else's animation one idle cycle in seven.
+			idle_alt_frames = TECHNICIAN_IDLE_ALT_FRAMES
 		Kind.MACHINEGUNNER:
 			# Belt-fed support weapon: no single shot, a deep magazine, and
 			# the volume of fire to pin a target. Slow to reposition.
@@ -1016,6 +1144,155 @@ func has_perk(perk: String) -> bool:
 	return perks.has(perk)
 
 
+# The specialist Kestrels' own sets. No standing_idle_alt: it is optional
+# (UNIT_ASSET_SPEC.md §3) and an empty array is handled as "no variation", so
+# _load_dir_frames is simply never asked for one.
+# --- Kestrel_Grenadier ---
+static var GRENADIER_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		GRENADIER_ROOT + "/Kestrel_Grenadier/rotations")
+static var GRENADIER_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		GRENADIER_ROOT + "/ReadyToFire_Stance/rotations")
+static var GRENADIER_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		GRENADIER_ROOT + "/Dead_stance/rotations")
+static var GRENADIER_IDLE_FRAMES: Array = _load_dir_frames(
+		GRENADIER_ROOT + "/Kestrel_Grenadier/animations/standing_idle")
+static var GRENADIER_WALK_FRAMES: Array = _load_dir_frames(
+		GRENADIER_ROOT + "/Kestrel_Grenadier/animations/standing_idle_walk")
+static var GRENADIER_RAISE_FRAMES: Array = _load_dir_frames(
+		GRENADIER_ROOT + "/Kestrel_Grenadier/animations/standing_idle_to_readyToFire")
+static var GRENADIER_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		GRENADIER_ROOT + "/ReadyToFire_Stance/animations/standing-readyToFire_idle")
+static var GRENADIER_DEATH_FRAMES: Array = _load_dir_frames(
+		GRENADIER_ROOT + "/Kestrel_Grenadier/animations/standing_idle_to_dead")
+static var GRENADIER_HURT_FRAMES: Array = _load_dir_frames(
+		GRENADIER_ROOT + "/Kestrel_Grenadier/animations/standing_idle_damage")
+static var GRENADIER_RELOAD_FRAMES: Array = _load_dir_frames(
+		GRENADIER_ROOT + "/Kestrel_Grenadier/animations/standing_idle_reload")
+# No alt idle was generated. _load_dir_frames on the absent path still
+# returns the eight-slot shape with every cycle empty, which is what
+# "no variation" has to look like - _current_cycle indexes this BY
+# DIRECTION, so a flat [] is an out-of-bounds crash rather than a
+# missing animation.
+static var GRENADIER_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		GRENADIER_ROOT + "/Kestrel_Grenadier/animations/standing_idle_alt")
+
+# --- Kestrel_Marksman ---
+static var MARKSMAN_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		MARKSMAN_ROOT + "/Kestrel_Marksman/rotations")
+static var MARKSMAN_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		MARKSMAN_ROOT + "/ReadyToFire_Stance/rotations")
+static var MARKSMAN_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		MARKSMAN_ROOT + "/Dead_stance/rotations")
+static var MARKSMAN_IDLE_FRAMES: Array = _load_dir_frames(
+		MARKSMAN_ROOT + "/Kestrel_Marksman/animations/standing_idle")
+static var MARKSMAN_WALK_FRAMES: Array = _load_dir_frames(
+		MARKSMAN_ROOT + "/Kestrel_Marksman/animations/standing_idle_walk")
+static var MARKSMAN_RAISE_FRAMES: Array = _load_dir_frames(
+		MARKSMAN_ROOT + "/Kestrel_Marksman/animations/standing_idle_to_readyToFire")
+static var MARKSMAN_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		MARKSMAN_ROOT + "/ReadyToFire_Stance/animations/standing-readyToFire_idle")
+static var MARKSMAN_DEATH_FRAMES: Array = _load_dir_frames(
+		MARKSMAN_ROOT + "/Kestrel_Marksman/animations/standing_idle_to_dead")
+static var MARKSMAN_HURT_FRAMES: Array = _load_dir_frames(
+		MARKSMAN_ROOT + "/Kestrel_Marksman/animations/standing_idle_damage")
+static var MARKSMAN_RELOAD_FRAMES: Array = _load_dir_frames(
+		MARKSMAN_ROOT + "/Kestrel_Marksman/animations/standing_idle_reload")
+# No alt idle was generated. _load_dir_frames on the absent path still
+# returns the eight-slot shape with every cycle empty, which is what
+# "no variation" has to look like - _current_cycle indexes this BY
+# DIRECTION, so a flat [] is an out-of-bounds crash rather than a
+# missing animation.
+static var MARKSMAN_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		MARKSMAN_ROOT + "/Kestrel_Marksman/animations/standing_idle_alt")
+
+# --- Kestrel_Breacher ---
+static var BREACHER_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		BREACHER_ROOT + "/Kestrel_Breacher/rotations")
+static var BREACHER_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		BREACHER_ROOT + "/ReadyToFire_Stance/rotations")
+static var BREACHER_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		BREACHER_ROOT + "/Dead_stance/rotations")
+static var BREACHER_IDLE_FRAMES: Array = _load_dir_frames(
+		BREACHER_ROOT + "/Kestrel_Breacher/animations/standing_idle")
+static var BREACHER_WALK_FRAMES: Array = _load_dir_frames(
+		BREACHER_ROOT + "/Kestrel_Breacher/animations/standing_idle_walk")
+static var BREACHER_RAISE_FRAMES: Array = _load_dir_frames(
+		BREACHER_ROOT + "/Kestrel_Breacher/animations/standing_idle_to_readyToFire")
+static var BREACHER_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		BREACHER_ROOT + "/ReadyToFire_Stance/animations/standing-readyToFire_idle")
+static var BREACHER_DEATH_FRAMES: Array = _load_dir_frames(
+		BREACHER_ROOT + "/Kestrel_Breacher/animations/standing_idle_to_dead")
+static var BREACHER_HURT_FRAMES: Array = _load_dir_frames(
+		BREACHER_ROOT + "/Kestrel_Breacher/animations/standing_idle_damage")
+static var BREACHER_RELOAD_FRAMES: Array = _load_dir_frames(
+		BREACHER_ROOT + "/Kestrel_Breacher/animations/standing_idle_reload")
+# No alt idle was generated. _load_dir_frames on the absent path still
+# returns the eight-slot shape with every cycle empty, which is what
+# "no variation" has to look like - _current_cycle indexes this BY
+# DIRECTION, so a flat [] is an out-of-bounds crash rather than a
+# missing animation.
+static var BREACHER_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		BREACHER_ROOT + "/Kestrel_Breacher/animations/standing_idle_alt")
+
+# --- Kestrel_Medic ---
+static var MEDIC_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		MEDIC_ROOT + "/Kestrel_Medic/rotations")
+static var MEDIC_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		MEDIC_ROOT + "/ReadyToFire_Stance/rotations")
+static var MEDIC_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		MEDIC_ROOT + "/Dead_stance/rotations")
+static var MEDIC_IDLE_FRAMES: Array = _load_dir_frames(
+		MEDIC_ROOT + "/Kestrel_Medic/animations/standing_idle")
+static var MEDIC_WALK_FRAMES: Array = _load_dir_frames(
+		MEDIC_ROOT + "/Kestrel_Medic/animations/standing_idle_walk")
+static var MEDIC_RAISE_FRAMES: Array = _load_dir_frames(
+		MEDIC_ROOT + "/Kestrel_Medic/animations/standing_idle_to_readyToFire")
+static var MEDIC_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		MEDIC_ROOT + "/ReadyToFire_Stance/animations/standing-readyToFire_idle")
+static var MEDIC_DEATH_FRAMES: Array = _load_dir_frames(
+		MEDIC_ROOT + "/Kestrel_Medic/animations/standing_idle_to_dead")
+static var MEDIC_HURT_FRAMES: Array = _load_dir_frames(
+		MEDIC_ROOT + "/Kestrel_Medic/animations/standing_idle_damage")
+static var MEDIC_RELOAD_FRAMES: Array = _load_dir_frames(
+		MEDIC_ROOT + "/Kestrel_Medic/animations/standing_idle_reload")
+# No alt idle was generated. _load_dir_frames on the absent path still
+# returns the eight-slot shape with every cycle empty, which is what
+# "no variation" has to look like - _current_cycle indexes this BY
+# DIRECTION, so a flat [] is an out-of-bounds crash rather than a
+# missing animation.
+static var MEDIC_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		MEDIC_ROOT + "/Kestrel_Medic/animations/standing_idle_alt")
+
+# --- Kestrel_Technician ---
+static var TECHNICIAN_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		TECHNICIAN_ROOT + "/Kestrel_Technician/rotations")
+static var TECHNICIAN_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		TECHNICIAN_ROOT + "/ReadyToFire_Stance/rotations")
+static var TECHNICIAN_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		TECHNICIAN_ROOT + "/Dead_stance/rotations")
+static var TECHNICIAN_IDLE_FRAMES: Array = _load_dir_frames(
+		TECHNICIAN_ROOT + "/Kestrel_Technician/animations/standing_idle")
+static var TECHNICIAN_WALK_FRAMES: Array = _load_dir_frames(
+		TECHNICIAN_ROOT + "/Kestrel_Technician/animations/standing_idle_walk")
+static var TECHNICIAN_RAISE_FRAMES: Array = _load_dir_frames(
+		TECHNICIAN_ROOT + "/Kestrel_Technician/animations/standing_idle_to_readyToFire")
+static var TECHNICIAN_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		TECHNICIAN_ROOT + "/ReadyToFire_Stance/animations/standing-readyToFire_idle")
+static var TECHNICIAN_DEATH_FRAMES: Array = _load_dir_frames(
+		TECHNICIAN_ROOT + "/Kestrel_Technician/animations/standing_idle_to_dead")
+static var TECHNICIAN_HURT_FRAMES: Array = _load_dir_frames(
+		TECHNICIAN_ROOT + "/Kestrel_Technician/animations/standing_idle_damage")
+static var TECHNICIAN_RELOAD_FRAMES: Array = _load_dir_frames(
+		TECHNICIAN_ROOT + "/Kestrel_Technician/animations/standing_idle_reload")
+# No alt idle was generated. _load_dir_frames on the absent path still
+# returns the eight-slot shape with every cycle empty, which is what
+# "no variation" has to look like - _current_cycle indexes this BY
+# DIRECTION, so a flat [] is an out-of-bounds crash rather than a
+# missing animation.
+static var TECHNICIAN_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		TECHNICIAN_ROOT + "/Kestrel_Technician/animations/standing_idle_alt")
+
+
 static func _load_dir_frames(base: String) -> Array:
 	var result: Array = []
 	for dir_name in DIR_NAMES:
@@ -1145,6 +1422,16 @@ func muzzle_point() -> Vector2:
 			offsets = BOLT_MUZZLE_OFFSETS
 		Kind.GOBLIN_REVOLVER:
 			offsets = REV_MUZZLE_OFFSETS
+		Kind.GRENADIER:
+			offsets = GRENADIER_MUZZLE_OFFSETS
+		Kind.MARKSMAN:
+			offsets = MARKSMAN_MUZZLE_OFFSETS
+		Kind.BREACHER:
+			offsets = BREACHER_MUZZLE_OFFSETS
+		Kind.MEDIC:
+			offsets = MEDIC_MUZZLE_OFFSETS
+		Kind.TECHNICIAN:
+			offsets = TECHNICIAN_MUZZLE_OFFSETS
 	return to_global(offsets[facing_sector])
 
 

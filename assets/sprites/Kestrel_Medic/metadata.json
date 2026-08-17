@@ -1,0 +1,164 @@
+{
+  "group_id": null,
+  "states": [
+    {
+      "character": {
+        "id": "fbea93e3-9c8f-4706-8653-ff1a47a867b3",
+        "name": "Kestrel_Medic",
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "view": "low top-down",
+        "directions": 8
+      },
+      "folder": "Kestrel_Medic",
+      "frames": {
+        "rotations": {
+          "east": "rotations/east.png",
+          "south-east": "rotations/south-east.png",
+          "south": "rotations/south.png",
+          "south-west": "rotations/south-west.png",
+          "west": "rotations/west.png",
+          "north-west": "rotations/north-west.png",
+          "north": "rotations/north.png",
+          "north-east": "rotations/north-east.png"
+        },
+        "animations": {
+          "standing_idle": {
+            "east": 9,
+            "south-east": 9,
+            "south": 9,
+            "south-west": 9,
+            "west": 9,
+            "north-west": 9,
+            "north": 9,
+            "north-east": 9
+          },
+          "standing_idle_damage": {
+            "east": 9,
+            "south-east": 9,
+            "south": 9,
+            "south-west": 9,
+            "west": 9,
+            "north-west": 9,
+            "north": 9,
+            "north-east": 9
+          },
+          "standing_idle_reload": {
+            "east": 9,
+            "south-east": 9,
+            "south": 9,
+            "south-west": 9,
+            "west": 9,
+            "north-west": 9,
+            "north": 9,
+            "north-east": 9
+          },
+          "standing_idle_to_dead": {
+            "east": 9,
+            "south-east": 9,
+            "south": 9,
+            "south-west": 9,
+            "west": 9,
+            "north-west": 9,
+            "north": 9,
+            "north-east": 9
+          },
+          "standing_idle_to_readyToFire": {
+            "east": 9,
+            "south-east": 9,
+            "south": 9,
+            "south-west": 9,
+            "west": 9,
+            "north-west": 9,
+            "north": 9,
+            "north-east": 9
+          },
+          "standing_idle_walk": {
+            "east": 9,
+            "south-east": 9,
+            "south": 9,
+            "south-west": 9,
+            "west": 9,
+            "north-west": 9,
+            "north": 9,
+            "north-east": 9
+          }
+        }
+      },
+      "note": "The final frame of standing_idle_to_readyToFire in all eight directions is the ReadyToFire rotation, so the raise lands on the pose it hands off to; gaps were 39-276px. tools/seal_raise_transition.py."
+    },
+    {
+      "character": {
+        "id": "8dee178f-999a-4a87-a6e7-91ad419c7d6c",
+        "name": "ReadyToFire_Stance",
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "view": "low top-down",
+        "directions": 8
+      },
+      "folder": "ReadyToFire_Stance",
+      "frames": {
+        "rotations": {
+          "east": "rotations/east.png",
+          "south-east": "rotations/south-east.png",
+          "south": "rotations/south.png",
+          "south-west": "rotations/south-west.png",
+          "west": "rotations/west.png",
+          "north-west": "rotations/north-west.png",
+          "north": "rotations/north.png",
+          "north-east": "rotations/north-east.png"
+        },
+        "animations": {
+          "standing-readyToFire_idle": {
+            "east": 9,
+            "south-east": 9,
+            "south": 9,
+            "south-west": 9,
+            "west": 9,
+            "north-west": 9,
+            "north": 9,
+            "north-east": 9
+          }
+        }
+      },
+      "note": "The aim-idle was drawn firing in south-east frames 1-6, west frames 2-7 and south frames 1-3 and 8. Each lit frame had the burst's own bounding box grafted from the nearest unfired frame, so the frame keeps its breathing pose. tools/fix_idle_flash.py."
+    },
+    {
+      "character": {
+        "id": "ee912144-6dbd-4421-965b-38dc7c8b4d5f",
+        "name": "Dead_stance",
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "view": "low top-down",
+        "directions": 8
+      },
+      "folder": "Dead_stance",
+      "note": "All eight rotations are the final frame of standing_idle_to_dead. create_character_state left the body standing in several facings, and taking all eight from the animation also makes the hand-off exact, so the corpse cannot pop when the death animation ends. tools/check_dead_stance.py --all.",
+      "frames": {
+        "rotations": {
+          "east": "rotations/east.png",
+          "south-east": "rotations/south-east.png",
+          "south": "rotations/south.png",
+          "south-west": "rotations/south-west.png",
+          "west": "rotations/west.png",
+          "north-west": "rotations/north-west.png",
+          "north": "rotations/north.png",
+          "north-east": "rotations/north-east.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-08-17",
+  "source": "PixelLab pro, style_character_id = shipped Scout f7aac71a-11ef-43db-ab39-caffcae2431b; animations v3 frame_count 8 + keep_first_frame = 9 frames",
+  "known_deviations": [
+    "The south aim pose is drawn with the weapon levelled to the right rather than foreshortened at the camera; three of the five do the same to the left on north. validate_unit_sprites.py check [3] reports it as an advisory. The muzzle offsets in Unit.gd follow the art rather than the ideal pose, so the flash still leaves the barrel the player sees."
+  ]
+}
