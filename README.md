@@ -30,6 +30,12 @@ right place. It is the answer to being outnumbered: grenades are the only
 thing in the game that touches more than one cell, and the only damage that
 does not roll to hit.
 
+Four tiles is as far as an arm goes, and **Essa Vane does not throw hers** — the
+launcher under her barrel puts frag or smoke **five tiles out**. That is
+exactly the Thirst Marksman's reach, which is the point: she is the one soldier
+who can trade with him at his own range, and she still has to stand on his line
+to do it.
+
 A five-soldier squad, each with a job:
 
 - **Rodar Akai, Hero of the Scouts** — designated marksman and the squad's
@@ -323,7 +329,8 @@ campaign and playing again starts you with five fresh recruits.
   comes back to finish it.
 - **G** or the **Frag** button — throw a fragmentation grenade, then **click
   the tile to land it on**: the five cells it will catch light up orange
-  before you commit. Four tiles of throw range, needs line of sight.
+  before you commit. Four tiles of throw range — **five for Essa Vane**, who
+  launches hers rather than throwing them — and needs line of sight.
 - **C** or the **Smoke** button — throw a smoke grenade the same way (the
   preview turns pale). Lays a cloud that blinds both sides.
 - **R** or the **Reload** button — refill a scout's magazine. Costs the move,
@@ -563,7 +570,7 @@ the briefing table before every mission:
 | Kestrel | Role | The trade |
 |---|---|---|
 | **Josen Marr** | Rifleman | The baseline. 8 HP, move 5, range 4, 90% |
-| **Essa Vane** | Grenadier | A tile slower and 86%, for a frag the squad would not otherwise have |
+| **Essa Vane** | Grenadier | A tile slower and 86%, for a frag the squad would not otherwise have — and the only arm that puts one five tiles out |
 | **Sillae Vekh** | Marksman | Six tiles and 4 damage, on six HP and two rounds |
 | **Halvik Dunn** | Breacher | 11 HP, the deepest pool there is — and range 3, so he has to close |
 | **Dava Ren** | Medic | The worst shot of the six, and the only one who arrives able to patch a wound |

@@ -277,6 +277,61 @@ static func reaction_interrupts(hit: bool) -> bool:
 	return hit
 
 
+# --- Thrown ordnance ----------------------------------------------------------
+
+## How far a soldier can put a grenade, in tiles, before line of sight is
+## consulted.
+##
+## Everyone throws it by arm. Essa Vane does not: her rifle carries a launcher
+## under the barrel, which is drawn on every one of her eight facings, and a
+## launched round goes a tile further than a thrown one. That is the whole
+## rule, and it covers smoke as well as frag - it is one launcher, and screening
+## a crossing from further back is as much of her job as breaking up a cluster.
+##
+## FIVE, and the tile it sits on is the Thirst's longest reach rather than the
+## squad's. That distinction is the whole of the balance and it is easy to get
+## backwards: comparing the launcher to Rodar's six-tile battle rifle looks like
+## parity and is not, because his six rolls to hit and is halved by cover while
+## a frag does neither. The number that decides whether a grenade is FREE is how
+## far the enemy can answer, and the longest weapon the Thirst owns is the
+## Marksman's bolt rifle at five.
+##
+## So five is the last tile from which she still has to stand on his line. Six
+## would have been the first from which she never does - and against everything
+## else on the board those two tiles are worth nothing, because every mobile
+## goblin threatens seven or eight (move plus weapon) and both numbers sit well
+## inside that. The Marksman is the exception only because reloading costs his
+## move and his magazine holds one, so once he starts firing he is rooted at
+## exactly five.
+##
+## Measured before it was chosen: at six, every one of the seven shipped maps
+## offers cells with line of sight to the Marksman's post at range six and
+## outside his own five - between three and ten of them per map. At five there
+## are none, on any map, by construction. Six does not make her better at
+## grenades; it makes her immune to the one enemy the campaign builds toward,
+## whom README answers with smoke and broken line of sight.
+##
+## What keeps the rest honest is not the tile count anyway. Frags carry no hit
+## roll and ignore cover, so the real levers are the pool - TWO for an entire
+## battle, three with her perk, shared by the whole squad - and the line of
+## sight every throw still needs.
+##
+## Takes the raw Kind ordinal for the same two reasons never_breaks() does: it
+## keeps Unit out of this file's signatures, and saves speak in ordinals anyway.
+const THROW_RANGE := 4
+const LAUNCHER_RANGE := 5
+const KIND_GRENADIER := 10
+
+static func throw_range(kind: int) -> int:
+	return LAUNCHER_RANGE if kind == KIND_GRENADIER else THROW_RANGE
+
+
+## True where a kind puts ordnance further than an arm can throw it, for the
+## places that want to say so rather than compare two numbers.
+static func has_launcher(kind: int) -> bool:
+	return throw_range(kind) > THROW_RANGE
+
+
 # --- Morale ------------------------------------------------------------------
 #
 # There was no morale in this game. Suppression is a pin, not a fear: it costs

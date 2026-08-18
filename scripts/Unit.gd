@@ -856,6 +856,15 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			# slower and a little worse over the sights, for a frag the squad
 			# would not otherwise have (the grenadier perk, which she starts
 			# with) and the pockets to work with it.
+			#
+			# She also LAUNCHES it rather than throwing it - five tiles against
+			# everyone else's four, frag and smoke alike, off the launcher drawn
+			# under her barrel. Five is the Thirst Marksman's reach, so it is
+			# the last tile from which she still has to stand on his line; the
+			# reasoning is written out in full at Rules.throw_range(), which is
+			# also where the number lives. It is not a field here because it is
+			# a rule about ordnance rather than a property of her body, and
+			# because this file cannot name Rules.
 			max_hp = 8
 			move_range = 4
 			attack_range = 4

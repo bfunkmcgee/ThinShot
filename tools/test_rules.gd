@@ -5,7 +5,9 @@ extends SceneTree
 ## wall placed where the rule needs a wall, rather than whichever rock a
 ## shipped level happens to have near a spawn.
 ##
-## Eight things are checked, and they are the ones the game rests on:
+## Eleven things are checked, and they are the ones the game rests on. The
+## numbering matches what the run prints, which is why it skips 8 - that sweep
+## lives in tools/check_cover_rules.gd, where it can run over the shipped maps:
 ##   1. flanking and cover are mutually exclusive - a flanked target has NONE,
 ##      takes the flank bonus, and does NOT also charge the full-cover penalty
 ##   2. the long-shot threshold is `attack_range / 2` in INTEGER division, so a
@@ -20,6 +22,12 @@ extends SceneTree
 ##      shooter, facing and arc width, and against the spelling effective_cover
 ##      had before it was decomposed - so the AI, which can only ask the
 ##      cell-and-facing form, is scoring what the resolver will apply
+##      (in tools/check_cover_rules.gd, over all seven shipped maps)
+##   9. a broken unit surrenders where somebody can take it and runs where
+##      nobody can, and the Marksman does neither
+##  10. a clean kill costs nothing; every other conduct is priced
+##  11. the grenadier alone puts ordnance further than an arm can throw it,
+##      and not further than the Thirst's longest weapon can answer
 ##
 ## Nothing here needs a scene, a save, or a turn. Board's spatial predicates run
 ## on a detached `Board.new()` (tools/check_cover_rules.gd sweeps all seven maps
@@ -46,6 +54,10 @@ const KIND_CIVILIAN := 8
 const KIND_NAMES: Array[String] = [
 	"SCOUT", "TEAM_LEAD", "MACHINEGUNNER", "GOBLIN", "GOBLIN_SMG",
 	"GOBLIN_SMG_ALT", "GOBLIN_REVOLVER", "GOBLIN_BOLT", "CIVILIAN", "HERO",
+	# The five specialist Kestrels. Listed so the sweeps below actually reach
+	# them - every one of these is indexed BY ORDINAL, so a short table does
+	# not fail, it silently stops checking at HERO.
+	"GRENADIER", "MARKSMAN", "BREACHER", "MEDIC", "TECHNICIAN",
 ]
 
 var _failed := false
@@ -275,6 +287,7 @@ func _run() -> void:
 	_test_preview_matches_resolution()
 	_test_morale()
 	_test_conduct()
+	_test_throw_range()
 
 	print("\nRESULT: ", "FAIL" if _failed else "PASS")
 	quit(1 if _failed else 0)
@@ -830,7 +843,7 @@ func _test_morale() -> void:
 	# for every kind. This is what lets the controller ask one question.
 	var overlap: Array[String] = []
 	var gap: Array[String] = []
-	for kind in 10:
+	for kind in KIND_NAMES.size():
 		for m in range(0, int(_k.MORALE_MAX) + 1):
 			for g in 4:
 				var s: bool = _rules.call("breaks_to_surrender", kind, m, g)
@@ -852,10 +865,12 @@ func _test_morale() -> void:
 	_check(_rules.call("never_breaks", bolt),
 			"the Marksman never breaks - the kill floor has somebody standing on it")
 	var breakers := 0
-	for kind in 10:
+	for kind in KIND_NAMES.size():
 		if not _rules.call("never_breaks", kind):
 			breakers += 1
-	_check(breakers == 9, "and he is the only one (%d of 10 can break)" % breakers)
+	_check(breakers == KIND_NAMES.size() - 1,
+			"and he is the only one (%d of %d can break)"
+			% [breakers, KIND_NAMES.size()])
 	_check(not _rules.call("breaks_to_surrender", bolt, 0, 9)
 			and not _rules.call("breaks_to_rout", bolt, 0, 9),
 			"at zero morale with nine guns on him he still does neither")
@@ -929,3 +944,76 @@ func _test_conduct() -> void:
 	_check(int(game_consts["STANDING_START"]) == int(_k.STANDING_START),
 			"Game.STANDING_START matches Rules' (%d)"
 			% int(game_consts["STANDING_START"]))
+
+
+# --- 11. the grenadier launches, everybody else throws ------------------------
+
+func _test_throw_range() -> void:
+	print("
+[11] ordnance goes further out of a launcher than out of an arm")
+	var thrown: int = int(_k.THROW_RANGE)
+	var launched: int = int(_k.LAUNCHER_RANGE)
+	var grenadier: int = int(_k.KIND_GRENADIER)
+
+	# Rules spells the ordinal by hand, for the reason never_breaks() does, so
+	# something has to keep the literal honest. Read the REAL enum to do it:
+	# comparing it against KIND_NAMES below would compare one hand-written
+	# table against another, and an insertion above GRENADIER would move the
+	# enum while leaving both literals agreeing with each other. The visible
+	# symptom of that is the medic lobbing a frag five tiles.
+	var kinds: Dictionary = _units.get_script_constant_map()["Kind"]
+	_check(grenadier == int(kinds["GRENADIER"]),
+			"Rules.KIND_GRENADIER (%d) is Essa Vane's real ordinal (%d)"
+			% [grenadier, int(kinds["GRENADIER"])])
+	# And the mirror this file sweeps with has to match the enum too, or every
+	# ordinal-indexed check in the file is reading stale labels.
+	_check(KIND_NAMES.size() == kinds.size(),
+			"KIND_NAMES covers every Kind (%d of %d)"
+			% [KIND_NAMES.size(), kinds.size()])
+	var mislabelled: Array[String] = []
+	for name: String in kinds:
+		var ord_: int = int(kinds[name])
+		if ord_ >= KIND_NAMES.size() or KIND_NAMES[ord_] != name:
+			mislabelled.append("%d should be %s" % [ord_, name])
+	_check(mislabelled.is_empty(), "...and names each one correctly (%s)"
+			% [mislabelled])
+
+	_check(launched > thrown,
+			"a launched round outreaches a thrown one (%d vs %d)"
+			% [launched, thrown])
+
+	# Exactly one kind launches. Swept rather than spot-checked, because the
+	# failure that matters is a SECOND kind quietly picking it up.
+	var launchers: Array[String] = []
+	for kind in KIND_NAMES.size():
+		var reach: int = int(_rules.call("throw_range", kind))
+		var claims: bool = bool(_rules.call("has_launcher", kind))
+		_check(claims == (reach > thrown),
+				"%s: has_launcher agrees with throw_range" % KIND_NAMES[kind])
+		if reach != thrown:
+			launchers.append("%s=%d" % [KIND_NAMES[kind], reach])
+	_check(launchers == ["GRENADIER=%d" % launched],
+			"the grenadier alone throws further than %d (got %s)"
+			% [thrown, launchers])
+
+	# The design claim in Rules' comment, pinned against the side of the board
+	# it is actually about: the launcher must not clear the longest weapon the
+	# THIRST owns, because that is the range at which a grenade stops being a
+	# trade and starts being free. Pinning it against the squad's own rifles
+	# instead - which the first draft of this test did - measures the wrong two
+	# numbers, and would have let the launcher outreach every enemy on the board
+	# while still reporting ok.
+	var enemy_reach := 0
+	var enemy_who := ""
+	for kind in KIND_NAMES.size():
+		var u: Node2D = _mk(kind, Vector2i.ZERO)
+		if int(u.team) == 1 and int(u.attack_range) > enemy_reach:
+			enemy_reach = int(u.attack_range)
+			enemy_who = KIND_NAMES[kind]
+		u.free()
+	_check(enemy_reach > 0, "found the Thirst's longest weapon (%s at %d)"
+			% [enemy_who, enemy_reach])
+	_check(launched <= enemy_reach,
+			("the launcher's %d does not clear the Thirst's longest weapon "
+			+ "(%s at %d) - at %d she would never have to stand on his line")
+			% [launched, enemy_who, enemy_reach, enemy_reach + 1])

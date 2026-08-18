@@ -40,6 +40,7 @@ const KIND_SCOUT := 0
 const KIND_TEAM_LEAD := 1
 const KIND_MACHINEGUNNER := 2
 const KIND_HERO := 9
+const KIND_GRENADIER := 10
 const TEAM_SCOUT := 0
 const TEAM_GOBLIN := 1
 const STATE_GAME_OVER := 3  # Battle.State
@@ -296,6 +297,57 @@ func _run() -> void:
 	battle.select(plain)
 	_check(not battle.ability_1_button.visible and not battle.ability_2_button.visible,
 			"a soldier with no actives shows no ability buttons")
+
+	print("
+  the launcher, against the real board and the real gate")
+	# _can_target_throw is the one line the launcher change actually altered,
+	# and no Rules-level test can see it: revert that line to a flat constant
+	# and every arithmetic assertion in test_rules.gd still passes. So ask the
+	# booted Battle itself, on the level it is standing on.
+	#
+	# Two units differing ONLY in kind, on the same cell, so board, geometry and
+	# line of sight are identical and the kind is the whole experiment. The
+	# grenadier is synthesised beside the squad rather than deployed with it:
+	# the crafted roster above is shaped for the ability-button checks, and
+	# swapping a member would quietly change what those assert.
+	var throw_scene := load("res://scenes/Unit.tscn") as PackedScene
+	var throw_script := load("res://scripts/Rules.gd") as GDScript
+	var throw_rules := throw_script.get_script_constant_map()
+	var thrown_reach := int(throw_rules["THROW_RANGE"])
+	var launched_reach := int(throw_rules["LAUNCHER_RANGE"])
+	var launcher: Node2D = _mk(throw_scene, KIND_GRENADIER, [])
+	launcher.cell = plain.cell
+	var only_launcher: Array[Vector2i] = []
+	var only_rifleman: Array[Vector2i] = []
+	var near_disagreements := 0
+	var wrong_band := 0
+	for y in battle.board.size.y:
+		for x in battle.board.size.x:
+			var c := Vector2i(x, y)
+			var by_rifle: bool = battle._can_target_throw(plain, c)
+			var by_launcher: bool = battle._can_target_throw(launcher, c)
+			if by_rifle == by_launcher:
+				continue
+			var d: int = Board.manhattan(plain.cell, c)
+			if by_rifle:
+				only_rifleman.append(c)
+				continue
+			only_launcher.append(c)
+			if d <= thrown_reach:
+				near_disagreements += 1
+			elif d > launched_reach:
+				wrong_band += 1
+	_check(only_rifleman.is_empty(),
+			"the launcher reaches everywhere an arm does (rifleman-only: %s)"
+			% [only_rifleman.slice(0, 3)])
+	_check(near_disagreements == 0,
+			"...they agree on every cell within %d tiles" % thrown_reach)
+	_check(wrong_band == 0,
+			"...and she reaches nothing beyond %d" % launched_reach)
+	_check(not only_launcher.is_empty(),
+			"the launcher buys real ground on this map (%d cell(s) at %d-%d tiles)"
+			% [only_launcher.size(), thrown_reach + 1, launched_reach])
+	launcher.free()
 
 	print("\n  walking fire and quick hands")
 	mg.moved = true

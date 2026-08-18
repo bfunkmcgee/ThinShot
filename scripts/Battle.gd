@@ -224,7 +224,8 @@ const SUSTAIN_VOLUME := -13.0
 # Thrown ordnance - the squad's edge, and the one thing the Thirst has no
 # answer to. Carried as a shared pool rather than per soldier, so the decision
 # is "is this the moment" rather than "which pocket".
-const THROW_RANGE := 4       # tiles from the thrower, needs line of sight
+# How far ordnance goes is Rules.throw_range(kind) - it varies by soldier now
+# that the grenadier launches hers rather than throwing it.
 # Half-width of the square a grenade covers: 1 gives the 3x3 footprint.
 const BLAST_RADIUS := 1
 const FRAG_DAMAGE := 3       # no hit roll and cover does not stop it
@@ -1349,13 +1350,24 @@ func _update_unit_panel() -> void:
 			panel_status_label.text = "PICK CALLED SHOT TARGET"
 			panel_status_label.modulate = Color("ffb84a")
 			return
+	# Both throw lines quote their reach, the way the overwatch line above does
+	# and for the same reason: the action's range is not the weapon's, and the
+	# stat line two lines up is already showing the player "Rng 4" off the rifle.
+	# Without this the grenadier's launcher is a rule with no readout - she
+	# reaches further than the number on screen and nothing says so, so a player
+	# who has learnt "grenades go four tiles" simply never sweeps the cursor out
+	# to the fifth.
 	if aim_mode == AimMode.THROW_FRAG and unit == selected:
-		panel_status_label.text = "PICK FRAG TARGET - %d CROSS / %d CORNERS" % [
+		panel_status_label.text = "%s FRAG - %d TILES - %d CROSS / %d CORNERS" % [
+				"LAUNCH" if Rules.has_launcher(unit.kind) else "THROW",
+				Rules.throw_range(unit.kind),
 				FRAG_DAMAGE, maxi(FRAG_DAMAGE - FRAG_FALLOFF, 1)]
 		panel_status_label.modulate = Color("ff8a3c")
 		return
 	if aim_mode == AimMode.THROW_SMOKE and unit == selected:
-		panel_status_label.text = "PICK SMOKE TARGET"
+		panel_status_label.text = "%s SMOKE - %d TILES" % [
+				"LAUNCH" if Rules.has_launcher(unit.kind) else "THROW",
+				Rules.throw_range(unit.kind)]
 		panel_status_label.modulate = Color("cfd4d8")
 		return
 	if aim_mode != AimMode.NONE and unit == selected:
@@ -2632,7 +2644,7 @@ func _detonate_drums(blast: Dictionary) -> Dictionary:
 ## behind is the whole point.
 func _can_target_throw(thrower: Unit, cell: Vector2i) -> bool:
 	return board.in_bounds(cell) and not board.is_blocker(cell) \
-			and Board.manhattan(thrower.cell, cell) <= THROW_RANGE \
+			and Board.manhattan(thrower.cell, cell) <= Rules.throw_range(thrower.kind) \
 			and board.has_line_of_sight(thrower.cell, cell)
 
 
