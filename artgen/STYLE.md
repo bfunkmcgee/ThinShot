@@ -291,6 +291,61 @@ Every accepted deviation from this document gets a dated line here — this is
 the anti-drift mechanism. Style questions are settled by appending, never by
 silent edits above.
 
+- **2026-08-18** — **Machinegunner repointed to the `Hero_MachineGunner`
+  set.** Brukk Meshan (`Unit.Kind.MACHINEGUNNER`, raw ordinal 2) now draws
+  `assets/sprites/Hero_MachineGunner/`, which had sat imported and referenced
+  by zero `.gd`/`.tscn` files since 2026-08-15. **The folder name is
+  historical and it misleads:** `Hero_MachineGunner/` is the PixelLab
+  "Hero_bandana" group and it is *Brukk's* art. `Kind.HERO` (ordinal 9) is
+  Rodar Akai, whose art is `Rodar_Akai/`. Read the metadata.json line in the
+  2026-08-15 scaffolding entry below with that correction in hand — "shipped
+  hero art" there means this machinegunner set, not the hero's. The set is
+  **canonical layout** (UNIT_ASSET_SPEC.md §4): unit folder
+  `Hero_MachineGunner/`, base state nested one level below it as
+  `Hero_MachineGunner/Hero_MachineGunner/` (`rotations/` plus seven
+  `animations/` sets), with `ReadyToFire_Stance/` and `Dead_stance/` at the
+  top level and the aim-idle spelled `standing-readyToFire_idle`. That nesting
+  is why `Unit.gd` carries two consts: `MG_ROOT` for the two top-level
+  stances, `MG_BASE` (= `MG_ROOT + "/Hero_MachineGunner"`) for the base
+  rotations and animations. Measured: 600 PNGs, all 60×60, 8 animation sets,
+  palette max 48 colours, feet 14 px below canvas centre in all 8 standing
+  rotations — bbox-identical to the Scout set's, so `SPRITE_SPECS` DEFAULT
+  still applies and `MACHINEGUNNER` needs no entry. Its ReadyToFire stance
+  sits 1 texel higher than its own standing stance (feet 13 in seven facings,
+  16 on south); the outgoing `Scout_MachineGunner`'s was 14 → 14/17. The
+  project gate wants 12–16, so the swap moves that stance **into** spec
+  (13–16 passes, 14–17 failed). `GUNNER_MUZZLE_OFFSETS` re-measured with
+  `measure_muzzle.gd`'s GUNNER entry repointed to the Hero aim rotations:
+  7 of 8 facings now measure exactly and only "south" carries the documented
+  hand-correction, per the Rodar/Scout precedent (the scan lands on boots
+  there). **Ejecta repaired before shipping** — the aim-idle threw *detached*
+  debris: a 35 px object beside him for 5 frames of 9 in north-west, and a
+  puff drifting off in east. Both deleted rather than grafted back, because a
+  disconnected lump cannot take a pixel of the soldier with it;
+  `tools/fix_idle_flash.py` grew a third "debris" detector for the case. The
+  standing rule this enforces: **an idle loop must not show the weapon
+  working.** ReadyToFire idle is a soldier holding aim — muzzle flash, smoke
+  and ejected brass belong to the firing beat, and on a loop they read as the
+  gun going off forever. The retired `Scout_MachineGunner/` set **stays on
+  disk on purpose**: with `Scout/` and `Scout_TeamLead/` it is the generic
+  Kestrel troop art — bodies for cut scenes, for making a garrison feel
+  inhabited, and for missions where another squad fights alongside the
+  player's. It only stops backing a named soldier. (Its 688-PNG count is 600
+  plus 88 top-level duplicates: `Dead_Stance/` and `ReadyToFire_Stance/` are
+  byte-identical copies of the nested ones.) New checks, all in `tools/`:
+  `check_unit_art.gd` asserts every `Unit.Kind` actually loaded its 11 frame
+  sets — the loaders fail silently, so nothing caught an empty set before;
+  `check_res_case.py` asserts every `res://` asset path matches the disk's own
+  casing, because Windows resolves a wrong case at the OS level and a
+  mis-cased path works locally and breaks only in an exported PCK;
+  `check_unit_complete.py` was matching stance folder names case-sensitively
+  and so picked `Scout_MachineGunner`'s `Dead_Stance` (capital S) as the base
+  state, reporting PASS over 96 of that unit's 688 files — now
+  case-insensitive, it reads 8 animation sets / 600 PNGs there. Watch items,
+  older art, not fixed and nobody asked: `Rodar_Akai`'s aim-idle north-west
+  frame 8 carries a 13 px white smoke puff, and `Goblin_revolver`'s east
+  aim-idle grows one behind his head across frames 2–6 — same defect family
+  as the ejecta above.
 - **2026-08-15** — **HD Rodar + Scout REVERTED by user verdict** — the art
   direction was rejected at the in-game gate (models/animations), overruling
   the earlier judge accepts below. Both 60px originals restored exactly from

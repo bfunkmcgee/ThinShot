@@ -68,12 +68,36 @@ worth more than a fourth goblin.
 | 18 | **Thirst claim-stakes / well-markers** — 48×48, ideally with a 9-frame sway | The Thirst is a dispossessed people with a grievance on record, and nothing on the map says so. Staked claim-markers and Assembly tally-boards around the Scrapline would sell it - the Charter made visible on the ground they are fighting over. | drop-in |
 | 19 | **Sandstorm overlay** — tileable band or a few drifting sheets | Weather that **cuts sight range** — reusing the exact `has_line_of_sight` path smoke already goes through, so it is far cheaper than it sounds, and it makes a mission feel like a different fight. | medium |
 | ~~20~~ | ~~**Kestrel specialist sprites**~~ — **done** | All five are generated, validated and wired: Essa Vane (grenadier), Sillae Vekh (marksman), Halvik Dunn (breacher), Dava Ren (medic), Fen Ost (technician). Each is a full unit — 3 rotation stances and 7 animation sets across 8 directions, 528 PNGs — generated against the shipped rifleman as the style anchor, with its own `*_MUZZLE_OFFSETS` in `Unit.gd`. `_use_rifleman_art` is gone. Known deviation, recorded in each `metadata.json`: the south aim pose is drawn with the weapon levelled to one flank rather than foreshortened at the camera, and the muzzle offsets follow the art so the flash still leaves the barrel. | shipped |
+| ~~21~~ | ~~**Brukk Meshan's own machinegunner art**~~ — **done** | The squad's heaviest weapon was drawn by the generic `Scout_MachineGunner` set, so the gunner read as a rifleman. He now draws `assets/sprites/Hero_MachineGunner/` — 600 PNGs, 8 animation sets, 60×60 on the canonical layout, feet 14px below centre in all eight standing rotations, so `SPRITE_SPECS` needs no entry for him at all. The swap also brought his aim stance into the project's 12–16 foot gate (13–16, where the old set failed at 14–17), and `GUNNER_MUZZLE_OFFSETS` was re-measured off the new aim rotations — 7 of 8 facings exact, south hand-corrected. The folder name is historical, and a trap: it is the PixelLab `Hero_bandana` group, so `Hero_MachineGunner/` is `Kind.MACHINEGUNNER`, while `Kind.HERO` is Rodar Akai in `Rodar_Akai/`. | shipped |
 
 ## Tier 5 — polish
 
 - **Corpse variants** per goblin type so a battlefield reads as a battlefield.
 - **Muzzle-flash sprites** — everything combat-related is code-drawn today; hand-drawn flashes would sharpen the shooting.
 - **Night / dusk palettes** of the floor sheets, for a dawn assault on Outpost 7 that actually looks like dawn.
+
+## Art that is kept on purpose
+
+Read this before deleting anything under `assets/sprites/`. A folder that no
+`.gd` or `.tscn` file names is **not** proof of dead art.
+
+`Scout/`, `Scout_TeamLead/` and `Scout_MachineGunner/` are the **generic Kestrel
+troops**, and all three are kept deliberately. They are the bodies for cut
+scenes, for making a garrison feel inhabited, and for missions where another
+squad fights alongside the player's. Two of them still back a kind directly:
+`Scout` is `Kind.SCOUT` (Josen Marr and the line riflemen), and
+`Scout_TeamLead` is `Kind.TEAM_LEAD` — legacy, since Rodar Akai took the lead
+slot and it is never recruited again, but still reachable. Only
+`Scout_MachineGunner` stopped backing a named soldier, when #21 above landed,
+and it stays for the same reason as the other two. The enum comment at the top
+of [Unit.gd](scripts/Unit.gd) says the same thing where a reader of the code
+will hit it.
+
+One measured detail, so the file counts do not mislead a future tidy-up:
+`Scout_MachineGunner` holds 688 PNGs against `Hero_MachineGunner`'s 600 only
+because its top-level `Dead_Stance/` and `ReadyToFire_Stance/` are
+byte-identical duplicates of the nested copies — 88 files that are copies, not
+extra art.
 
 ---
 

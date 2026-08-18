@@ -25,7 +25,23 @@ FRAMES = 9
 # The base state is called `Idle` in a downloaded bundle and is renamed after
 # the unit on assembly (UNIT_ASSET_SPEC.md §4), so it is found rather than
 # named and this works on a staging tree or a shipped one.
+#
+# Matched CASE-INSENSITIVELY, and that is not fussiness. Scout_MachineGunner
+# spells its corpse folder `Dead_Stance` with a capital S. Under a
+# case-sensitive compare that name is not in this list, so it is not excluded -
+# and because it sorts first it was picked AS the base state, whereupon the tool
+# looked for animations underneath it, found none, and reported
+# "1 animation set(s), 96 png(s) on disk, 96 expected / RESULT: PASS".
+# A green tick covering 96 of that unit's 688 files is worse than no tick.
 STATIC_SETS = ["ReadyToFire_Stance", "Dead_stance"]
+_STATIC_LOWER = {s.lower() for s in STATIC_SETS}
+
+
+def _find_state(root: Path, name: str) -> Path:
+    """The named stance folder as it is actually spelled on disk."""
+    hit = next((d for d in sorted(root.iterdir())
+                if d.is_dir() and d.name.lower() == name.lower()), None)
+    return hit if hit is not None else root / name
 
 
 def main() -> None:
@@ -36,17 +52,26 @@ def main() -> None:
     total = 0
 
     base = next((d for d in sorted(root.iterdir())
-                 if d.is_dir() and d.name not in STATIC_SETS
+                 if d.is_dir() and d.name.lower() not in _STATIC_LOWER
                  and (d / "rotations").is_dir()), None)
     if base is None:
         sys.exit("no base state (a folder with rotations/) under %s" % root)
     rotation_sets = [base.name + "/rotations"] + \
-                    [s + "/rotations" for s in STATIC_SETS]
+                    [_find_state(root, s).name + "/rotations" for s in STATIC_SETS]
 
     for rel in rotation_sets:
         d = root / rel
         if not d.is_dir():
-            problems.append("%s: MISSING FOLDER" % rel)
+            # Three shipped sets predate the naming convention and spell their
+            # stances freehand - Scout has `Standing_Ready_to_fire_stance`,
+            # Scout_TeamLead has `Solider_aims_his_rif` and
+            # `Solider_is_dead_with`, Civilian has `Cower_stance`. This tool is
+            # the gate for NEW art (UNIT_ASSET_SPEC.md §4 names the folders), so
+            # it does not translate them; say which it is, because "MISSING" on
+            # a set whose art is all present reads as a data loss it is not.
+            problems.append("%s: NOT ON THE CANONICAL LAYOUT (no such folder; a "
+                            "pre-convention set may spell this stance freehand)"
+                            % rel)
             continue
         for name in ORDER:
             if (d / ("%s.png" % name)).exists():
@@ -55,7 +80,7 @@ def main() -> None:
                 problems.append("%s/%s.png missing" % (rel, name))
 
     anim_roots = [base / "animations",
-                  root / "ReadyToFire_Stance" / "animations"]
+                  _find_state(root, "ReadyToFire_Stance") / "animations"]
     sets = 0
     for ar in anim_roots:
         if not ar.is_dir():

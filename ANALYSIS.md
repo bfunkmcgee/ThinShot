@@ -160,7 +160,7 @@ Lines [17-193](scripts/Battle.gd#L17) are pure texture tables and pixel offsets;
 
 ### Visual improvements, ranked
 
-1. **Re-quantize Scout and Goblin_SMG_alt.** Measured max distinct opaque colours in one 60×60 sprite: **Scout 387, Goblin_SMG_alt 396**, against Goblin 72, Goblin_SMG 61, Civilian 36, Rodar_Akai 50, Hero_MachineGunner 48. `Scout/south-east.png` has 410 opaque pixels and 335 colours, 285 of them used exactly once, top-5 = 6% of pixels; `Goblin/south-east.png` has 71 colours with top-5 = 61%. The project's own gate already encodes the rule — `PALETTE_MAX = 80` at [tools/validate_unit_sprites.py:45](tools/validate_unit_sprites.py#L45) — and these two sets are the only ones that fail it. UNIT_ASSET_SPEC.md documents the deviation explicitly ("the Scout is noisier at ~335... Aim for the Goblin end"), so it is known and shipped. At 2× nearest-neighbour every noise pixel becomes a 2×2 screen block, so three of five player soldiers and the raider that spawns on all seven missions read as muddy dither next to clean flat goblins. `Image.quantize(colors=64, method=MEDIANCUT, dither=NONE)` against a fixed desert palette, then re-run the validator. **Add the palette check to a pre-import gate.**
+1. **Re-quantize Scout and Goblin_SMG_alt.** Measured max distinct opaque colours in one 60×60 sprite: **Scout 387, Goblin_SMG_alt 396**, against Goblin 72, Goblin_SMG 61, Civilian 36, Rodar_Akai 50, Hero_MachineGunner 48. `Scout/south-east.png` has 410 opaque pixels and 335 colours, 285 of them used exactly once, top-5 = 6% of pixels; `Goblin/south-east.png` has 71 colours with top-5 = 61%. The project's own gate already encodes the rule — the 80-colour budget carried per set in `tools/validate_unit_sprites.py`'s `SPECS` — and these two sets are the only ones over it. Note the gate does not currently stop them: the v2 validator made the palette budget *informational* on the legacy 60×60 tier precisely so the shipped Scout would not start failing, so the excess is reported and ignored. UNIT_ASSET_SPEC.md documents the deviation explicitly ("the Scout is noisier at ~335... Aim for the Goblin end"), so it is known and shipped. At 2× nearest-neighbour every noise pixel becomes a 2×2 screen block, so three of five player soldiers and the raider that spawns on all seven missions read as muddy dither next to clean flat goblins. `Image.quantize(colors=64, method=MEDIANCUT, dither=NONE)` against a fixed desert palette, then re-run the validator. **Add the palette check to a pre-import gate.**
 2. **Fix the mixed pixel density.** `_spawn_prop`'s default is `ROCK_SCALE = (2,2)`, but five callers pass an explicit 1× over native-resolution art: the Choir cache (80px, [Battle.gd:512](scripts/Battle.gd#L512)), the ammo crates (96px, [Battle.gd:171](scripts/Battle.gd#L171) — whose own comment admits "drawn at 96px against the 48px the junk props use"), and the camp's crate/stores/briefing table (72px and 96px, [Camp.gd:237](scripts/Camp.gd#L237), [352](scripts/Camp.gd#L352), [368](scripts/Camp.gd#L368)). I checked the obvious refutation — that the 96px art might be a 2× upscale, which would make texel sizes match — by counting horizontal colour changes at even vs odd x boundaries: crates 1621/1556, cache 883/872, table 1067/1078, drum 398/418. All balanced; every one is native-res. So the crate stack beside a soldier has literally half-size pixels, and since Camp.tscn is the main scene, **the briefing table is the first art the player ever sees.** Downsample 96→48, 80→40, 72→36 nearest-neighbour, re-measure offsets, delete the five scale arguments, then make the `scale` parameter non-optional so nothing can silently opt out again.
 3. **Give the HUD a Theme.** There is no `.tres`, `.theme`, `.ttf` or `.otf` anywhere in the project and no `gui/theme/custom` in project.godot. All 16 Buttons in Battle.tscn set only `theme_override_font_sizes`; `UI/UnitPanel` is a bare PanelContainer drawing Godot's default dark rounded panel; HpLabel/StatsLabel/StatusLabel set no `font_color` and render default white while NameLabel and ProgressLabel directly above them use hand-authored warm tones (0.96,0.9,0.72 / 0.78,0.72,0.55). A hand-made desert pixel board framed in Godot blue-grey and antialiased Noto Sans. Build `assets/ui/thinshot.theme` with a bitmap font (`subpixel_positioning = 0`, AA off) and StyleBoxFlats in the existing palette (#241d13 / #7d6a45 / #f5e6b8), set it as `gui/theme/custom`, delete the per-node overrides.
 4. **Unify the frame.** `prop_dust.gdshader` is the only shader in the project and is applied to props and structures only — its header states units are deliberately excluded. The floor's only lighting is a 0.94–1.00 per-cell `shade` multiplier. There is no CanvasModulate, no vignette, no grade anywhere in the playing frame. Three separately-graded populations share one screen: hazed warm scenery, a nearly flat floor, and fully saturated units with no atmosphere. Two cheap GL-Compat additions in `_setup_fx_layers`: a CanvasModulate driven by `board.floor_mood()` (warm amber for desert/salt, cold grey-blue for ash) grading everything in one node at zero cost, and a CanvasLayer above the world holding a full-screen ColorRect with a 6-line radial vignette shader tinted from the same mood dict.
@@ -169,11 +169,11 @@ Lines [17-193](scripts/Battle.gd#L17) are pure texture tables and pixel offsets;
 7. **Give the grenade a body.** `_throw_arc` is nine `fx_air.smoke_drift` calls ([Battle.gd:2143-2149](scripts/Battle.gd#L2143)) — each one particle at 10-20% alpha, randomly displaced up to 30px off the parabola, larger than a grenade, living 1.1-2.0 s against a 0.42 s throw. And `_boil_smoke` uses the identical call for standing clouds, so **a frag in flight and a smoke already on the ground look the same.** Add an `Fx.grenade(pos)` emitting one high-contrast dark pixel at alpha 1.0 with a life just over one arc step, plus a ground shadow tracking the un-lifted lerp.
 8. **Recolour Goblin_SMG_alt onto the Choir ramp.** It has saturated blue trousers, near-white shoes and a red hip pouch against a family documented as "green-skinned in darker rags" (#7d9352 / #61724b / #385836 over #00090b outline). It has no dominant colour at all — 2342 distinct colours across its 8 standing rotations, top colour under 1%. It spawns on all seven missions. (The "cyan weapon" one lens reported does not hold up — the weapon clusters are #293437 and #545654, dark blue-grey.) Do it in the same pass as the Scout quantization; regenerating at 60×60 would also let you delete the bespoke `SPRITE_OFFSET_56` at [Unit.gd:421](scripts/Unit.gd#L421) and the dedicated `SMGA_MUZZLE_OFFSETS` table.
 9. **Darken the bolt marksman's head-wrap.** Goblin_BoltRifle's third most common colour is `#f8fcfc` at 10.9% of pixels; near-white total 13.8%; mean HSV value 0.380 against Goblin 0.221, SMG 0.212, revolver 0.298 — the other three have essentially zero near-white. One goblin per map is the brightest object on the board, and ASSETS.md keeps the floor mid-tone specifically so highlights, danger hatching and the selection ring read on top. Units get no dust shader, so nothing pulls it back down. Shift to a dusty bone tone in the sandbag family (#caa971 / #c4a275).
-10. **Resolve the orphaned hero art.** `Hero_MachineGunner` and `Rodar_Akai` are 600 PNGs / 5.3 MB each, fully imported, referenced by **no** `.gd` or `.tscn` — `Unit.gd:22-28` has no root const for either and `Kind` has no entry. Both PASS all five checks in `tools/validate_unit_sprites.py`. Silhouette XOR over the 8 standing rotations: Hero vs Scout_MachineGunner differ 109px of 3477 (3.1%), Rodar vs Scout_TeamLead 211 of 3739 (5.6%) — same-pose recolours of two squad members, at a union of 23 and 45 colours against the originals' 135 and 139. These are the palette-clean replacements. Both directories are untracked (`??` in git status), so this is work in flight, not shipped cruft — but decide: repoint `MG_ROOT` and `LEAD_ROOT`, re-run `tools/measure_muzzle.gd` for the muzzle-offset tables, delete the old dirs. If they are not replacements, delete them.
-11. **Delete the two duplicate machinegunner stance folders.** `MG_ROOT` is `.../Scout_MachineGunner/Scout_MachineGunner`, so `assets/sprites/Scout_MachineGunner/Dead_Stance/` and `.../ReadyToFire_Stance/` — one level too shallow — are never read. `diff -rq` reports only `.import` files differing; all 88 PNGs are byte-identical, which is exactly why this set counts 688 against every other complete unit's 600. Because the `.import` UIDs differ, both copies land in the pack. It is also an active trap: anyone fixing the aim art by eye will plausibly edit the copy the game does not load.
+10. ~~**Resolve the orphaned hero art.**~~ — **done: repointed, and nothing was deleted.** `Hero_MachineGunner` is Brukk Meshan's set and the game draws it. [Unit.gd:70](scripts/Unit.gd#L70) sets `MG_ROOT` to `res://assets/sprites/Hero_MachineGunner`, with a second const `MG_BASE` adding the nested `/Hero_MachineGunner` segment for the base state's rotations and animations — this set ships on the canonical layout (UNIT_ASSET_SPEC.md §4), where the doubled segment belongs on the base state, not on the root the way the old one did. `Rodar_Akai` is wired as its own `Kind.HERO` behind `RODAR_ROOT` ([Unit.gd:78](scripts/Unit.gd#L78)), and both directories are tracked now, so neither is work in flight any more. `LEAD_ROOT` was deliberately **not** repointed: Rodar is a kind of his own, and `Scout_TeamLead` still backs the legacy `Kind.TEAM_LEAD`. **The folder name is a trap worth reading twice** — `Hero_MachineGunner/` is `Kind.MACHINEGUNNER`, raw ordinal 2, Brukk Meshan; `Kind.HERO` is ordinal 9, Rodar Akai, and his art is `Rodar_Akai/`. The name is historical: it is the PixelLab `Hero_bandana` group. **And the three Scout sets stay.** `Scout`, `Scout_TeamLead` and `Scout_MachineGunner` are the generic Kestrel troops — the bodies for cut scenes, for making a garrison feel inhabited, and for missions where another squad fights alongside the player's. `Scout` is still `Kind.SCOUT` (Josen Marr and the line riflemen), `Scout_TeamLead` is still `Kind.TEAM_LEAD` (legacy, never re-recruited, still reachable), and only `Scout_MachineGunner` stopped backing a named soldier. They are not spare copies of the named soldiers' sprites; the enum says so at [Unit.gd:22-26](scripts/Unit.gd#L22) so that the next audit does not tidy them away. Measured on the set now shipping: 600 PNGs, all 60×60, 8 animation sets, palette max 48 colours, feet 14 px below canvas centre in all 8 standing rotations (the validator's count; the addendum table measures the same line as 15.0) — bbox-identical to the Scout set's, so `SPRITE_SPECS.DEFAULT` still applies and `MACHINEGUNNER` needs no entry of its own. `tools/measure_muzzle.gd`'s `GUNNER` entry was repointed at the Hero aim rotations and re-run: 7 of 8 facings now measure exactly, and only *south* keeps the documented hand-correction, because the scan lands on his boots there. Two aim-idle defects were repaired before the swap shipped — a 35 px lump of detached ejecta beside him for 5 frames of 9 in *north-west*, and a puff drifting off in *east* — using `tools/fix_idle_flash.py`, which grew a third "debris" detector for them and deletes rather than grafts, since a disconnected lump cannot take a pixel of the soldier with it. And because the frame loaders fail silently, `tools/check_unit_art.gd` now asserts that every `Unit.Kind` really loaded all 11 of its frame sets; nothing caught an empty set before.
+11. **Delete the two duplicate machinegunner stance folders.** Still there, still duplicates — but the reason to care changed. `MG_ROOT` no longer points into `Scout_MachineGunner` at all (see #10), so *neither* copy is loaded during play; the set is generic-troop art now. `assets/sprites/Scout_MachineGunner/Dead_Stance/` and `.../ReadyToFire_Stance/` sit one level above the nested set that is the real one, and `diff -rq` still reports only `.import` files differing: all 88 PNGs are byte-identical, which is exactly why this set counts 688 against every other complete unit's 600. Because the `.import` UIDs differ, both copies still land in the pack. The trap they set turned out to be for tooling rather than for the eye. `tools/check_unit_complete.py` matched stance folder names case-sensitively, so the capital-S `Dead_Stance` at the top level was picked as this unit's base state and the tool reported PASS over 96 of its 688 files. That is fixed — the match is case-insensitive now, and it reports 8 animation sets / 600 PNGs here — but the duplicates are what made a green check meaningless in the first place, and they are still capable of doing it to the next tool.
 12. **Decide on the five unwired environment folders.** 80 PNGs across Desert_Makeshift_Junk_Statue (2 @ 256px), Hidden_cache_of_money (30 @ 64px), Illegal_rune_technology (20 @ 96px), Makeshift_goblin_drug_still (20 @ 80px), Desert_Market_Stall (8 @ 97px) — referenced nowhere. These are exactly the Rust-Choir set dressing ASSETS.md tier 4 asks for. Note none of them is on the documented 48px ground-prop canvas, so wiring them requires downsampling first or they inherit the density bug above. The two-state Junk_Statue fits `TARGET_PROPS` as a demolish target; the Market_Stall fits `STRUCTURE_DIRS` as a 2×2 kind. Wire or delete — leave nothing imported-but-unnamed.
 13. **Animate the camp.** `Battle._load_structure_frames` scans `<dir>/animations/<prompt-folder>/unknown/` and falls back to a still; `Camp._spawn_structure` ([Camp.gd:246-253](scripts/Camp.gd#L246)) loads only `rotations/unknown.png`. The breeze frames exist for all three camp kinds. Camp.tscn is the main scene, so the first thing the player sees is the same tent that breathes in the desert standing perfectly still — and the camp's plants do not sway either (no `_swaying` equivalent). Both Battle helpers are already `static func`; call them.
-14. **Generate the team lead's alt idle.** Resolving all 90 loader paths against disk, 89 hit a full 8-direction × 9-frame set. The one miss is `LEAD_ROOT + "/standing_stance/animations/standing_idle_alt"` ([Unit.gd:138](scripts/Unit.gd#L138)) — the directory does not exist, which is why Scout_TeamLead counts 528 PNGs (600 − 72). Not a crash; the guard at [Unit.gd:1064](scripts/Unit.gd#L1064) means the 14% roll simply never fires. Every other soldier and goblin breaks its idle loop; the unit the player selects first every turn is the only one that does not. No code change needed — or take Rodar_Akai's, which has the full set.
+14. **Generate the team lead's alt idle.** Resolving all 90 loader paths against disk, 89 hit a full 8-direction × 9-frame set. The one miss is `LEAD_ROOT + "/standing_stance/animations/standing_idle_alt"` ([Unit.gd:138](scripts/Unit.gd#L138)) — the directory does not exist, which is why Scout_TeamLead counts 528 PNGs (600 − 72). Not a crash; the guard at [Unit.gd:1064](scripts/Unit.gd#L1064) means the 14% roll simply never fires. Every other soldier and goblin breaks its idle loop; this set is the only one that does not. It stings less than it did: `Kind.TEAM_LEAD` is legacy now that Rodar Akai holds the lead slot, so the miss shows on cut-scene bodies and allied squads rather than on the unit the player selects first every turn. No code change needed — or take Rodar_Akai's, which has the full set. (That 90-path census predates both the machinegunner repoint and the five `Kestrel_*` sets, so the total is larger now and unaudited; the one miss is still the miss.)
 
 ## Design: fun, AI, and pacing
 
@@ -255,14 +255,41 @@ Godot 4.7.stable returns zero parse errors, zero import errors, and bootstraps t
 correctly (5 recruits, OPERATION DRY CHOIR mission 1/3). Whatever else is wrong, nothing is
 broken enough to stop the engine.
 
-**`tools/validate_unit_sprites.py` fails on 6 of the 11 unit sets.** PASS: Scout_TeamLead,
-Goblin_BoltRifle, Hero_MachineGunner, Rodar_Akai, Civilian. FAIL: Scout, Scout_MachineGunner,
-Goblin, Goblin_SMG, Goblin_SMG_alt, Goblin_revolver.
+**`tools/validate_unit_sprites.py` now fails on 1 of the 16 unit sets.** There are 16 unit
+folders under `assets/sprites/` (everything but `Environment/`): the original 11, plus the five
+`Kestrel_*` specialists. Re-run per set with `--no-preview`, the only FAIL is
+**Scout_MachineGunner**, on the foot line — `ReadyToFire_Stance: feet 14-17px below centre
+(want 12-16)`, twice. Everything else passes.
+
+Five of those six now pass and not one of them was repainted: the change is in the validator,
+not the art. The v1 tally recorded here (6 of 11 failing:
+Scout, Scout_MachineGunner, Goblin, Goblin_SMG, Goblin_SMG_alt, Goblin_revolver) was measured
+against a tool that assumed one 60×60 spec for every set. v2 gives each set its real canvas,
+foot range and palette budget, and tiers the enforcement: the legacy 60×60 palette budget is
+informational (so the shipped Scout at ~387 colours reports and does not gate), and the newly
+validatable 64/56 goblin sets are advisory unless run with `--strict`. Read the current PASSes
+accordingly — they mean "nothing gated", not "nothing found". One caveat worth carrying:
+`Hero_MachineGunner` passes with a note that `Dead_stance` has no character id in its
+`metadata.json`.
+
+The five `Kestrel_*` sets used to be the other caveat — no `SPECS` entry at all, so they fell
+through to the measured-canvas fallback where *every* finding is advisory, which made the five
+newest units in the game the only ones nothing could gate. They have entries now
+([validate_unit_sprites.py:107](tools/validate_unit_sprites.py#L107)) and gate on the same
+legacy-60 contract as the rifleman they were generated against. Their one real deviation is
+registered rather than muted: a south (and on three of them north) aim pose drawn with the
+weapon levelled to a flank instead of foreshortened, declared per unit as `aim_levelled` so
+that facing is checked against the pose actually drawn while the other six still gate. Muting
+the whole `aim` category for them would also have hidden a missing weapon, which is the thing
+that check exists to catch. The muzzle offsets in `Unit.gd` follow the art for exactly those
+facings, so the flash still leaves the barrel the player can see.
 
 ### The 64×64 sheets sink below the tile — and nothing handles them
 
 Measured canvas size and drawn foot line (median over the 8 standing rotations, distance in
-texture px from canvas centre to the lowest opaque row):
+texture px from canvas centre to the bottom edge of the lowest opaque row — one more than the
+row *index* `tools/validate_unit_sprites.py` prints, so this table's 15.0 and the validator's
+"feet 14px below centre" are the same foot line):
 
 | Set | Canvas | Feet below centre | Anchor applied | Error |
 |---|---|---|---|---|
@@ -279,8 +306,9 @@ texture px from canvas centre to the lowest opaque row):
 
 The reason it was missed is a comment. `Unit.gd:414-417` states the baseline canvas is 64×64
 with the alt raider as the deviation. Measurement says the opposite: **60×60 is the baseline**
-(7 of 11 sets, including every player unit) and the 64×64 goblins are the deviation. The
-special case was written for the wrong exception.
+(12 of the 16 sets, including every player unit — the seven above plus all five `Kestrel_*`
+specialists) and the 64×64 goblins are the deviation. The special case was written for the
+wrong exception.
 
 Fix: `const SPRITE_OFFSET_64 := Vector2(0, -16)`, selected for `GOBLIN`, `GOBLIN_SMG` and
 `GOBLIN_REVOLVER`; correct the comment. Or regenerate those three at 60×60, which also lets
@@ -293,7 +321,7 @@ Goblin_revolver 31, Goblin_SMG_alt 28, Rodar_Akai 30.5). The differing canvas si
 make goblins render larger — only the foot line moves. This was the obvious hypothesis and it
 is wrong; do not "fix" the figure scale.
 
-### Three animation defects the validator caught
+### Five animation defects the tooling caught
 
 - **The Novice fires while standing still.** `Goblin_revolver`'s *east* aim-idle contains a
   muzzle flash in frames 4–5 (bright-pixel counts `[0,0,8,0,20,19,6,6,0]`). The aim-idle is a
@@ -303,13 +331,31 @@ is wrong; do not "fix" the figure scale.
   worst endpoint gap measured: **Goblin_revolver 167 px**, Goblin_SMG 45 px, Scout 27 px,
   Goblin 26 px. Under 10 px reads as continuous. The 167 px pop is on the most common enemy in
   the game, so it fires constantly.
-- **The machinegunner shifts when he raises.** `Scout_MachineGunner`'s `ReadyToFire_Stance`
-  measures 14–17 px below centre, outside the 12–16 band every other stance holds — he sinks
-  as he shoulders the gun.
+- **The machinegunner shifts when he raises — in the set the game no longer draws.** The
+  14–17 px measurement is `Scout_MachineGunner`'s `ReadyToFire_Stance`, outside the 12–16 band
+  every other stance holds: that set sinks as it shoulders the gun, and it is still the one
+  FAIL in the whole sprite tree. It is now generic-troop art rather than Brukk Meshan's, so it
+  is a cut-scene and background-squad defect, not a defect the player sees on their own gunner.
+  The gunner the game draws is `Hero_MachineGunner`, whose `ReadyToFire_Stance` sits one texel
+  *higher* than its own standing stance — feet 13 px in seven facings and 16 px on south,
+  against a standing 14 px flat — so it measures 13–16 and passes. The swap moved that stance
+  into spec rather than fixing it in place; the 14–17 art is untouched and still on disk.
+
+**Two more are known and not fixed.** `tools/fix_idle_flash.py`'s debris detector — the third
+one, written for Brukk Meshan's ejecta during the swap above — flags two shipped units besides
+him, and it is right about both: `Rodar_Akai`'s *north-west* aim-idle carries a 13 px puff of
+white smoke on frame 8 that is in no other frame, and `Goblin_revolver`'s *east* cycle grows one
+behind his head across frames 2–6 — the same loop that already fires the revolver in frames 4–5,
+so one direction of one unit carries two independent defects. Both are older art, both say "the
+gun is working" on a unit that is standing still, and neither was repaired because nobody asked.
+They are written down here so the report stays an honest finding rather than a false negative
+somebody tunes away later. Whenever it is worth doing, debris is deleted rather than grafted and
+that is safe: a disconnected component cannot take a pixel of the soldier with it.
 
 ### Palette outliers, measured
 
-Max distinct opaque colours in a single sprite, against the project's own `PALETTE_MAX = 80`:
+Max distinct opaque colours in a single sprite, against the project's own 80-colour budget
+(carried per set in `SPECS`, and advisory rather than gating on this tier):
 
 `Scout` **387** · `Goblin_SMG_alt` **396** · Scout_TeamLead 76 · Scout_MachineGunner 75 ·
 Goblin 72 · Goblin_SMG 61 · Goblin_revolver 53 · Civilian 36
@@ -317,10 +363,23 @@ Goblin 72 · Goblin_SMG 61 · Goblin_revolver 53 · Civilian 36
 Two sets are ~5× over budget and the rest are comfortably inside it. One of them is the unit
 the player controls three of.
 
-### The orphaned hero art is drop-in ready
+### The orphaned hero art is not orphaned any more
 
-`Hero_MachineGunner` and `Rodar_Akai` are referenced by zero lines of GDScript
-(`grep -rn` across `scripts/` returns nothing). Both are **60×60 with feet at exactly 15.0** —
-they match `SPRITE_OFFSET` without modification — and both PASS all five validator checks,
-which the sets they would replace do not. If they are the intended replacements, repointing
-`MG_ROOT` and `LEAD_ROOT` costs nothing geometrically.
+Both sets are wired. `Rodar_Akai` became `Kind.HERO` behind `RODAR_ROOT`, and `Hero_MachineGunner`
+is now `MG_ROOT` — Brukk Meshan, `Kind.MACHINEGUNNER`, raw ordinal 2. **The folder name is not
+the kind:** `Hero_MachineGunner/` is the machinegunner's art and `Rodar_Akai/` is the hero's;
+the folder is named after the PixelLab `Hero_bandana` group it came out of, and nothing else.
+
+The geometry claim held. Both are 60×60 with feet at exactly 15.0 by the table above — 14 in the
+validator's convention, the same line — matching `SPRITE_OFFSET` without modification, so the
+swap needed no anchor work: the standing
+rotations are bbox-identical to the Scout set's, `SPRITE_SPECS.DEFAULT` still applies, and
+`MACHINEGUNNER` has no `SPRITE_SPECS` entry of its own. What the swap did cost was the muzzle
+table (`tools/measure_muzzle.gd`'s `GUNNER` entry repointed and re-run — 7 of 8 facings exact,
+*south* hand-corrected because the scan lands on his boots) and two aim-idle repairs.
+
+`LEAD_ROOT` was not repointed and should not be. Rodar is a kind of his own; `Scout_TeamLead`
+still backs `Kind.TEAM_LEAD`, and along with `Scout` and `Scout_MachineGunner` it is kept
+deliberately as generic Kestrel troop art. The sets these two "would replace" are not being
+replaced — they are being kept for cut scenes, garrisons and allied squads. Nothing here is a
+delete list.

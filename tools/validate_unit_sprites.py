@@ -104,6 +104,22 @@ SPECS = {
     "Rodar_Akai":          _legacy60(),
     "Hero_MachineGunner":  _legacy60(),
     "Civilian":            _legacy60(weapon=False),
+    # The five specialist Kestrels. Same 60-canvas contract as the rifleman
+    # they were generated against. Without these entries they fell through to
+    # the measured-canvas fallback, where EVERY finding is advisory - so the
+    # five newest units in the game were the only ones nothing could gate.
+    #
+    # Each registers the facings Pixel Lab drew with the weapon levelled to a
+    # flank rather than foreshortened. Their muzzle offsets in Unit.gd follow
+    # the art for exactly those facings (see the band-scan note there), and
+    # each unit's metadata.json carries the same fact under known_deviations.
+    # Halvik and Fen have no registered north because theirs is not drawn
+    # holding a weapon there at all, which the ordinary check passes.
+    "Kestrel_Grenadier":   _legacy60(aim_levelled={"south": "right", "north": "left"}),
+    "Kestrel_Marksman":    _legacy60(aim_levelled={"south": "right", "north": "left"}),
+    "Kestrel_Breacher":    _legacy60(aim_levelled={"south": "right"}),
+    "Kestrel_Medic":       _legacy60(aim_levelled={"south": "right", "north": "left"}),
+    "Kestrel_Technician":  _legacy60(aim_levelled={"south": "right"}),
     # legacy 64/56 - newly validatable; advisory by default, --strict gates
     "Goblin":              _legacy((64, 64), 15),
     "Goblin_SMG":          _legacy((64, 64), 15),
@@ -308,6 +324,20 @@ def check_aim(root: Path, r: Report):
             l, rt = rr
             side = "left" if l > rt else "right"
             want = SIDE[d]
+            # A unit may REGISTER that a facing is drawn with the weapon
+            # levelled to a flank instead of foreshortened at the camera. That
+            # is a real deviation, not a pass: Pixel Lab draws it that way
+            # often, and the fix is to make the muzzle offset follow the art so
+            # the flash still leaves the barrel the player can see. Registering
+            # it here checks the pose that was actually drawn, and keeps the
+            # other six facings gated - muting the whole "aim" category for the
+            # unit would also hide a missing weapon, which is what this check
+            # is for.
+            levelled = r.spec.get("aim_levelled", {})
+            if d in levelled:
+                r.note(f"{d}: drawn levelled {levelled[d]}, not foreshortened - "
+                       f"registered deviation, muzzle offsets follow the art")
+                want = levelled[d]
             if want == "none":
                 if max(l, rt) > slack:
                     r.finding("aim", f"{d}: weapon sticks out {max(l, rt)}px to the "

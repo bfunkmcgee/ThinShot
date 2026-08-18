@@ -74,8 +74,13 @@ const AIM_STANCES := [
 	{"label": "LEAD", "canvas": 60, "scale": 2.0, "offset": Vector2(0, -15),
 		"path": "res://assets/sprites/Scout_TeamLead/Solider_aims_his_rif/rotations/%s.png",
 		"unit_const": "LEAD_MUZZLE_OFFSETS"},
+	# Brukk Meshan. The old Scout_MachineGunner path still resolves - that art
+	# is kept as generic-troop art - which is exactly why this had to be moved
+	# by hand: left alone the tool would have gone on measuring a sheet the
+	# game no longer draws and reported "all 8 facings match" against a table
+	# that had stopped describing anything on screen.
 	{"label": "GUNNER", "canvas": 60, "scale": 2.0, "offset": Vector2(0, -15),
-		"path": "res://assets/sprites/Scout_MachineGunner/Scout_MachineGunner/ReadyToFire_Stance/rotations/%s.png",
+		"path": "res://assets/sprites/Hero_MachineGunner/ReadyToFire_Stance/rotations/%s.png",
 		"unit_const": "GUNNER_MUZZLE_OFFSETS"},
 	{"label": "GOBLIN_SMG", "canvas": 64, "scale": 2.0, "offset": Vector2(0, -15),
 		"path": "res://assets/sprites/Goblin_SMG/Goblin_aims_submachi/rotations/%s.png",

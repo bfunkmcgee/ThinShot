@@ -16,6 +16,14 @@ const TEAM_GOBLIN := 1
 ## Which soldier this is. Team is allegiance; kind is the role, so the two
 ## scout types can differ in weapon, stats, and art.
 enum Kind {
+	# SCOUT is Josen Marr and the line riflemen; MACHINEGUNNER is Brukk Meshan.
+	# TEAM_LEAD is legacy - Rodar Akai took the lead slot and it is never
+	# recruited again - but it stays reachable, and so does the art behind all
+	# three. Scout, Scout_TeamLead and Scout_MachineGunner are the GENERIC
+	# Kestrel troops: the bodies for cut scenes, for making a garrison feel
+	# inhabited, and for missions where another squad works alongside this one.
+	# They are not spare copies of the named soldiers' sprites and should not be
+	# tidied away as such.
 	SCOUT, TEAM_LEAD, MACHINEGUNNER,
 	GOBLIN, GOBLIN_SMG, GOBLIN_SMG_ALT, GOBLIN_REVOLVER, GOBLIN_BOLT,
 	# Not a soldier. Carries no weapon, is never shot at, and until somebody
@@ -30,9 +38,9 @@ enum Kind {
 	# alternatives to a rifleman rather than additions to the squad, and each
 	# has its own entry in Game.CLASS_PERK_RANKS.
 	#
-	# All five wear the rifleman's sprites for now. That is a deliberate,
-	# recorded shortcut (see ASSETS.md): the rules are what makes them
-	# different, and art can be swapped in later without touching a rule.
+	# Each also has its own 8-direction set under assets/sprites/Kestrel_<Role>/
+	# (ASSETS.md tier 4 #20). The rules are still what makes them different; the
+	# art is what makes that legible across a board.
 	GRENADIER,
 	MARKSMAN,
 	BREACHER,
@@ -49,7 +57,19 @@ const RIFLE_SLOT_KINDS: Array[Kind] = [
 ]
 
 const LEAD_ROOT := "res://assets/sprites/Scout_TeamLead"
-const MG_ROOT := "res://assets/sprites/Scout_MachineGunner/Scout_MachineGunner"
+# Brukk Meshan's set. The folder is called Hero_MachineGunner for historical
+# reasons - it is the PixelLab "Hero_bandana" group - and that name is a trap
+# worth reading twice: Kind.HERO is Rodar Akai, whose art is Rodar_Akai/. This
+# is Kind.MACHINEGUNNER, ordinal 2.
+#
+# Unlike the Scout set it replaces, this one ships on the canonical layout
+# (UNIT_ASSET_SPEC.md §4): the root is the UNIT folder, the base state is the
+# folder beneath it that repeats the name, and ReadyToFire_Stance / Dead_stance
+# are siblings of that rather than children. So the root does not carry the
+# doubled segment the old one did.
+const MG_ROOT := "res://assets/sprites/Hero_MachineGunner"
+## Where the machinegunner's own rotations and animations live, one level in.
+const MG_BASE := MG_ROOT + "/Hero_MachineGunner"
 const SMG_ROOT := "res://assets/sprites/Goblin_SMG"
 const REV_ROOT := "res://assets/sprites/Goblin_revolver"
 const SMGA_ROOT := "res://assets/sprites/Goblin_SMG_alt"
@@ -158,28 +178,35 @@ static var LEAD_RELOAD_FRAMES: Array = _load_dir_frames(
 static var LEAD_IDLE_ALT_FRAMES: Array = _load_dir_frames(
 		LEAD_ROOT + "/standing_stance/animations/standing_idle_alt")
 
-# Machinegunner.
-static var MG_FRAMES: Array[Texture2D] = _load_rotation_frames(MG_ROOT + "/rotations")
+# Machinegunner - Brukk Meshan. Folder names are taken from disk rather than
+# from the set this replaced: the canonical layout spells the corpse stance
+# `Dead_stance` with a small s and the aim-idle `standing-readyToFire_idle`
+# with a hyphen, where the old Scout set used `Dead_Stance` and
+# `Standing_ReadyToFire_idle`. Getting either wrong loads nothing and says
+# nothing - _load_dir_frames returns an empty array for a path that is not
+# there - and Windows resolves the wrong casing anyway, so it would only
+# surface in an exported build, where res:// paths are case-sensitive.
+static var MG_FRAMES: Array[Texture2D] = _load_rotation_frames(MG_BASE + "/rotations")
 static var MG_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
 		MG_ROOT + "/ReadyToFire_Stance/rotations")
 static var MG_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
-		MG_ROOT + "/Dead_Stance/rotations")
+		MG_ROOT + "/Dead_stance/rotations")
 static var MG_IDLE_FRAMES: Array = _load_dir_frames(
-		MG_ROOT + "/animations/standing_idle")
+		MG_BASE + "/animations/standing_idle")
 static var MG_IDLE_ALT_FRAMES: Array = _load_dir_frames(
-		MG_ROOT + "/animations/standing_idle_alt")
+		MG_BASE + "/animations/standing_idle_alt")
 static var MG_WALK_FRAMES: Array = _load_dir_frames(
-		MG_ROOT + "/animations/standing_idle_walk")
+		MG_BASE + "/animations/standing_idle_walk")
 static var MG_RAISE_FRAMES: Array = _load_dir_frames(
-		MG_ROOT + "/animations/standing_idle_to_readyToFire")
+		MG_BASE + "/animations/standing_idle_to_readyToFire")
 static var MG_AIM_IDLE_FRAMES: Array = _load_dir_frames(
-		MG_ROOT + "/ReadyToFire_Stance/animations/Standing_ReadyToFire_idle")
+		MG_ROOT + "/ReadyToFire_Stance/animations/standing-readyToFire_idle")
 static var MG_DEATH_FRAMES: Array = _load_dir_frames(
-		MG_ROOT + "/animations/standing_idle_to_dead")
+		MG_BASE + "/animations/standing_idle_to_dead")
 static var MG_HURT_FRAMES: Array = _load_dir_frames(
-		MG_ROOT + "/animations/standing_idle_damage")
+		MG_BASE + "/animations/standing_idle_damage")
 static var MG_RELOAD_FRAMES: Array = _load_dir_frames(
-		MG_ROOT + "/animations/standing_idle_reload")
+		MG_BASE + "/animations/standing_idle_reload")
 
 # Thirst runner with a submachine gun. Note the aim-idle folder uses a
 # hyphen where every other set uses an underscore.
@@ -397,17 +424,17 @@ const RODAR_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(-6, -62),   # north
 	Vector2(38, -40),   # north-east
 ]
-# Belt-fed weapon held low across the body. South and south-west are
-# hand-corrected off the scan, which lands on boots for those poses.
+# Belt-fed weapon held low across the body. South is hand-corrected off the
+# scan, which lands on boots for that pose.
 const GUNNER_MUZZLE_OFFSETS: Array[Vector2] = [
-	Vector2(36, -34),   # east
-	Vector2(36, -26),   # south-east
-	Vector2(-14, -18),  # south
-	Vector2(-36, -24),  # south-west
-	Vector2(-38, -34),  # west
-	Vector2(-34, -46),  # north-west
-	Vector2(-6, -60),   # north
-	Vector2(32, -48),   # north-east
+	Vector2(34, -36),  # east
+	Vector2(34, -32),  # south-east (band scan)
+	Vector2(-16, -20),  # south (hand-set: the scan lands on a boot)
+	Vector2(-26, -26),  # south-west (band scan)
+	Vector2(-40, -36),  # west
+	Vector2(-36, -46),  # north-west (band scan)
+	Vector2(-8, -62),  # north
+	Vector2(32, -46),  # north-east (band scan)
 ]
 # A submachine gun is short and held tight to the chest, so the muzzle sits
 # closer in than a rifle's. The three southern facings are hand-corrected -

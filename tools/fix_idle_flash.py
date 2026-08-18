@@ -61,6 +61,33 @@ cycle's own MEDIAN. That finds a pale burst in one or two frames, and is blind
 to one firing in six of nine because the median moves with it - which is
 exactly the case the first detector handles. Neither rule subsumes the other,
 so a direction is repaired if either one reports it.
+
+A THIRD detector looks for DEBRIS rather than light: a lump of pixels that is
+not connected to the soldier at all, appears for part of the loop, and is gone
+again by the end of it. Spent brass and ejection puffs are drawn that way, and
+they say the same thing a flash says - the gun is working - without being
+bright enough for either rule above to see. Brukk Meshan's north-west aim-idle
+carries a detached 35-pixel object for five frames of nine, seven texels clear
+of his shoulder and about as tall as his torso, which is very visible on a unit
+whose whole job is standing still on overwatch.
+
+Detached art is NOT a defect by itself and the check is deliberately narrow.
+Every unit in the project has some - a dropped weapon separating from the body
+is most of a death animation, and the biggest examples in the repo (96px on the
+Goblin's corpse, 85px on the revolver's) are correct. So this looks only at the
+aim-idle, only at components of at least DEBRIS_MIN_PIXELS, and only at ones
+that blink; a permanent detached accessory is left alone.
+
+It does flag two shipped units, and it is right about both: Rodar Akai's
+north-west frame 8 carries a 13px puff of white smoke that is in no other
+frame, and the revolver goblin's east cycle grows one behind his head across
+frames 2-6. Neither is repaired here - they are older art and nobody asked -
+but the report is the honest output, not a false negative to be tuned away.
+
+Debris is DELETED rather than grafted. That is safe here precisely because it
+is disconnected - erasing a separate component cannot take a pixel of the
+soldier with it, which is the risk that made deletion the wrong answer for a
+flash (see above: Dava's burst had overwritten her barrel).
 """
 from __future__ import annotations
 
@@ -82,6 +109,14 @@ FLASH_YELLOW_EXCESS = 125
 # all is repaired, because a five-pixel spark still reads on screen and there
 # is no reason to leave it behind.
 FLASH_MIN_PIXELS = 6
+
+# Debris: a detached lump this big or bigger, sitting at least this far clear
+# of the soldier, that is not there for the whole loop. 10 and 3 keep shipped
+# art untouched (Rodar's aim-idle strays are 3px, and his 13px one is a single
+# transparent texel off his silhouette) while catching Meshan's 14-35px
+# ejections, which sit 4-8 texels clear.
+DEBRIS_MIN_PIXELS = 10
+DEBRIS_MIN_GAP = 2
 
 # The median-relative rule's slack, matching validate_unit_sprites' 60-canvas
 # spec so the two agree on what counts as a spike.
@@ -117,6 +152,52 @@ def bright_pixels(path: Path) -> set:
                     or (r > 235 and g > 235 and b > 200):
                 out.add((x, y))
     return out
+
+
+def components(path: Path):
+    """Opaque connected components (8-connected), largest first."""
+    im = load(path)
+    px = im.load()
+    w, h = im.size
+    seen = [[False] * h for _ in range(w)]
+    out = []
+    for x0 in range(w):
+        for y0 in range(h):
+            if px[x0, y0][3] == 0 or seen[x0][y0]:
+                continue
+            stack = [(x0, y0)]
+            seen[x0][y0] = True
+            cells = []
+            while stack:
+                x, y = stack.pop()
+                cells.append((x, y))
+                for dx in (-1, 0, 1):
+                    for dy in (-1, 0, 1):
+                        nx, ny = x + dx, y + dy
+                        if 0 <= nx < w and 0 <= ny < h and not seen[nx][ny]                                 and px[nx, ny][3] > 0:
+                            seen[nx][ny] = True
+                            stack.append((nx, ny))
+            out.append(cells)
+    out.sort(key=len, reverse=True)
+    return out
+
+
+def debris_of(path: Path) -> list:
+    """Detached lumps big enough and far enough out to read as ejecta."""
+    comps = components(path)
+    if len(comps) < 2:
+        return []
+    body = comps[0]
+    bx = {c[0] for c in body}
+    found = []
+    for comp in comps[1:]:
+        if len(comp) < DEBRIS_MIN_PIXELS:
+            continue
+        gap = min(max(abs(x - mx), abs(y - my))
+                  for (x, y) in comp for (mx, my) in body)
+        if gap >= DEBRIS_MIN_GAP:
+            found.append(comp)
+    return found
 
 
 def _scan(frames):
@@ -161,6 +242,38 @@ def _repair(frames, lit, clean, sets, patched, d) -> None:
         patched.append("%s/%d<-%d" % (d, i, src_i))
 
 
+def sweep_debris(frames, d, fix, cleared) -> list:
+    """Detached ejecta that is not there for the whole loop. Returns the frame
+    indices carrying it; deletes them under --fix."""
+    per_frame = [debris_of(f) for f in frames]
+    hits = [i for i, lumps in enumerate(per_frame) if lumps]
+    if not hits or len(hits) == len(frames):
+        # Nothing, or something detached in EVERY frame - a permanent accessory
+        # rather than ejecta, which this must not touch.
+        return []
+    if not fix:
+        return hits
+    # The size and distance thresholds decide whether this DIRECTION is
+    # throwing ejecta. Once it is, every detached lump in it goes, however
+    # small - the tail of a puff breaking up is the same puff, and Meshan's
+    # north-west left a 9px lump and a scatter of single texels behind when
+    # only the big ones were taken. Same rule the flash detectors use.
+    for i in range(len(frames)):
+        lumps = components(frames[i])[1:]
+        if not lumps:
+            continue
+        im = load(frames[i]).copy()
+        px = im.load()
+        n = 0
+        for lump in lumps:
+            for (x, y) in lump:
+                px[x, y] = (0, 0, 0, 0)
+                n += 1
+        im.save(frames[i])
+        cleared.append("%s/%d(-%dpx)" % (d, i, n))
+    return hits
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         sys.exit(__doc__)
@@ -172,12 +285,22 @@ def main() -> None:
     if not idles:
         sys.exit("no aim-idle set under %s" % root)
 
-    bad, patched, refused = 0, [], []
+    bad, patched, refused, cleared = 0, [], [], []
     for idle in idles:
         for d in DIRS:
             frames = sorted((idle / d).glob("frame_*.png"))
             if not frames:
                 continue
+            # Debris first: it is deleted rather than grafted, so clearing it
+            # up front keeps it out of the brightness figures the flash rules
+            # read, and out of any frame later used as a graft source.
+            debris = sweep_debris(frames, d, fix, cleared)
+            if debris:
+                bad += 1
+                print("  EJECTA %-11s frames %s  (detached lump(s) >=%dpx, >=%d "
+                      "texels clear)%s"
+                      % (d, debris, DEBRIS_MIN_PIXELS, DEBRIS_MIN_GAP,
+                         "" if fix else " - rerun with --fix"))
             sets, counts, hot, med, lit, by_colour, by_median = _scan(frames)
             # A frame is safe to graft FROM only if it carries no saturated
             # burst and sits at or below the cycle's median brightness. Merely

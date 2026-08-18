@@ -1,13 +1,13 @@
 # Sandline
 
 A turn-based tactics thin slice built in **Godot 4** (2D isometric, GDScript,
-placeholder art). One desert counterinsurgency: **Kestrel Squad**, Crown
+bespoke pixel art). One desert counterinsurgency: **Kestrel Squad**, Crown
 soldiers seconded to a Confederacy the locals never asked them to police,
 against **the Thirst** - goblin settlements dispossessed of their water.
 
 ## The game
 
-| | Rodar Akai | Machinegunner | Rifleman | Well-hand | Runner | Light Runner | Conscript | Marksman |
+| | Rodar Akai | Brukk Meshan | Rifleman | Well-hand | Runner | Light Runner | Conscript | Marksman |
 |---|---|---|---|---|---|---|---|---|
 | Side | you | you | you | AI | AI | AI | AI | AI |
 | Per battle | 1 | 1 | 3 | 3–4 | 1 | 1–2 | 3 | 1 |
@@ -37,17 +37,17 @@ A five-soldier squad, each with a job:
   healthy goblin in one hit — held by a veteran who starts at the accuracy cap,
   so his whole progression is his perk tree. If he falls, the mission is lost
   on the spot.
-- **Machinegunner** — area control. No semi-automatic setting at all: his
-  lightest option is a two-round burst, and **full auto (A)** walks four rounds
-  across a target at reduced accuracy. **His overwatch is not a sentry post**:
-  it reaches **6 tiles rather than his weapon's 4**, and answers with **two
-  rounds instead of one** — so putting him on watch genuinely covers the ground
-  the rest of the squad has to cross. On top of that he has an ability no one
-  else does — **suppressive fire (S)**: three rounds put down *around* a
-  target rather than into it. No damage and no hit roll, but **everything
-  within two tiles is pinned — it cannot move at all next turn**, shoots 25%
-  worse, and cannot set overwatch. Six rounds in the belt, and he is the
-  slowest soldier on the field.
+- **Brukk Meshan, machinegunner** — area control. No semi-automatic setting at
+  all: his lightest option is a two-round burst, and **full auto (A)** walks
+  four rounds across a target at reduced accuracy. **His overwatch is not a
+  sentry post**: it reaches **6 tiles rather than his weapon's 4**, and answers
+  with **two rounds instead of one** — so putting him on watch genuinely covers
+  the ground the rest of the squad has to cross. On top of that he has an
+  ability no one else does — **suppressive fire (S)**: three rounds put down
+  *around* a target rather than into it. No damage and no hit roll, but
+  **everything within two tiles is pinned — it cannot move at all next turn**,
+  shoots 25% worse, and cannot set overwatch. Six rounds in the belt, and he
+  is the slowest soldier on the field.
 - **Kestrel Riflemen** ×3 — the fast, accurate line. Single shots, or a braced
   burst when they hold still.
 
@@ -252,7 +252,7 @@ career — and **each class chooses from its own tree**:
 - Master Sergeant: **Ranger** (+1 move *and* +1 range) or **Executioner**
   (+1 damage on flanking shots).
 
-**Machinegunner — area denial:**
+**Brukk Meshan — area denial:**
 
 - Corporal: **Bipod** (overwatch answers with three rounds instead of two) or
   **Pack Mule** (two more rounds in the belt).
@@ -574,11 +574,13 @@ and the test suite sweeps for domination so it stays that way. Each also
 **starts holding the perk that is their specialty**, so the choice matters on
 mission one rather than after a promotion.
 
-Each of the five specialists has **its own 8-direction sprite set**, so who is
-standing where is readable on the board without selecting anybody: Essa's
-bandolier and underbarrel launcher, Sillae's hood and long scope, Halvik's
-carrier and low helmet, Dava's blonde braid and red-cross satchel, Fen's radio
-pack.
+Seven of the eight have **their own 8-direction sprite set**, so who is standing
+where is readable on the board without selecting anybody: Rodar's long coat and
+battle rifle, Brukk's red bandana, beard and belt-fed gun carried low across the
+body, Essa's bandolier and underbarrel launcher, Sillae's hood and long scope,
+Halvik's carrier and low helmet, Dava's blonde braid and red-cross satchel,
+Fen's radio pack. Josen Marr wears the line-rifleman art, which is not a gap: he
+is the baseline, and the baseline is what a Kestrel trooper looks like.
 
 The squad did not get bigger, it got **deeper**, and that is what makes
 permadeath bite. Losing Dava does not leave a gap in the line — the levy post
