@@ -374,6 +374,76 @@ const MORALE_RECOVER := 5
 const MORALE_SURRENDER_GUNS := 2
 
 
+## What a fighter starts a battle holding, by Kind.
+##
+## Everyone used to start at MORALE_MAX, and the arithmetic made that a rule
+## that only the healthy could ever break. Losing 70 takes a wounding round
+## (40) plus most of a squad going down beside you - and the two classes least
+## able to stand a fight are the two least able to reach it. A conscript has 2
+## HP: the only round he survives is one already halved by cover, and that one
+## round is the entire 40 he will ever be charged, because the next kills him.
+## A light runner at 3 HP is barely better. The men the fiction describes as
+## least willing to be there were the men who could not break.
+##
+## So they do not all arrive at 100. This is the supply reading the README
+## already gives, made mechanical: a well-hand is fighting where he used to draw
+## water and stands at full; a runner is lighter in every sense; and a pressed
+## conscript, handed a worn-out sidearm last week with no training to speak of,
+## starts most of the way to running and breaks the first time he is really hurt.
+## The Marksman's number is irrelevant - never_breaks() answers before this does
+## - but it is written at full because he was trained rather than pressed.
+const MORALE_WELL_HAND := 100
+const MORALE_RUNNER := 85
+const MORALE_LIGHT_RUNNER := 75
+const MORALE_CONSCRIPT := 60
+
+const KIND_GOBLIN := 3
+const KIND_GOBLIN_SMG := 4
+const KIND_GOBLIN_SMG_ALT := 5
+const KIND_GOBLIN_REVOLVER := 6
+
+## Unit.gd spells these per kind in its own stat blocks - it cannot name this
+## file - so tools/test_rules.gd asserts the two agree for every Kind. Anything
+## not listed starts at MORALE_MAX, which is every soldier in the squad, whose
+## morale is never asked about at all.
+static func starting_morale(kind: int) -> int:
+	match kind:
+		KIND_GOBLIN:
+			return MORALE_WELL_HAND
+		KIND_GOBLIN_SMG:
+			return MORALE_RUNNER
+		KIND_GOBLIN_SMG_ALT:
+			return MORALE_LIGHT_RUNNER
+		KIND_GOBLIN_REVOLVER:
+			return MORALE_CONSCRIPT
+	return MORALE_MAX
+
+
+## A fighter who ran, and came back anyway.
+##
+## He is steadier than he was, and the reasoning is not sentiment: he is not a
+## levy who was marched here, he is a man who walked back to a fight he had
+## already left. So he starts at full whatever he started at last time, and he
+## carries the same resistance the Marksman does to the small stuff - watching
+## somebody die near him no longer moves him.
+##
+## What this buys the game is a price on mercy. Shooting a routing man costs
+## Standing (see Conduct below), so letting him go is the decent choice and was
+## also the free one. Now it is decent and expensive, which is the shape a
+## dilemma has. It never forces the player's hand - Standing and Strain still
+## push the other way - it just stops the answer being obvious.
+const RETURNER_MORALE := MORALE_MAX
+
+static func returner_morale(_kind: int) -> int:
+	return RETURNER_MORALE
+
+
+## Does watching an ally fall still move this fighter? Not if he has already
+## walked away from one fight and chosen to come back to another.
+static func shaken_by_the_fallen(returned: bool) -> bool:
+	return not returned
+
+
 ## What a round does to the morale of the soldier who took it. `hp_left` is
 ## after the damage, so a round that kills is never asked about.
 static func morale_after_round(morale: int, hp_left: int, max_hp: int) -> int:
@@ -398,9 +468,17 @@ static func morale_after_suppression(morale: int) -> int:
 	return maxi(morale - MORALE_SUPPRESSED, 0)
 
 
-## A quiet turn. Never past MORALE_MAX, so a unit cannot bank calm.
-static func morale_recovered(morale: int) -> int:
-	return mini(morale + MORALE_RECOVER, MORALE_MAX)
+## A quiet turn.
+##
+## `ceiling` is the unit's OWN starting morale, not MORALE_MAX, and that
+## distinction is the whole of whether starting_morale() means anything. Capped
+## at 100 instead, a conscript who starts at 60 is at 65 before his first
+## decision point and back at 100 by the eighth quiet turn - so the class trait
+## decays into the old flat rule and the two kinds this exists for stop being
+## breakable again. A man does not get braver than he arrived; he gets his
+## breath back.
+static func morale_recovered(morale: int, ceiling := MORALE_MAX) -> int:
+	return mini(morale + MORALE_RECOVER, mini(ceiling, MORALE_MAX))
 
 
 ## Has this unit stopped fighting? Says nothing about which way - see below.
@@ -434,14 +512,23 @@ static func never_breaks(kind: int) -> bool:
 ## The two are exhaustive and mutually exclusive over a broken unit, which is
 ## what lets the controller ask one question and get an action rather than
 ## asking two and reconciling them.
-static func breaks_to_surrender(kind: int, morale: int, guns: int) -> bool:
-	if never_breaks(kind) or not is_broken(morale):
+## `holds` is the ground rather than the man: some maps are defended by people
+## who have been told how it ends and believe it, and on those nobody breaks
+## whatever his morale says. THE SURVEY CAMP's briefing states this outright -
+## "Fighters in that bowl will not break... they are not staying because they
+## are brave" - and it was prose with nothing behind it until starting_morale()
+## made three of its thirteen defenders breakable on the first round. A shipped
+## claim about how the world works is a rule; this is where it lives.
+static func breaks_to_surrender(kind: int, morale: int, guns: int,
+		holds := false) -> bool:
+	if holds or never_breaks(kind) or not is_broken(morale):
 		return false
 	return guns >= MORALE_SURRENDER_GUNS
 
 
-static func breaks_to_rout(kind: int, morale: int, guns: int) -> bool:
-	if never_breaks(kind) or not is_broken(morale):
+static func breaks_to_rout(kind: int, morale: int, guns: int,
+		holds := false) -> bool:
+	if holds or never_breaks(kind) or not is_broken(morale):
 		return false
 	return guns < MORALE_SURRENDER_GUNS
 

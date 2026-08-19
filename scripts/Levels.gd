@@ -489,6 +489,12 @@ const LEVELS: Array[Dictionary] = [
 		"fiction": "Where every track east of the cistern ends: a camp laid out along a riverbed that has been dry for two hundred years, pitched as though the water were still running.",
 		"briefing": "The tracks end in a bowl in the rock, and the Thirst is in it - all of it, and more than you have seen in one place.\n\nThey did not gather themselves. Somebody down there has been keeping them, and while he keeps them there will always be another column.\n\nFighters in that bowl will not break. Liaison has been clear on this and so has the interrogation of the pen guards: they are not staying because they are brave. They are staying because they have been told how this ends and they believe it.\n\nNo caches this time. No withdrawal.",
 		"orders": "END THE READING",
+		# The briefing above is not colour: it says these fighters will not
+		# break, and Rules.breaks_to_* honours it. Without this the starting
+		# morale table would have three of the thirteen defenders of the
+		# campaign's climactic mission running on the first round, on the one
+		# map whose whole premise is an enemy that does not withdraw.
+		"fighters_hold": true,
 		"debrief": "It is over, and it is quiet.\n\nThe camp was not a camp. It was laid out along the bed in stages - markers at the bends, stakes at the depth changes, the whole dry course measured out and pegged as though somebody intended to fill it.\n\nThe old man's papers are forty years of Confederacy survey work, annotated in a hand that gets steadier the further out it goes. The last forty pages are not survey. They are a schedule.\n\nHe was not with the bodies. Nobody saw him leave.\n\nBring the squad home. The Rangers are burying their own dead separately from ours, and did not ask whether we minded.",
 		"size": Vector2i(16, 10),
 		"map": [

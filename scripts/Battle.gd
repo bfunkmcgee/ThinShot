@@ -296,6 +296,12 @@ var rules_seed := 0
 # rather than derived from the cell so that two fighters on the same tile across
 # two different missions are still two different people.
 var _enemy_ordinal := 0
+## The ones who ran from an earlier mission and are walking back onto this one,
+## keyed by the turn they arrive on. Settled once, at _ready(), from a pure hash
+## - so reloading a save mid-mission produces the same people on the same turn.
+var _returners_due: Dictionary = {}
+## Everyone this mission actually put back on the board, for mark_returned().
+var _returners_landed: Array = []
 # THE ROLL: what became of every one of them, in the order it happened.
 # [{identity, kind, fate, conduct}] - see Roll.gd and Rules.Conduct.
 var roll: Array[Dictionary] = []
@@ -461,6 +467,7 @@ func _ready() -> void:
 	_refresh_objectives()
 	_refresh_watch_cells()  # also settles everyone into whatever cover they spawned in
 	_show_briefing()
+	_schedule_returners()
 	show_banner("%s  -  %s" % [Game.operation().name, level.name])
 	player_turn_ready_msec = Time.get_ticks_msec()
 	print("[Sandline] level %d '%s', player turn 1 begins" % [
@@ -867,12 +874,187 @@ func _spawn_unit(kind: Unit.Kind, spawn_cell: Vector2i, soldier := {}) -> void:
 	elif unit.team == Unit.TEAM_GOBLIN:
 		unit.identity = Roll.identity(Game.campaign_seed, Game.current_level,
 				_enemy_ordinal, kind)
+		# Kept on the body, not just used to mint the name. A name is not a key
+		# - Roll draws 228 distinct ones over 280 spawns - so (level, ordinal)
+		# is what the notebook needs if anybody is ever to be looked up again.
+		unit.spawn_ordinal = _enemy_ordinal
 		_enemy_ordinal += 1
 	unit.position = board.cell_to_global(spawn_cell)
 	unit.shadow_color = board.shadow_tone(Unit.SHADOW_COLOR.a)
 	unit.corpse_shadow_color = board.shadow_tone(Unit.CORPSE_SHADOW_COLOR.a)
 	unit.died.connect(_on_unit_died)
 	unit.wounded.connect(_on_unit_wounded)
+
+
+
+# ------------------------------------------------------- the ones who came back
+
+## How long the squad gets before the first of them walks on. Late enough that
+## the opening contact is the player's own problem, early enough that it is not
+## a footnote to a fight already decided.
+const RETURN_FIRST_TURN := 3
+## And how far apart, when more than one is coming.
+const RETURN_TURN_GAP := 2
+## Nobody wants four of them at once. The pool is small in practice, but a long
+## campaign should not turn the rim into a parade.
+const RETURN_MAX := 2
+
+
+## Settle who is coming, and when. Called once, from _ready().
+##
+## The whole schedule is decided up front rather than rolled per turn, for the
+## same reason Roll mints identities from a hash: a mission that is reloaded
+## must play out the same way. Game.returners_from() is already deterministic;
+## this only has to not add a coin flip of its own.
+func _schedule_returners() -> void:
+	var coming: Array = Game.returners_from(Game.current_level)
+	if coming.is_empty():
+		return
+	coming = coming.slice(0, RETURN_MAX)
+	for i in coming.size():
+		var turn := RETURN_FIRST_TURN + i * RETURN_TURN_GAP
+		var due: Array = _returners_due.get(turn, [])
+		due.append(coming[i])
+		_returners_due[turn] = due
+	print("[Sandline] %d returning to level %d" % [coming.size(), Game.current_level + 1])
+
+
+## Nobody arrives at a contact that is already over.
+##
+## An earlier draft held the mission OPEN until every scheduled arrival had
+## landed, so a squad that cleared the board on turn 2 would still meet the
+## turn-3 reinforcement. That was wrong in a way worth writing down, because it
+## looked reasonable. A win is otherwise always decided during the player's own
+## turn; deferring one moved the commit into the middle of an AI activation, and
+## run_enemy_turn does not stop when the mission is scored - it fires that
+## goblin's shot anyway. A banked WIN could be flipped to "RODAR AKAI HAS
+## FALLEN" by a round that landed after commit_mission() had cleared the
+## rollback. On a destroy map it also left the squad standing in the open for
+## four turns after the job was done, with every casualty in them permanent.
+##
+## So the contact ends when it ends. Somebody who does not get here stays in the
+## notebook, unreturned, and a later mission can have him. Clearing the ground
+## quickly is its own reward.
+
+
+## True where this map is held by people who have been told how it ends.
+func _fighters_hold() -> bool:
+	return bool(level.get("fighters_hold", false))
+
+
+## Where a man coming from `edge` steps back on.
+##
+## The rim he left by, and then the cell on it CLOSEST TO THE SQUAD that is
+## still at least ARRIVAL_STANDOFF tiles off them. He steps out behind you.
+##
+## This took three attempts and the two failures are worth keeping, because both
+## sounded right. Furthest from the squad drops him at the far end of the rim,
+## which on every shipped map is the corner nearest the Thirst's own spawns - he
+## arrives as one more body on the side you are already pointed at. Furthest
+## from the other GOBLINS fixes that on turn one and breaks by turn three: the
+## Thirst advances west toward the squad, so the cell furthest from them becomes
+## the east corner they started in, and he lands 16 tiles behind their own line.
+##
+## What actually makes an arrival alarming is proximity, not distance. The rim
+## nobody is watching is the one behind the squad, and a man who steps onto it
+## is between them and the way home. The standoff is what stops that being a
+## free shot rather than a surprise - it is one tile past the attack range of
+## both kinds that can return, so he has to close first.
+const ARRIVAL_STANDOFF := 4
+
+func _arrival_cell(edge: String) -> Vector2i:
+	var rim: Array[Vector2i] = []
+	match edge:
+		"north":
+			for x in board.size.x:
+				rim.append(Vector2i(x, 0))
+		"south":
+			for x in board.size.x:
+				rim.append(Vector2i(x, board.size.y - 1))
+		"west":
+			for y in board.size.y:
+				rim.append(Vector2i(0, y))
+		_:
+			for y in board.size.y:
+				rim.append(Vector2i(board.size.x - 1, y))
+	var scouts := living_soldiers(Unit.TEAM_SCOUT)
+	var best := Board.NO_CELL
+	var best_room := 9999
+	var fallback := Board.NO_CELL
+	var fallback_room := -1
+	for cell: Vector2i in rim:
+		if not board.is_walkable(cell) or unit_at(cell) != null:
+			continue
+		var room := 9999
+		for scout in scouts:
+			room = mini(room, Board.manhattan(cell, scout.cell))
+		if room >= ARRIVAL_STANDOFF and room < best_room:
+			best_room = room
+			best = cell
+		# Nowhere on this rim clears the standoff - every cell is in somebody's
+		# lap. Take the roomiest rather than refusing to arrive at all.
+		if room > fallback_room:
+			fallback_room = room
+			fallback = cell
+	return best if best != Board.NO_CELL else fallback
+
+
+## Put this turn's arrivals on the board.
+func _land_returners() -> void:
+	if state == State.GAME_OVER:
+		return
+	var due: Array = _returners_due.get(turn_number, [])
+	if due.is_empty():
+		return
+	_returners_due.erase(turn_number)
+	var names: Array[String] = []
+	for entry: Dictionary in due:
+		var edge := str(entry.get("edge", "north"))
+		var cell := _arrival_cell(edge)
+		if cell == Board.NO_CELL:
+			# Every cell on that rim is a wall or already occupied. Rather than
+			# drop him somewhere he did not come from, he stays out there - he
+			# is still in the notebook, and still unreturned, so a later mission
+			# can have him.
+			print("[Sandline]   no way back on from the %s rim" % edge)
+			continue
+		_spawn_returner(entry, cell)
+		# Stamped with where and when, not just who. He walks on his own
+		# activation the moment he lands, so his cell a second later is wherever
+		# the AI took him - this is the only record of the arrival itself.
+		var landed := entry.duplicate()
+		landed["arrived_on"] = turn_number
+		landed["arrived_at"] = cell
+		_returners_landed.append(landed)
+		names.append(str(entry.get("name", "somebody")))
+	if names.is_empty():
+		return
+	Sfx.play("turn_enemy", 0.0, 0.0)
+	# Named, because the name is the entire point. The player let this man walk
+	# off a map two missions ago and the game wrote it down.
+	show_banner("%s CAME BACK" % ", ".join(names).to_upper())
+	await get_tree().create_timer(0.9).timeout
+
+
+## One returning fighter, carrying the name he had when he ran.
+func _spawn_returner(entry: Dictionary, cell: Vector2i) -> void:
+	_spawn_unit(int(entry.get("kind", 3)), cell)
+	var unit := unit_at(cell)
+	if unit == null:
+		return
+	unit.identity = {
+		"name": str(entry.get("name", "")),
+		"age": int(entry.get("age", 0)),
+		"settlement": str(entry.get("settlement", "")),
+		"grievance": str(entry.get("grievance", "")),
+	}
+	unit.returned = true
+	# Steadier than he was: he is not a levy who was marched here.
+	unit.morale = Rules.returner_morale(unit.kind)
+	unit.morale_ceiling = unit.morale
+	# Facing in off the rim he came from, so his first act reads as an entrance
+	# rather than as a body that was always standing there.
+	unit.set_facing_sector(Board.sector_from_to(cell, board.size / 2))
 
 
 ## Somebody who lives here. Same body as a prisoner and none of the protection:
@@ -3173,6 +3355,12 @@ func end_player_turn() -> void:
 	smoke_button.disabled = true
 	ability_1_button.disabled = true
 	ability_2_button.disabled = true
+	# The ones who ran, walking back on. Deliberately here and not a line
+	# later: run_enemy_turn() snapshots its squad on its first statement, so a
+	# body added after this point would stand still for a turn before noticing
+	# there was a war on. Arriving now, it is refreshed by the loop below and
+	# is in that snapshot, so it acts on the turn it lands.
+	await _land_returners()
 	# Goblins refresh at the start of THEIR turn (expires last turn's
 	# unfired goblin overwatch at the right moment).
 	for goblin in living_units(Unit.TEAM_GOBLIN):
@@ -3320,14 +3508,14 @@ func _resolve_morale(goblin: Unit, index: int, squad_size: int) -> bool:
 	if goblin.is_suppressed():
 		goblin.morale = Rules.morale_after_suppression(goblin.morale)
 	elif not goblin.morale_pressed and not goblin.routing:
-		goblin.morale = Rules.morale_recovered(goblin.morale)
+		goblin.morale = Rules.morale_recovered(goblin.morale, goblin.morale_ceiling)
 	goblin.morale_pressed = false
 
 	if goblin.routing:
 		return await _run_for_it(goblin, index, squad_size)
 
 	var guns := _guns_on(goblin)
-	if Rules.breaks_to_surrender(goblin.kind, goblin.morale, guns):
+	if Rules.breaks_to_surrender(goblin.kind, goblin.morale, guns, _fighters_hold()):
 		goblin.surrender()
 		_record_on_roll(goblin, "surrendered")
 		Sfx.play("overwatch_set", -6.0, 0.0)
@@ -3336,7 +3524,7 @@ func _resolve_morale(goblin: Unit, index: int, squad_size: int) -> bool:
 		_refresh_objectives()
 		check_game_over()
 		return true
-	if Rules.breaks_to_rout(goblin.kind, goblin.morale, guns):
+	if Rules.breaks_to_rout(goblin.kind, goblin.morale, guns, _fighters_hold()):
 		goblin.begin_rout()
 		print("[Sandline]   goblin %d/%d breaks at %s (morale %d, %d guns)" % [
 				index, squad_size, goblin.cell, goblin.morale, guns])
@@ -3564,6 +3752,10 @@ func _spread_morale_from_death(dead: Unit) -> void:
 	for goblin in living_units(Unit.TEAM_GOBLIN):
 		if goblin == dead or goblin.has_stopped():
 			continue
+		# A man who already walked away from one fight and came back to this
+		# one does not need telling that people die here.
+		if not Rules.shaken_by_the_fallen(goblin.returned):
+			continue
 		var before: int = goblin.morale
 		goblin.morale = Rules.morale_after_ally_down(
 				goblin.morale, Board.manhattan(goblin.cell, dead.cell))
@@ -3585,6 +3777,68 @@ func _guns_on(unit: Unit) -> int:
 
 ## True once a routing fighter is standing on the rim of the map. One step off
 ## it and he is gone - not killed, and the contact resolved either way.
+
+## Which way a man went. The rim he stood on if he reached one, otherwise the
+## rim he was heading for - the sweep below records fighters who were still
+## running when the objective completed, and they never arrived anywhere.
+func _escape_edge(unit: Unit) -> String:
+	var on := _edge_of(unit.cell)
+	return on if on != "" else _nearest_edge(unit.cell)
+
+
+## Anybody still running when the mission ended got away.
+##
+## Five of the seven missions finish on a destroy, extract or rescue objective,
+## which can complete while a broken goblin is halfway to the rim. Until now the
+## scene was torn down around him and he left no line on THE ROLL at all - not
+## killed, not escaped, not anything. He was simply deleted, which is the one
+## outcome that is not true: the squad did not account for him.
+##
+## So the roll is closed out over the survivors. A fighter who was routing when
+## the shooting stopped is recorded as escaped, from whichever rim he had
+## reached - or the one he was nearest, since he never got there.
+func _sweep_the_still_running() -> void:
+	for goblin in living_units(Unit.TEAM_GOBLIN):
+		if not goblin.routing:
+			continue
+		print("[Sandline]   goblin was still running when it ended: %s"
+				% str(goblin.identity.get("name", "?")))
+		_record_on_roll(goblin, "escaped")
+
+
+## The rim this cell is on or nearest to, for somebody who never reached one.
+func _nearest_edge(cell: Vector2i) -> String:
+	var far := {
+		"north": cell.y,
+		"south": board.size.y - 1 - cell.y,
+		"west": cell.x,
+		"east": board.size.x - 1 - cell.x,
+	}
+	var best := "north"
+	for name: String in far:
+		if int(far[name]) < int(far[best]):
+			best = name
+	return best
+
+## Which rim a cell is on, as a word. "" for a cell that is not on one.
+##
+## Order matters where two edges meet: a corner is reported by its longer run,
+## which on every 16x10 map in the game is north or south. That is also the
+## answer the reinforcement code wants, since west is always the squad's rim and
+## east is always the Thirst's - so a corner reads as the unexpected direction
+## rather than the obvious one.
+func _edge_of(cell: Vector2i) -> String:
+	if cell.y == 0:
+		return "north"
+	if cell.y == board.size.y - 1:
+		return "south"
+	if cell.x == 0:
+		return "west"
+	if cell.x == board.size.x - 1:
+		return "east"
+	return ""
+
+
 func _at_map_edge(cell: Vector2i) -> bool:
 	return cell.x == 0 or cell.y == 0 \
 			or cell.x == board.size.x - 1 or cell.y == board.size.y - 1
@@ -3679,6 +3933,11 @@ func _record_on_roll(unit: Unit, fate: String) -> void:
 		"kind": int(unit.kind),
 		"fate": fate,
 		"conduct": conduct,
+		# The two facts that let a man who walked away be put back on a board:
+		# which body he was, and which way he went. Both are worthless to the
+		# after-action panel and both are why Game.notebook can now be read.
+		"ordinal": int(unit.spawn_ordinal),
+		"edge": _escape_edge(unit) if fate == "escaped" else "",
 	})
 
 
@@ -3760,7 +4019,12 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 		# who did the walking. The people they carried out are not on the roster.
 		for scout in living_soldiers(Unit.TEAM_SCOUT):
 			_award_xp(scout, Game.XP_SURVIVE, "survived")
+		_sweep_the_still_running()
 		_apply_conduct()
+		# Before the notebook write, so a returner who ran AGAIN is marked
+		# against the key he arrived under and then writes a fresh line under a
+		# new one - the man is back in the pool, the key is not reused.
+		Game.mark_returned(_returners_landed)
 		Game.add_to_notebook(Game.current_level, roll)
 		Game.commit_mission()
 	else:

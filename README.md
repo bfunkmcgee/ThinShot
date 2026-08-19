@@ -90,6 +90,19 @@ Rodar (six tiles out-reaches him, and four damage drops him in one), break
 line of sight and make him choose between shooting and repositioning, or eat a
 scout's worth of damage crossing his lane.
 
+**They do not all die, and they do not all forget.** A fighter whose nerve goes
+with nobody covering him runs for the edge of the map, and getting there is an
+escape rather than a kill — which is the decent outcome, and the one the
+district's opinion of you rewards. It is also the one that comes back. Dava's
+notebook keeps the name, the settlement and which way he went, and a later
+mission can hand him a rifle again: he walks on mid-battle, off the rim he fled
+by, behind the line you have been pushing. He is steadier than he was, because
+this time he came on purpose.
+
+Whether that is worth it is the point. Shooting a routing man costs Standing;
+letting him go costs you nothing today and might cost you a flank in three
+missions' time.
+
 Seven missions across two operations, on 16×10 isometric maps. It is one story,
 and **the objectives are how it is told** — each mission opens with a briefing
 and closes on a debrief that sets up the next.

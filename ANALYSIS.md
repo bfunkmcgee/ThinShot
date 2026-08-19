@@ -197,7 +197,9 @@ Lines [17-193](scripts/Battle.gd#L17) are pure texture tables and pixel offsets;
 
 **3. Free undo + end-turn confirmation.** *Buys:* removes the #1 rage-quit source in the genre. Cheap because a mission-level rollback already exists; this is the move-level equivalent. *Costs:* [Battle.gd](scripts/Battle.gd) `do_move`, `_handle_click`, `end_player_turn`, one new binding in project.godot. *Sketch:* cache `{cell, moved, facing_sector}` before the walk; `_undo_move()` on Z restores it while `not unit.acted` and no reaction fired; `end_player_turn` counts unspent soldiers and requires a second press inside 2 s.
 
-**4. Mission pressure — turn clocks and reinforcements.** *Buys:* kills the "hold the start line and overwatch" dominant strategy on all seven maps, and finally differentiates the destroy/extract missions from the eliminate ones. *Costs:* [Levels.gd](scripts/Levels.gd) data + ~30 lines in [Battle.gd](scripts/Battle.gd) `run_enemy_turn`, plus the turn counter in the banner. *Sketch:* optional `"pressure": {"turn": N, "spawns": [...], "edge": ...}` per mission; `_spawn_reinforcements()` keyed off `turn_number` at the top of `run_enemy_turn`; add a cover-holding penalty to `_best_ai_dest` so ranged goblins stop feeding themselves into the kill zone.
+~~**4. Mission pressure — turn clocks and reinforcements.**~~ — **half done.** The reinforcement half shipped, but not as a level table: arrivals are the campaign's own escapees walking back on, so they carry names the player has seen rather than being anonymous pressure (see *The ones who came back* below). What is still open is the turn clock, the on-screen turn counter, and the `_best_ai_dest` cover-holding penalty — those are what actually punish holding the start line, and this feature does not.
+
+**Original entry:** *Buys:* kills the "hold the start line and overwatch" dominant strategy on all seven maps, and finally differentiates the destroy/extract missions from the eliminate ones. *Costs:* [Levels.gd](scripts/Levels.gd) data + ~30 lines in [Battle.gd](scripts/Battle.gd) `run_enemy_turn`, plus the turn counter in the banner. *Sketch:* optional `"pressure": {"turn": N, "spawns": [...], "edge": ...}` per mission; `_spawn_reinforcements()` keyed off `turn_number` at the top of `run_enemy_turn`; add a cover-holding penalty to `_best_ai_dest` so ranged goblins stop feeding themselves into the kill zone.
 
 **5. The Choirmaster.** *Buys:* seven missions of escalating narrative currently resolve into "kill thirteen of the same goblins" with the same `eliminate` handler as mission 1. This makes the finale a target-priority puzzle for roughly an afternoon of work and no new art. *Costs:* [Levels.gd](scripts/Levels.gd) one key, [Unit.gd](scripts/Unit.gd) a `leader` flag, [Battle.gd](scripts/Battle.gd) `_spawn_unit` + `_objective_complete` + `_update_objective_label`. *Sketch:* `"choirmaster_spawn": Vector2i(...)` spawns a GOBLIN_BOLT with overridden max_hp/accuracy and `leader = true`; while alive, goblins within N tiles get +1 move or ignore the suppression penalty; objective label reads SILENCE THE CHOIRMASTER.
 
@@ -383,3 +385,52 @@ still backs `Kind.TEAM_LEAD`, and along with `Scout` and `Scout_MachineGunner` i
 deliberately as generic Kestrel troop art. The sets these two "would replace" are not being
 replaced — they are being kept for cut scenes, garrisons and allied squads. Nothing here is a
 delete list.
+
+### The ones who came back
+
+A goblin who breaks with nobody covering him routs for the rim, and reaching it
+has always been an escape rather than a kill. That was written to THE ROLL and
+read by nobody. It now feeds a reinforcement: escapees can walk back onto a
+later mission, mid-battle, off the rim they fled by, under the name they had
+when they ran.
+
+Three things had to change before it could work at all, and each was a defect
+on its own terms.
+
+**Most of them were being deleted.** Five of the seven missions end on a
+destroy, extract or rescue objective, which can complete while a broken goblin
+is still walking. `_show_game_over` committed the roll as it stood, so that man
+left no line at all — not killed, not escaped, nothing. `_sweep_the_still_running`
+closes the roll over the survivors.
+
+**Two classes could not break.** A conscript has 2 HP, so the only round he
+survives is one already halved by cover, and that single round is the entire 40
+morale he will ever be charged against a 70-point requirement. The two kinds the
+fiction calls least willing to be there were the two that could not run.
+`Rules.starting_morale()` gives them their own numbers — well-hand 100, runner
+85, light runner 75, conscript 60 — and `morale_recovered()` now caps at the
+unit's own ceiling rather than at MORALE_MAX, without which +5 a quiet turn
+walks everyone back to 100 and the table means nothing after turn four.
+
+**The notebook was a document, not a record.** `add_to_notebook` kept
+`{level, name, age, settlement, fate}` and dropped the `kind` Battle had
+recorded, so nothing on disk said what an escapee was carrying. It now keeps
+kind, spawn ordinal and the rim he left by — and because it drives a spawner, it
+is sanitised on load like every other adopted structure, against the Thirst's
+kinds specifically rather than merely against the enum's range.
+
+Two things that were tried and were wrong, kept here because both sounded right:
+
+- **Holding the mission open** for a scheduled arrival. A win is otherwise
+  always decided during the player's own turn; deferring one moves the commit
+  into the middle of an AI activation, and `run_enemy_turn` does not stop when
+  the mission is scored. A banked WIN could be flipped to "RODAR AKAI HAS
+  FALLEN" by a round that landed after `commit_mission()` had cleared the
+  rollback. On a destroy map it also left the squad standing in the open for
+  four turns after the job was done, with every casualty permanent. The contact
+  ends when it ends; somebody who does not get here stays in the notebook.
+- **Choosing the arrival cell by distance.** Furthest from the squad is the
+  corner nearest the Thirst's own spawns. Furthest from the other goblins is
+  correct on turn one and wrong by turn three, because the Thirst advances west
+  and the far cell becomes the corner they started in. What makes an arrival
+  alarming is proximity: the rim nobody is watching is the one behind the squad.

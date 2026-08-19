@@ -732,6 +732,10 @@ var identity: Dictionary = {}
 # already run scripts before the autoloads exist. Rules still owns the number.
 # tools/test_rules.gd asserts these two agree, so the duplication cannot drift.
 var morale := 100
+## Where this unit STARTED, and the most a quiet turn can give back. Without it
+## Rules.morale_recovered climbs everyone to MORALE_MAX and the per-kind table
+## above becomes a three-turn opening condition rather than a class trait.
+var morale_ceiling := 100
 # Hands up. Stops fighting, stops being fired on by the AI, and stops counting
 # as a combatant - so a map cleared of everyone still standing is cleared.
 var surrendered := false
@@ -743,6 +747,15 @@ var routing := false
 # back to a fighter nothing happened to, so the squad cannot shoot a man to the
 # edge of breaking and then have him steady himself on his own turn.
 var morale_pressed := false
+# Which body this was in the mission's own spawn order. Battle mints it; the
+# roll and the notebook carry it, because a name is not a key - 280 spawns
+# produce 228 distinct names, so two men called the same thing in one mission is
+# an ordinary Tuesday. (level, ordinal) is the only pair that is actually unique.
+var spawn_ordinal := -1
+# This fighter ran from an earlier mission and came back. Steadier for it
+# (Rules.returner_morale), unmoved by the fallen (Rules.shaken_by_the_fallen),
+# and carrying the name he had when he ran rather than a fresh one.
+var returned := false
 # Cut short by a reaction: a round landed while this unit was crossing a watched
 # lane. The advance stopped on the cell it was hit on and the activation stopped
 # with it - see Rules.reaction_interrupts. Cleared by start_turn(), alongside
@@ -1011,6 +1024,9 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			attack_range = 2
 			damage = 2
 			accuracy = 58
+			# Rules.starting_morale(), spelled here because this file cannot
+			# name Rules - a raider, lighter in every sense than a well-hand.
+			morale = 85
 			frames = SMG_FRAMES
 			aim_frames = SMG_AIM_FRAMES
 			walk_frames = SMG_WALK_FRAMES
@@ -1032,6 +1048,9 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			attack_range = 2
 			damage = 2
 			accuracy = 52  # too light to fight the recoil
+			# Rules.starting_morale(), spelled here because this file cannot
+			# name Rules - stripped for speed, and nothing to stand behind.
+			morale = 75
 			frames = SMGA_FRAMES
 			aim_frames = SMGA_AIM_FRAMES
 			walk_frames = SMGA_WALK_FRAMES
@@ -1076,6 +1095,9 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			attack_range = 3
 			damage = 2
 			accuracy = 48  # a worn revolver and no training at all
+			# Rules.starting_morale(), spelled here because this file cannot
+			# name Rules - pressed last week, no training, a worn-out sidearm.
+			morale = 60
 			frames = REV_FRAMES
 			aim_frames = REV_AIM_FRAMES
 			walk_frames = REV_WALK_FRAMES
@@ -1126,6 +1148,8 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			idle_alt_frames = GOBLIN_IDLE_ALT_FRAMES
 			hurt_frames = GOBLIN_HURT_FRAMES
 			reload_frames = GOBLIN_RELOAD_FRAMES
+	# After the stat blocks, so it captures whatever this kind starts on.
+	morale_ceiling = morale
 	var spec: Dictionary = SPRITE_SPECS.get(kind, SPRITE_SPECS.DEFAULT)
 	sprite_scale = spec.scale
 	sprite_offset = spec.offset

@@ -115,6 +115,17 @@ static func identity(seed: int, level: int, ordinal: int, kind: int) -> Dictiona
 	}
 
 
+## A stable yes/no, out of a hash rather than a generator.
+##
+## `percent` is the chance of true. The same (seed, level, key) always answers
+## the same way, which is the whole point: whether a man who ran comes back is
+## decided by who he is and which mission this is, not by how many times the
+## player has reloaded. Nothing here touches an RNG, for the reason identity()
+## does not - see the note there.
+static func chance(seed: int, level: int, key: String, percent: int) -> bool:
+	return _mix(seed, level * 977 + hash(key), 0x9E3779B1) % 100 < percent
+
+
 ## One line of THE ROLL. `fate` is what became of them - "killed", "surrendered",
 ## "escaped" - and is the controller's word, not this file's.
 static func line(identity: Dictionary, fate: String) -> String:

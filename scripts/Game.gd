@@ -63,6 +63,16 @@ var alliance_strain := STRAIN_START
 # the order it happened. Append-only. This is the document the game keeps
 # instead of a score.
 var notebook: Array = []
+## Keys of the escapees the campaign has already sent back, so the same man is
+## not waiting on the rim of every remaining mission. A key is "level:ordinal",
+## which is the only pair that is unique - Roll draws 228 distinct names over
+## 280 spawns, so a name is a label rather than an identifier.
+##
+## He can still return more than once across a campaign, and that is deliberate:
+## a returner who breaks and runs AGAIN writes a fresh notebook line under a new
+## ordinal, carrying the name he already had. The man comes back; the key does
+## not repeat.
+var returned: Array = []
 # v4: which three of the six rifle-slot Kestrels go out this mission, by id.
 # Ids rather than indices - the roster reorders as people die, and an index
 # would quietly deploy somebody else.
@@ -785,6 +795,7 @@ func new_campaign() -> bool:
 	district_standing.clear()
 	alliance_strain = STRAIN_START
 	notebook.clear()
+	returned.clear()
 	deployed_ids.clear()
 	# A new campaign is a different campaign, so it fights different dice.
 	campaign_seed = _mint_campaign_seed()
@@ -935,8 +946,112 @@ func add_to_notebook(level: int, entries: Array) -> void:
 			"name": str(identity.get("name", "")),
 			"age": int(identity.get("age", 0)),
 			"settlement": str(identity.get("settlement", "")),
+			"grievance": str(identity.get("grievance", "")),
 			"fate": str(entry.get("fate", "")),
+			# Everything below is for the ones who walked away. The notebook was
+			# a document; it is now also the only record of who is still out
+			# there, and a man cannot be put back on a board without knowing
+			# which body he was, what he was carrying, and which way he went.
+			"kind": int(entry.get("kind", -1)),
+			"ordinal": int(entry.get("ordinal", -1)),
+			"edge": str(entry.get("edge", "")),
 		})
+
+
+## The only kinds that can ever have escaped, and so the only ones that can be
+## read back off a save and put on a board. Spelled as ordinals because that is
+## what the notebook stores and what Unit.setup takes.
+const GOBLIN_KINDS: Array[int] = [3, 4, 5, 6, 7]
+
+## Rebuild the notebook from a save, field by field.
+##
+## Every other adopted structure in this file is rebuilt rather than trusted;
+## the notebook was the exception because nothing read it except the diary
+## screen, where a malformed entry is a cosmetic problem. It drives a spawner
+## now. `kind` in particular is handed to Unit.setup(), so it is checked against
+## the real enum rather than merely cast: an out-of-range ordinal from a
+## hand-edited file would otherwise fall through setup()'s match and produce a
+## unit with no stats, no art and no team.
+func _read_notebook(raw: Variant) -> Array:
+	var out: Array = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for row: Variant in raw:
+		if typeof(row) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = row
+		# Range is not enough, and the first version of this check thought it
+		# was. Unit.setup puts kinds 0-2, 8 and 9-14 on TEAM_SCOUT, so an
+		# in-range ordinal is not necessarily one of the Thirst: a campaign.json
+		# edited to say kind 9 put a second Rodar Akai on the rim, on the
+		# player's own team, where he counted toward the wipe condition. Only a
+		# goblin ever escapes, so only a goblin can come back.
+		var kind := int(entry.get("kind", -1))
+		if not GOBLIN_KINDS.has(kind):
+			kind = -1
+		out.append({
+			"level": int(entry.get("level", 0)),
+			"name": str(entry.get("name", "")),
+			"age": int(entry.get("age", 0)),
+			"settlement": str(entry.get("settlement", "")),
+			"grievance": str(entry.get("grievance", "")),
+			"fate": str(entry.get("fate", "")),
+			"kind": kind,
+			"ordinal": int(entry.get("ordinal", -1)),
+			"edge": str(entry.get("edge", "")),
+		})
+	return out
+
+
+## The key that identifies a person the campaign has met. Not their name.
+static func roll_key(level: int, ordinal: int) -> String:
+	return "%d:%d" % [level, ordinal]
+
+
+## Who is still out there, and might walk back onto THIS mission.
+##
+## Deterministic, and deliberately not a draw from any generator. Battle's
+## _rules_rng advances exactly once per shot so that a seed replays a mission
+## shot for shot; taking a variable number of draws from it here - one per
+## escapee the campaign happens to have accumulated - would shift every roll in
+## the mission by an amount that depends on campaign history. Roll.identity has
+## the same discipline and the same reason. So this is a pure hash of
+## (campaign seed, the mission being played, who he was), asked once per
+## candidate, and it answers the same way every time the mission is loaded.
+##
+## Only escapees from WON missions are in here, because a lost mission is rolled
+## back wholesale and its roll dies with the scene. That is the existing rule
+## rather than a new one, and it reads correctly: the mission did not happen.
+##
+## Entries from before save v5 carry kind -1 and are skipped - there is no
+## honest way to know what an old escapee was holding.
+const RETURN_CHANCE := 45
+
+func returners_from(level: int) -> Array:
+	var out: Array = []
+	for entry: Dictionary in notebook:
+		if str(entry.get("fate", "")) != "escaped":
+			continue
+		if int(entry.get("kind", -1)) < 0 or int(entry.get("ordinal", -1)) < 0:
+			continue
+		# Nobody returns to the mission he ran from, or to one already behind us.
+		if int(entry.get("level", 0)) >= level:
+			continue
+		var key := roll_key(int(entry.level), int(entry.ordinal))
+		if returned.has(key):
+			continue
+		if Roll.chance(campaign_seed, level, key, RETURN_CHANCE):
+			out.append(entry)
+	return out
+
+
+## Write down that these people have been sent back, so the rim of every
+## remaining mission is not the same crowd.
+func mark_returned(entries: Array) -> void:
+	for entry: Dictionary in entries:
+		var key := roll_key(int(entry.get("level", 0)), int(entry.get("ordinal", -1)))
+		if not returned.has(key):
+			returned.append(key)
 
 
 ## The notebook grouped the way the district connects it: settlement -> the
@@ -1025,7 +1140,7 @@ const SAVE_PATH := "user://campaign.json"
 # Raise this in the same commit that adds the migration step reaching it, and
 # never one without the other - _migrate_step() is what turns a number into a
 # shape the rest of this file can read.
-const SAVE_VERSION := 4
+const SAVE_VERSION := 5
 
 # Raised, and never lowered again, when load_save() finds a campaign written by
 # a build newer than this one. Refusing to READ such a file is only half the
@@ -1064,6 +1179,7 @@ func save() -> void:
 		"district_standing": district_standing,
 		"alliance_strain": alliance_strain,
 		"notebook": notebook,
+		"returned": returned,
 		# v4: who the garrison picked.
 		"deployed_ids": deployed_ids,
 	}
@@ -1113,6 +1229,8 @@ func _migrate_step(payload: Dictionary, from: int) -> Dictionary:
 			return _migrate_2_to_3(payload)
 		3:
 			return _migrate_3_to_4(payload)
+		4:
+			return _migrate_4_to_5(payload)
 	return {}
 
 
@@ -1198,6 +1316,20 @@ func _read_standing(raw: Variant) -> Dictionary:
 ## other five Kestrels the first time it walks into the garrison.
 func _migrate_3_to_4(payload: Dictionary) -> Dictionary:
 	payload["deployed_ids"] = []
+	return payload
+
+
+## v5: the notebook grew from a document into a record that can be read back,
+## and the campaign started remembering who it has already sent back.
+##
+## Old entries are left exactly as they are. They carry no kind, no ordinal and
+## no edge, so returners_from() skips them - which is right rather than
+## unfortunate: there is genuinely no way to know what an old escapee was
+## carrying, and inventing one would put a fighter on the board the campaign
+## never met. A save from before this rung simply has nobody to send back, and
+## fills up again from its next won mission onward.
+func _migrate_4_to_5(payload: Dictionary) -> Dictionary:
+	payload["returned"] = []
 	return payload
 
 
@@ -1298,8 +1430,18 @@ func load_save() -> bool:
 	# theater at zero Strain is a bug in the theme.
 	district_standing = _read_standing(payload.get("district_standing", {}))
 	alliance_strain = clampi(int(payload.get("alliance_strain", STRAIN_START)), 1, 100)
-	var read_notebook: Variant = payload.get("notebook", [])
-	notebook = read_notebook if typeof(read_notebook) == TYPE_ARRAY else []
+	# Sanitised field by field, unlike every earlier build of this line, because
+	# the notebook stopped being a document the moment returners_from() started
+	# reading it. It now names a Unit.Kind that goes to a spawner, and a
+	# hand-edited campaign.json must not be able to put an arbitrary ordinal on
+	# the board. Everything else in this file is rebuilt this way already
+	# (_read_roster, _read_promotions, _read_standing); this was the exception.
+	notebook = _read_notebook(payload.get("notebook", []))
+	var read_returned: Variant = payload.get("returned", [])
+	returned = []
+	if typeof(read_returned) == TYPE_ARRAY:
+		for key: Variant in read_returned:
+			returned.append(str(key))
 	# The v4 field. Read as ints and no further: deployment() re-checks every id
 	# against the living roster anyway, so a stale or invented one costs nothing.
 	deployed_ids = []

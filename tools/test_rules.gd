@@ -787,13 +787,48 @@ func _test_morale() -> void:
 
 	# Unit.gd cannot name Rules - Rules names Unit in every signature and the
 	# cycle would be resolved by compile order - so it carries the starting
-	# morale as a literal. This is the assertion that keeps the two honest.
+	# morale as a literal in each stat block. This is the assertion that keeps
+	# the two honest, and it sweeps every Kind rather than sampling one: the
+	# numbers now DIFFER by kind, so a spot check would pass while any other
+	# class quietly drifted.
+	var wrong_morale: Array[String] = []
+	for kind in KIND_NAMES.size():
+		var u: Node2D = _mk(kind, Vector2i.ZERO)
+		var want: int = int(_rules.call("starting_morale", kind))
+		if int(u.morale) != want:
+			wrong_morale.append("%s has %d, Rules says %d"
+					% [KIND_NAMES[kind], int(u.morale), want])
+		u.free()
+	_check(wrong_morale.is_empty(),
+			"every kind starts on the morale Rules gives it (%s)" % [wrong_morale])
+
+	# The point of the table: the two classes the fiction calls least willing to
+	# be there are now the two that can actually break. A conscript has 2 HP, so
+	# the only round he survives is one already halved by cover - and that one
+	# round has to be enough on its own.
+	var conscript: int = int(_rules.call("starting_morale",
+			int(_k.KIND_GOBLIN_REVOLVER)))
+	var one_bad_round: int = _rules.call("morale_after_round", conscript, 1, 2)
+	_check(_rules.call("is_broken", one_bad_round),
+			"a conscript breaks on the one wounding round he can survive (%d -> %d)"
+			% [conscript, one_bad_round])
+	var well_hand: int = int(_rules.call("starting_morale", int(_k.KIND_GOBLIN)))
+	var hurt_well_hand: int = _rules.call("morale_after_round", well_hand, 2, 4)
+	_check(not _rules.call("is_broken", hurt_well_hand),
+			"...and a well-hand does not (%d -> %d)" % [well_hand, hurt_well_hand])
+
+	# A man who came back is steadier than the levy he was, and stops flinching
+	# at the fallen.
+	_check(int(_k.RETURNER_MORALE) >= int(_k.MORALE_MAX),
+			"a returner starts at least as steady as anyone (%d)"
+			% int(_k.RETURNER_MORALE))
+	_check(not _rules.call("shaken_by_the_fallen", true)
+			and _rules.call("shaken_by_the_fallen", false),
+			"...and is the only one an ally going down does not move")
+
 	var fresh: Node2D = _mk(smg, Vector2i.ZERO)
-	_check(int(fresh.morale) == int(_k.MORALE_MAX),
-			"a fresh unit starts at MORALE_MAX (%d), which Unit.gd spells by hand"
-			% int(fresh.morale))
 	_check(not fresh.surrendered and not fresh.routing and not fresh.has_stopped(),
-			"...and starts fighting")
+			"a fresh unit starts fighting")
 	fresh.free()
 
 	# The Kind ordinal Rules names for the kill floor must be the real one.
