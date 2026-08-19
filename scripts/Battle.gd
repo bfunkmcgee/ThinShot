@@ -3793,6 +3793,38 @@ func _guns_on(unit: Unit) -> int:
 ## True once a routing fighter is standing on the rim of the map. One step off
 ## it and he is gone - not killed, and the contact resolved either way.
 
+## The ones this mission failed to account for, and how many times that has now
+## happened to each of them.
+##
+## One line, and deliberately: the after-action's right column is measured by
+## tools/check_briefing_fit.gd against a fixed budget, and mission 7's is the
+## tightest. A name per survivor would blow it on exactly the mission where the
+## most people are on the board.
+##
+## Read AFTER _remember_the_survivors has run, so the count includes today.
+func _still_out_there() -> String:
+	var names: Array[String] = []
+	for entry: Dictionary in roll:
+		var fate := str(entry.get("fate", ""))
+		if fate != "escaped" and fate != "injured":
+			continue
+		var identity: Dictionary = entry.get("identity", {})
+		var who := str(identity.get("name", ""))
+		if who == "":
+			continue
+		# Their tally now, which is the point: the second time somebody walks
+		# away from this squad should not read like the first.
+		var times := 0
+		for rec: Dictionary in Game.adversaries:
+			if str(rec.get("name", "")) == who:
+				times = int(rec.get("survivals", 0))
+				break
+		names.append(who if times < 2 else "%s (%d)" % [who, times])
+	if names.is_empty():
+		return ""
+	return ", ".join(names)
+
+
 ## Everybody who walked away from this mission, written into the campaign's
 ## standing record of who is still out there.
 ##
@@ -4200,11 +4232,13 @@ func _roll_text(won: bool) -> String:
 	var killed := 0
 	var surrendered := 0
 	var escaped := 0
+	var injured := 0
 	var civilians := 0
 	for entry: Dictionary in roll:
 		match str(entry.get("fate", "")):
 			"surrendered": surrendered += 1
 			"escaped": escaped += 1
+			"injured": injured += 1
 			_: killed += 1
 		if int(entry.get("conduct", -1)) == Rules.Conduct.CIVILIAN_KILLED:
 			civilians += 1
@@ -4217,6 +4251,11 @@ func _roll_text(won: bool) -> String:
 		tally.append("%d SURRENDERED" % surrendered)
 	if escaped > 0:
 		tally.append("%d WALKED AWAY" % escaped)
+	if injured > 0:
+		# Not "killed", though the squad watched every one of them go down.
+		# What the squad saw and what the campaign knows are different things,
+		# and this line is the difference.
+		tally.append("%d LEFT FOR DEAD" % injured)
 	lines.append("  -  ".join(tally))
 	lines.append("")
 
@@ -4233,6 +4272,11 @@ func _roll_text(won: bool) -> String:
 			named += 1
 	if named > shown:
 		lines.append("...and %d more in the notebook" % (named - shown))
+
+	var out_there := _still_out_there()
+	if out_there != "":
+		lines.append("")
+		lines.append("STILL OUT THERE  %s" % out_there)
 
 	if civilians > 0:
 		lines.append("")

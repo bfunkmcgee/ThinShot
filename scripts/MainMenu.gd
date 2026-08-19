@@ -115,8 +115,12 @@ func _close_notebook() -> void:
 func _notebook_lead() -> String:
 	if Game.notebook.is_empty():
 		return "Nothing written down yet."
-	return "%d name%s, and the two numbers the theater keeps." % [
-		Game.notebook.size(), "" if Game.notebook.size() == 1 else "s"]
+	var out_there: int = Game.adversaries.size()
+	if out_there == 0:
+		return "%d name%s, and the two numbers the theater keeps." % [
+			Game.notebook.size(), "" if Game.notebook.size() == 1 else "s"]
+	return "%d name%s, %d of them still out there, and the two numbers the theater keeps." % [
+		Game.notebook.size(), "" if Game.notebook.size() == 1 else "s", out_there]
 
 
 ## The document, grouped the way the district connects it.
@@ -148,10 +152,47 @@ func _notebook_text() -> String:
 			lines.append("    %s" % _entry_line(entry))
 		lines.append("")
 
+	lines.append(_still_out_there_text())
+
 	lines.append("ALLIANCE STRAIN  %d of 100" % Game.alliance_strain)
 	lines.append("Strain has a floor above zero and conduct cannot reach "
 			+ "through it. The squad is here whether or not it behaves.")
 	return "\n".join(lines)
+
+
+## The ones the campaign failed to account for, and what each of them has
+## survived.
+##
+## The settlement listing above is the document - every name, in the order the
+## squad met them, whatever became of them. This is the shorter and more useful
+## list: the people who are still alive to be met again, most-storied first, so
+## a fighter the squad has failed to finish three times reads as somebody rather
+## than as a line in a tally.
+##
+## Ordered by how much history each one has rather than chronologically,
+## because that is the order they matter in - and it is the same order
+## Game.adversaries_for offers them back to a mission.
+## Most history first. A named function rather than an inline lambda so the
+## comparison is one readable line and can be pointed at from a test.
+static func _more_history_first(a: Dictionary, b: Dictionary) -> bool:
+	return int(a.get("survivals", 0)) > int(b.get("survivals", 0))
+
+
+func _still_out_there_text() -> String:
+	if Game.adversaries.is_empty():
+		return ""
+	var ranked: Array = Game.adversaries.duplicate()
+	ranked.sort_custom(_more_history_first)
+	var lines: Array[String] = ["STILL OUT THERE  -  %d" % ranked.size()]
+	for rec: Dictionary in ranked:
+		lines.append("    %s" % Game.adversary_line(rec))
+		var wounds := int(rec.get("injuries", 0))
+		if wounds > 0:
+			lines.append("        carrying %d wound%s, and still not finished"
+					% [wounds, "" if wounds == 1 else "s"])
+	lines.append("")
+	return "
+".join(lines)
 
 
 func _fate_tally() -> String:
@@ -162,7 +203,7 @@ func _fate_tally() -> String:
 	var parts: Array[String] = []
 	# Fixed order rather than dictionary order, so the tally does not reshuffle
 	# itself between campaigns.
-	for fate: String in ["killed", "surrendered", "escaped"]:
+	for fate: String in ["killed", "surrendered", "escaped", "injured"]:
 		if counts.has(fate):
 			parts.append("%d %s" % [int(counts[fate]), fate])
 			counts.erase(fate)

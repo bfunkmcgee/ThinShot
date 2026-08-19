@@ -582,15 +582,38 @@ func _test_left_for_dead(battle: Node, whole_hp: int) -> void:
 				"grievance": "the well"},
 		"kind": KIND_GOBLIN, "fate": "escaped", "conduct": 0,
 		"ordinal": 41, "edge": "north", "adversary_id": 0,
+	}, {
+		# Shot down and not accounted for. The squad watched him drop, so the
+		# tally must not read him as killed.
+		"identity": {"name": "Crawled Off", "age": 24, "settlement": "Kessit",
+				"grievance": "the well"},
+		"kind": KIND_GOBLIN, "fate": "injured", "conduct": 0,
+		"ordinal": 42, "edge": "south", "adversary_id": 0,
 	}])
 	battle._show_game_over("TEST", true)
-	_check(game2.adversaries.size() == 1,
-			"a survivor of a won mission joins the standing roster (%d)"
+	_check(game2.adversaries.size() == 2,
+			"both survivors of a won mission join the standing roster (%d)"
 			% game2.adversaries.size())
-	if game2.adversaries.size() != 1:
+	if game2.adversaries.size() != 2:
 		return
 	var written: Dictionary = game2.adversaries[0]
 	_check(str(written.get("name", "")) == "Ledger Test",
 			"...under his own name (%s)" % str(written.get("name", "")))
 	_check(int(written.get("survivals", 0)) == 1, "...with one survival on the tally")
 	_check(written.get("history", []).size() == 1, "...and one line of history")
+
+	# And the player is told, at the moment it happens rather than by going to
+	# look. _roll_text is built after _remember_the_survivors, so the tally it
+	# quotes includes today.
+	var after_action: String = battle.roll_label.text
+	_check(after_action.contains("STILL OUT THERE"),
+			"the after-action says somebody is still out there")
+	_check(after_action.contains("Ledger Test"),
+			"...and names him (%s)" % after_action.split("
+")[-1])
+	# He is not counted among the dead: the squad watched him go, and the roll
+	# should not read as though it accounted for him.
+	_check(after_action.contains("LEFT FOR DEAD"),
+			"the man who was shot down is counted apart from the dead")
+	_check(not after_action.contains("KILLED"),
+			"...and nobody in this roll is counted killed at all")

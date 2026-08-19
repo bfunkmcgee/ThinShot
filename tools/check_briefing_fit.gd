@@ -123,7 +123,10 @@ const SQUAD_MAX := 6
 const OPERATION_LINES := 2 + SQUAD_MAX + 2 + 2
 ## The right column is bounded by construction - ROLL_NAMES_SHOWN caps the names
 ## - so its worst case is every optional block present at once.
-const ROLL_LINES := 2 + 2 + 3 + 1 + 2 + 2
+## +2 for the STILL OUT THERE block (a blank and one line). It is one line by
+## construction - Battle._still_out_there joins every survivor into it - which
+## is why this is a constant and not a per-survivor term.
+const ROLL_LINES := 2 + 2 + 3 + 1 + 2 + 2 + 2
 
 
 func _measure_after_action(font: Font) -> void:

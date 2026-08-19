@@ -228,6 +228,47 @@ func _test_notebook_screen() -> void:
 	_check(text.contains("AN EARLIER MISSION"),
 			"a mission index this build no longer has degrades instead of crashing")
 	_check(menu._notebook_lead().contains("4 names"), "the lead counts them")
+	_check(not text.contains("STILL OUT THERE"),
+			"with nobody still alive, the page does not offer an empty heading")
+
+	# The other list: the ones who are still out there to be met again. The
+	# settlement listing above is the document - everyone, whatever became of
+	# them - and this is the shorter one that matters, because these people can
+	# walk back onto a board.
+	game.adversaries = [
+		{"id": 1, "name": "Tammar Falk", "age": 35, "settlement": "Kessit",
+				"grievance": "the well", "kind": 3, "survivals": 1,
+				"injuries": 0, "state": "escaped", "edge": "north",
+				"history": [{"level": 0, "fate": "escaped"}], "last_level": 0},
+		{"id": 2, "name": "Hesh Korrin", "age": 28, "settlement": "Kessit",
+				"grievance": "the well", "kind": 6, "survivals": 3,
+				"injuries": 2, "state": "injured", "edge": "south",
+				"history": [{"level": 0, "fate": "escaped"},
+						{"level": 1, "fate": "injured"},
+						{"level": 3, "fate": "injured"}], "last_level": 3},
+	]
+	var living: String = menu._notebook_text()
+	print("
+%s
+" % living)
+	_check(living.contains("STILL OUT THERE  -  2"),
+			"the living are listed and counted")
+	_check(living.contains("Hesh Korrin") and living.contains("Tammar Falk"),
+			"...by name")
+	_check(living.contains("ran at DRY WASH") and living.contains("left for dead"),
+			"...with what happened to them, mission by mission")
+	_check(living.contains("carrying 2 wounds"),
+			"...and what they are carrying")
+	# Most-storied first, because that is the order they matter in and the same
+	# order a mission is offered them back in. Compared WITHIN the section:
+	# both names also appear in the settlement listing above, so a bare find()
+	# on the whole page answers about the document rather than about this list.
+	var section: String = living.substr(living.find("STILL OUT THERE"))
+	_check(section.find("Hesh Korrin") < section.find("Tammar Falk"),
+			"the man met three times is listed above the man met once")
+	_check(menu._notebook_lead().contains("2 of them still out there"),
+			"and the lead says how many are still alive to meet")
+	game.adversaries = []
 
 	menu.queue_free()
 	await process_frame
