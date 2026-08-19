@@ -99,9 +99,25 @@ mission can hand him a rifle again: he walks on mid-battle, off the rim he fled
 by, behind the line you have been pushing. He is steadier than he was, because
 this time he came on purpose.
 
-Whether that is worth it is the point. Shooting a routing man costs Standing;
-letting him go costs you nothing today and might cost you a flank in three
-missions' time.
+**And not everyone you shoot down is dead.** A round that would have killed a
+man from full health settles it — Rodar's rifle, Sillae's scope, a frag on
+anything but a well-hand. Anything less and he might be found breathing: about
+one in six the first time, and likelier every time after, because the ones who
+keep getting up are the ones who know how this goes. He comes back wounded —
+down a point of health per injury and a long way down on nerve — which is the
+opposite of the man who merely ran, and you can tell which is which from the
+health bar the moment he steps out.
+
+That cuts both ways for him. A four-time survivor is very hard to put down for
+good and physically almost nothing: a wretch who will not die rather than a
+boss who cannot be hurt. And the campaign keeps his file — every mission he has
+run from and every one he was left for dead on, under the name he had the first
+time.
+
+Whether any of it is worth it is the point. Shooting a routing man costs
+Standing; letting him go costs you nothing today and might cost you a flank in
+three missions' time. Finishing a wounded man properly costs you the shot that
+would have done it.
 
 Seven missions across two operations, on 16×10 isometric maps. It is one story,
 and **the objectives are how it is told** — each mission opens with a briefing

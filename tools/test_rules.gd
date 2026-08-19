@@ -28,6 +28,8 @@ extends SceneTree
 ##  10. a clean kill costs nothing; every other conduct is priced
 ##  11. the grenadier alone puts ordnance further than an arm can throw it,
 ##      and not further than the Thirst's longest weapon can answer
+##  12. most of the defeated are dead, the survivors get harder to finish and
+##      weaker every time, and a decisive blow settles it outright
 ##
 ## Nothing here needs a scene, a save, or a turn. Board's spatial predicates run
 ## on a detached `Board.new()` (tools/check_cover_rules.gd sweeps all seven maps
@@ -288,6 +290,7 @@ func _run() -> void:
 	_test_morale()
 	_test_conduct()
 	_test_throw_range()
+	_test_left_for_dead()
 
 	print("\nRESULT: ", "FAIL" if _failed else "PASS")
 	quit(1 if _failed else 0)
@@ -1052,3 +1055,75 @@ func _test_throw_range() -> void:
 			("the launcher's %d does not clear the Thirst's longest weapon "
 			+ "(%s at %d) - at %d she would never have to stand on his line")
 			% [launched, enemy_who, enemy_reach, enemy_reach + 1])
+
+
+# --- 12. left for dead --------------------------------------------------------
+
+func _test_left_for_dead() -> void:
+	print("
+[12] most of them are dead, and the ones who are not get worse")
+	var base: int = int(_k.SURVIVE_BASE)
+	var step: int = int(_k.SURVIVE_STEP)
+	var cap: int = int(_k.SURVIVE_CAP)
+
+	_check(base >= 15 and base <= 20,
+			"a first defeat is survived one time in five or six (%d%%)" % base)
+	_check(_rules.call("survive_chance", 0) == base,
+			"...which is what a stranger gets (%d%%)"
+			% _rules.call("survive_chance", 0))
+	var rising := true
+	var last := -1
+	for n in 8:
+		var c: int = _rules.call("survive_chance", n)
+		if c < last:
+			rising = false
+		last = c
+	_check(rising, "the more often he has walked away, the likelier he is to again")
+	_check(_rules.call("survive_chance", 1) == base + step,
+			"...by a step each time (%d%%)" % _rules.call("survive_chance", 1))
+	_check(_rules.call("survive_chance", 99) == cap,
+			"but never past the cap, so nobody becomes unkillable (%d%%)" % cap)
+	_check(cap < 100, "...and the cap is short of certain (%d%%)" % cap)
+	# Negative is not a real input, but a hand-edited save is.
+	_check(_rules.call("survive_chance", -5) == base,
+			"a nonsense tally reads as none")
+
+	# The player's lever. Read against max_hp rather than against what was left,
+	# because almost every weapon does 2 and enemy HP runs 2-4, so overkill past
+	# the remaining points is nearly always zero - a rule built on it would
+	# never fire. This way it says something actionable.
+	_check(_rules.call("decisive_blow", 4, 4) and _rules.call("decisive_blow", 4, 3),
+			"Rodar's four settles a well-hand and a light runner")
+	_check(_rules.call("decisive_blow", 3, 3) and _rules.call("decisive_blow", 3, 2),
+			"a frag settles a light runner and a conscript")
+	_check(not _rules.call("decisive_blow", 2, 4)
+			and not _rules.call("decisive_blow", 2, 3),
+			"a carbine finishing a wounded man does not - that is the crawl-away case")
+	_check(_rules.call("decisive_blow", 2, 2),
+			"...but a carbine on a conscript does, because it would have killed "
+			+ "him from full")
+
+	# What he brings back. Down a point per wound, floored at 1 so there is
+	# always a body to shoot, and never starting already broken - a fighter who
+	# arrived below MORALE_BREAK would rout on his first activation, which is
+	# not a comeback.
+	_check(_rules.call("injured_hp", 4, 1) == 3
+			and _rules.call("injured_hp", 4, 3) == 1,
+			"a wound costs a point of health, and the floor is 1")
+	_check(_rules.call("injured_hp", 2, 9) == 1, "...however many he has taken")
+	var conscript_kind: int = int(_k.KIND_GOBLIN_REVOLVER)
+	var hurt: int = _rules.call("injured_morale", conscript_kind, 2)
+	_check(hurt < int(_rules.call("starting_morale", conscript_kind)),
+			"...and he comes back shakier than he started (%d)" % hurt)
+	_check(not _rules.call("is_broken", hurt),
+			"...but not already broken, or the comeback is a cutscene (%d)" % hurt)
+	var very_hurt: int = _rules.call("injured_morale", conscript_kind, 99)
+	_check(not _rules.call("is_broken", very_hurt),
+			"...at any number of wounds (%d)" % very_hurt)
+
+	# The two flavours are opposites, and that contrast is the read: one of them
+	# chose to come back, the other was patched up and sent.
+	_check(int(_rules.call("returner_morale", conscript_kind)) > hurt,
+			"the man who merely ran comes back steadier than the man who was "
+			+ "left for dead (%d vs %d)"
+			% [int(_rules.call("returner_morale", conscript_kind)), hurt])

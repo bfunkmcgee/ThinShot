@@ -73,6 +73,9 @@ var notebook: Array = []
 ## ordinal, carrying the name he already had. The man comes back; the key does
 ## not repeat.
 var returned: Array = []
+## The living, keyed by person rather than by appearance. See the section below.
+var adversaries: Array = []
+var _next_adversary_id := 1
 # v4: which three of the six rifle-slot Kestrels go out this mission, by id.
 # Ids rather than indices - the roster reorders as people die, and an index
 # would quietly deploy somebody else.
@@ -796,6 +799,8 @@ func new_campaign() -> bool:
 	alliance_strain = STRAIN_START
 	notebook.clear()
 	returned.clear()
+	adversaries.clear()
+	_next_adversary_id = 1
 	deployed_ids.clear()
 	# A new campaign is a different campaign, so it fights different dice.
 	campaign_seed = _mint_campaign_seed()
@@ -963,6 +968,51 @@ func add_to_notebook(level: int, entries: Array) -> void:
 ## what the notebook stores and what Unit.setup takes.
 const GOBLIN_KINDS: Array[int] = [3, 4, 5, 6, 7]
 
+## Rebuild the adversary roster from a save, field by field.
+##
+## Same discipline as _read_notebook and the same reason, only more so: these
+## records go straight to a spawner AND carry a survival count that feeds a
+## rule. An id that collides, a kind that is not one of the Thirst, or a
+## negative survival count would all be adopted verbatim otherwise.
+func _read_adversaries(raw: Variant) -> Array:
+	var out: Array = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	var seen: Array[int] = []
+	for row: Variant in raw:
+		if typeof(row) != TYPE_DICTIONARY:
+			continue
+		var rec: Dictionary = row
+		var id := int(rec.get("id", 0))
+		var kind := int(rec.get("kind", -1))
+		if id <= 0 or seen.has(id) or not GOBLIN_KINDS.has(kind):
+			continue
+		seen.append(id)
+		var history: Array = []
+		for step: Variant in rec.get("history", []):
+			if typeof(step) != TYPE_DICTIONARY:
+				continue
+			history.append({
+				"level": int(step.get("level", 0)),
+				"fate": str(step.get("fate", "")),
+			})
+		out.append({
+			"id": id,
+			"name": str(rec.get("name", "")),
+			"age": int(rec.get("age", 0)),
+			"settlement": str(rec.get("settlement", "")),
+			"grievance": str(rec.get("grievance", "")),
+			"kind": kind,
+			"survivals": maxi(int(rec.get("survivals", 0)), 0),
+			"injuries": maxi(int(rec.get("injuries", 0)), 0),
+			"state": str(rec.get("state", "escaped")),
+			"edge": str(rec.get("edge", "")),
+			"history": history,
+			"last_level": int(rec.get("last_level", 0)),
+		})
+	return out
+
+
 ## Rebuild the notebook from a save, field by field.
 ##
 ## Every other adopted structure in this file is rebuilt rather than trusted;
@@ -1003,55 +1053,118 @@ func _read_notebook(raw: Variant) -> Array:
 	return out
 
 
-## The key that identifies a person the campaign has met. Not their name.
-static func roll_key(level: int, ordinal: int) -> String:
-	return "%d:%d" % [level, ordinal]
+# --- The ones who keep coming back -------------------------------------------
+#
+# The notebook is the document: append-only, one line per person per mission,
+# never revised. This is the other thing - a roster of the living, keyed by a
+# person rather than by an appearance, which is what a rising survival chance
+# and a logged history both need. A man who runs at Dry Wash, is left for dead
+# at Outpost 7 and turns up again at the Cistern is ONE row here and three lines
+# there, and that is the correct division: the document records what happened,
+# this records who is still out there.
+
+## How often somebody still out there turns up on a given later mission.
+const RETURN_CHANCE := 45
 
 
-## Who is still out there, and might walk back onto THIS mission.
+## Find the standing record for a person, or -1.
+func _adversary_index(id: int) -> int:
+	for i in adversaries.size():
+		if int(adversaries[i].get("id", 0)) == id:
+			return i
+	return -1
+
+
+## Write down that somebody walked away from a mission, minting them a lasting
+## identity the first time it happens.
+##
+## `fate` is "escaped" (his nerve went and he made the rim) or "injured" (the
+## squad put him down and he got up again). Both count as surviving, and both
+## make him harder to finish next time; only the second costs him health.
+##
+## Returns the adversary id, so Battle can stamp it on the body if he is still
+## on the board.
+func remember_survivor(identity: Dictionary, kind: int, fate: String,
+		level: int, edge: String, existing_id := 0) -> int:
+	var idx := _adversary_index(existing_id) if existing_id > 0 else -1
+	if idx < 0:
+		var minted := {
+			"id": _next_adversary_id,
+			"name": str(identity.get("name", "")),
+			"age": int(identity.get("age", 0)),
+			"settlement": str(identity.get("settlement", "")),
+			"grievance": str(identity.get("grievance", "")),
+			"kind": kind,
+			"survivals": 0,
+			"injuries": 0,
+			"state": fate,
+			"edge": edge,
+			"history": [],
+			"last_level": level,
+		}
+		_next_adversary_id += 1
+		adversaries.append(minted)
+		idx = adversaries.size() - 1
+	var rec: Dictionary = adversaries[idx]
+	rec["survivals"] = int(rec.get("survivals", 0)) + 1
+	if fate == "injured":
+		rec["injuries"] = int(rec.get("injuries", 0)) + 1
+	rec["state"] = fate
+	rec["last_level"] = level
+	if edge != "":
+		rec["edge"] = edge
+	var history: Array = rec.get("history", [])
+	history.append({"level": level, "fate": fate})
+	rec["history"] = history
+	return int(rec["id"])
+
+
+## Everything the campaign knows about one adversary, as prose the game can
+## show. This is the "logged history" the whole feature exists for - without it
+## a returning fighter is just a goblin with an unusual name.
+func adversary_line(rec: Dictionary) -> String:
+	var bits: PackedStringArray = []
+	for step: Dictionary in rec.get("history", []):
+		var lvl := int(step.get("level", 0))
+		var where := "?"
+		if lvl >= 0 and lvl < Levels.LEVELS.size():
+			where = str(Levels.LEVELS[lvl].name)
+		bits.append("%s at %s" % [
+			"ran" if str(step.get("fate", "")) == "escaped" else "left for dead",
+			where])
+	return "%s of %s - %s" % [str(rec.get("name", "")),
+			str(rec.get("settlement", "")), ", then ".join(bits)]
+
+
+## Who might walk back onto THIS mission.
 ##
 ## Deterministic, and deliberately not a draw from any generator. Battle's
 ## _rules_rng advances exactly once per shot so that a seed replays a mission
-## shot for shot; taking a variable number of draws from it here - one per
-## escapee the campaign happens to have accumulated - would shift every roll in
-## the mission by an amount that depends on campaign history. Roll.identity has
-## the same discipline and the same reason. So this is a pure hash of
-## (campaign seed, the mission being played, who he was), asked once per
-## candidate, and it answers the same way every time the mission is loaded.
+## shot for shot; taking a variable number of draws here - one per survivor the
+## campaign happens to have accumulated - would shift every roll in the mission
+## by an amount depending on campaign history. Roll.identity has the same
+## discipline for the same reason.
 ##
-## Only escapees from WON missions are in here, because a lost mission is rolled
-## back wholesale and its roll dies with the scene. That is the existing rule
-## rather than a new one, and it reads correctly: the mission did not happen.
+## Sorted by how much history they have, most first, because the slice Battle
+## takes is small and the interesting man is the one the squad has met twice.
+## Left unsorted this returned them in the order they were first met, so the
+## earliest escapee crowded out every later one for the rest of the campaign.
 ##
-## Entries from before save v5 carry kind -1 and are skipped - there is no
-## honest way to know what an old escapee was holding.
-const RETURN_CHANCE := 45
-
-func returners_from(level: int) -> Array:
+## Only survivors of WON missions are here: a lost mission is rolled back
+## wholesale and its roll dies with the scene.
+func adversaries_for(level: int) -> Array:
 	var out: Array = []
-	for entry: Dictionary in notebook:
-		if str(entry.get("fate", "")) != "escaped":
+	for rec: Dictionary in adversaries:
+		if int(rec.get("kind", -1)) < 0:
 			continue
-		if int(entry.get("kind", -1)) < 0 or int(entry.get("ordinal", -1)) < 0:
+		# Nobody returns to the mission he left, or to one already behind us.
+		if int(rec.get("last_level", 0)) >= level:
 			continue
-		# Nobody returns to the mission he ran from, or to one already behind us.
-		if int(entry.get("level", 0)) >= level:
-			continue
-		var key := roll_key(int(entry.level), int(entry.ordinal))
-		if returned.has(key):
-			continue
-		if Roll.chance(campaign_seed, level, key, RETURN_CHANCE):
-			out.append(entry)
+		if Roll.chance(campaign_seed, level, "adv:%d" % int(rec.get("id", 0)),
+				RETURN_CHANCE):
+			out.append(rec)
+	out.sort_custom(func(a, b): return int(a.get("survivals", 0)) 			> int(b.get("survivals", 0)))
 	return out
-
-
-## Write down that these people have been sent back, so the rim of every
-## remaining mission is not the same crowd.
-func mark_returned(entries: Array) -> void:
-	for entry: Dictionary in entries:
-		var key := roll_key(int(entry.get("level", 0)), int(entry.get("ordinal", -1)))
-		if not returned.has(key):
-			returned.append(key)
 
 
 ## The notebook grouped the way the district connects it: settlement -> the
@@ -1140,7 +1253,7 @@ const SAVE_PATH := "user://campaign.json"
 # Raise this in the same commit that adds the migration step reaching it, and
 # never one without the other - _migrate_step() is what turns a number into a
 # shape the rest of this file can read.
-const SAVE_VERSION := 5
+const SAVE_VERSION := 6
 
 # Raised, and never lowered again, when load_save() finds a campaign written by
 # a build newer than this one. Refusing to READ such a file is only half the
@@ -1180,6 +1293,8 @@ func save() -> void:
 		"alliance_strain": alliance_strain,
 		"notebook": notebook,
 		"returned": returned,
+		"adversaries": adversaries,
+		"next_adversary_id": _next_adversary_id,
 		# v4: who the garrison picked.
 		"deployed_ids": deployed_ids,
 	}
@@ -1231,6 +1346,8 @@ func _migrate_step(payload: Dictionary, from: int) -> Dictionary:
 			return _migrate_3_to_4(payload)
 		4:
 			return _migrate_4_to_5(payload)
+		5:
+			return _migrate_5_to_6(payload)
 	return {}
 
 
@@ -1330,6 +1447,54 @@ func _migrate_3_to_4(payload: Dictionary) -> Dictionary:
 ## fills up again from its next won mission onward.
 func _migrate_4_to_5(payload: Dictionary) -> Dictionary:
 	payload["returned"] = []
+	return payload
+
+
+## v6: survivors became people rather than appearances.
+##
+## A campaign already in flight is not thrown away. Every escapee the v5
+## notebook recorded well enough to rebuild - one that carries a kind - becomes
+## a standing adversary with that one line of history already on it, so a save
+## mid-campaign keeps the men it has met instead of starting the ledger empty.
+## Rows that predate v5 have no kind and are skipped, because there is no honest
+## way to know what they were carrying.
+func _migrate_5_to_6(payload: Dictionary) -> Dictionary:
+	var built: Array = []
+	var next_id := 1
+	var already: Array = payload.get("returned", []) if typeof(
+			payload.get("returned", [])) == TYPE_ARRAY else []
+	for row: Variant in payload.get("notebook", []):
+		if typeof(row) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = row
+		if str(entry.get("fate", "")) != "escaped":
+			continue
+		if int(entry.get("kind", -1)) < 0:
+			continue
+		var level := int(entry.get("level", 0))
+		built.append({
+			"id": next_id,
+			"name": str(entry.get("name", "")),
+			"age": int(entry.get("age", 0)),
+			"settlement": str(entry.get("settlement", "")),
+			"grievance": str(entry.get("grievance", "")),
+			"kind": int(entry.get("kind", -1)),
+			"survivals": 1,
+			"injuries": 0,
+			"state": "escaped",
+			"edge": str(entry.get("edge", "")),
+			"history": [{"level": level, "fate": "escaped"}],
+			# Somebody v5 had already sent back does not queue up again for a
+			# mission he has already been to.
+			"last_level": level,
+		})
+		next_id += 1
+	payload["adversaries"] = built
+	payload["next_adversary_id"] = next_id
+	# `returned` was v5's way of saying "already used"; the record carries its
+	# own last_level now, so the list stops meaning anything. Kept on disk
+	# rather than dropped, so a save that climbs can still be read by eye.
+	payload["returned"] = already
 	return payload
 
 
@@ -1437,6 +1602,10 @@ func load_save() -> bool:
 	# the board. Everything else in this file is rebuilt this way already
 	# (_read_roster, _read_promotions, _read_standing); this was the exception.
 	notebook = _read_notebook(payload.get("notebook", []))
+	adversaries = _read_adversaries(payload.get("adversaries", []))
+	_next_adversary_id = maxi(int(payload.get("next_adversary_id", 1)), 1)
+	for rec: Dictionary in adversaries:
+		_next_adversary_id = maxi(_next_adversary_id, int(rec.get("id", 0)) + 1)
 	var read_returned: Variant = payload.get("returned", [])
 	returned = []
 	if typeof(read_returned) == TYPE_ARRAY:

@@ -756,6 +756,18 @@ var spawn_ordinal := -1
 # (Rules.returner_morale), unmoved by the fallen (Rules.shaken_by_the_fallen),
 # and carrying the name he had when he ran rather than a fresh one.
 var returned := false
+## The standing record in Game.adversaries this body belongs to, 0 for somebody
+## the campaign has never met. Stamped on a returner at spawn and written back
+## onto the roll if he walks away again, which is what lets one person
+## accumulate a history instead of being a fresh stranger every mission.
+var adversary_id := 0
+## How many times he has already walked away from this squad. Feeds
+## Rules.survive_chance - the ones who keep getting up are better at it.
+var survivals := 0
+## How hard the blow that put him down landed, kept because Rules.decisive_blow
+## reads it after the fact. A hit that would have killed him from full health
+## leaves nobody to find; a carbine finishing a wounded man does not.
+var last_blow := 0
 # Cut short by a reaction: a round landed while this unit was crossing a watched
 # lane. The advance stopped on the cell it was hit on and the activation stopped
 # with it - see Rules.reaction_interrupts. Cleared by start_turn(), alongside
@@ -1901,6 +1913,8 @@ func take_damage(amount: int, from_dir := Vector2.ZERO) -> void:
 	hp = maxi(hp - amount, 0)
 	queue_redraw()
 	var lethal := hp == 0
+	if lethal:
+		last_blow = amount
 	if from_dir != Vector2.ZERO:
 		_body_shove(from_dir * 5.0, 0.18, Tween.TRANS_BACK)
 	var flash := create_tween()

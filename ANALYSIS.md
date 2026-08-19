@@ -434,3 +434,38 @@ Two things that were tried and were wrong, kept here because both sounded right:
   correct on turn one and wrong by turn three, because the Thirst advances west
   and the far cell becomes the corner they started in. What makes an arrival
   alarming is proximity: the rim nobody is watching is the one behind the squad.
+
+### Left for dead
+
+Escaping was one way off a board. Being shot down is now the other: a defeated
+fighter is usually dead and sometimes only left for dead, and the ones who get
+up become the campaign's recurring adversaries.
+
+**The unit still drops.** He plays the death animation, leaves a corpse, spreads
+morale, scores XP and prices conduct exactly as before — the district saw a man
+shot down and does not care that he crawled off later. Only the campaign record
+differs, which is why the whole feature is one line at the death hook rather
+than a second lifecycle.
+
+**Two gates, and the first belongs to the player.** `Rules.decisive_blow` reads
+the blow against the target's MAX health, not against what was left: almost
+every weapon does 2 and enemy HP runs 2-4, so overkill past the remaining points
+is nearly always zero and a rule built on it would never fire. Read this way it
+says something actionable — spend Rodar, Sillae or a grenade and he is gone;
+finish a wounded man with a carbine and he may not be. The second gate is
+`survive_chance`, 18% rising 12 a time to a 60% cap, keyed on the campaign seed,
+the mission and which body he was so a reload cannot turn a death into a
+survival.
+
+**The record had to stop being a list of appearances.** `(level, ordinal)` is
+unique per body, which was enough to send somebody back once and useless for
+accumulating anything. `Game.adversaries` is keyed by PERSON: one row, a
+survival tally, a wound count and a history, minted the first time somebody
+walks away and updated every time after. The notebook stays what it was — the
+append-only document, one line per person per mission. The document records what
+happened; the roster records who is still out there.
+
+**The wear is the balance.** Each injury costs a point of max health, floored at
+1, so a four-time survivor is hard to finish and trivial to knock down — his own
+test found this the hard way, because at 1 max HP every blow in the game is
+decisive and `_fate_of` correctly stops rolling for him at all.

@@ -907,7 +907,7 @@ const RETURN_MAX := 2
 ## must play out the same way. Game.returners_from() is already deterministic;
 ## this only has to not add a coin flip of its own.
 func _schedule_returners() -> void:
-	var coming: Array = Game.returners_from(Game.current_level)
+	var coming: Array = Game.adversaries_for(Game.current_level)
 	if coming.is_empty():
 		return
 	coming = coming.slice(0, RETURN_MAX)
@@ -1030,8 +1030,11 @@ func _land_returners() -> void:
 	if names.is_empty():
 		return
 	Sfx.play("turn_enemy", 0.0, 0.0)
-	# Named, because the name is the entire point. The player let this man walk
-	# off a map two missions ago and the game wrote it down.
+	# Named, because the name is the entire point: the player let this man walk
+	# off a map two missions ago and the game wrote it down. The console carries
+	# the whole history, which is more than a banner can hold.
+	for entry: Dictionary in due:
+		print("[Sandline]   %s" % Game.adversary_line(entry))
 	show_banner("%s CAME BACK" % ", ".join(names).to_upper())
 	await get_tree().create_timer(0.9).timeout
 
@@ -1049,8 +1052,20 @@ func _spawn_returner(entry: Dictionary, cell: Vector2i) -> void:
 		"grievance": str(entry.get("grievance", "")),
 	}
 	unit.returned = true
-	# Steadier than he was: he is not a levy who was marched here.
-	unit.morale = Rules.returner_morale(unit.kind)
+	unit.adversary_id = int(entry.get("id", 0))
+	unit.survivals = int(entry.get("survivals", 0))
+	var injuries := int(entry.get("injuries", 0))
+	if injuries > 0:
+		# Left for dead and patched up in a settlement with no doctor. Down a
+		# point of health per wound and a long way down on nerve - the exact
+		# opposite of the man who merely ran, and legible at a glance from the
+		# health bar, which is the whole reason the two read differently.
+		unit.max_hp = Rules.injured_hp(unit.max_hp, injuries)
+		unit.hp = unit.max_hp
+		unit.morale = Rules.injured_morale(unit.kind, injuries)
+	else:
+		# He chose to come back. Steadier than the levy he was.
+		unit.morale = Rules.returner_morale(unit.kind)
 	unit.morale_ceiling = unit.morale
 	# Facing in off the rim he came from, so his first act reads as an entrance
 	# rather than as a body that was always standing there.
@@ -3722,7 +3737,7 @@ func _on_unit_died(unit: Unit) -> void:
 		Game.mark_dead(unit.soldier_id)
 		print("[Sandline] %s is down" % unit.display_name())
 	else:
-		_record_on_roll(unit, "killed")
+		_record_on_roll(unit, _fate_of(unit))
 	_spread_morale_from_death(unit)
 	Sfx.play("unit_death")
 	fx_ground.stain(unit.position)
@@ -3777,6 +3792,51 @@ func _guns_on(unit: Unit) -> int:
 
 ## True once a routing fighter is standing on the rim of the map. One step off
 ## it and he is gone - not killed, and the contact resolved either way.
+
+## Everybody who walked away from this mission, written into the campaign's
+## standing record of who is still out there.
+##
+## Runs on a won mission only, beside the notebook write, and for the same
+## reason: a lost mission is rolled back wholesale, so nothing that happened in
+## it happened. Somebody the squad already knew keeps his id and adds a line to
+## his history; a stranger is minted one. Either way the next mission that meets
+## him meets the same man.
+func _remember_the_survivors() -> void:
+	for entry: Dictionary in roll:
+		var fate := str(entry.get("fate", ""))
+		if fate != "escaped" and fate != "injured":
+			continue
+		Game.remember_survivor(entry.get("identity", {}),
+				int(entry.get("kind", -1)), fate, Game.current_level,
+				str(entry.get("edge", "")), int(entry.get("adversary_id", 0)))
+
+
+## Killed, or only left for dead.
+##
+## Most of them are dead. The ones who are not are what turns a body count into
+## a cast: he keeps his name, and the next time the squad meets him they are
+## meeting somebody who has met them.
+##
+## Two gates, and the first is the player's. A blow that would have killed him
+## from full health settles it - Rodar's rifle, Sillae's scope, a frag on
+## anything but a well-hand - so if you want somebody gone for good you can
+## spend the shot that does it. Chip damage is what lets people crawl away.
+##
+## The second is a hash, not a die, keyed on the campaign, the mission and which
+## body he was. Reloading a mission must not turn a death into a survival, and
+## drawing from _rules_rng here would shift every later shot in the mission by
+## an amount depending on how many people had died first.
+func _fate_of(unit: Unit) -> String:
+	if unit.team != Unit.TEAM_GOBLIN or unit.is_civilian():
+		return "killed"
+	if Rules.decisive_blow(unit.last_blow, unit.max_hp):
+		return "killed"
+	var odds := Rules.survive_chance(unit.survivals)
+	if Roll.chance(Game.campaign_seed, Game.current_level,
+			"down:%d" % unit.spawn_ordinal, odds):
+		return "injured"
+	return "killed"
+
 
 ## Which way a man went. The rim he stood on if he reached one, otherwise the
 ## rim he was heading for - the sweep below records fighters who were still
@@ -3937,6 +3997,7 @@ func _record_on_roll(unit: Unit, fate: String) -> void:
 		# which body he was, and which way he went. Both are worthless to the
 		# after-action panel and both are why Game.notebook can now be read.
 		"ordinal": int(unit.spawn_ordinal),
+		"adversary_id": int(unit.adversary_id),
 		"edge": _escape_edge(unit) if fate == "escaped" else "",
 	})
 
@@ -4021,10 +4082,7 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 			_award_xp(scout, Game.XP_SURVIVE, "survived")
 		_sweep_the_still_running()
 		_apply_conduct()
-		# Before the notebook write, so a returner who ran AGAIN is marked
-		# against the key he arrived under and then writes a fresh line under a
-		# new one - the man is back in the pool, the key is not reused.
-		Game.mark_returned(_returners_landed)
+		_remember_the_survivors()
 		Game.add_to_notebook(Game.current_level, roll)
 		Game.commit_mission()
 	else:

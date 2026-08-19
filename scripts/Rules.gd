@@ -438,6 +438,69 @@ static func returner_morale(_kind: int) -> int:
 	return RETURNER_MORALE
 
 
+# --- Left for dead ------------------------------------------------------------
+#
+# Most of the people the squad shoots down are dead. Some of them are not, and
+# which is which is the difference between a war with a cast and a war with a
+# body count. A fighter who gets up again keeps his name, and the next time the
+# squad meets him they meet somebody who has met them.
+
+## How likely a defeated fighter is to be found breathing, given how many times
+## he has already walked away from this squad.
+##
+## The first time, one in six. After that it climbs, because the ones who keep
+## surviving are not a random sample - they are the ones who know how this goes,
+## and they get better at it. The cap is what stops a nemesis becoming a joke:
+## past SURVIVE_CAP he is hard to finish, never impossible.
+const SURVIVE_BASE := 18
+const SURVIVE_STEP := 12
+const SURVIVE_CAP := 60
+
+static func survive_chance(survivals: int) -> int:
+	return mini(SURVIVE_BASE + SURVIVE_STEP * maxi(survivals, 0), SURVIVE_CAP)
+
+
+## Was that blow decisive enough that there is no question?
+##
+## A hit that would have killed him from FULL health leaves nobody to find. This
+## is the player's lever, and it is why the rule reads on max_hp rather than on
+## overkill: almost every weapon in the game does exactly 2, and enemy HP runs
+## 2-4, so overkill past what was left is nearly always zero and a rule built on
+## it would never fire. Read this way it says something the player can act on -
+## Rodar's battle rifle and Sillae's scope (4) settle anything, a frag (3)
+## settles a runner or a conscript, and a carbine finishing a wounded man is
+## exactly the case where somebody crawls off. Cover halves damage, so a shot
+## through a wall stops being decisive, which is correct: it was a worse shot.
+static func decisive_blow(amount: int, max_hp: int) -> bool:
+	return amount >= max_hp
+
+
+## What a fighter who was left for dead brings back, having been patched up in a
+## settlement with no doctor and every reason to send him out again.
+##
+## Down a point of health per wound and a long way down on nerve - the opposite
+## of the man who merely ran, who comes back whole and steadier. That contrast
+## is the whole read: one of them chose to return and one of them was sent, and
+## the player can tell which at a glance from the health bar.
+##
+## It also self-limits. Survival makes him harder to put down for good and
+## weaker every time he does it, so a four-time veteran is a wretch who will not
+## die rather than a boss who cannot be hurt. The floor is 1: there is always a
+## body to shoot.
+const INJURY_HP_COST := 1
+const INJURY_MORALE_COST := 20
+
+static func injured_hp(max_hp: int, injuries: int) -> int:
+	return maxi(max_hp - INJURY_HP_COST * maxi(injuries, 0), 1)
+
+
+## Never starts below breaking - a fighter who arrives already broken would rout
+## on his first activation, which is not a comeback, it is a cutscene.
+static func injured_morale(kind: int, injuries: int) -> int:
+	var start := starting_morale(kind) - INJURY_MORALE_COST * maxi(injuries, 0)
+	return maxi(start, MORALE_BREAK + 1)
+
+
 ## Does watching an ally fall still move this fighter? Not if he has already
 ## walked away from one fight and chosen to come back to another.
 static func shaken_by_the_fallen(returned: bool) -> bool:
