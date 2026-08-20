@@ -14,6 +14,8 @@ worth more than a fourth goblin.
 | Kind | Canvas | Layout |
 |---|---|---|
 | Ground prop (rock, junk, plant) | **48×48** | one PNG, drawn flat on the cell |
+| Ground **decal** (bones, scorch, signal panel) | **48×48** | one PNG, drawn at **1×** on the Board's decal layer, centred on its own paint |
+| **Tall** single-cell prop (mast, flagpole, watchtower) | **168×168** | one PNG, drawn at 2× on ONE cell — a structure's canvas without a structure's footprint. Anchor `-(bbox.bottom − 85)`, not the 48px rule |
 | Wall | **68×68** | `rotations/<8 names>.png`, named by the wall's *facing* |
 | Structure, 2×2 footprint | **168×168** | `rotations/unknown.png` + optional `animations/<any name>/unknown/frame_%03d.png` |
 | Structure, 4×4 footprint | **256×256** | as above |
@@ -45,8 +47,8 @@ worth more than a fourth goblin.
 | ~~5d~~ | ~~**Dropped assault rifle**~~ — **done** | Its eight rotations exist to lie pointing somewhere. A fallen scout leaves their rifle on the cell they died on, facing the way they last faced. Only your own dead — eleven goblin rifles would be litter, five soldiers is a squad. | shipped |
 | ~~6~~ | ~~**Comms mast / radio set**~~ — **done** | "SILENCE THE RELAY" on The Scrapline. Its three states made it the first **two-charge** objective: one charge buckles it into a leaning, sparking wreck, the second brings it down. | shipped |
 | ~~7~~ | ~~**Fuel drum**~~ — **done** | Cover until a blast reaches it, then it detonates with a frag's force **and sets off the next drum along**. A line of them is a fuse. | shipped |
-| 8 | **Vehicle wreck** — 168×168, 2×2 | A big multi-cell cover piece to fight around, and visual proof the desert had a war in it — which is exactly the campaign's story. | drop-in |
-| 9 | **Extraction marker** — 48×48 signal panel or smoke pot | The extraction zone is tinted tiles. A physical marker makes the last objective a *place* rather than a colour. | drop-in |
+| ~~8~~ | ~~**Vehicle wreck**~~ — **done** | Two of them, on the hut's 2×2 footprint and blocking exactly as hard: a six-wheel cargo hauler and a split water tanker. The hauler is on THE HOLDING PENS, where it is the only hard cover on the walk back out with unarmed people at move 4, and where a dead hauler answers why the column was carrying water by hand. The tanker is on THE CISTERN's southern approach, which had no cover at all, so the breakthrough now has two lanes worth trying instead of one. | shipped |
+| ~~9~~ | ~~**Extraction marker**~~ — **done** | An orange signal panel pegged flat, drawn as a **decal** on every extraction cell — flat, so five soldiers can finish the mission standing on the mark without hiding it — plus up to three staked banners on the open ground beside the zone. No level data: Battle reads the `extract` objective's own cells. | shipped |
 
 ## Tier 3 — units (expensive; pick one or two)
 
@@ -64,11 +66,12 @@ worth more than a fourth goblin.
 |---|---|---|---|
 | ~~15~~ | ~~**Two more floor tilesheets**~~ — **done** | Salt flat and ash are generated, wired and assigned: THE LONG HAUL and THE CISTERN are fought on the pan, THE CHOIRMASTER on burnt ground. Levels now carry a `floor` name alongside `zone_seed`, `shade_seed` and `zone_thresholds`, so re-skinning a mission is one line. | shipped |
 | 16 | **Track / road tiles** — 3–4 diamonds in the same sheet layout | The campaign's story is literally *follow the route back*. A visible road makes that legible on the map. | small |
-| 17 | **Dead scrub, bones, tyre ruts, scorch decals** — 48×48 each, 4–6 of them | Cheap density. The prop scatter system already places these deterministically by cell. | drop-in |
-| 18 | **Thirst claim-stakes / well-markers** — 48×48, ideally with a 9-frame sway | The Thirst is a dispossessed people with a grievance on record, and nothing on the map says so. Staked claim-markers and Assembly tally-boards around the Scrapline would sell it - the Charter made visible on the ground they are fighting over. | drop-in |
+| ~~17~~ | ~~**Dead scrub, bones, tyre ruts, scorch decals**~~ — **done** | Eight of them: rib bones, a jawbone, a scorch ring, pottery shards, driftwood, a curled mud plate, a fallen cactus, buried corrugated iron. There was no scatter system to place them — props are per-map-char — so `Battle._spawn_decals` is new: 17% of the open sand, minimum one cell apart, hashed per cell so a board is stable, and it runs *last* so it only dresses ground the props, structures and caches did not claim. The camps scatter the same set off the same salts. | shipped |
+| ~~18~~ | ~~**Thirst claim-stakes / well-markers**~~ — **done** | Four: an Assembly tally-board with the count cut into it, a bundle of staked claims with rag pennants, a post hung with a tin cup, a stone well-ring. Map char `'t'` — walkable decoration, the deal `'p'` gets — and they sway on the plants' wind rather than needing frames. Placed as tally-boards on THE SCRAPLINE, claims on THE CISTERN's disputed water, and as the survey stakes on THE SURVEY CAMP, where the debrief *already described them* ("markers at the bends, stakes at the depth changes") and nothing was on the ground. | shipped |
 | 19 | **Sandstorm overlay** — tileable band or a few drifting sheets | Weather that **cuts sight range** — reusing the exact `has_line_of_sight` path smoke already goes through, so it is far cheaper than it sounds, and it makes a mission feel like a different fight. | medium |
 | ~~20~~ | ~~**Kestrel specialist sprites**~~ — **done** | All five are generated, validated and wired: Essa Vane (grenadier), Sillae Vekh (marksman), Halvik Dunn (breacher), Dava Ren (medic), Fen Ost (technician). Each is a full unit — 3 rotation stances and 7 animation sets across 8 directions, 528 PNGs — generated against the shipped rifleman as the style anchor, with its own `*_MUZZLE_OFFSETS` in `Unit.gd`. `_use_rifleman_art` is gone. Known deviation, recorded in each `metadata.json`: the south aim pose is drawn with the weapon levelled to one flank rather than foreshortened at the camera, and the muzzle offsets follow the art so the flash still leaves the barrel. | shipped |
 | ~~21~~ | ~~**Brukk Meshan's own machinegunner art**~~ — **done** | The squad's heaviest weapon was drawn by the generic `Scout_MachineGunner` set, so the gunner read as a rifleman. He now draws `assets/sprites/Hero_MachineGunner/` — 600 PNGs, 8 animation sets, 60×60 on the canonical layout, feet 14px below centre in all eight standing rotations, so `SPRITE_SPECS` needs no entry for him at all. The swap also brought his aim stance into the project's 12–16 foot gate (13–16, where the old set failed at 14–17), and `GUNNER_MUZZLE_OFFSETS` was re-measured off the new aim rotations — 7 of 8 facings exact, south hand-corrected. The folder name is historical, and a trap: it is the PixelLab `Hero_bandana` group, so `Hero_MachineGunner/` is `Kind.MACHINEGUNNER`, while `Kind.HERO` is Rodar Akai in `Rodar_Akai/`. | shipped |
+| ~~22~~ | ~~**Garrison fixture kit**~~ — **done** | Home was a walled yard containing three buildings and eight junk heaps, two of which were wrecked car doors, and it read as a scrapheap the squad happened to sleep in. Fourteen fixtures now: steel flag mast, scaffold observation tower, raised steel water tank, camo-net workshop bay, sheet-metal duty board, skid-mounted water bowser, pipe kit rack, steel ammunition box, jerricans, manpack field radio, field stove, weapons cleaning bench, laundry line, and a battlefield cross — rifle muzzle-down, helmet, dog tags. Every one stands on a cell that was scrap, so the garrison has no junk left at all. **The first pass of these was wrong and was regenerated:** seven of the fourteen prompts said *wooden*, *timber* or *stone* outright, and four were pre-industrial objects no adjective could save — a treadle grinding wheel, a stone draw-well, a heraldic standard, a log-stilt watchtower. The garrison came out a frontier stockade in a biome whose own art is an outpost sign, a cargo truck and steel ammo crates. The lesson is cheap and worth keeping: **the fixture prompts are the only place the era is set, so name the material every time** — sheet steel, angle iron, galvanised, olive drab — because the model's default for an unqualified camp object is pre-modern. | shipped |
 
 ## Tier 5 — polish
 
@@ -190,7 +193,107 @@ slots line up.
 
 ## If you only do three
 
-**1 (supply cache)** and **15 (two floor sheets)** are both shipped, which
-leaves **10 (shielded goblin)** — the one that turns the flanking rules from a
-detail into the point. After that, **2 (gate)** for breaching and **16 (road
-tiles)**, now that a mission can pick its own ground.
+Every drop-in on this list is now shipped — 8, 9, 17 and 18 went in together on
+19 August 2026, which is what closed out Tier 4's cheap half. What is left all
+costs code or a unit:
+
+**10 (shielded goblin)** is still the one worth most — it turns the flanking
+rules from a detail into the point. After that, **2 (gate)** for breaching and
+**16 (road tiles)**, now that a mission can pick its own ground.
+
+One note for whoever does 16: a **salt** road set is the actual blocker for THE
+LONG HAUL, not the code. The level already says so in its own comment.
+
+## The decal layer, and what belongs on it
+
+Item 17 added a class of art the game did not have, so it is worth stating what
+distinguishes it, because the next person will otherwise generate a decal and
+wire it as a prop.
+
+A **prop** stands on a cell. It is 48px art drawn at **2×**, it sits in
+`Entities` where it y-sorts against the units, it casts a contact shadow, and
+it can hide a soldier — which is why every prop is on the occlusion fade.
+
+A **decal** is a marking *on* the ground. It is 48px art drawn at **1×** on
+`Board.decal_layer`, under everything; it casts no shadow, sorts against
+nothing, and can never occlude anybody, so it is not on the fade list at all.
+
+The 1× is the part that looks like a mistake and is not. Props are doubled
+because they have to hold their own against a 120px soldier. A decal has to sit
+*into* a 128×60 tile: at 2× a jawbone spans three quarters of a tile and starts
+reading as something to take cover behind, which is a lie about the rules. 1×
+also lands it at exactly the floor sheet's texel density, which is the honest
+class for it — this is ground, not an object on the ground.
+
+Rule of thumb: **if it would be wrong for a soldier to stand on it, it is a
+prop.** The extraction signal panel is the case that proves it — pegged flat
+and drawn as a decal specifically so the squad can end the mission standing on
+the mark without covering it up.
+
+## Camp fixtures, and why they are 'j'
+
+The garrison's furniture (item 22) needed to be **solid** — you should not walk
+through a flagpole — and the camps have no cover rules to hang that on. Three
+routes were possible and two are traps:
+
+- A new map char per fixture: fourteen new legend entries for one scene.
+- A 1×1 entry in `structures`: it *would* block, but `Board` gives every
+  structure cell a `DIAMOND_SHADOW`, so a flagpole would stand in a full black
+  tile. This is the one to remember, because it looks like the obvious answer.
+
+What shipped instead: a fixture stands on a cell that is already **`'j'`**, and
+the camp's optional `props` table says what to draw there instead of a scrap
+pile. The char is doing all the mechanical work it always did — solid, and a
+contact shadow the right size — so a fixture needs no rules of its own, and a
+camp with no `props` table behaves exactly as before.
+
+`CampData.GARRISON_PROPS` is that table. Two things it is worth knowing:
+
+- Every `'j'` in the garrison is named in it, so the garrison has **no scrap
+  left**. `Camp.JUNK_TEXTURES` is now the field camp's alone — and it is
+  deliberately three of the seven battlefield junk sprites, not all of them.
+  `Rusted_desert_garbage_3` is the wrecked car door: it belongs on a map whose
+  point is stripped wreckage, not in a manned camp.
+- Three of the four tall fixtures are on **row 1, against the back wall**. They
+  stand two soldiers high, and on the back row there is nothing behind them to
+  hide. Put a 270px prop mid-yard and it eats whoever is standing behind it.
+- The **awning is the exception, and it is a width problem rather than a height
+  one**. Its canopy is 256px — two full tiles — on a 128px cell, so against the
+  back wall its right half hung past the wall line and floated over open desert
+  outside the compound. It sits at (5, 6) now, where the yard is wide enough to
+  hold it; the memorial took the wall cell it gave up. Height is safe on row 1,
+  **width is not**: check a tall fixture's alpha width against `TILE_W` before
+  placing it there, because the wall does not clip anything.
+
+## Passive motion: the camp used to be a still life
+
+Nothing in either camp moved — fourteen fixtures, three buildings, and not one
+of them so much as leaned. The battlefield had solved this long ago, so camp
+borrows the rule instead of inventing a second one: `Camp._sway_props` is
+`Battle._sway_plants`, a lean of one whole sprite texel snapped so the pixel art
+never shimmers between subpixel positions, phased off the cell so no two things
+sway in step.
+
+Two things about it are deliberate:
+
+- **Only cloth is on the list** — the camo net, the colours, the laundry, the
+  kit rack's hanging webbing, plus the camp's cacti. A jerrican or an ammunition
+  box that drifted sideways would read as a physics bug rather than as weather,
+  so the steel half of the yard is deliberately still. `SWAYING_FIXTURES` is the
+  whole list; adding to it is one line.
+- **The tick sits above `_process`'s player guard.** The wind belongs to the
+  scene, not to the avatar, so it keeps blowing through the frames where there
+  is nobody to walk around as.
+
+## Kestrel canvas is modern; Thirst canvas is not
+
+The camps used to pitch `tent` — the shipped rustic pole tent, ragged and
+stripe-canvassed — which put a nomad's tent in a regular army's garrison. Three
+battle levels still place that same `tent`, and there it is exactly right: it is
+Thirst ground, and the Thirst are a dispossessed people. So rather than swap the
+shipped art out from under those levels, the camps got their own kinds:
+`stores_tent` (sandbags, mesh windows, stores cases — it stands beside the
+garrison's `stores` spot) and `field_tent` (a plain frame tent with a stove pipe,
+for the one tent the squad has out on operation). The rule worth keeping: **when
+an asset reads wrong in one scene and right in another, add a kind — do not
+retexture the shared one.**
