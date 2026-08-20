@@ -221,6 +221,8 @@ const SHADOW_RADII := {
 	"#": 22.0, "j": 20.0, "p": 12.0, "d": 15.0, "s": 18.0, "c": 20.0,
 	# Wire throws almost nothing - a row of posts and some thread.
 	"=": 11.0,
+	# A claim stake is a post and a rag, so it throws about what a plant does.
+	"t": 11.0,
 	"W": DIAMOND_SHADOW,
 }
 
@@ -381,6 +383,15 @@ var show_grid := false
 # Board never enter the tree and simply run without one.
 var floor_layer: FloorLayer = null
 
+# Flat ground clutter - bones, scorch, tyre-flattened scrap, the extraction
+# zone's signal panels. Shares the floor's z index and is added straight after
+# it, so it paints ON the ground: above the tiles and their contact shadows,
+# below fx_ground (-1), the Board's own highlights (0) and every unit. A decal
+# is scenery that can never be stood in front of, which is exactly why it does
+# not go in `Entities` with the standing props - nothing here occludes anybody,
+# so nothing here has to fade. Battle fills it; Board only owns the node.
+var decal_layer: Node2D = null
+
 # Fuel drums the selected unit could put a round into. Drawn hotter than an
 # attack tile so a hazard never reads as an enemy.
 var hazard_cells: Dictionary = {}
@@ -407,6 +418,11 @@ func _ready() -> void:
 	floor_layer.board = self
 	floor_layer.z_index = -2
 	add_child(floor_layer)
+	decal_layer = Node2D.new()
+	decal_layer.name = "Decals"
+	decal_layer.z_index = -2  # same band as the floor; tree order puts it above
+	decal_layer.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	add_child(decal_layer)
 
 
 func set_highlights(moves: Dictionary, dests: Dictionary,

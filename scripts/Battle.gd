@@ -70,6 +70,44 @@ const WIRE_TEXTURES := {
 	"junction": preload(WIRE_ROOT + "north.png"),
 	"cap": preload(WIRE_ROOT + "east.png"),
 }
+# Ground detritus: what the desert has left lying about. Pure dressing - it is
+# scattered onto open sand by hash, blocks nothing, stops nothing, and is drawn
+# on the Board's decal layer under every unit.
+const DETRITUS_ROOT := "res://assets/sprites/Environment/Desert/desert_detritus/"
+const DETRITUS_TEXTURES: Array[Texture2D] = [
+	preload(DETRITUS_ROOT + "Desert_detritus.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_1.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_2.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_3.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_4.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_5.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_6.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_7.png"),
+]
+# What the squad leaves to mark a landing zone. The panel lies flat and is a
+# decal; the other two stand up and are props, so they are anchored on a base
+# and get their own offsets.
+const SIGNAL_ROOT := "res://assets/sprites/Environment/Desert/desert_signal_markers/"
+const SIGNAL_PANEL := preload(SIGNAL_ROOT + "Signal_panel.png")
+const SIGNAL_STAND_TEXTURES: Array[Texture2D] = [
+	preload(SIGNAL_ROOT + "Signal_banner.png"),
+	preload(SIGNAL_ROOT + "Signal_mast.png"),
+]
+const SIGNAL_STAND_OFFSETS: Array[Vector2] = [Vector2(0, -17), Vector2(0, -19)]
+# The Thirst's own marks on ground they say is theirs: tally boards, staked
+# claims, a cup hung at a well. Map char 't', walkable, decoration only - the
+# same deal 'p' plants get, and for the same reason. What they buy is not
+# cover, it is that the Charter finally appears on the ground it is about.
+const CLAIM_ROOT := "res://assets/sprites/Environment/Desert/thirst_claim_markers/"
+const CLAIM_TEXTURES: Array[Texture2D] = [
+	preload(CLAIM_ROOT + "Thirst_tally_board.png"),
+	preload(CLAIM_ROOT + "Thirst_stake_bundle.png"),
+	preload(CLAIM_ROOT + "Thirst_cup_post.png"),
+	preload(CLAIM_ROOT + "Thirst_well_marker.png"),
+]
+const CLAIM_OFFSETS: Array[Vector2] = [
+	Vector2(0, -16), Vector2(0, -19), Vector2(0, -18), Vector2(0, -18),
+]
 # Cover somebody built on purpose, as opposed to junk they left behind.
 const SANDBAG_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/Environment/Desert/desert_sandbags/Desert_Sandbags.png"),
@@ -93,6 +131,12 @@ const STRUCTURE_DIRS := {
 	"hut_2": STRUCTURE_ROOT + "/desert_hut/Desert_hut_1",
 	"tent": STRUCTURE_ROOT + "/desert_hut/Desert_hut_2",
 	"fortress": STRUCTURE_ROOT + "/Desert_military_building",
+	# Dead vehicles, on the same 2x2 footprint as a hut and blocking exactly
+	# as hard. They earn their place twice: a big piece to fight around on
+	# boards that had only rocks, and the only thing on any map that says the
+	# desert had a war in it before this squad turned up.
+	"hauler_wreck": STRUCTURE_ROOT + "/desert_vehicle_wreck/Desert_hauler_wreck",
+	"tanker_wreck": STRUCTURE_ROOT + "/desert_vehicle_wreck/Desert_tanker_wreck",
 }
 const STRUCTURE_FPS := 7.0  # gentle breeze loops
 
@@ -138,6 +182,7 @@ const THIRST_CACHE_OFFSET := Vector2(0, -15)
 const STRUCTURE_OFFSETS := {
 	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33),
 	"tent": Vector2(0, -33), "fortress": Vector2(0, -55),
+	"hauler_wreck": Vector2(0, -19), "tanker_wreck": Vector2(0, -23),
 }
 const ROCK_SCALE := Vector2(2, 2)
 
@@ -389,6 +434,10 @@ var _occlusion_watch := Vector2.ZERO
 @onready var briefing_body_label: Label = $UI/Briefing/Center/Box/BodyLabel
 @onready var briefing_orders_label: Label = $UI/Briefing/Center/Box/OrdersLabel
 @onready var briefing_begin_button: Button = $UI/Briefing/Center/Box/BeginButton
+## The framed HUD. Built in code (scripts/Hud.gd) rather than in Battle.tscn,
+## and handed the action buttons and the contact panel to reparent - so every
+## handler, hotkey and enable rule above still drives the same nodes.
+var hud: BattleHud = null
 
 
 func _ready() -> void:
@@ -416,6 +465,10 @@ func _ready() -> void:
 	for s: Dictionary in level.structures:
 		_spawn_structure(s)
 	_spawn_caches()
+	# Strictly last of the scenery: it dresses whatever ground the props, the
+	# structures and the caches did not claim, and it reads _prop_shadows to
+	# find out which cells those were.
+	_spawn_decals()
 	board.set_prop_shadows(_prop_shadows)
 	# Rodar Akai deploys in the lead slot: same spawn key, stronger soldier.
 	_spawn_squad(Unit.Kind.HERO, level.get("lead_spawns", []))
@@ -458,6 +511,7 @@ func _ready() -> void:
 			break
 	_sync_throw_buttons()
 	danger_button.toggled.connect(_on_danger_button_toggled)
+	_build_hud()
 	restart_button.pressed.connect(_on_restart)
 	briefing_begin_button.pressed.connect(_dismiss_briefing)
 	# Hotkeys/buttons cover the first 3 levels; extend the level_N input
@@ -518,10 +572,37 @@ func _apply_cmdline_overrides() -> void:
 ## `godot --path . -- --level 1 --screenshot out.png`. The art pipeline's way
 ## of seeing a board. Must run WINDOWED - headless swaps in a dummy rasterizer
 ## that renders nothing, so it refuses rather than writing a black frame.
+## `--pose` selects the Nth surviving scout and rests the cursor on the nearest
+## goblin before the shot is taken. Half the HUD only exists while something is
+## selected or hovered - the contact card, the ability buttons, the highlight
+## overlays - so without this a screenshot can only ever show the idle state,
+## and the panels that took the most work are the ones that never appear in it.
+func _apply_cmdline_pose() -> void:
+	var args := OS.get_cmdline_user_args()
+	for i in args.size():
+		if args[i] != "--pose" or i + 1 >= args.size():
+			continue
+		var squad := living_units(Unit.TEAM_SCOUT)
+		if squad.is_empty():
+			return
+		var who: Unit = squad[clampi(int(args[i + 1]) - 1, 0, squad.size() - 1)]
+		select(who)
+		var best: Unit = null
+		for goblin in living_units(Unit.TEAM_GOBLIN):
+			if best == null or Board.manhattan(who.cell, goblin.cell) \
+					< Board.manhattan(who.cell, best.cell):
+				best = goblin
+		if best != null:
+			hover_cell = best.cell
+			_update_unit_panel()
+		return
+
+
 func _apply_cmdline_screenshot() -> void:
 	var args := OS.get_cmdline_user_args()
 	for i in args.size():
 		if args[i] == "--screenshot" and i + 1 < args.size():
+			_apply_cmdline_pose()
 			_capture_screenshot(args[i + 1])
 			return
 
@@ -602,6 +683,34 @@ func _setup_fx_layers() -> void:
 	fx_air.set_ambient(_board_world_rect().grow(90.0), 26, Vector2(-34.0, 11.0))
 
 
+## Stand the HUD up and hand it the widgets that were loose on the CanvasLayer.
+##
+## It goes in as the FIRST child of UI so it paints under the two full-screen
+## overlays (the briefing and the results card), which are later siblings. Put
+## it last and the action bar shows through the debrief.
+func _build_hud() -> void:
+	var ui := $UI
+	hud = BattleHud.new()
+	hud.battle = self
+	ui.add_child(hud)
+	ui.move_child(hud, 0)
+	hud.adopt([ability_1_button, ability_2_button, face_button, reload_button,
+			burst_button, auto_button, suppress_button, frag_button,
+			smoke_button, demolish_button, overwatch_button, danger_button,
+			end_turn_button], unit_panel, turn_banner)
+	# The Objectives panel says all of this, in a list, with progress bars.
+	objective_label.visible = false
+	# The banner stops being a headline: which side is acting matters, but not
+	# at 39px across the top of a board the player is trying to read. The HUD
+	# owns where it sits, because it has to clear the order-of-battle strip.
+	turn_banner.add_theme_font_size_override("font_size", 23)
+	# Only the keys the bar does not already print on itself. Every button
+	# carries its own hotkey in its label, so listing all twelve again down here
+	# was a second copy of the same information and a worse one.
+	hud.set_hint("TAB end turn      Q / T abilities      "
+			+ "click a soldier's card to select them")
+
+
 ## The board's extent in world space, used to frame the camera and to bound
 ## the ambient wind.
 func _board_world_rect() -> Rect2:
@@ -614,11 +723,19 @@ func _board_world_rect() -> Rect2:
 	return Rect2(origin, Vector2(max_x - min_x, max_y + half_h))
 
 
-func _validate_spawns() -> void:
-	for spawn: Vector2i in level.scout_spawns + level.get("lead_spawns", []) \
+## Every cell somebody starts the mission standing on. Two callers want this:
+## the spawn check below, and the scenery, which must not stake a banner on a
+## cell that is about to have a soldier on it.
+func _spawn_cells() -> Array:
+	return level.scout_spawns + level.get("lead_spawns", []) \
 			+ level.get("gunner_spawns", []) + level.goblin_spawns \
 			+ level.get("smg_spawns", []) + level.get("smg_alt_spawns", []) \
-			+ level.get("novice_spawns", []) + level.get("bolt_spawns", []):
+			+ level.get("novice_spawns", []) + level.get("bolt_spawns", []) \
+			+ level.get("prisoner_spawns", []) + level.get("bystander_spawns", [])
+
+
+func _validate_spawns() -> void:
+	for spawn: Vector2i in _spawn_cells():
 		if not board.in_bounds(spawn) or not board.is_walkable(spawn):
 			push_error("Bad spawn cell (blocked or out of bounds): %s" % spawn)
 			assert(false, "Bad spawn cell: %s" % spawn)
@@ -634,6 +751,11 @@ const SALT_SANDBAG := 7
 const SALT_CACHE := 8
 const SALT_SWAY := 9
 const SALT_STRUCT_PHASE := 10
+const SALT_CLAIM := 11
+const SALT_DETRITUS := 12
+const SALT_DETRITUS_PICK := 13
+const SALT_DETRITUS_JITTER := 14
+const SALT_SIGNAL := 15
 
 
 ## A deterministic pick out of `count` variants for this cell and stream.
@@ -679,12 +801,159 @@ func _spawn_props() -> void:
 							THIRST_CACHE_TEXTURES[_prop_pick(cell, SALT_CACHE,
 									THIRST_CACHE_TEXTURES.size())],
 							THIRST_CACHE_OFFSET, cell)
+				"t":
+					var claim := _prop_pick(cell, SALT_CLAIM, CLAIM_TEXTURES.size())
+					var stake := _spawn_prop(CLAIM_TEXTURES[claim],
+							CLAIM_OFFSETS[claim], cell)
+					# Rags and pennants catch the same wind the cacti do.
+					_swaying.append({
+						"sprite": stake,
+						"base_x": stake.position.x,
+						"phase": Board._hash01(cell, _prop_seed + SALT_SWAY) * TAU,
+					})
 				"W":
 					var kind := _wall_kind(cell)
 					_spawn_prop(_wall_texture_for(kind), WALL_OFFSETS[kind], cell)
 				"=":
 					var run := _wire_kind(cell)
 					_spawn_prop(WIRE_TEXTURES[run], WIRE_OFFSETS[run], cell)
+
+
+## How much of the open sand gets a piece of detritus on it, and how close two
+## of them may sit. Tuned on the emptiest board in the game (THE LONG HAUL, one
+## rock and nine scraps of cover): enough that no stretch of ground is blank,
+## sparse enough that the eye still reads the cover as the thing worth looking
+## at. The gap is Chebyshev, so nothing is ever placed in a neighbouring cell.
+const DETRITUS_RATE := 0.17
+const DETRITUS_GAP := 1
+## Sub-cell drift, in decal texels, so a scatter is not a grid of centred
+## stamps. Whole texels only - a decal draws at 1x, and a half-pixel offset
+## would smear the one class of art that is pixel-exact with the floor.
+const DETRITUS_JITTER := 11.0
+## Standing signal markers set out beside an extraction zone. Three is enough
+## to bracket a six-cell zone without crowding the ground the squad has to
+## finish the mission standing on.
+const SIGNAL_STANDS := 3
+const SIGNAL_STAND_SHADOW := 12.0
+
+
+## Flat scenery painted onto the ground: the extraction zone's signal panels,
+## then detritus scattered over whatever open sand is left.
+##
+## Called after the props, the structures and the caches, so everything that
+## occupies a cell has already claimed it and this only dresses what is spare.
+## Nothing here has any rule attached - no cover, no blocking, no line of sight.
+## It exists because seven maps share one desert and bare sand between the
+## cover pieces is what made them read as the same desert.
+func _spawn_decals() -> void:
+	var extract := {}
+	for obj: Dictionary in level.get("objectives", []):
+		if str(obj.get("kind", "")) != "extract":
+			continue
+		for cell: Vector2i in obj.get("cells", []):
+			extract[cell] = true
+	# The zone was a green tint and nothing else. Panels are pegged flat, so
+	# the squad can stand on the ground they mark without the mark vanishing
+	# behind them - which a staked banner on the same cell would do.
+	for cell: Vector2i in extract:
+		_spawn_decal(SIGNAL_PANEL, cell, false)
+	_spawn_signal_stands(extract)
+	var placed: Array[Vector2i] = []
+	for y in board.size.y:
+		for x in board.size.x:
+			var cell := Vector2i(x, y)
+			if board.map_char(cell) != "." or board.is_structure(cell):
+				continue
+			# Never under a signal panel, a cache, a mast or a drum wreck:
+			# those cells are being read for a reason.
+			if extract.has(cell) or _prop_shadows.has(cell):
+				continue
+			if Board._hash01(cell, _prop_seed + SALT_DETRITUS) >= DETRITUS_RATE:
+				continue
+			var clear := true
+			for other: Vector2i in placed:
+				if maxi(absi(other.x - cell.x), absi(other.y - cell.y)) <= DETRITUS_GAP:
+					clear = false
+					break
+			if not clear:
+				continue
+			placed.append(cell)
+			_spawn_decal(DETRITUS_TEXTURES[_prop_pick(cell, SALT_DETRITUS_PICK,
+					DETRITUS_TEXTURES.size())], cell, true)
+
+
+## A decal sprite on the Board's ground layer.
+##
+## Drawn at 1x, alone among the scenery. Every standing prop is 48px art at 2x
+## because it has to hold its own against a 120px soldier; a decal has to sit
+## INTO a 128x60 tile, and at 2x a jawbone would span three quarters of that
+## tile and read as something to take cover behind. 1x also puts it at exactly
+## the floor sheet's texel density, which is the honest class for it: this is
+## ground marking, not an object standing on the ground.
+func _spawn_decal(texture: Texture2D, cell: Vector2i, jitter: bool) -> Sprite2D:
+	var decal := Sprite2D.new()
+	decal.texture = texture
+	decal.material = _dust_material(cell)  # same haze band as the props above it
+	decal.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	decal.position = board.cell_to_local(cell)
+	if jitter:
+		# Two independent hashes off one salt, so drift in x and y are not
+		# the same number and the scatter never falls on a diagonal.
+		var hx := Board._hash01(cell, _prop_seed + SALT_DETRITUS_JITTER)
+		var hy := Board._hash01(cell + Vector2i(97, 61), _prop_seed + SALT_DETRITUS_JITTER)
+		decal.position += Vector2(
+				roundf((hx - 0.5) * 2.0 * DETRITUS_JITTER),
+				roundf((hy - 0.5) * DETRITUS_JITTER))  # tiles are half as tall
+		decal.flip_h = hx > 0.5
+	board.decal_layer.add_child(decal)
+	return decal
+
+
+## Standing markers on the open ground beside an extraction zone, so the last
+## objective is somewhere the eye finds before the rules do.
+##
+## They go BESIDE the zone rather than in it: these are 96px-tall staked
+## banners, and the zone's own cells are where five soldiers have to end the
+## mission standing. Cells already carrying anything are skipped, so a zone
+## boxed in by rock simply gets fewer - the panels underfoot are the part that
+## is guaranteed.
+func _spawn_signal_stands(extract: Dictionary) -> void:
+	if extract.is_empty():
+		return
+	var occupied := {}
+	for spawn: Vector2i in _spawn_cells():
+		occupied[spawn] = true
+	var taken: Array[Vector2i] = []
+	for cell: Vector2i in extract:
+		for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			if taken.size() >= SIGNAL_STANDS:
+				return
+			var side: Vector2i = cell + dir
+			if extract.has(side) or not board.in_bounds(side):
+				continue
+			if board.map_char(side) != "." or board.is_structure(side):
+				continue
+			if _prop_shadows.has(side) or occupied.has(side):
+				continue
+			# Spread them along the zone instead of clustering on its first cell.
+			var clear := true
+			for other: Vector2i in taken:
+				if maxi(absi(other.x - side.x), absi(other.y - side.y)) < 2:
+					clear = false
+					break
+			if not clear:
+				continue
+			taken.append(side)
+			var pick := _prop_pick(side, SALT_SIGNAL, SIGNAL_STAND_TEXTURES.size())
+			var stand := _spawn_prop(SIGNAL_STAND_TEXTURES[pick],
+					SIGNAL_STAND_OFFSETS[pick], side)
+			_prop_shadows[side] = SIGNAL_STAND_SHADOW
+			# Cloth on stakes, so it moves with the plants and the claim stakes.
+			_swaying.append({
+				"sprite": stand,
+				"base_x": stand.position.x,
+				"phase": Board._hash01(side, _prop_seed + SALT_SWAY) * TAU,
+			})
 
 
 ## One dust material per depth band, built on demand and shared. Farther back
@@ -1521,6 +1790,20 @@ func select(unit: Unit) -> void:
 	_update_unit_panel()
 
 
+## Clicking a roster card. Routed through the same select() a board click uses,
+## with the same two gates the board applies - it is the player's turn, and the
+## soldier is one of theirs - so the card cannot reach a state a click could
+## not. A dead soldier has no card at all.
+func select_from_roster(unit: Unit) -> void:
+	if state != State.PLAYER_TURN or unit == null or not unit.is_alive():
+		return
+	if unit.team != Unit.TEAM_SCOUT:
+		return
+	if unit == selected:
+		return
+	select(unit)
+
+
 func deselect() -> void:
 	_clear_aim_mode()
 	if selected != null:
@@ -1654,6 +1937,10 @@ func _update_unit_panel() -> void:
 		return
 	panel_name_label.text = unit.display_name()
 	panel_progress_label.text = _progress_text(unit)
+	# An unnamed fighter's "progress" line is just their role, and their name
+	# line is their role too, so the card printed the same words twice. Harmless
+	# at the old size; at the contact card's size it reads as a bug.
+	panel_progress_label.visible = panel_progress_label.text != panel_name_label.text
 	panel_hp_label.text = "HP %d / %d" % [unit.hp, unit.max_hp]
 	panel_stats_label.text = "Move %d  Rng %d  Dmg %d  Acc %d%%%s" % [
 			unit.move_range, unit.attack_range, unit.damage, unit.accuracy,
@@ -2718,37 +3005,54 @@ func _refresh_objectives() -> void:
 
 ## Every outstanding job, not just the first. A level can ask for two things at
 ## once, and showing only one of them makes the other look like scenery.
+## One pass, two consumers. The HUD's checklist wants the same numbers the old
+## one-line banner did, so this builds a structured entry per objective and the
+## banner text falls out of the same loop - there is no second place that has to
+## know how a cache count is worked out.
+##
+## Completed objectives are KEPT here and struck through, where the banner used
+## to drop them. A list that silently loses its first line is worse than a list
+## that ticks it: the player is owed the fact that they finished something.
 func _update_objective_label() -> void:
 	var parts: Array[String] = []
+	var entries: Array = []
 	for i in _objectives().size():
-		if _objective_complete(i):
-			continue
+		var done := _objective_complete(i)
 		var obj: Dictionary = _objectives()[i]
 		var text: String = obj.get("label", "")
+		var have := 0
+		var need := 0
 		match obj.get("kind", ""):
 			"eliminate":
 				if text.is_empty():
 					text = "CLEAR THE CONTACT"
-				text += " %d LEFT" % living_units(Unit.TEAM_GOBLIN).size()
+				var left := living_units(Unit.TEAM_GOBLIN).size()
+				text += " %d LEFT" % left
 			"destroy":
-				var total: int = obj.get("cells", []).size()
-				text += " %d/%d" % [total - _targets_left(i), total]
+				need = obj.get("cells", []).size()
+				have = need - _targets_left(i)
+				text += " %d/%d" % [have, need]
 			"rescue":
-				var held: int = level.get("prisoner_spawns", []).size()
-				text += " %d/%d" % [held - captives().size(), held]
+				need = level.get("prisoner_spawns", []).size()
+				have = need - captives().size()
+				text += " %d/%d" % [have, need]
 			"extract":
 				var zone: Array = obj.get("cells", [])
-				var home := 0
+				need = living_units(Unit.TEAM_SCOUT).size()
 				for scout in living_units(Unit.TEAM_SCOUT):
 					if zone.has(scout.cell):
-						home += 1
-				text += " %d/%d ABOARD" % [home, living_units(Unit.TEAM_SCOUT).size()]
+						have += 1
+				text += " %d/%d ABOARD" % [have, need]
 				# The zone is inert until the earlier jobs are done, so say so
 				# rather than showing a target that cannot be met yet.
-				if i != _active_objective():
+				if i != _active_objective() and not done:
 					text = "THEN " + text
-		parts.append(text)
+		entries.append({"label": text, "done": done, "have": have, "need": need})
+		if not done:
+			parts.append(text)
 	objective_label.text = "     ".join(parts)
+	if hud != null:
+		hud.set_objectives(entries)
 
 
 ## A scout can demolish a cache it is standing on or beside, as long as it has

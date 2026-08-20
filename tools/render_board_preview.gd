@@ -50,11 +50,28 @@ const STRUCTURE_DIRS := {
 	"hut_2": ENV + "/Structures/desert_hut/Desert_hut_1",
 	"tent": ENV + "/Structures/desert_hut/Desert_hut_2",
 	"fortress": ENV + "/Structures/Desert_military_building",
+	"hauler_wreck": ENV + "/Structures/desert_vehicle_wreck/Desert_hauler_wreck",
+	"tanker_wreck": ENV + "/Structures/desert_vehicle_wreck/Desert_tanker_wreck",
 }
 const STRUCTURE_OFFSETS := {
 	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33),
 	"tent": Vector2(0, -33), "fortress": Vector2(0, -55),
+	"hauler_wreck": Vector2(0, -19), "tanker_wreck": Vector2(0, -23),
 }
+const CLAIM_ROOT := ENV + "/thirst_claim_markers"
+const CLAIM_FILES := ["Thirst_tally_board.png", "Thirst_stake_bundle.png",
+		"Thirst_cup_post.png", "Thirst_well_marker.png"]
+const CLAIM_OFFSETS := [Vector2(0, -16), Vector2(0, -19),
+		Vector2(0, -18), Vector2(0, -18)]
+const DETRITUS_ROOT := ENV + "/desert_detritus"
+const SIGNAL_ROOT := ENV + "/desert_signal_markers"
+const SIGNAL_STAND_FILES := ["Signal_banner.png", "Signal_mast.png"]
+const SIGNAL_STAND_OFFSETS := [Vector2(0, -17), Vector2(0, -19)]
+const SIGNAL_STANDS := 3
+const SIGNAL_STAND_SHADOW := 12.0
+const DETRITUS_RATE := 0.17
+const DETRITUS_GAP := 1
+const DETRITUS_JITTER := 11.0
 const TARGET_PROPS := {
 	"crates": {
 		"still": PROP_ROOT + "/Pile_of_desert_ammo_crates/Pile_of_desert_ammo_crates/rotations/unknown.png",
@@ -72,6 +89,11 @@ const SALT_JUNK := 5
 const SALT_PLANT := 6
 const SALT_SANDBAG := 7
 const SALT_CACHE := 8
+const SALT_CLAIM := 11
+const SALT_DETRITUS := 12
+const SALT_DETRITUS_PICK := 13
+const SALT_DETRITUS_JITTER := 14
+const SALT_SIGNAL := 15
 
 const PROP_DUST := "res://assets/shaders/prop_dust.gdshader"
 
@@ -355,6 +377,11 @@ func _spawn_props(board: Board, entities: Node2D, data: Dictionary) -> void:
 					var run := _wire_kind(board, cell)
 					_prop(board, entities, WIRE_ROT.path_join(ROT_FILES[run]),
 							WIRE_OFFSETS[run], cell)
+				"t":
+					var claim := mini(int(Board._hash01(cell, _prop_seed + SALT_CLAIM)
+							* CLAIM_FILES.size()), CLAIM_FILES.size() - 1)
+					_prop(board, entities, CLAIM_ROOT.path_join(CLAIM_FILES[claim]),
+							CLAIM_OFFSETS[claim], cell)
 	for s: Dictionary in data.structures:
 		_spawn_structure(board, entities, s)
 	# Demolition targets stand their prop art on their cells, with the contact
@@ -368,8 +395,103 @@ func _spawn_props(board: Board, entities: Node2D, data: Dictionary) -> void:
 		for cell in obj.get("cells", []):
 			_prop(board, entities, spec.still, spec.offset, cell)
 			shadows[cell] = spec.shadow
+	_spawn_decals(board, entities, data, shadows)
 	if not shadows.is_empty():
 		board.set_prop_shadows(shadows)
+
+
+## Battle._spawn_decals, reproduced against the same salts so the preview shows
+## the scatter the mission will actually have. Runs last, for the same reason
+## it does there: it only dresses cells nothing else claimed.
+func _spawn_decals(board: Board, entities: Node2D, data: Dictionary,
+		shadows: Dictionary) -> void:
+	var extract := {}
+	for obj in data.get("objectives", []):
+		if obj.get("kind", "") != "extract":
+			continue
+		for cell in obj.get("cells", []):
+			extract[_v2i(cell)] = true
+	for cell: Vector2i in extract:
+		_decal(board, SIGNAL_ROOT.path_join("Signal_panel.png"), cell, false)
+	_spawn_signal_stands(board, entities, data, extract, shadows)
+	var detritus := _numbered(DETRITUS_ROOT, "Desert_detritus", 8)
+	var placed: Array[Vector2i] = []
+	for y in board.size.y:
+		for x in board.size.x:
+			var cell := Vector2i(x, y)
+			if board.map_char(cell) != "." or board.is_structure(cell):
+				continue
+			if extract.has(cell) or shadows.has(cell):
+				continue
+			if Board._hash01(cell, _prop_seed + SALT_DETRITUS) >= DETRITUS_RATE:
+				continue
+			var clear := true
+			for other: Vector2i in placed:
+				if maxi(absi(other.x - cell.x), absi(other.y - cell.y)) <= DETRITUS_GAP:
+					clear = false
+					break
+			if not clear:
+				continue
+			placed.append(cell)
+			_decal(board, _pick(detritus, cell, SALT_DETRITUS_PICK), cell, true)
+
+
+func _spawn_signal_stands(board: Board, entities: Node2D, data: Dictionary,
+		extract: Dictionary, shadows: Dictionary) -> void:
+	if extract.is_empty():
+		return
+	var occupied := {}
+	for key: String in SPAWN_KEYS:
+		for spawn in data.get(key, []):
+			occupied[_v2i(spawn)] = true
+	for spawn in data.get("bystander_spawns", []):
+		occupied[_v2i(spawn)] = true
+	var taken: Array[Vector2i] = []
+	for cell: Vector2i in extract:
+		for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			if taken.size() >= SIGNAL_STANDS:
+				return
+			var side: Vector2i = cell + dir
+			if extract.has(side) or not board.in_bounds(side):
+				continue
+			if board.map_char(side) != "." or board.is_structure(side):
+				continue
+			if shadows.has(side) or occupied.has(side):
+				continue
+			var clear := true
+			for other: Vector2i in taken:
+				if maxi(absi(other.x - side.x), absi(other.y - side.y)) < 2:
+					clear = false
+					break
+			if not clear:
+				continue
+			taken.append(side)
+			var pick := mini(int(Board._hash01(side, _prop_seed + SALT_SIGNAL)
+					* SIGNAL_STAND_FILES.size()), SIGNAL_STAND_FILES.size() - 1)
+			_prop(board, entities, SIGNAL_ROOT.path_join(SIGNAL_STAND_FILES[pick]),
+					SIGNAL_STAND_OFFSETS[pick], side)
+			shadows[side] = SIGNAL_STAND_SHADOW
+
+
+## Flat ground art, on the Board's decal layer at 1x - see Battle._spawn_decal
+## for why this one class of scenery is not doubled.
+func _decal(board: Board, path: String, cell: Vector2i, jitter: bool) -> void:
+	if not ResourceLoader.exists(path):
+		printerr("missing decal art: %s" % path)
+		return
+	var decal := Sprite2D.new()
+	decal.texture = load(path)
+	decal.material = _dust_material(board, cell)
+	decal.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	decal.position = board.cell_to_local(cell)
+	if jitter:
+		var hx := Board._hash01(cell, _prop_seed + SALT_DETRITUS_JITTER)
+		var hy := Board._hash01(cell + Vector2i(97, 61), _prop_seed + SALT_DETRITUS_JITTER)
+		decal.position += Vector2(
+				roundf((hx - 0.5) * 2.0 * DETRITUS_JITTER),
+				roundf((hy - 0.5) * DETRITUS_JITTER))
+		decal.flip_h = hx > 0.5
+	board.decal_layer.add_child(decal)
 
 
 func _pick(paths: Array, cell: Vector2i, salt: int) -> String:
@@ -516,7 +638,16 @@ class Markers:
 # because tools/ carries a .gdignore and cannot cross-load its own scripts.
 
 
+## Cells arrive as `[x, y]` from a JSON draft and as a real Vector2i from
+## Levels.LEVELS. This used to handle only the draft form and answer (-1, -1)
+## for the other, which is a silent wrong answer rather than an error: every
+## extraction cell of a shipped level folded onto one off-board cell, and the
+## preview drew a single signal panel in the void beside the map.
 static func _v2i(value: Variant) -> Vector2i:
+	if value is Vector2i:
+		return value
+	if value is Vector2:
+		return Vector2i(value)
 	if value is Array and (value as Array).size() == 2:
 		return Vector2i(int(value[0]), int(value[1]))
 	return Vector2i(-1, -1)

@@ -1,0 +1,127 @@
+{
+  "group_id": "d591f15d-fa73-44e4-9423-b48ef4bd16e5",
+  "objects": [
+    {
+      "id": "1d9f9b44-4b49-47b4-9942-af6429bcbf59",
+      "name": null,
+      "prompt": "a scatter of bleached rib bones and one long legbone lying flat on dry sand",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_detritus.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "10981b0a-1633-46c2-a139-6424e71f0ee7",
+      "name": null,
+      "prompt": "a black scorch burn mark with a soot ring seared into pale sand, flat stain",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_detritus_1.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "53ae7102-9502-4505-8166-1582729a0d5e",
+      "name": null,
+      "prompt": "a scatter of broken terracotta pottery shards on dry ground",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_detritus_2.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "d20b0882-bba9-4108-bd60-32143be03914",
+      "name": null,
+      "prompt": "sun bleached driftwood plank fragments lying flat in the sand",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_detritus_3.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "3095b78a-a965-4d9c-9faf-e7e155f3973d",
+      "name": null,
+      "prompt": "a curled plate of cracked dried mud lifting at its edges",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_detritus_4.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "6a59a58e-14cd-4e1b-bc79-252c80fb95e2",
+      "name": null,
+      "prompt": "a fallen split dead cactus, grey and dried out, lying on its side",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_detritus_5.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "54b6e438-81f1-4ea5-8c45-d0309ddf5944",
+      "name": null,
+      "prompt": "a weathered pale animal jawbone and vertebrae lying flat in the dust",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_detritus_6.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "d05df1e4-351b-4b3a-9df5-89d0ccb1d3e8",
+      "name": null,
+      "prompt": "a low drift of windblown sand against a buried scrap of corrugated iron",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_detritus_7.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-08-19T00:00:00.000000"
+}

@@ -1,0 +1,37 @@
+{
+  "group_id": "27fe7034-f5c1-43ae-8c4a-58ddd4ff7ea4",
+  "objects": [
+    {
+      "id": "24dd4861-67ba-4e01-8afd-34bc967101bb",
+      "name": null,
+      "prompt": "the burnt out wreck of a six wheeled desert cargo hauler, cab collapsed and blackened, rusted flatbed, sand drifted against the wheels",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_hauler_wreck/rotations/unknown.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "ee1265bf-0c4d-425a-90b0-7ad93917bac0",
+      "name": null,
+      "prompt": "a wrecked tanker trailer split open along its length, rusted through, half buried in a sand drift",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_tanker_wreck/rotations/unknown.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-08-19T00:00:00.000000"
+}

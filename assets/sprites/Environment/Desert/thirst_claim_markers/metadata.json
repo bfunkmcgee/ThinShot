@@ -1,0 +1,67 @@
+{
+  "group_id": "4a80cad5-356b-495e-8b2d-0a0cdf5de520",
+  "objects": [
+    {
+      "id": "e642f95b-b76c-4ed3-b278-455c7fed226a",
+      "name": null,
+      "prompt": "a weathered tally board on two short posts, hand scratched counting marks cut into the wood",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Thirst_tally_board.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "0358eae1-296d-46e8-a96d-ffa109d55842",
+      "name": null,
+      "prompt": "a bundle of hand cut stakes with faded red rag pennants tied to their tops",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Thirst_stake_bundle.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "d1f49be5-4322-4111-b396-10a43f599aad",
+      "name": null,
+      "prompt": "a leaning wooden post hung with a dented tin cup and a knotted rope",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Thirst_cup_post.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "693da95c-2bef-44fa-a4d1-a2c1f9436b89",
+      "name": null,
+      "prompt": "a well marker, a short ring of stones with a wooden stake and a rope loop",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Thirst_well_marker.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-08-19T00:00:00.000000"
+}

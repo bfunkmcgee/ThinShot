@@ -38,6 +38,10 @@ class_name Levels
 ##   '.' open sand          '#' rock (blocks move + LOS)
 ##   'W' mud-brick wall (blocks move + LOS)
 ##   'p' plant (pure decoration, walkable)
+##   't' a Thirst claim marker - tally board, staked claim, well marker. Pure
+##       decoration and walkable, exactly like 'p'; what it is for is that the
+##       Charter the whole campaign is about has to be visible on the ground
+##       somewhere, and this is where it is written down.
 ##
 ##   Half cover - unwalkable, shots pass at half damage. Three glyphs that
 ##   behave identically and say different things about who was here:
@@ -130,6 +134,11 @@ const LEVELS: Array[Dictionary] = [
 		# outer barricade: the squad deploys onto ground it can bound through
 		# instead of a bare apron, and the board stops reading as a packed
 		# right half beside an empty left one.
+		# The 't' at (4,6) and (5,7) are Assembly tally-boards: the Thirst counts
+		# what it moves through here, in the open, on ground it says is theirs.
+		# They are the first thing on any map that states the Charter grievance
+		# the campaign turns on, and they cost the player nothing - walkable,
+		# no cover, no LOS.
 		"map": [
 			".p..j.j..p.j....",
 			"..j...j.........",
@@ -137,8 +146,8 @@ const LEVELS: Array[Dictionary] = [
 			".j.......d.j....",
 			"...j..j..d.j....",
 			"....j.j.........",
-			".j....j....j....",
-			"...j.......j....",
+			".j..t.j....j....",
+			"...j.t.....j....",
 			"..j...j....j....",
 			"..p.j.j..p.j....",
 		],
@@ -177,6 +186,15 @@ const LEVELS: Array[Dictionary] = [
 		# tiles of reach covering the corridor lengthwise. Crossing between
 		# the lines now costs something even when the gates are clear.
 		"bolt_spawns": [Vector2i(12, 4)],
+		# No vehicle wreck here, though this is the best fiction in the campaign
+		# for one - a yard on the old freight line, waiting on a truck that has
+		# not come, with the road overlay already painting the lane it would
+		# have driven in on. Density was never the objection: the wreck costs
+		# this board 0.645 -> 0.65 against a 0.66 gate. It is that the campaign
+		# gets exactly two dead vehicles, and both are worth more elsewhere -
+		# the hauler on THE HOLDING PENS, where it is the only hard cover on
+		# the walk out, and the tanker on THE CISTERN, where it opens a second
+		# lane. Three would make wrecks a motif; two keeps them a detail.
 		"structures": [
 			{"kind": "hut_1", "anchor": Vector2i(13, 2), "size": Vector2i(2, 2)},
 			{"kind": "tent", "anchor": Vector2i(13, 6), "size": Vector2i(2, 2)},
@@ -364,14 +382,19 @@ const LEVELS: Array[Dictionary] = [
 		"orders": "BREAK THROUGH TO THE EAST",
 		"debrief": "Past the cistern the tracks stop scattering.\n\nEvery path east of the water runs together into one, beaten flat and wide by more feet than the Thirst has ever put in one place - and it does not follow the road. It follows the old riverbed, which has been dry since before the Charter was written.\n\nSomebody is walking them along a watercourse that has no water in it.",
 		"size": Vector2i(16, 10),
+		# Claim markers on the western approach, outside the wall: this is the
+		# water the Charter awards to a family that has not drawn from it in
+		# ninety years, and the 't' cells are where somebody has gone on saying
+		# otherwise - a well marker and staked claims on the ground the squad
+		# crosses to get at it. Decoration; the fight is unchanged.
 		"map": [
 			"..p...WWW.......",
-			"......W...j.....",
+			"...t..W...j.....",
 			"...j..W..c......",
 			".....sW....j....",
-			"..........dd....",
+			"....t.....dd....",
 			".....sW.........",
-			"...j..W....j....",
+			"..tj..W....j....",
 			"......W.........",
 			"..p...WWW..j....",
 			"...........p....",
@@ -399,6 +422,13 @@ const LEVELS: Array[Dictionary] = [
 		"bystander_spawns": [Vector2i(7, 2), Vector2i(8, 7)],
 		"structures": [
 			{"kind": "hut_1", "anchor": Vector2i(13, 0), "size": Vector2i(2, 2)},
+			# A dead water tanker on the southern approach. The campaign's
+			# whole argument is about hauling water, and this is the first
+			# thing on any board that says people were doing it here long
+			# before this squad arrived. It is also the reason the southern
+			# gap is now worth trying: the breakthrough had one covered lane
+			# and the other was bare, so there was no choice to make.
+			{"kind": "tanker_wreck", "anchor": Vector2i(3, 8), "size": Vector2i(2, 2)},
 		],
 		# No caches, no killing quota: the whole objective is the far edge, so
 		# the squad has to be pushed through rather than fought to a standstill.
@@ -463,6 +493,14 @@ const LEVELS: Array[Dictionary] = [
 		"bolt_spawns": [Vector2i(12, 2)],
 		"structures": [
 			{"kind": "tent", "anchor": Vector2i(6, 1), "size": Vector2i(2, 2)},
+			# The hauler the water never rode on. Its being dead here is the
+			# answer to the question the last two missions asked - why a column
+			# was carrying drums forty miles by hand - and it is the only hard
+			# cover on the way back out. That is deliberate: the briefing says
+			# reaching the prisoners is the easy half, and until now the walk
+			# home across open sand with unarmed people at move 4 had nothing
+			# to bound between at all.
+			{"kind": "hauler_wreck", "anchor": Vector2i(4, 6), "size": Vector2i(2, 2)},
 		],
 		"objectives": [
 			{"kind": "rescue", "label": "REACH THE PRISONERS"},
@@ -497,16 +535,23 @@ const LEVELS: Array[Dictionary] = [
 		"fighters_hold": true,
 		"debrief": "It is over, and it is quiet.\n\nThe camp was not a camp. It was laid out along the bed in stages - markers at the bends, stakes at the depth changes, the whole dry course measured out and pegged as though somebody intended to fill it.\n\nThe old man's papers are forty years of Confederacy survey work, annotated in a hand that gets steadier the further out it goes. The last forty pages are not survey. They are a schedule.\n\nHe was not with the bodies. Nobody saw him leave.\n\nBring the squad home. The Rangers are burying their own dead separately from ours, and did not ask whether we minded.",
 		"size": Vector2i(16, 10),
+		# The 't' cells are the survey stakes, and they are the one piece of
+		# scenery in the campaign that the debrief writes down afterwards:
+		# "markers at the bends, stakes at the depth changes, the whole dry
+		# course measured out and pegged as though somebody intended to fill
+		# it." They run WNW to ESE across the bowl, following the riverbed
+		# rather than the cover, so the thing the player has been walking past
+		# all mission turns out to have been the answer.
 		"map": [
 			"....##......##..",
 			"...#....j....#..",
-			".......j........",
-			"..j...c...j.....",
+			"..t....j........",
+			"..j.t.c...j.....",
 			".....dd.....j...",
-			"........j.......",
-			"...j.......dd...",
+			"........j..t....",
+			"...jt......dd...",
 			"......j..c......",
-			"...#....j....#..",
+			"...#....j...t#..",
 			"....##......##..",
 		],
 		"scout_spawns": [Vector2i(1, 2), Vector2i(1, 7), Vector2i(2, 4)],
@@ -589,7 +634,7 @@ const BIOMES := {
 	},
 }
 
-const LEGAL_CHARS := ".#Wjpdsc="
+const LEGAL_CHARS := ".#Wjpdsc=t"
 
 
 ## Validates every level. push_error-based so it also reports in release
@@ -650,14 +695,15 @@ static func _validate(index: int) -> bool:
 				ok = _check(not seen_footprint.has(cell),
 						"%s: overlapping structures at %s" % [label, cell]) and ok
 				seen_footprint[cell] = true
-	# Walkable = '.' or 'p', outside every footprint.
+	# Walkable = the decoration-only chars, outside every footprint. Board says
+	# the same thing by falling through to CellKind.OPEN; keep the two in step.
 	var walkable := func(cell: Vector2i) -> bool:
 		if cell.x < 0 or cell.x >= grid.x or cell.y < 0 or cell.y >= grid.y:
 			return false
 		if footprints.has(cell):
 			return false
 		var ch: String = data.map[cell.y][cell.x]
-		return ch == "." or ch == "p"
+		return ch == "." or ch == "p" or ch == "t"
 	var spawns: Array = data.scout_spawns + data.get("lead_spawns", []) \
 			+ data.get("gunner_spawns", []) + data.goblin_spawns \
 			+ data.get("smg_spawns", []) + data.get("smg_alt_spawns", []) \

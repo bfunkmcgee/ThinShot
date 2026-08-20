@@ -1,0 +1,52 @@
+{
+  "group_id": "4a80cad5-356b-495e-8b2d-0a0cdf5de520",
+  "objects": [
+    {
+      "id": "40ec47dc-a853-4345-810b-7f3f4598a189",
+      "name": null,
+      "prompt": "a folded bright orange signal panel cloth pegged flat to the sand with small stakes",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Signal_panel.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "a9424dd4-35aa-40f5-b18f-ecdf461129cb",
+      "name": null,
+      "prompt": "a pair of crossed marker stakes with an orange cloth banner strung between them",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Signal_banner.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "6ffee299-1b22-4227-b817-5ea496374e0e",
+      "name": null,
+      "prompt": "a bundle of three marker poles lashed together in a stone base with an orange flag",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Signal_mast.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-08-19T00:00:00.000000"
+}
