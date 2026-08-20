@@ -345,6 +345,13 @@ var _resolving_blast := false
 @onready var board: Board = $Board
 @onready var camera: Camera2D = $Camera
 @onready var entities_node: Node2D = $Entities
+## Every piece of scenery in the entities layer, paired with the node whose Y
+## position decides where it sorts. See _refresh_occlusion().
+var _occluders: Array[Dictionary] = []
+## Sum of the living units' screen positions last frame. Occlusion only has to
+## be recomputed when somebody has actually moved, and on a turn-based board
+## that is a few frames in ten seconds.
+var _occlusion_watch := Vector2.ZERO
 @onready var turn_banner: Label = $UI/TurnBanner
 @onready var objective_label: Label = $UI/ObjectiveLabel
 @onready var end_turn_button: Button = $UI/EndTurnButton
@@ -467,6 +474,8 @@ func _ready() -> void:
 	_refresh_objectives()
 	_refresh_watch_cells()  # also settles everyone into whatever cover they spawned in
 	_show_briefing()
+	# After every spawner has run, so the scenery list is the whole board.
+	_collect_occluders()
 	_schedule_returners()
 	show_banner("%s  -  %s" % [Game.operation().name, level.name])
 	player_turn_ready_msec = Time.get_ticks_msec()
@@ -700,6 +709,132 @@ func _dust_material(cell: Vector2i) -> ShaderMaterial:
 				Board.HAZE_MAX * (float(band) + 0.5) / float(Board.HAZE_BANDS))
 		_dust_materials[band] = mat
 	return _dust_materials[band]
+
+
+## Recompute only when somebody has actually moved.
+##
+## The board is turn-based and the units are still for most of a session, but a
+## move TWEENS, so this cannot be event-driven off the destination alone or the
+## scenery would jump aside a beat after the soldier arrives. Watching the sum
+## of their positions catches every frame of a slide for the cost of one vector
+## add per unit, and a fade in progress keeps running until it lands.
+var _occlusion_settling := false
+
+func _watch_for_occlusion(delta: float) -> void:
+	if _occluders.is_empty():
+		return
+	var now := Vector2.ZERO
+	for unit in entities_node.get_children():
+		if unit is Unit and unit.is_alive():
+			now += unit.global_position
+	if not now.is_equal_approx(_occlusion_watch):
+		_occlusion_watch = now
+		_occlusion_settling = true
+	if not _occlusion_settling:
+		return
+	_refresh_occlusion(delta)
+	# Stop once every prop has arrived at the alpha it wants.
+	_occlusion_settling = false
+	for entry: Dictionary in _occluders:
+		var a: float = (entry.sprite as Sprite2D).modulate.a
+		if not is_equal_approx(a, 1.0) and not is_equal_approx(a, OCCLUDED_ALPHA):
+			_occlusion_settling = true
+			break
+
+
+# ------------------------------------------------------------------ occlusion
+
+## How much of an occluder is left when somebody is standing behind it. Not
+## zero: the prop still has to read as cover, and a rock that vanishes when a
+## soldier walks past it is a worse lie than one that hides him.
+const OCCLUDED_ALPHA := 0.42
+## Only the part of a body that has to stay recognisable. A soldier's boots
+## going behind a barrel is depth and reads correctly; his head and shoulders
+## going behind it is the bug. Measured down from the crown as a fraction of
+## the sprite's height.
+const RECOGNISE_BAND := 0.62
+## And how much of that band has to be covered before the scenery is actually
+## in the way. Without this, a prop whose mostly-transparent rectangle merely
+## overlaps a neighbour's counts - which faded 18 of 40 props on THE SCRAPLINE
+## and left the yard looking like a ghost of itself.
+const OCCLUDED_FRACTION := 0.22
+## How fast it gets out of the way, in alpha per second. Fast enough not to lag
+## a move, slow enough that a soldier crossing a junk field does not strobe.
+const OCCLUSION_FADE := 4.0
+
+
+## Collect the scenery once, after everything has been placed.
+##
+## Structures are the awkward case and the reason this stores a pair. They are
+## sliced into per-column strips, each strip a Sprite2D under its own Node2D
+## root positioned on that column's FRONT cell - which is what makes a building
+## y-sort per column instead of as one slab. So the node that decides the draw
+## order is the root, and the node that has the pixels is the child.
+func _collect_occluders() -> void:
+	_occluders.clear()
+	for child in entities_node.get_children():
+		if child is Unit:
+			continue
+		if child is Sprite2D:
+			_occluders.append({"sprite": child, "sorts_by": child})
+			continue
+		for grandchild in child.get_children():
+			if grandchild is Sprite2D:
+				_occluders.append({"sprite": grandchild, "sorts_by": child})
+
+
+## The screen rectangle a sprite actually covers.
+func _sprite_rect(spr: Sprite2D) -> Rect2:
+	var size: Vector2 = spr.region_rect.size if spr.region_enabled 			else Vector2(spr.texture.get_size())
+	size *= spr.scale
+	var centre := spr.global_position + spr.offset * spr.scale
+	return Rect2(centre - size * 0.5, size)
+
+
+## Fade any scenery that is standing in front of somebody.
+##
+## The board is 3/4 top-down and the props are tall: a rock reaches 74px above
+## its own cell and a sandbag line 90px, against a 60px tile step - so a prop
+## covers two and a half cells of screen behind it, and a soldier who walks
+## into that band disappears. Y-sorting is correct and does not help: the unit
+## IS behind the prop, and the prop IS drawn over him. The art is the problem
+## and the art cannot be shortened without making the desert flat.
+##
+## So the scenery gets out of the way. This is the same principle the prop dust
+## shader already states - "units should stay the crispest things on screen so
+## they read against the scenery" - applied to the one case the shader cannot
+## reach.
+##
+## Enemies count too. There is no fog of war in this game; a goblin behind a
+## drum is drawn, just invisibly, and losing track of him is the same bug.
+func _refresh_occlusion(delta: float) -> void:
+	var hiding := {}
+	for unit in living_units(Unit.TEAM_SCOUT) + living_units(Unit.TEAM_GOBLIN):
+		if unit.sprite == null or unit.sprite.texture == null:
+			continue
+		var body := _sprite_rect(unit.sprite)
+		# Head and shoulders only - see RECOGNISE_BAND.
+		body.size.y *= RECOGNISE_BAND
+		var need := body.size.x * body.size.y * OCCLUDED_FRACTION
+		for i in _occluders.size():
+			if hiding.has(i):
+				continue
+			var entry: Dictionary = _occluders[i]
+			var spr: Sprite2D = entry.sprite
+			if spr.texture == null:
+				continue
+			# Sorts behind him, so it is drawn first and cannot be hiding him.
+			if (entry.sorts_by as Node2D).global_position.y <= unit.global_position.y:
+				continue
+			var over := body.intersection(_sprite_rect(spr))
+			if over.size.x * over.size.y >= need:
+				hiding[i] = true
+	for i in _occluders.size():
+		var spr: Sprite2D = _occluders[i].sprite
+		var want := OCCLUDED_ALPHA if hiding.has(i) else 1.0
+		if is_equal_approx(spr.modulate.a, want):
+			continue
+		spr.modulate.a = move_toward(spr.modulate.a, want, OCCLUSION_FADE * delta)
 
 
 func _spawn_prop(texture: Texture2D, offset: Vector2, cell: Vector2i,
@@ -4357,6 +4492,7 @@ const SHAKE_OFFSETS: Array[Vector2] = [
 ## fighting each other over the same property.
 func _process(delta: float) -> void:
 	camera.offset = _cam_lean + _cam_shake
+	_watch_for_occlusion(delta)
 	_sway_plants()
 	_animate_structures()
 	_boil_smoke(delta)

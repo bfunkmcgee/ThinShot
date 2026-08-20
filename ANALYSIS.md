@@ -469,3 +469,36 @@ happened; the roster records who is still out there.
 1, so a four-time survivor is hard to finish and trivial to knock down — his own
 test found this the hard way, because at 1 max HP every blow in the game is
 decisive and `_fate_of` correctly stops rolling for him at all.
+
+### Units disappeared behind the scenery
+
+Reported from play: soldiers walking behind buildings and props became
+invisible. Measured before anything was changed - a rock's art reaches 74px
+above its own cell, junk 82px and a sandbag line 90px, against a 60px tile
+step. So a prop covers about two and a half cells of screen behind itself, and
+anybody standing in that band is buried.
+
+Y-sorting was not the bug and fixing it would not have helped: the unit IS
+behind the prop and the prop IS correctly drawn over him. Structures were
+already handled - they are sliced into per-column strips, each parented to its
+own column's front cell, which is why a building sorts per column rather than
+as one slab. Loose props and walls had no equivalent.
+
+So the scenery stands aside. Anything drawn after a unit whose rectangle covers
+enough of him fades to 42% while he is there, and returns when he moves off.
+That is the principle the prop dust shader already states in its own header -
+"units should stay the crispest things on screen so they read against the
+scenery" - applied to the one case a shader cannot reach.
+
+Two refinements, both from looking at the result rather than from reasoning:
+
+- **Head and shoulders, not the whole body.** A first pass faded on any overlap
+  of the sprite rectangle and took 18 of THE SCRAPLINE's 40 props with it,
+  leaving the yard a ghost of itself. Only the top 62% of a body has to stay
+  recognisable; boots going behind a barrel is depth, not a defect. With a 22%
+  area threshold on that band it takes 9.
+- **42%, not nothing.** A prop that vanishes is a worse lie than one that
+  hides somebody: it still has to read as cover, because it still IS cover.
+
+Enemies count too. There is no fog of war here - a goblin behind a drum is
+already drawn, just invisibly, and losing track of him is the same bug.
