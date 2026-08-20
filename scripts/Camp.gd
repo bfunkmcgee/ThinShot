@@ -26,17 +26,67 @@ const ROCK_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_7.png"),
 	preload("res://assets/sprites/Environment/Desert/Desert_Rock_or_bolder/Rock_8.png"),
 ]
+# Deliberately NOT the full battlefield junk set. `Rusted_desert_garbage_3` is
+# the wrecked car door, and two of them were standing in the middle of the
+# garrison yard - the base the squad comes home to read as a scrapheap with
+# soldiers in it. It stays on the battle maps, where a yard full of stripped
+# wreckage is the point; it does not belong in a manned camp. Anything added
+# here should pass the same test: would a garrison sergeant leave it lying
+# there?
 const JUNK_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage.png"),
 	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage_1.png"),
 	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage_2.png"),
-	preload("res://assets/sprites/Environment/Desert/desert_rusted_garbage/Rusted_desert_garbage_3.png"),
 ]
 const PLANT_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants.png"),
 	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_4.png"),
 	preload("res://assets/sprites/Environment/Desert/desert_plants/Desert_Plants_9.png"),
 ]
+# The garrison's furniture. Keyed by the name CampData.GARRISON_PROPS uses for
+# the cell, and every one of them stands on a 'j' - so they are solid and get
+# their contact shadow for free, and none of them needed a rule.
+#
+# Two canvas classes here, both drawn at PROP_SCALE. The 48px ones are the
+# ordinary prop class. The four tall ones are 168px on a SINGLE cell, which is
+# the comms mast's trick rather than a structure's: a structure spans a
+# footprint and is sliced per column, this is one sprite on one cell that
+# simply reaches a long way up. Their offsets follow the mast's rule
+# (-(bbox.bottom - 85)) instead of the 48px one (-(bbox.bottom - 26)).
+const FIXTURE_ROOT := "res://assets/sprites/Environment/Desert/garrison_fixtures/"
+const FIXTURE_TEXTURES := {
+	"ammo_box": preload(FIXTURE_ROOT + "Garrison_ammo_box.png"),
+	"awning": preload(FIXTURE_ROOT + "Garrison_awning.png"),
+	"cleaning_bench": preload(FIXTURE_ROOT + "Garrison_cleaning_bench.png"),
+	"field_radio": preload(FIXTURE_ROOT + "Garrison_field_radio.png"),
+	"field_stove": preload(FIXTURE_ROOT + "Garrison_field_stove.png"),
+	"flagpole": preload(FIXTURE_ROOT + "Garrison_flagpole.png"),
+	"jerry_cans": preload(FIXTURE_ROOT + "Garrison_jerry_cans.png"),
+	"kit_frame": preload(FIXTURE_ROOT + "Garrison_kit_frame.png"),
+	"memorial_cross": preload(FIXTURE_ROOT + "Garrison_memorial_cross.png"),
+	"notice_board": preload(FIXTURE_ROOT + "Garrison_notice_board.png"),
+	"washing_line": preload(FIXTURE_ROOT + "Garrison_washing_line.png"),
+	"watchtower": preload(FIXTURE_ROOT + "Garrison_watchtower.png"),
+	"water_bowser": preload(FIXTURE_ROOT + "Garrison_water_bowser.png"),
+	"water_tank": preload(FIXTURE_ROOT + "Garrison_water_tank.png"),
+}
+## Measured off each texture's opaque bounds, so the base sits on the cell.
+const FIXTURE_OFFSETS := {
+	"ammo_box": Vector2(0, -21),
+	"awning": Vector2(0, -65),
+	"cleaning_bench": Vector2(0, -21),
+	"field_radio": Vector2(0, -21),
+	"field_stove": Vector2(0, -21),
+	"flagpole": Vector2(0, -72),
+	"jerry_cans": Vector2(0, -19),
+	"kit_frame": Vector2(0, -21),
+	"memorial_cross": Vector2(0, -20),
+	"notice_board": Vector2(0, -20),
+	"washing_line": Vector2(0, -18),
+	"watchtower": Vector2(0, -73),
+	"water_bowser": Vector2(0, -22),
+	"water_tank": Vector2(0, -63),
+}
 const WALL_TEX_X_RUN := preload(
 		"res://assets/sprites/Environment/Desert/Walls/desert_brick_and_mud/rotations/south-west.png")
 const WALL_TEX_Y_RUN := preload(
@@ -62,13 +112,21 @@ const BRIEFING_TEX_GARRISON := preload(
 const BRIEFING_TEX_FIELD := preload(
 		"res://assets/sprites/Environment/Desert/Props/Briefing_table/Briefing_table_field/rotations/unknown.png")
 const STRUCTURE_ROOT := "res://assets/sprites/Environment/Desert/Structures"
+# The camps' own canvas is modern military; the Thirst's is not. `tent` is the
+# shipped rustic pole tent and three battle levels still place it, where a
+# ragged tent on a dispossessed people's ground is the right read - so the
+# Kestrel camps get their own kinds rather than the shipped one being swapped
+# out from under those levels.
 const STRUCTURE_DIRS := {
 	"hut_1": STRUCTURE_ROOT + "/desert_hut/Desert_hut",
 	"hut_2": STRUCTURE_ROOT + "/desert_hut/Desert_hut_1",
 	"tent": STRUCTURE_ROOT + "/desert_hut/Desert_hut_2",
+	"stores_tent": STRUCTURE_ROOT + "/camp_tents/Stores_tent",
+	"field_tent": STRUCTURE_ROOT + "/camp_tents/Field_tent",
 }
 const STRUCTURE_OFFSETS := {
 	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33), "tent": Vector2(0, -33),
+	"stores_tent": Vector2(0, -17), "field_tent": Vector2(0, -23),
 }
 const PROP_DUST := preload("res://assets/shaders/prop_dust.gdshader")
 const ROCK_OFFSET := Vector2(0, -18)
@@ -132,6 +190,7 @@ var spots: Dictionary = {}
 var fixtures: Array = []
 var _focus: Dictionary = {}
 var _dust_materials: Dictionary = {}
+var _swaying: Array = []
 # What the two modal buttons currently mean, set when a panel is opened.
 var _choice_action := ""
 var _choice_args: Array = []
@@ -233,6 +292,45 @@ func _spawn_prop(texture: Texture2D, offset: Vector2, cell: Vector2i,
 	return prop
 
 
+# ------------------------------------------------------------ passive motion --
+# The camp used to be a still life - the yard held fourteen fixtures and not one
+# of them moved. The battlefield already leans its cacti and claim-pennants in
+# the wind, so camp borrows that rule rather than inventing a second one: a lean
+# of one whole sprite texel, snapped so the pixel art never shimmers between
+# subpixel positions, phased off the cell so no two things sway in step.
+#
+# Only cloth is on the list, and that is the point. A jerrican or an ammunition
+# box that drifted sideways would read as a physics bug rather than as weather,
+# so the steel half of the yard is deliberately still and the canvas half moves.
+const SWAY_SPEED := 1.6      # radians/sec, matching Battle's cycle
+const SWAY_TEXELS := 1.0     # sprite texels a thing leans at full sway
+const SWAYING_FIXTURES := {
+	"awning": true,          # the camo net is the largest cloth in the yard
+	"flagpole": true,        # the colours, and the one thing wind is *for*
+	"washing_line": true,
+	"kit_frame": true,       # webbing and canteens hang loose off the rack
+}
+
+
+## Registers a sprite on the camp's wind. Phase comes from the cell so a given
+## yard always sways the same way, and no two neighbours move together.
+func _sway(sprite: Sprite2D, cell: Vector2i) -> void:
+	_swaying.append({
+		"sprite": sprite,
+		"base_x": sprite.position.x,
+		"phase": Board._hash01(cell, _prop_seed + SALT_SWAY) * TAU,
+	})
+
+
+func _sway_props() -> void:
+	var t := Time.get_ticks_msec() / 1000.0
+	for entry: Dictionary in _swaying:
+		var wave: float = sin(t * SWAY_SPEED + entry.phase)
+		var step: float = SWAY_TEXELS * PROP_SCALE.x * signf(wave) \
+				* (1.0 if absf(wave) > 0.45 else 0.0)
+		entry.sprite.position.x = entry.base_x + step
+
+
 func _wall_texture(cell: Vector2i) -> Texture2D:
 	var has_x := board.map_char(cell + Vector2i(1, 0)) == "W" \
 			or board.map_char(cell + Vector2i(-1, 0)) == "W"
@@ -248,6 +346,29 @@ const SALT_ROCK := 4
 const SALT_JUNK := 5
 const SALT_PLANT := 6
 const SALT_CRATE := 8
+const SALT_SWAY := 9
+const SALT_DETRITUS := 12
+const SALT_DETRITUS_PICK := 13
+const SALT_DETRITUS_JITTER := 14
+
+## Flat ground clutter, on the same terms Battle scatters it: same textures,
+## same salts, same rate. The camps stand on the same desert as the missions
+## and are dressed from the same prop set, so bare sand here would have been
+## the one ground in the game that had nothing on it.
+const DETRITUS_ROOT := "res://assets/sprites/Environment/Desert/desert_detritus/"
+const DETRITUS_TEXTURES: Array[Texture2D] = [
+	preload(DETRITUS_ROOT + "Desert_detritus.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_1.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_2.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_3.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_4.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_5.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_6.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_7.png"),
+]
+const DETRITUS_RATE := 0.17
+const DETRITUS_GAP := 1
+const DETRITUS_JITTER := 11.0
 
 
 ## A deterministic pick out of `count` variants for this cell and stream.
@@ -264,17 +385,78 @@ func _spawn_props() -> void:
 					_spawn_prop(ROCK_TEXTURES[_prop_pick(cell, SALT_ROCK,
 							ROCK_TEXTURES.size())], ROCK_OFFSET, cell)
 				"j":
-					_spawn_prop(JUNK_TEXTURES[_prop_pick(cell, SALT_JUNK,
-							JUNK_TEXTURES.size())], JUNK_OFFSET, cell)
+					# A scrap cell the camp has named becomes that fixture; an
+					# unnamed one is still a scrap pile. The garrison names all
+					# of its, which is why there is no junk left in it.
+					var fixture := str(camp.get("props", {}).get(cell, ""))
+					if FIXTURE_TEXTURES.has(fixture):
+						var fix := _spawn_prop(FIXTURE_TEXTURES[fixture],
+								FIXTURE_OFFSETS[fixture], cell)
+						if SWAYING_FIXTURES.has(fixture):
+							_sway(fix, cell)
+					else:
+						if not fixture.is_empty():
+							push_error("[Camp] %s names unknown fixture '%s'"
+									% [cell, fixture])
+						_spawn_prop(JUNK_TEXTURES[_prop_pick(cell, SALT_JUNK,
+								JUNK_TEXTURES.size())], JUNK_OFFSET, cell)
 				"p":
-					_spawn_prop(PLANT_TEXTURES[_prop_pick(cell, SALT_PLANT,
-							PLANT_TEXTURES.size())], PLANT_OFFSET, cell)
+					# The camp's cacti lean on the same wind the battlefield's do.
+					_sway(_spawn_prop(PLANT_TEXTURES[_prop_pick(cell, SALT_PLANT,
+							PLANT_TEXTURES.size())], PLANT_OFFSET, cell), cell)
 				"W":
 					_spawn_prop(_wall_texture(cell), WALL_OFFSET, cell)
 	for cell: Vector2i in spots.dressing:
 		_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, cell)
 	for s: Dictionary in camp.structures:
 		_spawn_structure(s)
+	_spawn_detritus()
+
+
+## Ground clutter over whatever open sand the camp's own fixtures left spare.
+## Runs last so the crates, tables and structures have already claimed theirs;
+## the walkable spots the player actually interacts with are left clear, since
+## a bone under the briefing table would read as something to click on.
+func _spawn_detritus() -> void:
+	var claimed := {}
+	for cell: Vector2i in spots.dressing:
+		claimed[cell] = true
+	for key: String in spots:
+		var value: Variant = spots[key]
+		if value is Vector2i:
+			claimed[value] = true
+	var placed: Array[Vector2i] = []
+	for y in board.size.y:
+		for x in board.size.x:
+			var cell := Vector2i(x, y)
+			if board.map_char(cell) != "." or board.is_structure(cell):
+				continue
+			if claimed.has(cell):
+				continue
+			if Board._hash01(cell, _prop_seed + SALT_DETRITUS) >= DETRITUS_RATE:
+				continue
+			var clear := true
+			for other: Vector2i in placed:
+				if maxi(absi(other.x - cell.x), absi(other.y - cell.y)) <= DETRITUS_GAP:
+					clear = false
+					break
+			if not clear:
+				continue
+			placed.append(cell)
+			var decal := Sprite2D.new()
+			decal.texture = DETRITUS_TEXTURES[_prop_pick(cell, SALT_DETRITUS_PICK,
+					DETRITUS_TEXTURES.size())]
+			decal.material = _dust_material(cell)
+			decal.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			decal.position = board.cell_to_local(cell)
+			var hx := Board._hash01(cell, _prop_seed + SALT_DETRITUS_JITTER)
+			var hy := Board._hash01(cell + Vector2i(97, 61),
+					_prop_seed + SALT_DETRITUS_JITTER)
+			decal.position += Vector2(
+					roundf((hx - 0.5) * 2.0 * DETRITUS_JITTER),
+					roundf((hy - 0.5) * DETRITUS_JITTER))
+			decal.flip_h = hx > 0.5
+			board.decal_layer.add_child(decal)
 
 
 func _spawn_structure(s: Dictionary) -> void:
@@ -428,6 +610,9 @@ func _try_step(delta_pos: Vector2) -> void:
 
 
 func _process(delta: float) -> void:
+	# Above the player guard on purpose: the wind is the scene's, not his, so it
+	# keeps blowing through the frames where there is nobody to walk around as.
+	_sway_props()
 	if player == null:
 		return
 	var dir := Vector2.ZERO if modal.visible else _walk_input()

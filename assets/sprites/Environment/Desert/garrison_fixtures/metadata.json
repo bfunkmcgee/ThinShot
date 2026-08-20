@@ -1,0 +1,220 @@
+{
+  "group_id": [
+    "575e1204-82bd-4d14-aae5-ce188fb1bf27",
+    "eba0041d-a357-4e82-aa48-04ec485cb74e"
+  ],
+  "objects": [
+    {
+      "id": "b3444b38-f115-4f4c-aee0-4d03e1819389",
+      "name": "notice_board",
+      "prompt": "a duty roster board of dented sheet metal bolted to two steel angle-iron posts, papers and a map pinned behind a plastic cover",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_notice_board.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "f60aaf6c-bbb0-462f-86f8-47c73a0576fe",
+      "name": "memorial_cross",
+      "prompt": "a battlefield cross memorial: a rifle stood muzzle-down in a low concrete plinth with a steel helmet on the stock and dog tags hanging from the grip",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_memorial_cross.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "3d322e1f-b6d2-489b-9892-12b4d5e36a78",
+      "name": "washing_line",
+      "prompt": "a laundry line of steel wire strung between two galvanised pipe posts, desert camouflage uniforms and towels pegged along it",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_washing_line.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "11b240f3-62e3-4f9a-a227-28093107afff",
+      "name": "jerry_cans",
+      "prompt": "a stack of olive-drab pressed-steel jerricans with stencilled white markings, one lying on its side",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_jerry_cans.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "38c599fb-454d-405e-939b-8c4853c4f70f",
+      "name": "field_radio",
+      "prompt": "a manpack field radio with a folded whip antenna and a handset, sat on a ribbed olive plastic transit case",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_field_radio.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "a1a1db49-bd5f-49e9-b7df-752f6264e94e",
+      "name": "field_stove",
+      "prompt": "a sheet-steel field stove with a sooty flue pipe and a dented metal kettle on top",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_field_stove.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "7a450cce-d82f-49e1-ba96-5eff26a20453",
+      "name": "kit_frame",
+      "prompt": "a welded steel pipe rack hung with body armour vests, a helmet, webbing and canteens",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_kit_frame.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "8fe0e510-6279-4dab-b423-04680153f722",
+      "name": "ammo_box",
+      "prompt": "an open olive-drab steel ammunition box with stencilled markings and belted ammunition inside, a closed one stacked beside it",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_ammo_box.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "776a3e40-b8c8-4ad5-9833-1b48cd05d7d4",
+      "name": "water_bowser",
+      "prompt": "an olive steel water bowser tank on a low skid frame with two brass taps and a jerrican under the spout",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_water_bowser.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "32b6aa6e-30d7-4477-9d57-e2817aa327f8",
+      "name": "cleaning_bench",
+      "prompt": "a weapons cleaning bench of stamped steel with a rifle stripped into parts, an oil can and a bore rod laid on it",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_cleaning_bench.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "89763251-a2c2-4cf0-b884-6bc5784af362",
+      "name": "flagpole",
+      "prompt": "a tall welded steel flag mast on a poured concrete base, a halyard cleat at the bottom and a rectangular military flag flying out stiff from the top",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_flagpole.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "b3bbd077-25fb-4819-b877-12dbd66b9f56",
+      "name": "watchtower",
+      "prompt": "a tall observation tower of steel scaffold poles and angle iron with a corrugated tin roof, a sandbagged parapet and a steel ladder up one leg",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_watchtower.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "61a152bb-d91a-46dc-b314-81b6a998d772",
+      "name": "water_tank",
+      "prompt": "a galvanised corrugated steel water tank raised on a welded steel gantry, a tap manifold underneath and a jerrican beneath the spout",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_water_tank.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "2ce069f8-b11f-4802-851a-7e4624f54053",
+      "name": "awning",
+      "prompt": "an open workshop bay: desert camouflage netting stretched on four steel poles over a heavy steel workbench with a vice and tools",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_awning.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-08-20T00:00:00.000000"
+}

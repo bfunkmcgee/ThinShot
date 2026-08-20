@@ -13,25 +13,66 @@ class_name CampData
 ## reads only `size`, `map` and `structures`, and everything else has a
 ## default. Same map legend as Levels:
 ##   '.' open sand   '#' rock   'W' mud-brick wall   'j' scrap   'p' plant
+##
+## A 'j' cell named in a camp's optional `props` table is drawn as that fixture
+## instead of a scrap pile. The char is doing real work either way - it is what
+## makes the cell solid and gives it its contact shadow - so a fixture needs no
+## rules of its own, and a camp with no `props` table behaves exactly as before.
+
+## The base's furniture, keyed by the cell it stands on. Every one of these is
+## a 'j' in the map below.
+##
+## Twelve of them, and the garrison has no scrap piles left at all - which was
+## the point. Home used to be a walled yard with eight junk heaps in it, two of
+## them wrecked car doors, and it read as a scrapheap the squad happened to
+## sleep in rather than as anywhere the Accord posted them. Nothing here is
+## interactive; the briefing table, stores and levy post are still the only
+## things you can walk up to and use.
+##
+## The tall four - flagpole, watchtower, water tank, awning - are all on row 1,
+## against the back wall. That is deliberate and worth keeping: they stand two
+## soldiers high, and on the back row there is nothing behind them to hide.
+const GARRISON_PROPS := {
+	# The awning is 256px of canopy on a 128px cell - two tiles wide on a
+	# one-tile stand. Against the back wall its right half hung past the wall
+	# line over open desert, so it sits a rank in where the yard is wide enough
+	# to hold it, still shading the west billet. Nothing else here is wide
+	# enough to care, and the memorial takes the wall cell it gave up.
+	Vector2i(5, 6): "awning",
+	Vector2i(8, 1): "flagpole",       # the colours, behind the command table
+	Vector2i(10, 1): "field_radio",
+	Vector2i(11, 1): "jerry_cans",
+	Vector2i(12, 1): "watchtower",    # the one corner that overlooks the gate road
+	Vector2i(5, 2): "notice_board",   # the duty roster, on the parade side
+	Vector2i(2, 3): "water_bowser",   # the Crown's own water, in a war about water
+	Vector2i(11, 3): "water_tank",
+	Vector2i(2, 4): "kit_frame",
+	Vector2i(11, 5): "ammo_box",
+	Vector2i(3, 1): "memorial_cross", # the garrison is where the dead are replaced
+	Vector2i(3, 7): "washing_line",
+	Vector2i(6, 8): "field_stove",
+	Vector2i(11, 8): "cleaning_bench",
+}
 
 const GARRISON := {
 	"size": Vector2i(14, 10),
 	"map": [
 		"WWWWWWWWWWWWWW",
-		"W..p.......j.W",
+		"W..j....j.jjjW",
 		"W....j.......W",
-		"W..........j.W",
+		"W.j........j.W",
 		"W.j..........W",
 		"W..........j.W",
 		"W....j.......W",
 		"W..j.......p.W",
-		"W..........j.W",
+		"W.....j....j.W",
 		"WWWWWWWWWWWWWW",
 	],
+	"props": GARRISON_PROPS,
 	"structures": [
 		{"kind": "hut_1", "anchor": Vector2i(1, 1), "size": Vector2i(2, 2)},
 		{"kind": "hut_2", "anchor": Vector2i(1, 6), "size": Vector2i(2, 2)},
-		{"kind": "tent", "anchor": Vector2i(10, 6), "size": Vector2i(2, 2)},
+		{"kind": "stores_tent", "anchor": Vector2i(10, 6), "size": Vector2i(2, 2)},
 	],
 	"zone_seed": 91,
 	"shade_seed": 17,
@@ -52,7 +93,7 @@ const FIELD := {
 		"...........",
 	],
 	"structures": [
-		{"kind": "tent", "anchor": Vector2i(7, 4), "size": Vector2i(2, 2)},
+		{"kind": "field_tent", "anchor": Vector2i(7, 4), "size": Vector2i(2, 2)},
 	],
 	"zone_seed": 91,
 	"shade_seed": 17,

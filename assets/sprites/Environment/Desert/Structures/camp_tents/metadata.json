@@ -1,0 +1,39 @@
+{
+  "group_id": [
+    "09712f42-46b1-4309-96af-3580663363eb"
+  ],
+  "objects": [
+    {
+      "id": "de17886c-dbd1-406d-bd90-db53ebc97da2",
+      "name": "Stores_tent",
+      "prompt": "a low olive canvas squad tent on steel poles with mesh window panels, a sandbag blast wall along one side and olive equipment cases stacked outside the door",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "371d95b4-948d-4ec1-bc88-4cf790d5ad70",
+      "name": "Field_tent",
+      "prompt": "an olive drab military frame tent with a ridge pole, rolled-up door flaps, taut guy lines pegged out and a stove pipe through the roof",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-08-20T00:00:00.000000"
+}
