@@ -571,6 +571,18 @@ func _build_fixtures() -> void:
 			STORES_TEXTURES[_prop_pick(spots.stores, SALT_CRATE,
 					STORES_TEXTURES.size())],
 			STORES_OFFSET, spots.stores)
+	# The duty roster board doubles as the bounty board. Garrison only, and only
+	# once the campaign has actually let somebody get away - a board with
+	# nothing posted on it is a prompt that wastes a walk.
+	if not in_field and not Bounty.offers(Game.campaign_seed, Game.adversaries,
+			Game.bounties_done).is_empty():
+		var board_cell: Vector2i = _fixture_cell("notice_board")
+		if board_cell.x >= 0:
+			fixtures.append({
+				"kind": "bounties", "cell": board_cell,
+				"pos": board.cell_to_global(board_cell),
+				"label": "the bounty board", "id": 0,
+			})
 	# Replacements are a garrison thing. Out on operation the squad fights
 	# with whoever walked away from the last mission.
 	var post: Vector2i = spots.recruit
@@ -721,6 +733,9 @@ func _prompt_for(fixture: Dictionary) -> String:
 			if short <= 0:
 				return "E  -  levy post: squad at full strength"
 			return "E  -  levy post: %d levy/levies available" % short
+		"bounties":
+			return "E  -  bounty board: %d posted" % Bounty.offers(
+					Game.campaign_seed, Game.adversaries, Game.bounties_done).size()
 	return ""
 
 
@@ -756,6 +771,99 @@ func _unhandled_input(event: InputEvent) -> void:
 			_open_stores()
 		"recruit":
 			_open_recruit()
+		"bounties":
+			_open_bounties()
+
+
+# ------------------------------------------------------------------ bounties --
+
+## The board, then who goes, then away.
+##
+## Three panels rather than one, because the choice is genuinely two decisions -
+## which man is worth hunting, and who you can spare to hunt him - and folding
+## them into one list would hide the interesting half. The middle panel is the
+## one that matters: it shows each candidate's PRESENCE and GUILE against the
+## odds they would actually face, so choosing a hunter is choosing an approach.
+var _bounty_offer: Dictionary = {}
+
+## Where a named garrison fixture stands, or (-1, -1). Looked up in the camp's
+## own prop table rather than hardcoded, so moving the notice board moves the
+## bounty board with it instead of leaving a prompt in an empty patch of sand.
+func _fixture_cell(kind: String) -> Vector2i:
+	var props: Dictionary = camp.get("props", {})
+	for cell: Vector2i in props:
+		if str(props[cell]) == kind:
+			return cell
+	return Vector2i(-1, -1)
+
+
+func _open_bounties() -> void:
+	var posted: Array = Bounty.offers(Game.campaign_seed, Game.adversaries,
+			Game.bounties_done)
+	if posted.is_empty():
+		_open_modal("BOUNTY BOARD",
+				"Nothing posted. The Accord pays for the ones who got away, and "
+				+ "so far this squad has not let anybody.")
+		return
+	_bounty_offer = {}
+	var lines: Array[String] = ["The Accord pays for these.", ""]
+	for i in posted.size():
+		var o: Dictionary = posted[i]
+		lines.append("%d.  %s of %s" % [i + 1, o.name, o.settlement])
+		lines.append("     got away %d time(s)  -  rumoured at %s"
+				% [int(o.survivals), o.place])
+		lines.append("     %s" % o.where)
+		lines.append("")
+	lines.append("Pick one and the garrison will post a party.")
+	_choice_action = "bounty_pick"
+	_choice_args = [posted]
+	# Two buttons, so at most the first two are takeable from here. Three are
+	# posted because the third is information - what else is out there - and a
+	# board that only listed what you could take would be a menu.
+	_open_modal("BOUNTY BOARD", "
+".join(lines),
+			"Take: %s" % str(posted[0].name),
+			"Take: %s" % str(posted[1].name) if posted.size() > 1 else "")
+
+
+## Who to send. Every living named soldier, with what they would actually roll.
+func _open_bounty_hunters(offer: Dictionary) -> void:
+	_bounty_offer = offer
+	var candidates: Array = []
+	for soldier: Dictionary in Game.roster:
+		if bool(soldier.get("alive", false)):
+			candidates.append(soldier)
+	if candidates.is_empty():
+		_open_modal("NOBODY TO SEND", "There is no one on their feet.")
+		return
+	var survivals := int(offer.get("survivals", 0))
+	var has_band := Rules.can_lead_warband(survivals)
+	var lines: Array[String] = [
+		"%s of %s, at %s." % [offer.name, offer.settlement, offer.place],
+		"He has got away %d time(s)%s." % [survivals,
+				" and he does not travel alone" if has_band else ""],
+		"",
+		"Two riflemen go with whoever you send.",
+		"",
+	]
+	for i in mini(candidates.size(), 2):
+		var s: Dictionary = candidates[i]
+		var presence := int(s.get("presence", 0))
+		var guile := int(s.get("guile", 0))
+		lines.append("%s  -  %s" % [Game.soldier_label(s),
+				Unit.kind_role_name(int(s.kind))])
+		lines.append("   presence %d, guile %d" % [presence, guile])
+		lines.append("   talk him down %d%%   turn him %d%%" % [
+				Bounty.surrender_chance(presence, survivals, has_band, false),
+				Bounty.informant_chance(guile, presence, survivals, has_band,
+						not str(offer.get("grievance", "")).is_empty())])
+		lines.append("")
+	_choice_action = "bounty_send"
+	_choice_args = [offer, candidates]
+	_open_modal("WHO GOES", "
+".join(lines),
+			Game.soldier_label(candidates[0]),
+			Game.soldier_label(candidates[1]) if candidates.size() > 1 else "")
 
 
 # ------------------------------------------------------------------- modal --
@@ -951,8 +1059,12 @@ func _build_deployment_rows() -> void:
 ## read at a glance when the decision is which three of six go. The row says it
 ## in words instead.
 func _deployment_row_text(soldier: Dictionary, going: bool) -> String:
+	var resting := Game.is_resting(int(soldier.get("id", 0)))
 	var parts: Array[String] = [
-		"GOING " if going else "      ",
+		# A resting soldier is shown rather than hidden: the player chose to
+		# send them on a bounty, and the cost of that choice should be visible
+		# on the screen where the next one is made.
+		("RESTED" if resting else ("GOING " if going else "      ")),
 		"%-14s" % Game.full_name(soldier),
 		"%-20s" % Unit.kind_role_name(int(soldier.kind)),
 		"%-16s" % Game.rank_title(int(soldier.rank)),
@@ -1021,6 +1133,30 @@ func _on_choice(slot: int) -> void:
 			# Rebuild the camp so the new faces are actually standing in it.
 			get_tree().reload_current_scene()
 			print("[Sandline] %d levy/levies reported" % taken.size())
+		"bounty_pick":
+			var posted: Array = _choice_args[0]
+			if slot < posted.size():
+				_close_modal()
+				_open_bounty_hunters(posted[slot])
+		"bounty_send":
+			var offer: Dictionary = _choice_args[0]
+			var people: Array = _choice_args[1]
+			if slot >= people.size():
+				return
+			var hunter: Dictionary = people[slot]
+			# Built here rather than in Game, which may not name Bounty - see
+			# the layering note in Bounty.gd. If the generator cannot produce a
+			# sound board the bounty is simply refused: an unfinishable map is
+			# worse than a bounty that has to be taken again.
+			var generated: Dictionary = Bounty.generate(offer, Game.campaign_seed)
+			if generated.is_empty():
+				_open_modal("NO ROUTE",
+						"The rumour does not hold up. Try another posting.")
+				return
+			Game.begin_bounty(int(hunter.id), int(offer.target_id), generated)
+			print("[Sandline] bounty: %s after %s at %s" % [
+					Game.full_name(hunter), offer.name, offer.place])
+			Game.go_to_battle()
 		"deploy":
 			# Recorded before the scene changes: Battle reads the choice back
 			# out of Game when it fills the rifle slots.

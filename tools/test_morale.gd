@@ -124,6 +124,9 @@ func _run() -> void:
 	await _test_bystanders()
 	await _test_after_action()
 	await _test_escape_through_the_turn_loop()
+	await _test_shock_and_being_outnumbered()
+	await _test_raider_breaks_contact()
+	await _test_warband_lands_together()
 
 	# Moving and surrendering play pooled SFX. Sfx assigns `player.stream` and
 	# never clears it, so whichever player went last is still holding its WAV
@@ -565,3 +568,228 @@ func _test_escape_through_the_turn_loop() -> void:
 	_check(battle.last_result_won,
 			"and the contact resolved, so the loop ran to the end")
 	await _dismiss(battle)
+
+
+# --- 11. the formation breaks, not just the man -------------------------------
+#
+# Rules' arithmetic for both terms is pinned in tools/test_rules.gd. What is
+# checked here is that _resolve_morale actually asks: both live in the
+# controller, both are charged once per fighter per turn, and neither has a
+# Rules signature that a wiring mistake would trip over.
+
+func _test_shock_and_being_outnumbered() -> void:
+	print("\n[11] losing several at once, and being the last two")
+	var k: Dictionary = _rules.get_script_constant_map()
+	var battle: Node = await _battle(0)
+
+	# Three down inside the window, which is the shock floor. Written into the
+	# tally rather than staged as real deaths on purpose: the thing under test
+	# is that the turn READS the tally, and killing three would drag in the
+	# ally-down term and prove less about this code.
+	battle.turn_number = 5
+	battle._thirst_deaths = {5: 2, 4: 1, 1: 4}
+	_check(battle._recent_thirst_deaths() == 3,
+			"deaths inside the window count and older ones do not (%d)"
+			% battle._recent_thirst_deaths())
+
+	var goblins: Array = battle.living_units(TEAM_GOBLIN)
+	if goblins.size() < 2:
+		_check(false, "expected the wash to field goblins")
+		await _dismiss(battle)
+		return
+	# All but two off the board, so the survivors are outnumbered as well as
+	# shocked. Freed rather than killed so no death handler fires and the tally
+	# written above stays exactly what it was.
+	var kept: Array = [goblins[0], goblins[1]]
+	for g in goblins:
+		if not kept.has(g):
+			g.cell = Vector2i(-99, -99)
+			g.queue_free()
+	await process_frame
+
+	var subject: Node2D = kept[0]
+	# Deliberately below his ceiling. At full morale the quiet-turn recovery is
+	# capped to nothing and the arithmetic below cannot tell "recovery ran and
+	# was capped" from "recovery never ran", which is exactly the wiring this is
+	# supposed to be checking.
+	subject.morale = 90
+	subject.morale_ceiling = 100
+	subject.morale_pressed = false
+	var soldiers: int = battle.living_soldiers(TEAM_SCOUT).size()
+	var left: int = battle.living_units(TEAM_GOBLIN).size()
+	_check(_rules.call("is_outnumbered", left, soldiers),
+			"%d fighters against %d soldiers is outnumbered" % [left, soldiers])
+
+	battle.state = battle.State.ENEMY_TURN
+	var before: int = subject.morale
+	await battle._resolve_morale(subject, 1, left)
+	_check(subject.morale < before,
+			"a fighter activating into that pays for both (%d -> %d)"
+			% [before, subject.morale])
+	var expected: int = int(_rules.call("morale_recovered", before, 100)) \
+			- int(_rules.call("shock_cost", 3)) - int(k["MORALE_OUTNUMBERED"])
+	_check(subject.morale == expected,
+			"...exactly the two terms, after the quiet-turn recovery (%d, wanted %d)"
+			% [subject.morale, expected])
+
+	# And it has to be able to finish somebody, or none of it matters.
+	var other: Node2D = kept[1]
+	if is_instance_valid(other):
+		other.morale = int(k["MORALE_BREAK"]) + int(k["MORALE_SHOCK"])
+		other.morale_pressed = true  # deny recovery, so only the terms move him
+		await battle._resolve_morale(other, 2, left)
+		_check(_rules.call("is_broken", other.morale),
+				"a man already worn thin is broken by it (%d)" % other.morale)
+	await _dismiss(battle)
+
+
+# --- 12. a raider hits once and goes ------------------------------------------
+
+func _test_raider_breaks_contact() -> void:
+	print("\n[12] somebody who came back to raid leaves when he is done")
+	var conduct: Dictionary = _rules.get_script_constant_map()["Conduct"]
+	var battle: Node = await _battle(0)
+	var goblins: Array = battle.living_units(TEAM_GOBLIN)
+	if goblins.is_empty():
+		_check(false, "expected the wash to field goblins")
+		await _dismiss(battle)
+		return
+	var raider: Node2D = goblins[0]
+	raider.returned = true
+	raider.raider = true
+	raider.raid_shots_left = 1
+	raider.morale = 100
+	raider.morale_ceiling = 100
+	raider.morale_pressed = true  # steady: nothing here is a morale break
+
+	battle.state = battle.State.ENEMY_TURN
+	var done: bool = await battle._resolve_morale(raider, 1, goblins.size())
+	_check(not done and not raider.routing,
+			"with his shot still owed he holds his ground")
+
+	raider.raid_shots_left = 0
+	done = await battle._resolve_morale(raider, 1, goblins.size())
+	_check(raider.routing, "having taken it, he breaks contact")
+	_check(raider.raid_withdrawal,
+			"...and it is marked a withdrawal, not nerve going")
+	_check(not _rules.call("is_broken", raider.morale),
+			"...on full morale, which is the whole difference (%d)" % raider.morale)
+
+	# The conduct consequence, which is the reason the flag exists at all.
+	battle.roll.clear()
+	battle._record_on_roll(raider, "killed")
+	_check(not battle.roll.is_empty()
+			and int(battle.roll.back().conduct) == int(conduct.COMBATANT_KILLED),
+			"firing on him on the way out is a combat kill and costs nothing")
+	raider.raid_withdrawal = false
+	battle.roll.clear()
+	battle._record_on_roll(raider, "killed")
+	_check(int(battle.roll.back().conduct) == int(conduct.ROUTING_FIRED_ON),
+			"...while a man whose nerve went is still protected")
+	await _dismiss(battle)
+
+
+# --- 13. a warband walks on as one --------------------------------------------
+
+func _test_warband_lands_together() -> void:
+	print("\n[13] a warband walks on together")
+	var game: Node = root.get_node("/root/Game")
+	var kept_adversaries: Array = game.adversaries.duplicate(true)
+	var kept_seed: int = game.campaign_seed
+	game.adversaries = []
+	for i in 4:
+		game.adversaries.append({
+			"id": 900 + i, "name": "Band%d" % i, "age": 30,
+			"settlement": "Kessit", "grievance": "the well", "kind": 3,
+			"survivals": 3 if i == 0 else 1, "injuries": 0,
+			"state": "escaped", "edge": "north",
+			"history": [{"level": 0, "fate": "escaped"}], "last_level": 0,
+		})
+	# Whichever campaign and mission this band actually turns up on. Searching
+	# rather than pinning one seed is the point: WARBAND_CHANCE is a coin the
+	# hash flips per (seed, level, leader), and a hardcoded pair that happens to
+	# come up tails today would make this a test of one arbitrary number rather
+	# than of the machinery. The search is over a fixed list, so it is still
+	# deterministic.
+	var level := -1
+	for seed_try in [20260821, 4242, 99881, 7, 1234567]:
+		game.campaign_seed = seed_try
+		for candidate in range(1, 7):
+			if not game.warband_for(candidate).is_empty():
+				level = candidate
+				break
+		if level >= 0:
+			break
+	if level < 0:
+		_check(false, "expected some mission to draw the warband")
+		game.adversaries = kept_adversaries
+		game.campaign_seed = kept_seed
+		return
+
+	var battle: Node = await _battle(level)
+	var before: int = battle.living_units(TEAM_GOBLIN).size()
+	var due: Array = battle._returners_due.get(battle.WARBAND_TURN, [])
+	_check(due.size() == int(game.WARBAND_SIZE),
+			"all %d are scheduled for the same turn (%d)"
+			% [int(game.WARBAND_SIZE), due.size()])
+	var edges := {}
+	var chiefs := 0
+	for entry: Dictionary in due:
+		edges[str(entry.get("edge", ""))] = true
+		if bool(entry.get("warband_leader", false)):
+			chiefs += 1
+	_check(edges.size() == 1, "off one rim, so they arrive as a formation")
+	_check(chiefs == 1, "with exactly one of them leading")
+
+	battle.turn_number = battle.WARBAND_TURN
+	await battle._land_returners()
+	await process_frame
+	var after: int = battle.living_units(TEAM_GOBLIN).size()
+	_check(after == before + int(game.WARBAND_SIZE),
+			"and all %d are standing on the board (%d -> %d)"
+			% [int(game.WARBAND_SIZE), before, after])
+
+	var band_id := 0
+	var stamped := 0
+	var leaders := 0
+	var follower: Node2D = null
+	var chief: Node2D = null
+	for g in battle.living_units(TEAM_GOBLIN):
+		if g.warband == 0:
+			continue
+		stamped += 1
+		band_id = g.warband
+		if g.warband_leader:
+			leaders += 1
+			chief = g
+			_check(g.adversary_id == g.warband,
+					"the leader carries the band's own id, so his people can find him")
+		else:
+			follower = g
+	_check(stamped == int(game.WARBAND_SIZE), "all of them stamped with the band")
+	_check(leaders == 1, "and one of them leading it")
+
+	# The cohesion a band buys, and what losing it costs.
+	if follower != null and chief != null:
+		_check(battle._warband_leader_alive(band_id),
+				"while he is up, his people know it")
+		follower.morale = 50
+		follower.morale_ceiling = 100
+		follower.morale_pressed = false
+		battle.state = battle.State.ENEMY_TURN
+		await battle._resolve_morale(follower, 1, after)
+		_check(follower.morale == int(_rules.call("morale_recovered_led", 50, 100)),
+				"...and steady faster for it (%d)" % follower.morale)
+		var was: int = follower.morale
+		battle._spread_morale_from_death(chief)
+		_check(follower.morale < was,
+				"losing him costs the rest of them at once (%d -> %d)"
+				% [was, follower.morale])
+		chief.cell = Vector2i(-99, -99)
+		chief.queue_free()
+		await process_frame
+		_check(not battle._warband_leader_alive(band_id),
+				"and the band knows he is gone")
+	await _dismiss(battle)
+	game.adversaries = kept_adversaries
+	game.campaign_seed = kept_seed

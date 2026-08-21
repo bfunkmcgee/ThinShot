@@ -764,6 +764,34 @@ var adversary_id := 0
 ## How many times he has already walked away from this squad. Feeds
 ## Rules.survive_chance - the ones who keep getting up are better at it.
 var survivals := 0
+## He came back to raid rather than to hold ground: take his shot and break
+## contact on his own terms. Set on some returners at spawn (Rules.RAID_CHANCE).
+var raider := false
+## Shots he still means to take before leaving. Counted down by the AI's fire.
+var raid_shots_left := 0
+## Set the moment a raider turns for the rim having done what he came for. It is
+## the only thing separating that from a man whose nerve went, and the two must
+## not be confused: `routing` is true for both, but firing on somebody who chose
+## to withdraw after shooting at you is a combat kill and costs nothing, while
+## firing on a broken man costs Standing. See Battle._record_on_roll.
+var raid_withdrawal := false
+## The warband this body belongs to, 0 for nobody. A leader carries his own id
+## here, so `warband == leader.adversary_id` identifies the whole group and one
+## comparison answers "is this my leader".
+var warband := 0
+## True only on the man who gathered them.
+var warband_leader := false
+## Somebody who LIVES at a bounty location. A goblin by kind and by sprite, and
+## not a fighter by any other measure: he never takes a turn, he is not a
+## combatant, and shooting him is scored the way shooting a civilian is. What he
+## is for is that he knows where the posted man sleeps.
+var resident := false
+## He has already been asked, and either talked or refused. Both end the
+## conversation - a settlement that could be asked twice would make GUILE a
+## formality you grind rather than a stat.
+var questioned := false
+## The man the bounty is posted on.
+var bounty_target := false
 ## How hard the blow that put him down landed, kept because Rules.decisive_blow
 ## reads it after the fact. A hit that would have killed him from full health
 ## leaves nobody to find; a carbine finishing a wounded man does not.
@@ -1560,7 +1588,10 @@ func suppress_radius() -> int:
 ## Someone who fights. A prisoner is on your side and walks out with you, but
 ## is never shot at, never shoots, and never counts toward a squad wipe.
 func is_combatant() -> bool:
-	return kind != Kind.CIVILIAN and not surrendered
+	# A resident of a bounty location fails this for the same reason a man with
+	# his hands up does: he is not fighting. It is what keeps the mission from
+	# counting a settlement of well-hands as opposition to be cleared.
+	return kind != Kind.CIVILIAN and not surrendered and not resident
 
 
 ## A civilian is anyone who never carried a weapon: the prisoners in the pens,

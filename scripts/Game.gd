@@ -75,6 +75,35 @@ var notebook: Array = []
 var returned: Array = []
 ## The living, keyed by person rather than by appearance. See the section below.
 var adversaries: Array = []
+
+# --- bounties ----------------------------------------------------------------
+#
+# A bounty is a mission the campaign generates rather than ships: one named
+# soldier, two riflemen lent to them, and somebody the squad has already let get
+# away. See scripts/Bounty.gd, which owns the generator and the odds; this file
+# only remembers what happened.
+
+## The generated board while one is being fought, {} otherwise. Not saved - it
+## is a pure function of (campaign_seed, target) and Camp rebuilds it.
+var bounty_level: Dictionary = {}
+## {"hunter_id": int, "target_id": int} while one is running.
+var bounty: Dictionary = {}
+## Targets already hunted, so the board does not post the same man twice.
+var bounties_done: Array = []
+## The ones who took the other offer. Each is worth marked enemy positions at
+## the start of every later mission, and moved the two counters when he turned.
+var informants: Array = []
+## One line per finished bounty, for the notebook and the after-action.
+var bounty_outcomes: Array = []
+## Soldiers who came back from a bounty and are sitting the next campaign
+## mission out. Cleared wholesale by commit_mission(), so a rest is exactly one
+## main mission long however many bounties happen in between.
+##
+## The point of it is roster rotation. Without it a campaign settles into one
+## squad of five that fights every mission and a bench that never plays; a
+## bounty now costs the main line the person who took it, so sending your best
+## negotiator is a decision about the NEXT fight as well as this one.
+var resting_ids: Array = []
 var _next_adversary_id := 1
 # v4: which three of the six rifle-slot Kestrels go out this mission, by id.
 # Ids rather than indices - the roster reorders as people die, and an index
@@ -424,8 +453,101 @@ func _ready() -> void:
 		campaign_seed = _mint_campaign_seed()
 
 
+## The mission being fought. A bounty replaces it wholesale while one is
+## running, which is the whole of how a generated board reaches Board and
+## Battle: they read Game.data() and neither has to know where it came from.
+##
+## The board itself is NOT held here between sessions - it is a pure function of
+## the campaign seed and the target, so Camp regenerates it. Persisting it would
+## be a second copy of something already derivable, and the one that got stale.
+##
+## This file deliberately does not name Bounty. Bounty names Rules, Rules names
+## Unit and Unit names this autoload; importing it here would close the cycle
+## the layering note in Rules.gd exists to prevent. Camp builds the board and
+## hands it over as a plain dictionary.
 func data() -> Dictionary:
+	if not bounty_level.is_empty():
+		return bounty_level
 	return Levels.LEVELS[current_level]
+
+
+## Is the squad out on a bounty rather than on a campaign mission?
+func on_bounty() -> bool:
+	return not bounty.is_empty() and not bounty_level.is_empty()
+
+
+## Take a bounty. `level` is the generated board; Camp built it.
+func begin_bounty(hunter_id: int, target_id: int, level: Dictionary) -> void:
+	bounty = {"hunter_id": hunter_id, "target_id": target_id}
+	bounty_level = level
+	print("[Sandline] bounty accepted: soldier %d after adversary %d"
+			% [hunter_id, target_id])
+
+
+## Put the campaign back the way it was. Called whether the bounty was finished
+## or abandoned, because a half-set bounty_level would silently replace the next
+## campaign mission with a stale board.
+func clear_bounty() -> void:
+	bounty = {}
+	bounty_level = {}
+
+
+## Settle a finished bounty: what became of the man, what the district and the
+## theater make of it, and what the soldier who did it learned.
+##
+## `outcome` is "killed", "surrendered" or "informant". Anything else is treated
+## as no result at all and leaves the bounty on the board to be taken again -
+## a mission the squad walked away from is not a mission they finished.
+func finish_bounty(outcome: String, hunter_id: int, target: Dictionary) -> void:
+	var target_id := int(target.get("id", 0))
+	if not ["killed", "surrendered", "informant"].has(outcome):
+		clear_bounty()
+		return
+	if not bounties_done.has(target_id):
+		bounties_done.append(target_id)
+	# He is no longer somebody who might walk back onto a mission, whichever of
+	# the three it was. That is the point of a bounty.
+	for i in range(adversaries.size() - 1, -1, -1):
+		if int(adversaries[i].get("id", 0)) == target_id:
+			adversaries.remove_at(i)
+	if outcome == "informant":
+		informants.append({
+			"id": target_id,
+			"name": str(target.get("name", "")),
+			"settlement": str(target.get("settlement", "")),
+			"turned_by": hunter_id,
+		})
+	bounty_outcomes.append({"id": target_id, "name": str(target.get("name", "")),
+			"outcome": outcome, "hunter_id": hunter_id})
+	# Whoever went is off the next main mission. Booked here rather than when
+	# the bounty was accepted so that a bounty the squad lost - and had rolled
+	# back - costs nobody anything.
+	rest_from_bounty(hunter_id)
+	clear_bounty()
+	save()
+
+
+## Raise one of the two negotiation stats on a soldier. Named rather than let
+## callers poke the roster so there is one place that knows they are floored at
+## zero and one place to log the change from.
+func award_stat(soldier_id: int, stat: String, amount := 1) -> void:
+	if stat != "presence" and stat != "guile":
+		push_error("[Sandline] no such negotiation stat: %s" % stat)
+		return
+	for soldier: Dictionary in roster:
+		if int(soldier.get("id", 0)) != soldier_id:
+			continue
+		soldier[stat] = maxi(int(soldier.get(stat, 0)) + amount, 0)
+		print("[Sandline] %s now has %s %d" % [soldier_label(soldier), stat,
+				int(soldier[stat])])
+		return
+
+
+## How many enemy positions the squad is given at the start of a mission. One
+## informant is worth a few; a stable of them should not hand over the board, so
+## this is what the caller clamps against the number of enemies there are.
+func informant_marks() -> int:
+	return informants.size() * 3
 
 
 func operation() -> Dictionary:
@@ -578,6 +700,61 @@ func soldier_by_id(id: int) -> Dictionary:
 
 
 ## Living soldiers of a kind, in stable slot order.
+## Is this soldier sitting out the next campaign mission?
+func is_resting(id: int) -> bool:
+	return resting_ids.has(id)
+
+
+## Book a rest. Called when a bounty is booked, so a bounty the squad LOST -
+## which is rolled back wholesale like any lost mission - costs nobody a rest.
+func rest_from_bounty(id: int) -> void:
+	if id <= 0 or resting_ids.has(id):
+		return
+	var soldier := soldier_by_id(id)
+	if soldier.is_empty() or not bool(soldier.get("alive", false)):
+		return
+	resting_ids.append(id)
+	print("[Sandline] %s is off the next mission - just back from a bounty"
+			% soldier_label(soldier))
+
+
+## Drop the resting from a list of candidates - unless doing so would leave the
+## mission short.
+##
+## The fallback is the whole reason this is a function rather than a filter. The
+## roster is deeper than the squad but not infinitely: a campaign that has lost
+## people can reach a point where resting one more would deploy four soldiers
+## into a five-slot mission, and a side activity must never be able to do that.
+## So the rest is a PREFERENCE, and a campaign thin enough to need somebody gets
+## them back with a line in the log saying so.
+func _rested_out(candidates: Array, slots: int) -> Array:
+	var free: Array = []
+	var resting: Array = []
+	for soldier: Dictionary in candidates:
+		if is_resting(int(soldier.get("id", 0))):
+			resting.append(soldier)
+		else:
+			free.append(soldier)
+	if free.size() >= slots or resting.is_empty():
+		return free
+	for soldier: Dictionary in resting:
+		if free.size() >= slots:
+			break
+		free.append(soldier)
+		print("[Sandline] %s is recalled off their rest - the squad is short"
+				% soldier_label(soldier))
+	return free
+
+
+## The HERO and MACHINEGUNNER slots, minus anybody resting. Separate from
+## soldiers_of_kind() on purpose: that one answers "who does the campaign have",
+## which is what recruiting and the camp crowd both want, and must keep counting
+## a resting soldier or the levy post would mint a second Rodar Akai to stand
+## beside the one having a week off.
+func deployable_of_kind(kind: int, slots := 1) -> Array:
+	return _rested_out(soldiers_of_kind(kind), slots)
+
+
 func soldiers_of_kind(kind: int) -> Array:
 	var out: Array = []
 	for soldier: Dictionary in roster:
@@ -646,6 +823,15 @@ func _recruit(kind: int) -> Dictionary:
 		"perks": ([CLASS_STARTING_PERK[kind]] if CLASS_STARTING_PERK.has(kind)
 				else []) as Array,
 		"alive": true,
+		# What a soldier is worth across a table rather than across a board.
+		# Both start at nothing and are earned on bounties: PRESENCE is whether
+		# a man believes you can make good on what you are offering, GUILE is
+		# reading a room and being believed in it. Everybody starts equal
+		# because the point of them is that a particular soldier BECOMES your
+		# negotiator, and a class that arrived good at it would decide that on
+		# the player's behalf.
+		"presence": 0,
+		"guile": 0,
 	}
 	_next_id += 1
 	roster.append(soldier)
@@ -800,6 +986,11 @@ func new_campaign() -> bool:
 	notebook.clear()
 	returned.clear()
 	adversaries.clear()
+	bounties_done.clear()
+	informants.clear()
+	bounty_outcomes.clear()
+	resting_ids.clear()
+	clear_bounty()
 	_next_adversary_id = 1
 	deployed_ids.clear()
 	# A new campaign is a different campaign, so it fights different dice.
@@ -898,7 +1089,7 @@ func rifle_candidates() -> Array:
 ## opens the deployment screen still fields a full squad - and so does a
 ## campaign loaded from before the screen existed.
 func deployment(slots: int) -> Array:
-	var candidates := rifle_candidates()
+	var candidates := _rested_out(rifle_candidates(), slots)
 	var by_id := {}
 	for soldier: Dictionary in candidates:
 		by_id[int(soldier.id)] = soldier
@@ -974,6 +1165,29 @@ const GOBLIN_KINDS: Array[int] = [3, 4, 5, 6, 7]
 ## records go straight to a spawner AND carry a survival count that feeds a
 ## rule. An id that collides, a kind that is not one of the Thirst, or a
 ## negative survival count would all be adopted verbatim otherwise.
+## Two shapes the v7 lists come in, sanitised the way every other loaded list
+## is: whatever is on disk is somebody else's data until it has been checked.
+func _read_int_list(raw: Variant) -> Array:
+	var out: Array = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for entry: Variant in raw:
+		var value := int(entry)
+		if value > 0 and not out.has(value):
+			out.append(value)
+	return out
+
+
+func _read_dict_list(raw: Variant) -> Array:
+	var out: Array = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for entry: Variant in raw:
+		if typeof(entry) == TYPE_DICTIONARY:
+			out.append(entry)
+	return out
+
+
 func _read_adversaries(raw: Variant) -> Array:
 	var out: Array = []
 	if typeof(raw) != TYPE_ARRAY:
@@ -1065,6 +1279,20 @@ func _read_notebook(raw: Variant) -> Array:
 
 ## How often somebody still out there turns up on a given later mission.
 const RETURN_CHANCE := 45
+
+## How often a man who could gather a warband actually brings one. Well under
+## the individual return chance on purpose: four named fighters arriving as a
+## fireteam should be something the campaign does to you a couple of times, not
+## the standard shape of a mission's back half.
+const WARBAND_CHANCE := 35
+## Mirrors of Rules.WARBAND_* - see the layering note at the top of Rules'
+## morale section. This file may not name Rules (Rules names Unit, Unit names
+## this autoload, and the -s harnesses load all three before the autoloads
+## exist), so the numbers are written twice and tools/test_rules.gd asserts the
+## two copies agree. Do not "fix" this by importing Rules.
+const WARBAND_LEADER_SURVIVALS := 2
+const WARBAND_MEMBER_SURVIVALS := 1
+const WARBAND_SIZE := 4
 
 
 ## Find the standing record for a person, or -1.
@@ -1167,6 +1395,101 @@ func adversaries_for(level: int) -> Array:
 	return out
 
 
+## Everybody eligible to walk back onto this mission, whether or not the return
+## roll picked them. Warbands draw from here rather than from adversaries_for(),
+## because a warband is a decision its leader made and not four coincidences:
+## requiring all four to independently pass the return roll would have made a
+## full band vanishingly rare, and the ones that did form would be random
+## strangers rather than the people he keeps.
+func _available_adversaries(level: int) -> Array:
+	var out: Array = []
+	for rec: Dictionary in adversaries:
+		if int(rec.get("kind", -1)) < 0:
+			continue
+		if int(rec.get("last_level", 0)) >= level:
+			continue
+		out.append(rec)
+	return out
+
+
+## The warband coming to this mission, or {} for none.
+##
+## A leader is somebody who has walked away from this squad at least twice; his
+## people have managed it at least once. The whole group is decided from the
+## campaign seed and the level, never from an RNG, for the reason every other
+## pre-mission decision is: a reloaded mission has to play out the same way, and
+## Battle's rules stream advances once per shot so that a seed replays a
+## firefight exactly. A draw here would shift every roll in the mission by an
+## amount depending on how much campaign history happened to exist.
+##
+## Returns {"leader": rec, "members": [rec, rec, rec]}. Members exclude the
+## leader, so the band on the board is members.size() + 1.
+func warband_for(level: int) -> Dictionary:
+	var pool := _available_adversaries(level)
+	var leaders: Array = []
+	for rec: Dictionary in pool:
+		if int(rec.get("survivals", 0)) >= WARBAND_LEADER_SURVIVALS:
+			leaders.append(rec)
+	if leaders.is_empty():
+		return {}
+	# The most experienced man present leads, ties broken by id so the answer
+	# cannot depend on the order records happen to sit in the save.
+	leaders.sort_custom(func(a, b):
+		var sa := int(a.get("survivals", 0))
+		var sb := int(b.get("survivals", 0))
+		if sa != sb:
+			return sa > sb
+		return int(a.get("id", 0)) < int(b.get("id", 0)))
+	var leader: Dictionary = leaders[0]
+	var leader_id := int(leader.get("id", 0))
+	if not Roll.chance(campaign_seed, level, "warband:%d" % leader_id,
+			WARBAND_CHANCE):
+		return {}
+	var followers: Array = []
+	for rec: Dictionary in pool:
+		if int(rec.get("id", 0)) == leader_id:
+			continue
+		if int(rec.get("survivals", 0)) >= WARBAND_MEMBER_SURVIVALS:
+			followers.append(rec)
+	followers.sort_custom(func(a, b):
+		var sa := int(a.get("survivals", 0))
+		var sb := int(b.get("survivals", 0))
+		if sa != sb:
+			return sa > sb
+		return int(a.get("id", 0)) < int(b.get("id", 0)))
+	# A band that cannot be filled does not form. Three is what the leader went
+	# looking for; two men and a story is just a returner with company, and the
+	# arrival banner would be promising something the board does not deliver.
+	var want := WARBAND_SIZE - 1
+	if followers.size() < want:
+		return {}
+	return {"leader": leader, "members": followers.slice(0, want)}
+
+
+## The people a given leader can hold, for a bounty that has found him.
+##
+## Deliberately NOT warband_for(): that decides whether a band turns up on a
+## CAMPAIGN mission, and rolls for it. On a bounty the question is already
+## settled - the squad has walked to where he lives and he is either a man with
+## people or a man alone - so this only asks who qualifies.
+func warband_members_for(leader_id: int) -> Array:
+	var out: Array = []
+	for rec: Dictionary in adversaries:
+		if int(rec.get("id", 0)) == leader_id:
+			continue
+		if int(rec.get("kind", -1)) < 0:
+			continue
+		if int(rec.get("survivals", 0)) >= WARBAND_MEMBER_SURVIVALS:
+			out.append(rec)
+	out.sort_custom(func(a, b):
+		var sa := int(a.get("survivals", 0))
+		var sb := int(b.get("survivals", 0))
+		if sa != sb:
+			return sa > sb
+		return int(a.get("id", 0)) < int(b.get("id", 0)))
+	return out.slice(0, WARBAND_SIZE - 1)
+
+
 ## The notebook grouped the way the district connects it: settlement -> the
 ## people from it, in the order the campaign met them. The cross-link the plan
 ## asks for is this - four settlements lost their water, and the document shows
@@ -1187,6 +1510,12 @@ func notebook_by_settlement() -> Dictionary:
 ## choices those promotions unlocked. The dead were already marked during play
 ## and simply stay marked.
 func commit_mission() -> void:
+	# A rest is one main mission long, and this is the line that makes that
+	# true. Cleared before the promotions below so that a soldier who was
+	# resting is available again the moment this mission is in the books.
+	if not resting_ids.is_empty():
+		print("[Sandline] %d soldier(s) come off rest" % resting_ids.size())
+		resting_ids.clear()
 	for soldier: Dictionary in roster:
 		if not bool(soldier.alive):
 			continue
@@ -1253,7 +1582,7 @@ const SAVE_PATH := "user://campaign.json"
 # Raise this in the same commit that adds the migration step reaching it, and
 # never one without the other - _migrate_step() is what turns a number into a
 # shape the rest of this file can read.
-const SAVE_VERSION := 6
+const SAVE_VERSION := 7
 
 # Raised, and never lowered again, when load_save() finds a campaign written by
 # a build newer than this one. Refusing to READ such a file is only half the
@@ -1295,6 +1624,12 @@ func save() -> void:
 		"returned": returned,
 		"adversaries": adversaries,
 		"next_adversary_id": _next_adversary_id,
+		# v7: bounties. The generated board is NOT here - it is derivable from
+		# the campaign seed and the target, so only what happened is kept.
+		"bounties_done": bounties_done,
+		"informants": informants,
+		"bounty_outcomes": bounty_outcomes,
+		"resting_ids": resting_ids,
 		# v4: who the garrison picked.
 		"deployed_ids": deployed_ids,
 	}
@@ -1348,6 +1683,8 @@ func _migrate_step(payload: Dictionary, from: int) -> Dictionary:
 			return _migrate_4_to_5(payload)
 		5:
 			return _migrate_5_to_6(payload)
+		6:
+			return _migrate_6_to_7(payload)
 	return {}
 
 
@@ -1498,6 +1835,28 @@ func _migrate_5_to_6(payload: Dictionary) -> Dictionary:
 	return payload
 
 
+## v6 -> v7: soldiers learn to talk, and the campaign starts keeping bounties.
+##
+## Nothing is invented. Every existing soldier gets PRESENCE and GUILE of zero,
+## which is exactly what a fresh recruit gets - a campaign that has never posted
+## a bounty has had no way to earn either, so zero is the truthful number rather
+## than a default. The three bounty lists start empty for the same reason.
+func _migrate_6_to_7(payload: Dictionary) -> Dictionary:
+	var roster_raw: Variant = payload.get("roster", [])
+	if typeof(roster_raw) == TYPE_ARRAY:
+		for entry: Variant in roster_raw:
+			if typeof(entry) != TYPE_DICTIONARY:
+				continue
+			var soldier: Dictionary = entry
+			soldier["presence"] = maxi(int(soldier.get("presence", 0)), 0)
+			soldier["guile"] = maxi(int(soldier.get("guile", 0)), 0)
+	payload["bounties_done"] = payload.get("bounties_done", [])
+	payload["informants"] = payload.get("informants", [])
+	payload["bounty_outcomes"] = payload.get("bounty_outcomes", [])
+	payload["resting_ids"] = payload.get("resting_ids", [])
+	return payload
+
+
 ## A campaign's number. Never 0 - that is the "not minted yet" sentinel, and a
 ## campaign that landed on it would be re-minted on every single load.
 func _mint_campaign_seed() -> int:
@@ -1603,6 +1962,16 @@ func load_save() -> bool:
 	# (_read_roster, _read_promotions, _read_standing); this was the exception.
 	notebook = _read_notebook(payload.get("notebook", []))
 	adversaries = _read_adversaries(payload.get("adversaries", []))
+	bounties_done = _read_int_list(payload.get("bounties_done", []))
+	informants = _read_dict_list(payload.get("informants", []))
+	bounty_outcomes = _read_dict_list(payload.get("bounty_outcomes", []))
+	# Defaults to nobody resting, which is why this needed no version of its
+	# own: a save written before rests existed is a save where nobody is on one.
+	resting_ids = _read_int_list(payload.get("resting_ids", []))
+	# A bounty in progress is never resumed: the board is regenerated at the
+	# notice board, and a save written mid-bounty should come back to a garrison
+	# rather than to half a mission.
+	clear_bounty()
 	_next_adversary_id = maxi(int(payload.get("next_adversary_id", 1)), 1)
 	for rec: Dictionary in adversaries:
 		_next_adversary_id = maxi(_next_adversary_id, int(rec.get("id", 0)) + 1)
@@ -1686,6 +2055,11 @@ func _read_roster(raw: Variant) -> Array:
 			"rank": clampi(int(soldier.get("rank", 0)), 0, RANKS.size() - 1),
 			"perks": perks,
 			"alive": bool(soldier.get("alive", true)),
+			# Floored at 0 rather than trusted: these drive negotiation odds,
+			# and a hand-edited save should not be able to hand somebody a
+			# guaranteed informant.
+			"presence": maxi(int(soldier.get("presence", 0)), 0),
+			"guile": maxi(int(soldier.get("guile", 0)), 0),
 		})
 	return out
 

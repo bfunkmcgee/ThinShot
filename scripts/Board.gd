@@ -226,6 +226,11 @@ const SHADOW_RADII := {
 	"W": DIAMOND_SHADOW,
 }
 
+## What an informant's word looks like on the ground. Deliberately the objective
+## beacon's amber rather than the danger red: this is knowledge the squad was
+## given, not a threat the squad worked out.
+const INTEL_EDGE := Color(1.0, 0.69, 0.18, 0.85)
+
 const GRID_LINE := Color(0.35, 0.27, 0.15, 0.25)
 # Corner ticks on route-only cells: the quiet remnant of the full lattice,
 # shown exactly where a movement decision is being made.
@@ -411,6 +416,14 @@ var watch_cells: Dictionary = {}
 # Cells any enemy could shoot next turn (selection-independent; cleared
 # only via set_danger, never by clear_highlights).
 var danger_cells: Dictionary = {}
+
+## Positions an informant gave away before the first shot. A SEPARATE set from
+## danger_cells on purpose: danger is recomputed every time the selection or the
+## toggle changes, so intel written into it survived exactly until the next
+## refresh - and while it was there it lit every cell the marked enemies could
+## shoot, which is the whole danger overlay rather than three positions. This is
+## written once at deploy and nothing recomputes it.
+var intel_cells: Dictionary = {}
 
 
 func _ready() -> void:
@@ -1241,6 +1254,13 @@ func _draw() -> void:
 		var edge := CACHE_REACH_EDGE if in_reach else CACHE_EDGE
 		draw_polyline(k_ring, edge.lerp(CACHE_FILL, breath * 0.6),
 				3.0 if in_reach else 2.0, true)
+	# Informant intel: a ring on the cell somebody is standing on, under the
+	# danger hatching so the two read as different claims - one is "he is here",
+	# the other is "he can shoot here".
+	for cell: Vector2i in intel_cells:
+		var ring := _diamond(cell)
+		ring.append(ring[0])
+		draw_polyline(ring, INTEL_EDGE, 2.0, true)
 	for cell: Vector2i in danger_cells:
 		var d := _diamond(cell)
 		draw_colored_polygon(d, DANGER_FILL)

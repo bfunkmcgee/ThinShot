@@ -596,6 +596,124 @@ static func breaks_to_rout(kind: int, morale: int, guns: int,
 	return guns < MORALE_SURRENDER_GUNS
 
 
+# --- Breaking as a formation --------------------------------------------------
+#
+# Everything above is a private meter: a fighter is worn down by what happens to
+# HIM and to whoever is close enough for him to watch it. That is a man losing
+# his nerve, and it is only half of why levies leave. The other half is the unit
+# losing its cohesion, and a body of men knows two things about itself that no
+# individual term can express - how fast it is dying, and how badly it is
+# outnumbered.
+#
+# So both terms below are charged to EVERY surviving fighter regardless of where
+# he is standing. That is the point rather than a simplification: four men going
+# down in one exchange is known to the whole formation, and a fighter counting
+# two of his own against six rifles does not need line of sight to do it.
+#
+# Both are charged at most once per fighter per turn, in _resolve_morale, and
+# both stack with the private meter rather than replacing it.
+
+## How long a death still counts as "just now", in player turns. Two, so that a
+## turn the squad spends reloading does not wipe the memory of the turn before.
+const SHOCK_WINDOW := 2
+## How many have to go down inside that window before it reads as a collapse
+## rather than a firefight. Below this the per-death ally term already covers
+## it, and this has to stay silent or a good opening volley would rout the map.
+const SHOCK_DEATHS := 3
+## Charged per death at or past that floor. Three dead is 16, four is 32, five
+## is 48 - which is most of a well-hand's meter and all of a conscript's, and
+## that ordering is deliberate: the men least willing to be there leave first.
+const MORALE_SHOCK := 16
+
+
+## The morale cost of the formation's recent losses. Zero until the floor.
+static func shock_cost(deaths_in_window: int) -> int:
+	if deaths_in_window < SHOCK_DEATHS:
+		return 0
+	return MORALE_SHOCK * (deaths_in_window - SHOCK_DEATHS + 1)
+
+
+static func morale_after_shock(morale: int, deaths_in_window: int) -> int:
+	return maxi(morale - shock_cost(deaths_in_window), 0)
+
+
+## "There are three of us left and six of them."
+##
+## Two conditions, not one, and the pair is what keeps this from firing on the
+## opening turn of a map the Thirst outnumbers. A force can be outnumbered two
+## to one and still be eleven strong, which is a fight; the same ratio with
+## three men left is the end of one.
+const OUTNUMBERED_FEW := 3
+## Soldiers per surviving fighter before it counts.
+const OUTNUMBERED_BY := 2
+## Charged every turn the situation holds, so it compounds if they stay.
+const MORALE_OUTNUMBERED := 18
+
+
+static func is_outnumbered(fighters: int, soldiers: int) -> bool:
+	if fighters <= 0 or fighters > OUTNUMBERED_FEW:
+		return false
+	return soldiers >= fighters * OUTNUMBERED_BY
+
+
+static func morale_after_outnumbered(morale: int, fighters: int,
+		soldiers: int) -> int:
+	if not is_outnumbered(fighters, soldiers):
+		return morale
+	return maxi(morale - MORALE_OUTNUMBERED, 0)
+
+
+# --- Raiders and warbands -----------------------------------------------------
+#
+# A returning fighter used to come back and fight the mission out like a levy
+# who had been standing there all along, which wasted the one thing that makes
+# him interesting: he chose to be here. These two shapes give that choice a
+# form on the board.
+
+## How often somebody walking back onto a mission has come to raid rather than
+## to hold ground - hit the squad once and break contact on his own terms.
+const RAID_CHANCE := 40
+## How many shots he came to take before leaving.
+const RAID_SHOTS := 1
+
+## What a man has to have walked away from before he can gather others: twice.
+## Once is luck, and the campaign is full of people who managed it.
+const WARBAND_LEADER_SURVIVALS := 2
+## And what the people he gathers need. Once - they are followers, not peers.
+const WARBAND_MEMBER_SURVIVALS := 1
+## Leader plus three. Four is a fireteam and reads as one on the board; three
+## reads as stragglers and five swamps a sixteen-by-ten map.
+const WARBAND_SIZE := 4
+
+## A warband holds together while the man who gathered it is alive. This is the
+## extra his people recover at the top of their turn, on top of MORALE_RECOVER.
+const MORALE_WARBAND_STEADY := 7
+## And what it costs them, all at once, when he goes down. Deliberately larger
+## than a wound: the reason they are on this map is that HE came back, and the
+## rest of them have no such argument with this squad.
+const MORALE_LEADER_DOWN := 30
+
+
+static func morale_after_leader_down(morale: int) -> int:
+	return maxi(morale - MORALE_LEADER_DOWN, 0)
+
+
+## Recovery for a fighter whose warband leader is still standing.
+static func morale_recovered_led(morale: int, ceiling := MORALE_MAX) -> int:
+	return mini(morale + MORALE_RECOVER + MORALE_WARBAND_STEADY,
+			mini(ceiling, MORALE_MAX))
+
+
+## Whether a record has walked away from enough missions to gather a warband.
+## Takes the plain count rather than a record so the harness can pin it.
+static func can_lead_warband(survivals: int) -> bool:
+	return survivals >= WARBAND_LEADER_SURVIVALS
+
+
+static func can_join_warband(survivals: int) -> bool:
+	return survivals >= WARBAND_MEMBER_SURVIVALS
+
+
 # --- Conduct, Standing, and Strain -------------------------------------------
 #
 # The after-action has two panels that are never summed. THE OPERATION is

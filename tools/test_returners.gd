@@ -7,7 +7,7 @@ extends SceneTree
 ## down; now the notebook keeps enough of it to put him back on a later board,
 ## carrying the name he had when he ran.
 ##
-## Six things are checked:
+## Seven things are checked:
 ##   1. selection is a pure function of (campaign seed, mission, who he was) -
 ##      the same answer every time, a different answer for a different campaign,
 ##      and never a draw from any generator
@@ -20,6 +20,9 @@ extends SceneTree
 ##      steadier than it was and known to the enemy turn
 ##   6. a cleared board does not end the mission while somebody is still walking
 ##      toward it
+##   7. a man who has got away twice gathers three who have got away once, the
+##      band only forms when it can be filled, and which band forms is the same
+##      hash-driven decision the individual return is
 ##
 ## Any real save is backed up and restored, so this is safe to run on a machine
 ## someone is actually playing on.
@@ -91,7 +94,115 @@ func _run() -> void:
 	_test_eligibility(game)
 	_test_round_trip(game)
 	_test_hostile_save(game)
+	_test_warbands(game)
 	await _test_arrival()
+
+
+## A man who has walked away twice can gather the ones who managed it once.
+##
+## Everything here is about SELECTION, which is Game's half: who is eligible to
+## lead, who is eligible to follow, and the determinism the whole returner
+## system is built on. Whether the four of them actually land together is
+## _test_arrival's business.
+func _test_warbands(game: Node) -> void:
+	print("
+[7] a warband forms around somebody who keeps getting away")
+	var seeded := func(records: Array) -> void:
+		game.adversaries = records.duplicate(true)
+		game.campaign_seed = 20260821
+
+	# Nobody experienced enough to lead: four men who each ran once is four
+	# returners, not a warband. This is the case that must NOT fire, because it
+	# is the common one for most of a campaign.
+	seeded.call([_adv(1, 0, "escaped", KIND_GOBLIN, "north", "One", 1),
+			_adv(2, 0, "escaped", KIND_GOBLIN, "north", "Two", 1),
+			_adv(3, 0, "escaped", KIND_GOBLIN, "north", "Three", 1),
+			_adv(4, 0, "escaped", KIND_GOBLIN, "north", "Four", 1)])
+	var none_yet := true
+	for level in range(1, 7):
+		if not game.warband_for(level).is_empty():
+			none_yet = false
+	_check(none_yet, "four one-time escapees gather nobody - there is no leader")
+
+	# A leader with too few followers does not form one either: the banner
+	# promises a warband and the board has to deliver four.
+	seeded.call([_adv(1, 0, "escaped", KIND_GOBLIN, "north", "Storied", 3),
+			_adv(2, 0, "escaped", KIND_GOBLIN, "north", "Two", 1)])
+	var short_handed := true
+	for level in range(1, 7):
+		if not game.warband_for(level).is_empty():
+			short_handed = false
+	_check(short_handed, "a leader with only one follower brings nobody")
+
+	# The real thing: one man with three escapes, and enough people who have
+	# managed one.
+	var full := [_adv(1, 0, "escaped", KIND_GOBLIN, "north", "Storied", 3),
+			_adv(2, 0, "escaped", KIND_GOBLIN, "south", "Two", 1),
+			_adv(3, 0, "escaped", KIND_GOBLIN, "east", "Three", 2),
+			_adv(4, 0, "escaped", KIND_GOBLIN, "west", "Four", 1),
+			_adv(5, 0, "escaped", KIND_GOBLIN, "north", "Five", 1)]
+	seeded.call(full)
+	var formed := {}
+	var found_level := -1
+	for level in range(1, 7):
+		var band: Dictionary = game.warband_for(level)
+		if not band.is_empty():
+			formed = band
+			found_level = level
+			break
+	if formed.is_empty():
+		_check(false, "expected a warband to form on some mission")
+		return
+	_check(true, "a warband forms on mission %d" % (found_level + 1))
+	_check(int(formed.leader.get("survivals", 0))
+			>= int(game.WARBAND_LEADER_SURVIVALS),
+			"its leader has walked away at least %d times (%d)"
+			% [int(game.WARBAND_LEADER_SURVIVALS),
+					int(formed.leader.get("survivals", 0))])
+	_check(str(formed.leader.get("name", "")) == "Storied",
+			"and it is the most experienced man available who leads (%s)"
+			% str(formed.leader.get("name", "")))
+	_check(formed.members.size() == int(game.WARBAND_SIZE) - 1,
+			"he brings %d others (%d)"
+			% [int(game.WARBAND_SIZE) - 1, formed.members.size()])
+	var leader_in_members := false
+	var all_qualify := true
+	for rec: Dictionary in formed.members:
+		if int(rec.get("id", 0)) == int(formed.leader.get("id", 0)):
+			leader_in_members = true
+		if int(rec.get("survivals", 0)) < int(game.WARBAND_MEMBER_SURVIVALS):
+			all_qualify = false
+	_check(not leader_in_members, "...and is not counted among them")
+	_check(all_qualify, "...every one of whom has got away at least once")
+
+	# Determinism, which is the same contract adversaries_for is held to: a
+	# reloaded mission has to field the same warband, and Battle's rules stream
+	# must never be involved in deciding it.
+	var again: Dictionary = game.warband_for(found_level)
+	_check(int(again.get("leader", {}).get("id", -1))
+			== int(formed.leader.get("id", 0)),
+			"asking twice gives the same leader")
+	game.campaign_seed = 777333
+	var elsewhere := false
+	for level in range(1, 7):
+		var other: Dictionary = game.warband_for(level)
+		if other.is_empty() or int(other.get("leader", {}).get("id", -1)) \
+				!= int(formed.leader.get("id", 0)):
+			elsewhere = true
+	_check(elsewhere, "a different campaign does not get the same warband")
+
+	# Same rule the individual return obeys: nobody comes back to the mission he
+	# left, or to one already behind us.
+	game.campaign_seed = 20260821
+	game.adversaries = full.duplicate(true)
+	for rec: Dictionary in game.adversaries:
+		rec["last_level"] = 5
+	var not_backwards := true
+	for level in range(0, 6):
+		if not game.warband_for(level).is_empty():
+			not_backwards = false
+	_check(not_backwards,
+			"a band whose members all left on mission 6 does not appear before it")
 
 
 ## Put the player's campaign back and go. Called from every exit.

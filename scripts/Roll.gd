@@ -126,6 +126,19 @@ static func chance(seed: int, level: int, key: String, percent: int) -> bool:
 	return _mix(seed, level * 977 + hash(key), 0x9E3779B1) % 100 < percent
 
 
+## A stable index into a list of `count`, out of the same hash.
+##
+## chance() answers yes or no; a generator needs "which one", and doing that as
+## a run of chance() calls both biases the answer and costs a different number
+## of draws per outcome. Same discipline as everything else here: no RNG, so a
+## generated board is a function of the campaign and not of when you looked at
+## it. Returns 0 for a non-positive count rather than dividing by zero.
+static func pick(seed: int, level: int, key: String, count: int) -> int:
+	if count <= 0:
+		return 0
+	return _mix(seed, level * 977 + hash(key), 0x27D4EB2F) % count
+
+
 ## One line of THE ROLL. `fate` is what became of them - "killed", "surrendered",
 ## "escaped" - and is the controller's word, not this file's.
 static func line(identity: Dictionary, fate: String) -> String:

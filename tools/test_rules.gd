@@ -289,6 +289,7 @@ func _run() -> void:
 	_test_preview_matches_resolution()
 	_test_morale()
 	_test_conduct()
+	_test_formation_morale()
 	_test_throw_range()
 	_test_left_for_dead()
 
@@ -982,6 +983,94 @@ func _test_conduct() -> void:
 	_check(int(game_consts["STANDING_START"]) == int(_k.STANDING_START),
 			"Game.STANDING_START matches Rules' (%d)"
 			% int(game_consts["STANDING_START"]))
+	# Same deal for the warband thresholds, which Game.warband_for compares
+	# against and therefore has to carry as literals too.
+	for key: String in ["WARBAND_LEADER_SURVIVALS", "WARBAND_MEMBER_SURVIVALS",
+			"WARBAND_SIZE"]:
+		_check(int(game_consts[key]) == int(_k.get(key)),
+				"Game.%s matches Rules' (%d)" % [key, int(_k.get(key))])
+
+
+# --- 10b. breaking as a formation --------------------------------------------
+#
+# The two terms that are about the unit rather than the man. Both have to be
+# silent in an ordinary firefight and loud in a collapse, and the thresholds
+# are the whole of that - so they are pinned here rather than left to feel.
+
+func _test_formation_morale() -> void:
+	print("
+[10b] a formation breaks as well as a man")
+
+	# Shock. Below the floor it must contribute NOTHING: the per-death ally
+	# term already prices one or two casualties, and a second charge on top of
+	# it would rout a map on a good opening volley.
+	_check(int(_rules.call("shock_cost", 0)) == 0
+			and int(_rules.call("shock_cost", int(_k.SHOCK_DEATHS) - 1)) == 0,
+			"losses below the floor cost nothing extra - that is a firefight")
+	var at_floor: int = int(_rules.call("shock_cost", int(_k.SHOCK_DEATHS)))
+	_check(at_floor == int(_k.MORALE_SHOCK),
+			"the %dth death in the window is the first that shocks (%d)"
+			% [int(_k.SHOCK_DEATHS), at_floor])
+	_check(int(_rules.call("shock_cost", int(_k.SHOCK_DEATHS) + 2))
+			> at_floor,
+			"and it goes on getting worse the faster they are dying")
+	_check(int(_rules.call("morale_after_shock", 10, 99)) == 0,
+			"shock floors at zero rather than going negative")
+
+	# It has to be able to actually break somebody, or it is decoration. Four
+	# dead in a window against a full-strength well-hand is the case: he is the
+	# steadiest thing the Thirst fields and he should still be considering it.
+	var whole: int = int(_rules.call("starting_morale", int(_k.KIND_GOBLIN)))
+	var shocked: int = int(_rules.call("morale_after_shock", whole,
+			int(_k.SHOCK_DEATHS) + 1))
+	_check(shocked < whole,
+			"a well-hand at full strength feels four of his own go down (%d -> %d)"
+			% [whole, shocked])
+	_check(_rules.call("is_broken", int(_rules.call("morale_after_shock",
+			int(_k.MORALE_BREAK) + int(_k.MORALE_SHOCK), int(_k.SHOCK_DEATHS)))),
+			"...and a man already worn thin breaks on it")
+
+	# Outnumbered. Two conditions, and the pair is what stops it firing on the
+	# opening turn of a map the Thirst outnumbers.
+	_check(not _rules.call("is_outnumbered", 11, 5),
+			"eleven against five is not outnumbered, whatever the ratio says")
+	_check(not _rules.call("is_outnumbered", int(_k.OUTNUMBERED_FEW) + 1, 99),
+			"more than a few left is not outnumbered either")
+	_check(_rules.call("is_outnumbered", 2, 5),
+			"two left against five is")
+	_check(not _rules.call("is_outnumbered", 3, 5),
+			"...but three against five is not yet %dx" % int(_k.OUTNUMBERED_BY))
+	_check(not _rules.call("is_outnumbered", 0, 5),
+			"and nobody left is not a morale state")
+	_check(int(_rules.call("morale_after_outnumbered", 90, 11, 5)) == 90,
+			"a fight in the balance costs nothing")
+	_check(int(_rules.call("morale_after_outnumbered", 90, 2, 5)) < 90,
+			"being the last two against five does")
+
+	# Warbands. The leader is the difference between four returners and a unit.
+	_check(_rules.call("can_lead_warband", int(_k.WARBAND_LEADER_SURVIVALS))
+			and not _rules.call("can_lead_warband",
+					int(_k.WARBAND_LEADER_SURVIVALS) - 1),
+			"it takes %d escapes to gather a warband, not fewer"
+			% int(_k.WARBAND_LEADER_SURVIVALS))
+	_check(_rules.call("can_join_warband", int(_k.WARBAND_MEMBER_SURVIVALS))
+			and not _rules.call("can_join_warband", 0),
+			"and one to follow somebody who has")
+	_check(int(_k.WARBAND_LEADER_SURVIVALS) > int(_k.WARBAND_MEMBER_SURVIVALS),
+			"a leader has been through more than the people he gathers")
+	var led: int = int(_rules.call("morale_recovered_led", 40))
+	var alone: int = int(_rules.call("morale_recovered", 40))
+	_check(led > alone,
+			"a man whose leader is still up steadies faster (%d vs %d)" % [led, alone])
+	_check(int(_rules.call("morale_recovered_led", 99, 100)) <= 100
+			and int(_rules.call("morale_recovered_led", 40, 45)) == 45,
+			"...but never past his own ceiling")
+	var bereaved: int = int(_rules.call("morale_after_leader_down", whole))
+	_check(bereaved < whole,
+			"losing the man who gathered them costs the rest of them (%d -> %d)"
+			% [whole, bereaved])
+	_check(int(_k.MORALE_LEADER_DOWN) > int(_k.MORALE_HIT),
+			"and costs more than being shot, because he was their reason to be here")
 
 
 # --- 11. the grenadier launches, everybody else throws ------------------------

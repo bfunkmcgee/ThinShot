@@ -344,6 +344,28 @@ var _enemy_ordinal := 0
 ## The ones who ran from an earlier mission and are walking back onto this one,
 ## keyed by the turn they arrive on. Settled once, at _ready(), from a pure hash
 ## - so reloading a save mid-mission produces the same people on the same turn.
+## Thirst dead per player turn, `turn_number -> count`. The formation's own
+## memory of how fast it is dying, which Rules.shock_cost reads over a window.
+## Kept as a per-turn tally rather than a running total because the whole point
+## is that four in one exchange is a collapse and four across ten turns is a
+## long afternoon.
+# --- bounty state -------------------------------------------------------------
+## The soldier the bounty was given to. Their PRESENCE and GUILE are what every
+## roll on this mission reads, so a party that loses them loses the mission's
+## whole second half - which is the risk the player accepts by choosing.
+var bounty_hunter: Unit = null
+## The people who live here, in spawn order.
+var residents: Array[Unit] = []
+## How many of them have refused so far. The settlement talks to itself: each
+## refusal makes the next person warier (Bounty.question_chance).
+var bounty_refusals := 0
+## The posted man, once somebody has said where he is. Null until then.
+var bounty_target: Unit = null
+## What became of him: "" while it is still open, then killed / surrendered /
+## informant. This is what ends the mission rather than a body count.
+var bounty_outcome := ""
+
+var _thirst_deaths: Dictionary = {}
 var _returners_due: Dictionary = {}
 ## Everyone this mission actually put back on the board, for mark_returned().
 var _returners_landed: Array = []
@@ -470,6 +492,62 @@ func _ready() -> void:
 	# find out which cells those were.
 	_spawn_decals()
 	board.set_prop_shadows(_prop_shadows)
+	if Game.on_bounty():
+		_spawn_bounty_party()
+		_spawn_bounty_residents()
+	else:
+		_spawn_campaign_squad()
+	_finish_setup()
+
+
+## The hunting party: the soldier the player chose, and two riflemen lent to
+## them. Deliberately NOT the deployment machinery - a bounty is not the squad
+## going out, it is one person being sent, and the two who go with them are
+## anonymous on purpose. They are drawn as generic Kestrel troops, which is what
+## Scout/ exists for (see the enum comment in Unit.gd).
+func _spawn_bounty_party() -> void:
+	var spawns: Array = level.get("scout_spawns", [])
+	if spawns.is_empty():
+		push_error("[Sandline] a bounty board with nowhere to land")
+		return
+	var hunter: Dictionary = Game.soldier_by_id(int(Game.bounty.get("hunter_id", 0)))
+	if hunter.is_empty():
+		push_error("[Sandline] the bounty's hunter is not on the roster")
+		return
+	_spawn_unit(int(hunter.get("kind", Unit.Kind.SCOUT)), spawns[0], hunter)
+	bounty_hunter = unit_at(spawns[0])
+	for i in range(1, spawns.size()):
+		# No roster record, so no name, no rank and no progression: these two are
+		# not the player's people and are not at risk of being permanently lost.
+		_spawn_unit(Unit.Kind.SCOUT, spawns[i])
+	print("[Sandline] bounty party: %s and %d riflemen"
+			% [Game.full_name(hunter), spawns.size() - 1])
+
+
+## The people who live here. Goblins by sprite and by kind, and fighters by
+## nothing at all: they never take a turn, they are not combatants, and killing
+## one is scored as killing a civilian. Every one of them can be asked once.
+func _spawn_bounty_residents() -> void:
+	var spec: Dictionary = level.get("bounty", {})
+	var ordinal := 0
+	for cell: Vector2i in spec.get("residents", []):
+		if not board.in_bounds(cell) or unit_at(cell) != null:
+			continue
+		_spawn_unit(Unit.Kind.GOBLIN, cell)
+		var who := unit_at(cell)
+		if who == null:
+			continue
+		who.resident = true
+		who.identity = Roll.identity(Game.campaign_seed,
+				Game.current_level + 900, ordinal, Unit.Kind.GOBLIN)
+		who.set_facing_sector(Board.sector_from_to(cell, board.size / 2))
+		residents.append(who)
+		ordinal += 1
+	print("[Sandline] %d living at %s" % [residents.size(),
+			str(spec.get("offer", {}).get("place", "somewhere"))])
+
+
+func _spawn_campaign_squad() -> void:
 	# Rodar Akai deploys in the lead slot: same spawn key, stronger soldier.
 	_spawn_squad(Unit.Kind.HERO, level.get("lead_spawns", []))
 	_spawn_squad(Unit.Kind.MACHINEGUNNER, level.get("gunner_spawns", []))
@@ -488,6 +566,14 @@ func _ready() -> void:
 		_spawn_unit(Unit.Kind.CIVILIAN, spawn)
 	for spawn: Vector2i in level.get("bystander_spawns", []):
 		_spawn_bystander(spawn)
+
+
+## Everything that is true of a mission whichever kind it is: the buttons, the
+## ordnance pool, the HUD and the opening state. Split out when bounties landed,
+## because the two spawn paths above are the ONLY part that differs and having
+## the bounty path re-do all of this was how the first draft ended up with an
+## action bar wired twice.
+func _finish_setup() -> void:
 	end_turn_button.pressed.connect(end_player_turn)
 	overwatch_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.OVERWATCH))
 	face_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.FACE))
@@ -708,7 +794,42 @@ func _build_hud() -> void:
 	# carries its own hotkey in its label, so listing all twelve again down here
 	# was a second copy of the same information and a worse one.
 	hud.set_hint("TAB end turn      Q / T abilities      "
+			+ ("Z ask / offer      " if Game.on_bounty() else "")
 			+ "click a soldier's card to select them")
+	_apply_informant_intel()
+
+
+## What the turned are worth, every mission after they turn.
+##
+## An informant who is only a line in the notebook is a reward the player reads
+## once. This is the other half of what the Accord bought: positions given away
+## before the first shot, drawn through the danger overlay that already exists
+## rather than through a screen of its own - so it reads as knowledge about the
+## board rather than as a menu.
+##
+## Never on a bounty: the man is standing in front of you, and there is nothing
+## to be told.
+func _apply_informant_intel() -> void:
+	if Game.on_bounty() or Game.informants.is_empty():
+		return
+	var enemies := living_soldiers(Unit.TEAM_GOBLIN)
+	if enemies.is_empty():
+		return
+	var marks := mini(Game.informant_marks(), enemies.size())
+	var told := {}
+	# Deterministic, and by position rather than by draw: the same campaign
+	# walking into the same mission is told the same things.
+	for i in marks:
+		var pick := Roll.pick(Game.campaign_seed, Game.current_level,
+				"intel:%d" % i, enemies.size())
+		told[enemies[pick].cell] = true
+	board.intel_cells = told
+	board.queue_redraw()
+	var who: Array[String] = []
+	for rec: Dictionary in Game.informants:
+		who.append(str(rec.get("name", "")))
+	print("[Sandline] informant intel: %d position(s) marked, from %s"
+			% [told.size(), ", ".join(who)])
 
 
 ## The board's extent in world space, used to frame the camera and to bound
@@ -1302,6 +1423,10 @@ const RETURN_TURN_GAP := 2
 ## Nobody wants four of them at once. The pool is small in practice, but a long
 ## campaign should not turn the rim into a parade.
 const RETURN_MAX := 2
+## When a warband walks on. Later than the first stragglers: the squad should
+## have committed to a plan and taken some losses before four fresh rifles
+## arrive behind them, or it is just a bigger opening force.
+const WARBAND_TURN := 4
 
 
 ## Settle who is coming, and when. Called once, from _ready().
@@ -1311,6 +1436,14 @@ const RETURN_MAX := 2
 ## must play out the same way. Game.returners_from() is already deterministic;
 ## this only has to not add a coin flip of its own.
 func _schedule_returners() -> void:
+	# A warband takes precedence over the trickle and replaces it. Four named
+	# fighters walking on together IS the event; adding two more strangers
+	# behind them turns it into a stream of reinforcements, which is a different
+	# and much worse thing for a sixteen-by-ten board.
+	var band: Dictionary = Game.warband_for(Game.current_level)
+	if not band.is_empty():
+		_schedule_warband(band)
+		return
 	var coming: Array = Game.adversaries_for(Game.current_level)
 	if coming.is_empty():
 		return
@@ -1321,6 +1454,40 @@ func _schedule_returners() -> void:
 		due.append(coming[i])
 		_returners_due[turn] = due
 	print("[Sandline] %d returning to level %d" % [coming.size(), Game.current_level + 1])
+
+
+## The whole band lands on one turn, off one rim, as one arrival.
+##
+## Stamped onto each record rather than tracked beside them, because the entries
+## are what _land_returners carries and what _spawn_returner reads - anything
+## kept in a parallel structure would have to survive the same reordering the
+## arrival-cell search does, and would not.
+func _schedule_warband(band: Dictionary) -> void:
+	var leader: Dictionary = band.get("leader", {})
+	var members: Array = band.get("members", [])
+	if leader.is_empty():
+		return
+	var band_id := int(leader.get("id", 0))
+	# One rim for all four, so they come on as a formation rather than as four
+	# people who happened to arrive at once. The leader's own recorded edge is
+	# the one they use - he is the reason they are here.
+	var edge := str(leader.get("edge", "north"))
+	var due: Array = []
+	var lead_entry: Dictionary = leader.duplicate()
+	lead_entry["edge"] = edge
+	lead_entry["warband"] = band_id
+	lead_entry["warband_leader"] = true
+	due.append(lead_entry)
+	for rec: Dictionary in members:
+		var entry: Dictionary = rec.duplicate()
+		entry["edge"] = edge
+		entry["warband"] = band_id
+		entry["warband_leader"] = false
+		due.append(entry)
+	_returners_due[WARBAND_TURN] = due
+	print("[Sandline] %s brings a warband of %d to level %d, turn %d" % [
+			str(leader.get("name", "somebody")), due.size(),
+			Game.current_level + 1, WARBAND_TURN])
 
 
 ## Nobody arrives at a contact that is already over.
@@ -1439,7 +1606,18 @@ func _land_returners() -> void:
 	# the whole history, which is more than a banner can hold.
 	for entry: Dictionary in due:
 		print("[Sandline]   %s" % Game.adversary_line(entry))
-	show_banner("%s CAME BACK" % ", ".join(names).to_upper())
+	# A warband is announced by the man who gathered it, not by a list of four
+	# names the player cannot read in the time the banner is up. The names are
+	# all in the console and all on THE ROLL afterwards.
+	var chief := ""
+	for entry: Dictionary in due:
+		if bool(entry.get("warband_leader", false)):
+			chief = str(entry.get("name", ""))
+			break
+	if chief != "":
+		show_banner("%s HAS BROUGHT A WARBAND" % chief.to_upper())
+	else:
+		show_banner("%s CAME BACK" % ", ".join(names).to_upper())
 	await get_tree().create_timer(0.9).timeout
 
 
@@ -1458,6 +1636,20 @@ func _spawn_returner(entry: Dictionary, cell: Vector2i) -> void:
 	unit.returned = true
 	unit.adversary_id = int(entry.get("id", 0))
 	unit.survivals = int(entry.get("survivals", 0))
+	unit.warband = int(entry.get("warband", 0))
+	unit.warband_leader = bool(entry.get("warband_leader", false))
+	# Some of them came back to hold ground and some came back to hit the squad
+	# once and go. Decided from the campaign seed and this man's id rather than
+	# from _rules_rng: that stream advances exactly once per shot so a seed
+	# replays a firefight, and a draw here would shift every roll in the mission.
+	#
+	# A warband does not raid. Four men who gathered on purpose came to fight,
+	# and a leader who shoots once and leaves would take his people with him
+	# before the player had met them.
+	if unit.warband == 0 and Roll.chance(Game.campaign_seed, Game.current_level,
+			"raid:%d" % unit.adversary_id, Rules.RAID_CHANCE):
+		unit.raider = true
+		unit.raid_shots_left = Rules.RAID_SHOTS
 	var injuries := int(entry.get("injuries", 0))
 	if injuries > 0:
 		# Left for dead and patched up in a settlement with no doctor. Down a
@@ -1528,7 +1720,12 @@ func _spawn_rifle_slots(spawns: Array) -> void:
 ## Walk a level's spawn list for one scout role alongside the roster slots for
 ## that role, so the same soldier lands in the same job every mission.
 func _spawn_squad(kind: Unit.Kind, spawns: Array) -> void:
-	var soldiers := Game.soldiers_of_kind(kind)
+	# Anybody just back from a bounty sits this one out - see Game.resting_ids.
+	# The lead and gunner slots go through here, so a hero who spent last week
+	# hunting somebody is genuinely absent, and the mission is fought without
+	# him. deployable_of_kind falls back to recalling him if the campaign is too
+	# thin to field the slot at all.
+	var soldiers := Game.deployable_of_kind(kind, spawns.size())
 	# Only as many bodies as there are soldiers left alive to fill them. A
 	# spawn point with nobody to stand on it simply goes unused - deploying an
 	# anonymous unit there would quietly undo permadeath.
@@ -1653,6 +1850,16 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("throw_smoke"):
 		_try_throw(AimMode.THROW_SMOKE)
 		return
+	if event.is_action_pressed("parley"):
+		# One key for the whole bounty conversation, because at any moment only
+		# one of the three is available: somebody to ask, or somebody to make an
+		# offer to. Which it is, the panel says.
+		if _resident_in_reach() != null:
+			_try_question()
+			return
+		if _target_in_reach() != null:
+			_try_parley("surrender")
+			return
 	if event.is_action_pressed("demolish"):
 		_try_demolish()
 		return
@@ -2831,6 +3038,10 @@ func _objective_complete(index: int) -> bool:
 			# is_combatant() is false once he surrenders; a routing one is
 			# gone from the tree the moment he steps off the rim.
 			return living_soldiers(Unit.TEAM_GOBLIN).is_empty()
+		"bounty":
+			# One question, and it is not a body count: is the man settled? He
+			# can be shot, taken, or turned, and all three finish the mission.
+			return bounty_outcome != ""
 		"destroy":
 			return _targets_left(index) == 0
 		"rescue":
@@ -3869,6 +4080,10 @@ func run_enemy_turn() -> void:
 		# Hands already up: he is finished for the battle, not for the turn.
 		if goblin.surrendered:
 			continue
+		# The people who live here are not in this. They never move, never
+		# shoot, and never break - the mission is that you have to talk to them.
+		if goblin.resident:
+			continue
 		acted += 1
 		var from_cell := goblin.cell
 		# Mark the actor and give the player a beat to find it before it
@@ -3962,11 +4177,44 @@ func _resolve_morale(goblin: Unit, index: int, squad_size: int) -> bool:
 	if goblin.is_suppressed():
 		goblin.morale = Rules.morale_after_suppression(goblin.morale)
 	elif not goblin.morale_pressed and not goblin.routing:
-		goblin.morale = Rules.morale_recovered(goblin.morale, goblin.morale_ceiling)
+		# Somebody whose leader is still standing steadies faster. It is the
+		# only thing a warband does for its members while it is intact, and it
+		# is enough to make killing the leader first the right answer.
+		if goblin.warband != 0 and _warband_leader_alive(goblin.warband):
+			goblin.morale = Rules.morale_recovered_led(
+					goblin.morale, goblin.morale_ceiling)
+		else:
+			goblin.morale = Rules.morale_recovered(
+					goblin.morale, goblin.morale_ceiling)
 	goblin.morale_pressed = false
 
 	if goblin.routing:
 		return await _run_for_it(goblin, index, squad_size)
+
+	# A raider leaves when he has done what he came for, and this is checked
+	# BEFORE the morale terms below because it is not a morale decision at all -
+	# he is not broken, he is finished. Flagged as a withdrawal so that firing on
+	# him on the way out is scored as a combat kill rather than as shooting a man
+	# whose nerve went.
+	if goblin.raider and goblin.raid_shots_left <= 0:
+		goblin.raid_withdrawal = true
+		goblin.begin_rout()
+		print("[Sandline]   goblin %d/%d has done what it came for and breaks contact at %s"
+				% [index, squad_size, goblin.cell])
+		return await _run_for_it(goblin, index, squad_size)
+
+	# The two formation terms. Both are charged once per fighter per turn, both
+	# apply wherever he is standing, and both are silent until their thresholds -
+	# so an ordinary firefight never sees either of them.
+	var still_up := living_units(Unit.TEAM_GOBLIN).size()
+	var rifles := living_soldiers(Unit.TEAM_SCOUT).size()
+	var recent := _recent_thirst_deaths()
+	var before := goblin.morale
+	goblin.morale = Rules.morale_after_shock(goblin.morale, recent)
+	goblin.morale = Rules.morale_after_outnumbered(goblin.morale, still_up, rifles)
+	if goblin.morale < before:
+		print("[Sandline]   goblin %d/%d: %d dead lately, %d left against %d - morale %d -> %d"
+				% [index, squad_size, recent, still_up, rifles, before, goblin.morale])
 
 	var guns := _guns_on(goblin)
 	if Rules.breaks_to_surrender(goblin.kind, goblin.morale, guns, _fighters_hold()):
@@ -4032,6 +4280,10 @@ func _ai_reload(goblin: Unit, index: int, squad_size: int) -> bool:
 ## AI units shoot with the heaviest setting their weapon allows, so a raider
 ## empties a burst instead of squeezing off one round like a rifleman.
 func _ai_fire(attacker: Unit, target: Unit) -> void:
+	# Counted here rather than at the two call sites, so no future branch that
+	# finds a shot can forget to spend the raider's reason for being here.
+	if attacker.raider and attacker.raid_shots_left > 0:
+		attacker.raid_shots_left -= 1
 	if _can_use_mode(attacker, FireMode.BURST):
 		await do_volley(attacker, target, BURST_ROUNDS, BURST_GAP, 0)
 	else:
@@ -4177,6 +4429,11 @@ func _on_unit_died(unit: Unit) -> void:
 		print("[Sandline] %s is down" % unit.display_name())
 	else:
 		_record_on_roll(unit, _fate_of(unit))
+	# Shooting him is one of the three endings, and the only one that needs no
+	# roll. Booked here rather than in the shooting code so that a frag, a drum
+	# and a rifle round all finish the bounty the same way.
+	if unit.bounty_target and bounty_outcome == "":
+		_settle_bounty("killed")
 	_spread_morale_from_death(unit)
 	Sfx.play("unit_death")
 	fx_ground.stain(unit.position)
@@ -4202,7 +4459,31 @@ func _on_unit_wounded(unit: Unit) -> void:
 ## Watching somebody go down. Charged to every fighter close enough to have
 ## seen it, which is a radius rather than a line of sight on purpose: the sound
 ## of it carries further than the view does.
+## Deaths inside Rules.SHOCK_WINDOW turns of now, counting this one.
+func _recent_thirst_deaths() -> int:
+	var n := 0
+	for turn: int in _thirst_deaths:
+		if turn > turn_number - Rules.SHOCK_WINDOW:
+			n += int(_thirst_deaths[turn])
+	return n
+
+
 func _spread_morale_from_death(dead: Unit) -> void:
+	if dead.team == Unit.TEAM_GOBLIN and not dead.is_civilian():
+		_thirst_deaths[turn_number] = int(_thirst_deaths.get(turn_number, 0)) + 1
+	# A warband is held together by the man who gathered it, and it comes apart
+	# when he goes down - all at once, and wherever his people are standing.
+	# Nothing else in the game targets a specific enemy for a morale reason, and
+	# that is what makes a leader worth shooting first.
+	if dead.warband_leader and dead.adversary_id != 0:
+		for goblin in living_units(Unit.TEAM_GOBLIN):
+			if goblin == dead or goblin.has_stopped():
+				continue
+			if goblin.warband != dead.adversary_id:
+				continue
+			goblin.morale = Rules.morale_after_leader_down(goblin.morale)
+			goblin.morale_pressed = true
+		print("[Sandline]   %s's warband loses its leader" % dead.display_name())
 	for goblin in living_units(Unit.TEAM_GOBLIN):
 		if goblin == dead or goblin.has_stopped():
 			continue
@@ -4215,6 +4496,264 @@ func _spread_morale_from_death(dead: Unit) -> void:
 				goblin.morale, Board.manhattan(goblin.cell, dead.cell))
 		if goblin.morale < before:
 			goblin.morale_pressed = true
+
+
+# --- bounties: asking, finding, and what happens then --------------------------
+
+## The soldier's two negotiation stats, or zeroes. Read through the roster
+## rather than off the unit so that a stat awarded mid-mission is visible to the
+## next roll without a second copy to keep in step.
+func _hunter_stat(stat: String) -> int:
+	if bounty_hunter == null or not bounty_hunter.is_alive():
+		return 0
+	var rec: Dictionary = Game.soldier_by_id(bounty_hunter.soldier_id)
+	return maxi(int(rec.get(stat, 0)), 0)
+
+
+## Somebody standing next to the selected soldier who can still be asked.
+func _resident_in_reach() -> Unit:
+	if not Game.on_bounty() or selected == null or bounty_target != null:
+		return null
+	for who in residents:
+		if not is_instance_valid(who) or not who.is_alive() or who.questioned:
+			continue
+		if Board.manhattan(selected.cell, who.cell) <= 1:
+			return who
+	return null
+
+
+## The posted man, if the selected soldier is close enough to talk to him. A
+## parley is a conversation rather than a shout, so it wants adjacency the way
+## questioning does.
+func _target_in_reach() -> Unit:
+	if bounty_target == null or selected == null or bounty_outcome != "":
+		return null
+	if not is_instance_valid(bounty_target) or not bounty_target.is_alive():
+		return null
+	if bounty_target.surrendered:
+		return null
+	if Board.manhattan(selected.cell, bounty_target.cell) <= 1:
+		return bounty_target
+	return null
+
+
+## Ask somebody where he is.
+##
+## The roll is the hunter's GUILE against how wary the place has become, and it
+## is drawn from _rules_rng - the same stream the shooting uses - so a bounty
+## replays the same way a firefight does under the same seed.
+func _try_question() -> void:
+	var who := _resident_in_reach()
+	if who == null or state != State.PLAYER_TURN:
+		return
+	who.questioned = true
+	var guile := _hunter_stat("guile")
+	var chance := Bounty.question_chance(guile, bounty_refusals)
+	var rolled := _rules_rng.randi_range(1, 100)
+	var talked := rolled <= chance
+	print("[Sandline] question at %s: guile %d, %d refusals -> %d%% (rolled %d) %s"
+			% [who.cell, guile, bounty_refusals, chance, rolled,
+					"TALKS" if talked else "REFUSES"])
+	if not talked:
+		bounty_refusals += 1
+		Sfx.play("miss", -4.0, 0.0)
+		show_banner("THEY WILL NOT SAY")
+		_update_unit_panel()
+		# Everybody refusing is not a dead end: the man is still on the board,
+		# and a party that cannot talk can still go and look.
+		if _residents_left() == 0 and bounty_target == null:
+			await get_tree().create_timer(0.6).timeout
+			_reveal_bounty_target("nobody would say, so they went and looked")
+		return
+	Sfx.play("select", 0.0, 0.0)
+	await _reveal_bounty_target("%s told them" % str(who.identity.get("name", "somebody")))
+
+
+func _residents_left() -> int:
+	var n := 0
+	for who in residents:
+		if is_instance_valid(who) and who.is_alive() and not who.questioned:
+			n += 1
+	return n
+
+
+## He is where they said he would be - and if he has people, they are with him.
+func _reveal_bounty_target(because: String) -> void:
+	if bounty_target != null:
+		return
+	var spec: Dictionary = level.get("bounty", {})
+	var offer: Dictionary = spec.get("offer", {})
+	var hide: Vector2i = spec.get("hide", Board.NO_CELL)
+	if not board.in_bounds(hide) or unit_at(hide) != null:
+		hide = _arrival_cell("east")
+	if not board.in_bounds(hide):
+		push_error("[Sandline] nowhere to put the bounty target")
+		return
+	_spawn_unit(int(offer.get("kind", Unit.Kind.GOBLIN)), hide)
+	bounty_target = unit_at(hide)
+	if bounty_target == null:
+		return
+	bounty_target.bounty_target = true
+	bounty_target.adversary_id = int(offer.get("target_id", 0))
+	bounty_target.survivals = int(offer.get("survivals", 0))
+	bounty_target.identity = {
+		"name": str(offer.get("name", "")),
+		"age": int(offer.get("age", 0)),
+		"settlement": str(offer.get("settlement", "")),
+		"grievance": str(offer.get("grievance", "")),
+	}
+	bounty_target.returned = true
+	bounty_target.morale = Rules.returner_morale(bounty_target.kind)
+	bounty_target.morale_ceiling = bounty_target.morale
+	var injuries := int(offer.get("injuries", 0))
+	if injuries > 0:
+		bounty_target.max_hp = Rules.injured_hp(bounty_target.max_hp, injuries)
+		bounty_target.hp = bounty_target.max_hp
+	# The warband he gathered, if he has one. Same rule the campaign uses: a man
+	# who has walked away twice can hold people, and they stand with him here.
+	var band: Array = []
+	if Rules.can_lead_warband(int(offer.get("survivals", 0))):
+		band = Game.warband_members_for(int(offer.get("target_id", 0)))
+	for rec: Dictionary in band:
+		var cell := _free_cell_near(hide)
+		if cell == Board.NO_CELL:
+			break
+		_spawn_unit(int(rec.get("kind", Unit.Kind.GOBLIN)), cell)
+		var mate := unit_at(cell)
+		if mate == null:
+			continue
+		mate.returned = true
+		mate.adversary_id = int(rec.get("id", 0))
+		mate.warband = int(offer.get("target_id", 0))
+		mate.identity = {
+			"name": str(rec.get("name", "")), "age": int(rec.get("age", 0)),
+			"settlement": str(rec.get("settlement", "")),
+			"grievance": str(rec.get("grievance", "")),
+		}
+		mate.morale = Rules.returner_morale(mate.kind)
+		mate.morale_ceiling = mate.morale
+	if not band.is_empty():
+		bounty_target.warband = int(offer.get("target_id", 0))
+		bounty_target.warband_leader = true
+	print("[Sandline] %s found at %s (%s), %d with him"
+			% [str(offer.get("name", "")), hide, because, band.size()])
+	Sfx.play("turn_enemy", 0.0, 0.0)
+	show_banner("%s IS HERE" % str(offer.get("name", "")).to_upper())
+	_refresh_objectives()
+	_update_unit_panel()
+	await get_tree().create_timer(0.9).timeout
+
+
+func _free_cell_near(cell: Vector2i) -> Vector2i:
+	for step in [Vector2i(1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(-1, 0),
+			Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]:
+		var c: Vector2i = cell + step
+		if board.in_bounds(c) and board.is_walkable(c) and unit_at(c) == null:
+			return c
+	return Board.NO_CELL
+
+
+## The parley. Two offers, and the third option is the rifle already in the
+## soldier's hands - so this only implements the two that need a roll.
+##
+## `want` is "surrender" or "informant". Both are one attempt: a player who
+## could ask twice would always ask twice, and the choice between them is the
+## whole decision the mission is built around.
+func _try_parley(want: String) -> void:
+	var target := _target_in_reach()
+	if target == null or state != State.PLAYER_TURN or bounty_outcome != "":
+		return
+	var offer: Dictionary = level.get("bounty", {}).get("offer", {})
+	var presence := _hunter_stat("presence")
+	var guile := _hunter_stat("guile")
+	var band_up := _warband_leader_alive(target.warband) and _band_still_standing(target)
+	var wounded := target.hp * 2 <= target.max_hp
+	var chance := 0
+	if want == "surrender":
+		chance = Bounty.surrender_chance(presence, target.survivals, band_up, wounded)
+	else:
+		chance = Bounty.informant_chance(guile, presence, target.survivals,
+				band_up, not str(offer.get("grievance", "")).is_empty())
+	var rolled := _rules_rng.randi_range(1, 100)
+	var took_it := rolled <= chance
+	print("[Sandline] parley (%s): presence %d guile %d vs %d escapes%s -> %d%% (rolled %d) %s"
+			% [want, presence, guile, target.survivals,
+					", warband up" if band_up else "", chance, rolled,
+					"ACCEPTED" if took_it else "REFUSED"])
+	if not took_it:
+		# A refused offer is not a free action. He knows what you came for now,
+		# and the only thing left is the rifle.
+		Sfx.play("miss", -2.0, 0.0)
+		show_banner("HE REFUSES")
+		if selected != null:
+			selected.set_done(true)
+		_update_unit_panel()
+		return
+	target.surrender()
+	bounty_outcome = "surrendered" if want == "surrender" else "informant"
+	Sfx.play("overwatch_set", -4.0, 0.0)
+	show_banner("HE COMES QUIETLY" if want == "surrender" else "HE WILL TALK")
+	_settle_bounty(bounty_outcome)
+
+
+## Whether anybody who came with him is still up. A leader whose people are all
+## down is a man alone, and should hear the offer differently.
+func _band_still_standing(target: Unit) -> bool:
+	if target.warband == 0:
+		return false
+	for goblin in living_units(Unit.TEAM_GOBLIN):
+		if goblin != target and goblin.warband == target.warband \
+				and not goblin.has_stopped():
+			return true
+	return false
+
+
+## Book the result. Called from the parley and from the target's death, and it
+## is the only place a bounty is scored - so the three endings cannot drift.
+func _settle_bounty(outcome: String) -> void:
+	if not Game.on_bounty() or outcome == "":
+		return
+	bounty_outcome = outcome
+	var offer: Dictionary = level.get("bounty", {}).get("offer", {})
+	var settlement := str(offer.get("settlement", ""))
+	var standing := Bounty.standing_for(outcome)
+	var strain := Bounty.strain_for(outcome)
+	if standing != 0 and settlement != "":
+		Game.set_standing(settlement,
+				Game.standing_of(settlement) + standing)
+	if strain != 0:
+		Game.alliance_strain = clampi(Game.alliance_strain + strain, 0, 100)
+	# What the soldier learned. Narrow on purpose - see Bounty's constants.
+	var hunter_id := bounty_hunter.soldier_id if bounty_hunter != null else 0
+	if outcome == "surrendered":
+		Game.award_stat(hunter_id, "presence", Bounty.PRESENCE_FOR_SURRENDER)
+	elif outcome == "informant":
+		Game.award_stat(hunter_id, "guile", Bounty.GUILE_FOR_INFORMANT)
+	if outcome != "killed" and _residents_unharmed():
+		Game.award_stat(hunter_id, "guile", Bounty.GUILE_FOR_CLEAN_RUN)
+	print("[Sandline] bounty settled: %s -> %s (standing %+d, strain %+d)"
+			% [str(offer.get("name", "")), outcome, standing, strain])
+	_refresh_objectives()
+	check_game_over()
+
+
+## Did everybody who lives here live through it?
+func _residents_unharmed() -> bool:
+	for who in residents:
+		if not is_instance_valid(who) or not who.is_alive():
+			return false
+	return true
+
+
+## Is the man who gathered this warband still on his feet? A leader who has
+## surrendered or is routing counts as gone: his people can see him too.
+func _warband_leader_alive(band: int) -> bool:
+	if band == 0:
+		return false
+	for goblin in living_units(Unit.TEAM_GOBLIN):
+		if goblin.warband_leader and goblin.adversary_id == band:
+			return not goblin.has_stopped()
+	return false
 
 
 ## How many living soldiers have a shot on this unit right now. The number that
@@ -4452,12 +4991,18 @@ func _record_on_roll(unit: Unit, fate: String) -> void:
 	if unit.team != Unit.TEAM_GOBLIN and not unit.is_civilian():
 		return
 	var conduct: int = Rules.Conduct.COMBATANT_KILLED
-	if unit.is_civilian():
+	if unit.is_civilian() or unit.resident:
+		# Somebody who lives at a bounty location is a well-hand standing in
+		# his own settlement. He is drawn as a goblin because he is one; he is
+		# scored as what he is, which is a civilian.
 		conduct = Rules.Conduct.CIVILIAN_KILLED
 	elif fate == "killed":
 		if unit.surrendered:
 			conduct = Rules.Conduct.SURRENDERED_FIRED_ON
-		elif unit.routing:
+		elif unit.routing and not unit.raid_withdrawal:
+			# A raider breaking contact after shooting at you is still a
+			# combatant, and the price of mercy should not be charged for
+			# refusing to let one go. Only a man whose nerve went is protected.
 			conduct = Rules.Conduct.ROUTING_FIRED_ON
 	roll.append({
 		"identity": unit.identity,
@@ -4555,7 +5100,19 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 		_apply_conduct()
 		_remember_the_survivors()
 		Game.add_to_notebook(Game.current_level, roll)
-		Game.commit_mission()
+		if Game.on_bounty():
+			# A bounty is not a campaign mission and must not advance the
+			# operation: the squad went out after one man and came home to the
+			# same garrison. finish_bounty saves, so commit_mission - which is
+			# what moves current_level on - is deliberately not called.
+			var spec: Dictionary = level.get("bounty", {}).get("offer", {})
+			Game.finish_bounty(bounty_outcome, bounty_hunter.soldier_id
+					if bounty_hunter != null else 0,
+					{"id": int(spec.get("target_id", 0)),
+					"name": str(spec.get("name", "")),
+					"settlement": str(spec.get("settlement", ""))})
+		else:
+			Game.commit_mission()
 	else:
 		# Nothing earned in a failed attempt sticks, so retrying cannot be
 		# farmed for XP - and the fallen are un-killed along with it.
