@@ -128,6 +128,7 @@ func _run() -> void:
 	await _test_raider_breaks_contact()
 	await _test_warband_lands_together()
 	await _test_gunner_last_round()
+	await _test_end_turn_guard()
 
 	# Moving and surrendering play pooled SFX. Sfx assigns `player.stream` and
 	# never clears it, so whichever player went last is still holding its WAV
@@ -837,4 +838,39 @@ func _test_gunner_last_round() -> void:
 	battle.select(gunner)
 	_check(battle.board.attack_cells.has(goblin.cell),
 			"...and the overlay offers the shot")
+	await _dismiss(battle)
+
+
+# --- 15. one keypress cannot throw the turn away ------------------------------
+#
+# E is also the camp's interact key. With soldiers still ready, the first press
+# must warn and arm a confirm window rather than handing the Thirst a free
+# round; a second press inside the window is a decision and goes through.
+
+func _test_end_turn_guard() -> void:
+	print("
+[15] ending the turn with soldiers ready takes two presses")
+	var battle: Node = await _battle(0)
+	# Step past the anti-mash grace that exists for a different reason.
+	battle.player_turn_ready_msec = Time.get_ticks_msec() - 1000
+
+	var ready: int = battle._soldiers_still_ready()
+	_check(ready > 0, "a fresh deployment has soldiers ready (%d)" % ready)
+	battle.end_player_turn()
+	_check(battle.state == battle.State.PLAYER_TURN
+			and not battle.enemy_turn_running,
+			"the first press does not end the turn")
+	_check(battle._end_turn_confirm_until > Time.get_ticks_msec(),
+			"...it arms the confirm window instead")
+	_check(battle.end_turn_button.text.contains("%d ready" % ready),
+			"...and the button says why (%s)" % battle.end_turn_button.text)
+
+	# The second press, inside the window, is a decision.
+	var before: int = battle.turn_number
+	await battle.end_player_turn()
+	_check(battle.turn_number == before + 1,
+			"the second press runs the turn (turn %d -> %d)"
+			% [before, battle.turn_number])
+	_check(battle._end_turn_confirm_until == 0,
+			"...and disarms the window behind it")
 	await _dismiss(battle)

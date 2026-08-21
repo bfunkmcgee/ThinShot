@@ -303,8 +303,15 @@ const CALLED_SHOT_BONUS := 2  # One Shot's extra damage on a called shot
 # Ignore end-turn requests this soon after control returns to the player -
 # they are almost always leftover E-mashing/clicking from the enemy turn.
 const END_TURN_GRACE_MS := 350
+# How long a "still ready" warning stays armed. Long enough to read the count
+# and press again on purpose, short enough that a warning from two decisions
+# ago cannot silently authorise a later slip.
+const END_TURN_CONFIRM_MS := 2500
 
 var state := State.PLAYER_TURN
+# The end-turn confirm window: pressing E with soldiers still ready arms this
+# instead of ending the turn, and only a second press inside it goes through.
+var _end_turn_confirm_until := 0
 var selected: Unit = null
 var hover_cell := Board.NO_CELL
 var turn_number := 1
@@ -2129,6 +2136,9 @@ func _update_unit_panel() -> void:
 	# conversation's pair with them, since reach changes on the same events.
 	_refresh_ability_buttons()
 	_refresh_parley_buttons()
+	if state == State.PLAYER_TURN:
+		var ready := _soldiers_still_ready()
+		end_turn_button.text = "End (E)" if ready == 0 				else "End (E) - %d ready" % ready
 	var unit := unit_at(hover_cell) if hover_cell != Board.NO_CELL else null
 	if unit == null:
 		unit = selected
@@ -4050,11 +4060,42 @@ func _overwatchers_against(mover: Unit) -> Array[Unit]:
 
 # --- Turn flow ---------------------------------------------------------------
 
-func end_player_turn() -> void:
+## Soldiers who still have their action. A man who merely moved is still
+## ready; one who shot, threw, set overwatch or was patched into acting is
+## spent. Freed prisoners wear the squad's colours but never act, so they are
+## not counted against the player's conscience here.
+func _soldiers_still_ready() -> int:
+	var n := 0
+	for unit in living_units(Unit.TEAM_SCOUT):
+		if unit.kind == Unit.Kind.CIVILIAN or unit.has_stopped():
+			continue
+		if not unit.acted:
+			n += 1
+	return n
+
+
+## `force` exists for the harnesses and for nothing else: the turn loop tests
+## drive whole turns without spending anybody, and the confirm window would
+## turn every one of those calls into a no-op with a banner.
+func end_player_turn(force := false) -> void:
 	if state != State.PLAYER_TURN or enemy_turn_running:
 		return
 	if Time.get_ticks_msec() - player_turn_ready_msec < END_TURN_GRACE_MS:
 		return
+	# E is also the camp's interact key, and one slip used to hand the Thirst
+	# a free round with up to five activations unspent. With soldiers still
+	# ready the first press warns and arms a short window; only a deliberate
+	# second press ends the turn.
+	if not force:
+		var ready := _soldiers_still_ready()
+		var now := Time.get_ticks_msec()
+		if ready > 0 and now > _end_turn_confirm_until:
+			_end_turn_confirm_until = now + END_TURN_CONFIRM_MS
+			Sfx.play("select", -4.0, 0.0)
+			show_banner("%d STILL READY - END TURN AGAIN" % ready)
+			_update_unit_panel()  # the button label carries the count
+			return
+	_end_turn_confirm_until = 0
 	enemy_turn_running = true
 	deselect()
 	board.set_danger({})

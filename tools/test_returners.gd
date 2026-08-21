@@ -518,7 +518,9 @@ func _test_arrival() -> void:
 		battle.player_turn_ready_msec = 0
 		battle.state = battle.State.PLAYER_TURN
 		battle.enemy_turn_running = false
-		await battle.end_player_turn()
+		# force=true: the confirm guard is for a player's slipped keypress, and
+		# this loop deliberately ends turns with the whole squad unspent.
+		await battle.end_player_turn(true)
 	_check(battle.turn_number >= first_turn,
 			"the clock reached the arrival turn (%d)" % battle.turn_number)
 
@@ -589,7 +591,7 @@ func _test_arrival() -> void:
 	_check(battle.state == battle.State.GAME_OVER, "...and the state says so")
 	var count_at_end: int = battle.living_units(1).size()
 	battle.player_turn_ready_msec = 0
-	await battle.end_player_turn()
+	await battle.end_player_turn(true)
 	_check(battle.living_units(1).size() == count_at_end,
 			"nobody walks onto a finished board (%d)" % battle.living_units(1).size())
 
