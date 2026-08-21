@@ -254,7 +254,14 @@ const BURST_GAP := 0.13  # pause between the rounds of a burst
 const AUTO_GAP := 0.07   # full auto cycles faster than a burst
 const BURST_ROUNDS := 2
 const AUTO_ROUNDS := 4
-const AUTO_ACCURACY := -15  # per-round penalty for walking the gun
+# Fire-mode accuracy. The audit's arithmetic, adopted: at -15, four autofire
+# rounds strictly dominated the two-round burst for a stationary gunner
+# (4.64 vs 2.92 expected damage, same action), and a free burst strictly
+# dominated the single shot. Priced so each step up in volume costs real
+# accuracy: precision is the default, the burst buys volume with -8 a round,
+# and walking the gun is a genuine trade rather than the obvious button.
+const AUTO_ACCURACY := -35  # per-round penalty for walking the gun
+const BURST_ACCURACY := -8  # per-round penalty for the two-round burst
 const WALKING_FIRE_ACCURACY := -10  # Walking Fire's extra for full auto off the advance
 const SUPPRESS_ROUNDS := 3
 # The beaten zone's radius lives on Unit (suppress_radius()), because Wide
@@ -1994,7 +2001,8 @@ func _fire_selected_at(target: Unit) -> void:
 			return
 	match mode:
 		FireMode.BURST:
-			do_volley(selected, target, BURST_ROUNDS, BURST_GAP, 0)
+			do_volley(selected, target, BURST_ROUNDS, BURST_GAP,
+					_mode_accuracy(selected, FireMode.BURST))
 		FireMode.AUTO:
 			do_volley(selected, target, AUTO_ROUNDS, AUTO_GAP,
 					_mode_accuracy(selected, FireMode.AUTO))
@@ -2008,6 +2016,8 @@ func _fire_selected_at(target: Unit) -> void:
 ## so the panel's preview and the resolved volley can never disagree. Walking
 ## Fire pays another 10 points for firing full auto off the advance.
 func _mode_accuracy(unit: Unit, mode: FireMode) -> int:
+	if mode == FireMode.BURST:
+		return BURST_ACCURACY
 	if mode != FireMode.AUTO:
 		return 0
 	var mod := AUTO_ACCURACY
@@ -4524,6 +4534,9 @@ func _ai_fire(attacker: Unit, target: Unit) -> void:
 	if attacker.raider and attacker.raid_shots_left > 0:
 		attacker.raid_shots_left -= 1
 	if _can_use_mode(attacker, FireMode.BURST):
+		# The Thirst's burst goes out unpriced. BURST_ACCURACY exists to make
+		# the squad's trigger settings a real choice; a Runner has no single
+		# setting to choose instead, and his 58 already is his burst.
 		await do_volley(attacker, target, BURST_ROUNDS, BURST_GAP, 0)
 	else:
 		await do_attack(attacker, target)

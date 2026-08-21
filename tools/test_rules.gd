@@ -12,7 +12,8 @@ extends SceneTree
 ##      takes the flank bonus, and does NOT also charge the full-cover penalty
 ##   2. the long-shot threshold is `attack_range / 2` in INTEGER division, so a
 ##      5-tile weapon is comfortable to 2 exactly like a 4-tile one
-##   3. the [20, 99] clamp, inclusive at both ends, and Marksman's exemption
+##   3. the [20, 99] clamp on the position, inclusive at both ends, the pin's
+##      quarter taken after it, and Marksman's exemption
 ##   4. cover halves damage with `>>`, which is why every base damage is even
 ##   5. Executioner adds its point on a flank and can never add it through cover
 ##   6. peek_origin leans around the END of a wall run and not around its MIDDLE
@@ -452,13 +453,20 @@ func _test_clamp_bounds() -> void:
 	_check(_chance(board, shooter, target, _k.MIN_HIT_CHANCE - base - 1) == _k.MIN_HIT_CHANCE,
 			"one point under is pushed back up to it")
 
-	# A bad shooter, pinned: 10 - 25 is well under the floor.
-	shooter.accuracy = 10
+	# Pinned: the position clamps FIRST, and the pin then takes its quarter
+	# of whatever is left - the same fraction against a hopeless shot as
+	# against a clean one, and the one number allowed below the floor.
 	shooter.suppress()
 	_check(shooter.is_suppressed(), "the shooter is pinned")
-	_check(_chance(board, shooter, target) == _k.MIN_HIT_CHANCE,
-			"10%% accuracy minus the %d-point pin still gets a %d%% shot"
-			% [_k.SUPPRESSION_ACCURACY, _k.MIN_HIT_CHANCE])
+	_check(_chance(board, shooter, target)
+					== base * (100 - _k.SUPPRESSION_ACCURACY) / 100,
+			"the pin takes %d%% of a clean %d%% shot" % [
+					_k.SUPPRESSION_ACCURACY, base])
+	shooter.accuracy = 10
+	_check(_chance(board, shooter, target)
+					== _k.MIN_HIT_CHANCE * (100 - _k.SUPPRESSION_ACCURACY) / 100,
+			"and %d%% of the floored %d%% - never nothing, never free"
+			% [100 - _k.SUPPRESSION_ACCURACY, _k.MIN_HIT_CHANCE])
 	shooter.suppression = 0
 	shooter.accuracy = base
 

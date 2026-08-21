@@ -30,7 +30,7 @@ class_name Rules
 const FLANK_ACCURACY := 10    # bonus to hit from outside the target's arc
 const FLANKER_ACCURACY := 10  # the Flanker perk's extra, on top of the flank bonus
 const LONG_SHOT_PENALTY := 5  # per tile past half the shooter's range
-const SUPPRESSION_ACCURACY := 25  # to-hit penalty while pinned down
+const SUPPRESSION_ACCURACY := 25  # % of the positional chance the pin takes
 const FULL_COVER_ACCURACY := 25   # to-hit penalty against a target behind a wall
 const PEEK_ACCURACY := 10         # to-hit penalty for leaning around your own cover
 
@@ -135,8 +135,6 @@ static func is_peeking(board: Board, attacker: Unit, target: Unit) -> bool:
 static func hit_chance(board: Board, attacker: Unit, target: Unit,
 		accuracy_mod := 0, inspiration := 0) -> int:
 	var chance := attacker.accuracy + accuracy_mod
-	if attacker.is_suppressed():
-		chance -= SUPPRESSION_ACCURACY
 	# The hero's steadying hands: Rally's transient bonus on the soldier, and
 	# Inspiration's aura for standing near a living hero who carries it.
 	chance += attacker.rally_bonus
@@ -160,7 +158,17 @@ static func hit_chance(board: Board, attacker: Unit, target: Unit,
 	# A Marksman has shot at that range enough times for it to stop mattering.
 	if dist > comfortable and not attacker.has_perk("marksman"):
 		chance -= (dist - comfortable) * LONG_SHOT_PENALTY
-	return clampi(chance, MIN_HIT_CHANCE, MAX_HIT_CHANCE)
+	chance = clampi(chance, MIN_HIT_CHANCE, MAX_HIT_CHANCE)
+	# Being pinned takes its quarter of whatever the position left - AFTER the
+	# clamp, multiplicatively, so suppression is worth the same fraction
+	# against a dug-in target as against one in the open. The old additive
+	# -25 vanished under the floor exactly where the player was playing well:
+	# a Conscript shooting into full cover lost nothing at all to the pin.
+	# This is also the one number allowed below MIN_HIT_CHANCE, which is a
+	# clamp on the POSITION; the pin is not a position, it is a machinegun.
+	if attacker.is_suppressed():
+		chance = chance * (100 - SUPPRESSION_ACCURACY) / 100
+	return chance
 
 
 ## The roll. Every shot in the game comes through this one line, and that is the
