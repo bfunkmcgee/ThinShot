@@ -574,8 +574,17 @@ func _build_fixtures() -> void:
 	# The duty roster board doubles as the bounty board. Garrison only, and only
 	# once the campaign has actually let somebody get away - a board with
 	# nothing posted on it is a prompt that wastes a walk.
-	if not in_field and not Bounty.offers(Game.campaign_seed, Game.adversaries,
-			Game.bounties_done).is_empty():
+	#
+	# The count is computed once and cached. The offer list cannot change while
+	# the player is standing in camp - it moves only when a bounty is settled,
+	# and settling one goes through a battle and back through a fresh Camp
+	# scene - but _prompt_for used to recompute it EVERY FRAME the player stood
+	# near the board: an allocation and a sort per frame to re-learn a number
+	# that was decided at _ready.
+	if not in_field:
+		_bounties_posted = Bounty.offers(Game.campaign_seed, Game.adversaries,
+				Game.bounties_done).size()
+	if _bounties_posted > 0:
 		var board_cell: Vector2i = _fixture_cell("notice_board")
 		if board_cell.x >= 0:
 			fixtures.append({
@@ -734,8 +743,7 @@ func _prompt_for(fixture: Dictionary) -> String:
 				return "E  -  levy post: squad at full strength"
 			return "E  -  levy post: %d levy/levies available" % short
 		"bounties":
-			return "E  -  bounty board: %d posted" % Bounty.offers(
-					Game.campaign_seed, Game.adversaries, Game.bounties_done).size()
+			return "E  -  bounty board: %d posted" % _bounties_posted
 	return ""
 
 
@@ -785,6 +793,11 @@ func _unhandled_input(event: InputEvent) -> void:
 ## one that matters: it shows each candidate's PRESENCE and GUILE against the
 ## odds they would actually face, so choosing a hunter is choosing an approach.
 var _bounty_offer: Dictionary = {}
+## How many bounties the board is posting, settled once at _ready. The list
+## only changes across a battle, and every battle comes back through a fresh
+## Camp scene - so a per-visit cache is exact, and the per-frame prompt stops
+## paying an allocation and a sort to re-learn it.
+var _bounties_posted := 0
 
 ## Where a named garrison fixture stands, or (-1, -1). Looked up in the camp's
 ## own prop table rather than hardcoded, so moving the notice board moves the
