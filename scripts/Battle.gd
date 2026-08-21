@@ -809,7 +809,9 @@ func _build_hud() -> void:
 	# Only the keys the bar does not already print on itself. Every button
 	# carries its own hotkey in its label, so listing all twelve again down here
 	# was a second copy of the same information and a worse one.
-	hud.set_hint("TAB end turn      Q / T abilities      "
+	# E ends the turn and TAB cycles soldiers - this line said the opposite
+	# for a while, which is the kind of bug a hint should be ashamed of.
+	hud.set_hint("E end turn      TAB next soldier      Q / T abilities      "
 			+ ("Z ask / offer      " if Game.on_bounty() else "")
 			+ "click a soldier's card to select them")
 	_apply_informant_intel()
@@ -4806,6 +4808,32 @@ func _band_still_standing(target: Unit) -> bool:
 	return false
 
 
+## The debrief a bounty earns, written from its ending. The campaign missions
+## carry authored debriefs; a bounty's story is which of the three choices was
+## made, and until this existed the results panel just went blank on it.
+func _bounty_debrief() -> String:
+	var offer: Dictionary = level.get("bounty", {}).get("offer", {})
+	var name := str(offer.get("name", "the man"))
+	var settlement := str(offer.get("settlement", "his settlement"))
+	match bounty_outcome:
+		"killed":
+			return ("%s is dead. The Accord pays either way, and the paper "
+					+ "does not ask how - but %s will hear which way it went, "
+					+ "and bury him closer to the grievance than to the Crown.") \
+					% [name, settlement]
+		"surrendered":
+			return ("%s put his weapon down and walked in ahead of the party."
+					+ "\n\n%s will hear that it was offered, and that it was "
+					+ "kept. That is worth more out here than the man is.") \
+					% [name, settlement]
+		"informant":
+			return ("%s will talk.\n\nThe Crown has ears in %s now. Every "
+					+ "mission after this one starts with something he knows, "
+					+ "and he is nobody's martyr - which is the part the "
+					+ "Assembly will find hardest to use.") % [name, settlement]
+	return ""
+
+
 ## Book the result. Called from the parley and from the target's death, and it
 ## is the only place a bounty is scored - so the three endings cannot drift.
 func _settle_bounty(outcome: String) -> void:
@@ -5219,7 +5247,15 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 		text = "CAMPAIGN COMPLETE - THE WASTES FALL SILENT"
 	result_label.text = text
 	# The story beat only lands on a win - a failed attempt is not part of it.
-	narrative_label.text = str(level.get("debrief", "")) if won else ""
+	# A bounty's debrief cannot be authored in Levels - which of the three
+	# endings happened is the whole story - so it is composed here from what
+	# was actually done. Read off Battle's own fields, not Game.on_bounty():
+	# finish_bounty has already run in the won-branch above and cleared the
+	# campaign-side state by the time this line executes.
+	if won and level.has("bounty"):
+		narrative_label.text = _bounty_debrief()
+	else:
+		narrative_label.text = str(level.get("debrief", "")) if won else ""
 	debrief_label.text = _debrief_text(won)
 	# Built after _apply_conduct() has run, so the Strain it reports is the one
 	# this mission left behind rather than the one it started with.

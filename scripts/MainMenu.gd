@@ -153,10 +153,37 @@ func _notebook_text() -> String:
 		lines.append("")
 
 	lines.append(_still_out_there_text())
+	lines.append(_bounties_settled_text())
 
 	lines.append("ALLIANCE STRAIN  %d of 100" % Game.alliance_strain)
 	lines.append("Strain has a floor above zero and conduct cannot reach "
 			+ "through it. The squad is here whether or not it behaves.")
+	return "\n".join(lines)
+
+
+## What the garrison's posted hunts came to. These were recorded from the
+## first bounty on and rendered NOWHERE - a player who turned a man got a
+## banner, a stat, and then silence, and the notebook never said the campaign's
+## most deliberate choices had happened at all. Same rule as the section above:
+## an empty list writes no heading.
+func _bounties_settled_text() -> String:
+	if Game.bounty_outcomes.is_empty():
+		return ""
+	var lines: Array[String] = ["BOUNTIES SETTLED  -  %d"
+			% Game.bounty_outcomes.size()]
+	for entry: Dictionary in Game.bounty_outcomes:
+		var what := "shot"
+		match str(entry.get("outcome", "")):
+			"surrendered":
+				what = "brought in"
+			"informant":
+				what = "turned informant"
+		var line := "    %s  -  %s" % [str(entry.get("name", "somebody")), what]
+		var hunter := Game.soldier_by_id(int(entry.get("hunter_id", 0)))
+		if not hunter.is_empty():
+			line += "  (%s)" % Game.soldier_label(hunter)
+		lines.append(line)
+	lines.append("")
 	return "\n".join(lines)
 
 

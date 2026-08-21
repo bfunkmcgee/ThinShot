@@ -199,6 +199,10 @@ func _test_notebook_screen() -> void:
 	# game, which is the worst way for a test to fail - it looks like whatever
 	# you changed most recently.
 	game.adversaries = []
+	# Same isolation rule, learned the hard way above: BOUNTIES SETTLED is
+	# driven by this list, so a developer campaign that has hunted somebody
+	# would otherwise leak a heading into the empty-page check.
+	game.bounty_outcomes = []
 	var menu: Node = (load("res://scenes/MainMenu.tscn") as PackedScene).instantiate()
 	root.add_child(menu)
 	await process_frame
@@ -238,6 +242,29 @@ func _test_notebook_screen() -> void:
 	_check(menu._notebook_lead().contains("4 names"), "the lead counts them")
 	_check(not text.contains("STILL OUT THERE"),
 			"with nobody still alive, the page does not offer an empty heading")
+	_check(not text.contains("BOUNTIES SETTLED"),
+			"...and no empty bounty ledger either")
+
+	# The settled bounties, rendered. One with a hunter still on the roster,
+	# one whose hunter_id resolves to nobody - both lines must hold.
+	game.roster = [{"id": 41, "surname": "Vane", "kind": 10, "xp": 0,
+			"rank": 2, "perks": [], "alive": true, "presence": 1, "guile": 2}]
+	game.bounty_outcomes = [
+		{"id": 7, "name": "Hesh Korrin", "outcome": "informant", "hunter_id": 41},
+		{"id": 8, "name": "Tammar Falk", "outcome": "killed", "hunter_id": 999},
+	]
+	var settled: String = menu._notebook_text()
+	_check(settled.contains("BOUNTIES SETTLED  -  2"),
+			"settled bounties get a ledger with a count")
+	_check(settled.contains("Hesh Korrin  -  turned informant"),
+			"...saying what was done")
+	_check(settled.contains("Vane"),
+			"...and who did it, when the roster still knows them")
+	_check(settled.contains("Tammar Falk  -  shot")
+			and not settled.contains("999"),
+			"...while an unresolvable hunter is simply omitted")
+	game.bounty_outcomes = []
+	game.roster = []
 
 	# The other list: the ones who are still out there to be met again. The
 	# settlement listing above is the document - everyone, whatever became of
