@@ -1,5 +1,39 @@
 # ThinShot — full analysis
 
+> ## Status — verified against the code on 2026-08-21
+>
+> This audit predates most of the campaign of work that followed it, and its
+> findings have been substantially IMPLEMENTED. It is kept as written — the
+> reasoning and the recipes are the valuable part — but read it with this
+> scorecard, so its remaining open items stop hiding among the fixed ones.
+>
+> **All 11 critical/high bugs are now fixed**, the last two on 2026-08-21:
+>
+> | Finding | Status |
+> |---|---|
+> | Blast commits the win before its own casualties | FIXED (`_resolving_blast`) |
+> | Units shoot through walls (`peek_origin` ignore set) | FIXED (single-cell ignore + `in_bounds`) |
+> | No persistence | FIXED (save v7, forward-only ladder, atomic write) |
+> | Debug level jumps destroy campaigns | FIXED (debug-gated) |
+> | Machinegun fires behind the results screen | FIXED (`_end_sustained_fire` in `_show_game_over`) |
+> | Fire-mode panel lies after a move | FIXED (reset in `do_move` tail) |
+> | Machinegunner's stranded last round | FIXED 2026-08-21 (`Unit.min_rounds`) |
+> | Free perimeter peek / phantom edge cover | FIXED (bounds guard) |
+> | Promotions evaporate | FIXED (clears only on campaign reset) |
+> | Danger overlay under-warns | FIXED (`can_engage`) |
+> | End Turn has no guard | FIXED 2026-08-21 (two-press confirm + count) |
+>
+> **"Do this first" (12 items):** 1–10 and 12 are done — including the save
+> system, the `Rules.gd` extraction, `tools/test_rules.gd` (the suite is now
+> 17+ harnesses), the entity-index exception (#8, still open, profiling has
+> not yet justified it), and the visual pass. **#11, the balance pass, was
+> never taken** (`AUTO_ACCURACY` is still −15, suppression still additive) —
+> that is now a deliberate open decision, not an oversight: adopt, adapt, or
+> strike it.
+>
+> The addenda below the metrics line were appended as later features landed
+> and describe shipped systems, not proposals.
+
 Audit of bugs, architecture, features, graphics, visual consistency and game design.
 Produced by 9 parallel code analysts plus adversarial verification of every claim (99 raw
 findings, 6 refuted); the five headline defects were then re-confirmed by hand against the

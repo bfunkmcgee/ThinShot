@@ -678,10 +678,16 @@ godot --headless --path . -s tools/test_roll.gd          # who the enemy was
 godot --headless --path . -s tools/test_morale.gd        # surrender, rout, bystanders
 godot --headless --path . -s tools/test_overwatch.gd     # reactions that interrupt
 godot --headless --path . -s tools/test_menu.gd          # new campaign, the notebook
-godot --headless --path . -s tools/test_save_load.gd     # the save ladder, v1 -> v3
+godot --headless --path . -s tools/test_save_load.gd     # the save ladder, v1 up
 godot --headless --path . -s tools/test_progression.gd   # xp, ranks, perks
 godot --headless --path . -s tools/test_hero_gameover.gd # Rodar ends the campaign
+godot --headless --path . -s tools/test_returners.gd     # the ones who came back
+godot --headless --path . -s tools/test_bounty.gd        # generated boards, the parley
+godot --headless --path . -s tools/test_occlusion.gd     # scenery gets out of the way
 godot --headless --path . -s tools/check_level.gd -- --all
+godot --headless --path . -s tools/check_prop_tables.gd  # the three prop-table copies agree
+godot --headless --path . -s tools/check_unit_art.gd
+godot --headless --path . -s tools/check_floor_sheets.gd
 godot --headless --path . -s tools/check_briefing_fit.gd
 godot --headless --path . -s tools/check_cover_rules.gd
 godot --headless --path . -s tools/check_tile_catalog.gd
@@ -690,7 +696,12 @@ godot --headless --path . -s tools/check_tile_catalog.gd
 Every one of them prints `RESULT: PASS` or `RESULT: FAIL`. Grep for **both**
 `RESULT` and `SCRIPT ERROR` — a call on a freed instance logs and returns null
 rather than halting, so a harness can pass while the thing it is driving is
-quietly erroring.
+quietly erroring. (Known noise: `test_save_load` deliberately feeds the loader
+hostile files and logs a handful of script errors on its way to PASS.)
+
+The same sweep runs on every push via GitHub Actions
+(`.github/workflows/tests.yml`), so a green suite is a property of the branch
+rather than of whichever machine last ran it.
 
 ## Project layout
 
