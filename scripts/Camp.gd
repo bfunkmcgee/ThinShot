@@ -928,6 +928,9 @@ func _open_soldier(id: int) -> void:
 	if str(soldier.get("surname", "")) == "Vekh":
 		lines.append("")
 		lines.append(_sillae_reads_the_district())
+	if bool(soldier.get("wounded", false)):
+		lines.append("Walking wounded - a point of HP short until he sits a")
+		lines.append("mission out, or the squad makes it home.")
 	if perks.is_empty():
 		lines.append("No specialty yet.")
 	else:
@@ -1082,6 +1085,10 @@ func _deployment_row_text(soldier: Dictionary, going: bool) -> String:
 		"%-20s" % Unit.kind_role_name(int(soldier.kind)),
 		"%-16s" % Game.rank_title(int(soldier.rank)),
 	]
+	# The wound rides the row where the deploy decision is made: taking him
+	# anyway is allowed and costs a point of HP; the row is what says so.
+	if bool(soldier.get("wounded", false)):
+		parts.append("WOUNDED -1 HP")
 	var perks: Array = soldier.get("perks", [])
 	var named: Array[String] = []
 	for key: String in perks:

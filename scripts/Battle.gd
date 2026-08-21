@@ -1438,6 +1438,10 @@ func _spawn_unit(kind: Unit.Kind, spawn_cell: Vector2i, soldier := {}) -> void:
 	if not soldier.is_empty():
 		# Strictly after setup(), which assigns every stat from scratch.
 		unit.apply_progression(soldier)
+		# The wound ledger needs to know who actually fought this mission -
+		# commit_mission heals the wounded who did NOT.
+		if unit.soldier_id != 0 and not Game.mission_fielded.has(unit.soldier_id):
+			Game.mission_fielded.append(unit.soldier_id)
 	elif unit.team == Unit.TEAM_GOBLIN:
 		unit.identity = Roll.identity(Game.campaign_seed, Game.current_level,
 				_enemy_ordinal, kind)
@@ -5349,6 +5353,13 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 		_sweep_the_still_running()
 		_apply_conduct()
 		_remember_the_survivors()
+		# The ledger's first half: whoever ends a won mission below half is
+		# walking wounded for the next one. Before commit_mission, so the
+		# flag is part of the state the win banks - and never on a loss,
+		# where the rollback puts everything back anyway.
+		for scout in living_soldiers(Unit.TEAM_SCOUT):
+			if scout.soldier_id != 0 and scout.hp * 2 <= scout.max_hp:
+				Game.mark_wounded(scout.soldier_id)
 		Game.add_to_notebook(Game.current_level, roll)
 		if Game.on_bounty():
 			# A bounty is not a campaign mission and must not advance the

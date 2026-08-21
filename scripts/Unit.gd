@@ -1228,6 +1228,13 @@ func apply_progression(soldier: Dictionary) -> void:
 		attack_range += 1
 	if has_perk("iron_will"):
 		max_hp += 2
+	# Walking wounded: he chose to deploy rather than sit it out, and the
+	# wound is one point off the top for the whole mission. After the rank
+	# and perk bonuses, so the cost is always exactly one point regardless
+	# of career - and never below 2, so a wound is a handicap, not a death
+	# sentence waiting on a graze.
+	if bool(soldier.get("wounded", false)):
+		max_hp = maxi(max_hp - 1, 2)
 	if has_perk("pack_mule"):
 		mag_size += 2
 	if has_perk("deep_pockets"):

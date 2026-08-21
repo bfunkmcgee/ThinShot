@@ -266,9 +266,14 @@ gone for the campaign** — nobody replaces them. Lose a scout on Dry Wash and
 you assault The Scrapline four strong, with one fewer rifle for every fight
 that follows.
 
-Everything else resets between missions: **survivors deploy at full HP, with
-full magazines, and the squad's grenades are restocked**. Attrition costs you
-soldiers, never a wounded start.
+Everything else resets between missions — **full magazines, and the squad's
+grenades restocked** — with one graded exception. A soldier who ends a won
+mission **below half his health is walking wounded**: he deploys a point of
+max HP short until he either sits a mission out at the deployment table or the
+squad makes it home to the garrison, whose walls come with a surgeon. Taking
+him anyway is allowed, and the deploy row says what it costs. Attrition still
+costs you soldiers before anything else — a wound is a decision to make, not a
+death sentence on a graze.
 
 | Rank | XP | Gains |
 |---|---|---|

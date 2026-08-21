@@ -624,6 +624,12 @@ func advance_mission() -> bool:
 	var next: Array = operation().missions
 	current_level = int(next[0]) if not next.is_empty() else 0
 	in_the_field = false
+	# Walls, stores, and a surgeon with time: coming home clears the wound
+	# ledger outright. The field camp never does - that is the difference
+	# between the two camps with a rule behind it.
+	for soldier: Dictionary in roster:
+		if bool(soldier.get("wounded", false)):
+			soldier.wounded = false
 	return true
 
 
@@ -1047,10 +1053,30 @@ func _deep_copy(source: Array) -> Array:
 ## one. Clearing here silently destroyed the pick of anyone who walked to the
 ## briefing table instead of to the promoted soldier. Camp._on_choice removes
 ## each entry as it is spent.
+# Who actually walked out the gate this mission: soldier ids, stamped by
+# Battle as it spawns them. Mission-scoped like mission_xp - reset on load
+# rather than persisted - and what commit_mission reads to heal the wounded
+# who sat the mission out.
+var mission_fielded: Array = []
+
+
+## A mission ended with this soldier badly hurt: below half. He deploys a
+## point of max HP short until he sits a mission out or the squad makes it
+## home to the garrison. Stamped only on a WON mission - a lost attempt rolls
+## back wholesale, wounds included, exactly like the deaths.
+func mark_wounded(id: int) -> void:
+	var soldier := soldier_by_id(id)
+	if soldier.is_empty():
+		return
+	soldier.wounded = true
+	print("[Sandline] %s is walking wounded" % soldier.surname)
+
+
 func begin_mission() -> void:
 	_snapshot = _deep_copy(roster)
 	mission_xp.clear()
 	mission_dead.clear()
+	mission_fielded.clear()
 
 
 func award(id: int, amount: int) -> void:
@@ -1530,6 +1556,14 @@ func commit_mission() -> void:
 		for rank in range(old_rank + 1, new_rank + 1):
 			if not perk_choices(int(soldier.kind), rank).is_empty():
 				pending_promotions.append({"id": int(soldier.id), "rank": rank})
+	# The wound ledger's other half: a soldier who sat this one out has had a
+	# mission's worth of the medic's time, and comes back whole. Deploying
+	# wounded was the player's call; healing is what sitting out is FOR.
+	for soldier: Dictionary in roster:
+		if bool(soldier.alive) and bool(soldier.get("wounded", false)) \
+				and not mission_fielded.has(int(soldier.id)):
+			soldier.wounded = false
+			print("[Sandline] %s is off the wounded list" % soldier.surname)
 	_snapshot.clear()
 	save()
 
@@ -1582,7 +1616,7 @@ const SAVE_PATH := "user://campaign.json"
 # Raise this in the same commit that adds the migration step reaching it, and
 # never one without the other - _migrate_step() is what turns a number into a
 # shape the rest of this file can read.
-const SAVE_VERSION := 7
+const SAVE_VERSION := 8
 
 # Raised, and never lowered again, when load_save() finds a campaign written by
 # a build newer than this one. Refusing to READ such a file is only half the
@@ -1700,6 +1734,8 @@ func _migrate_step(payload: Dictionary, from: int) -> Dictionary:
 			return _migrate_5_to_6(payload)
 		6:
 			return _migrate_6_to_7(payload)
+		7:
+			return _migrate_7_to_8(payload)
 	return {}
 
 
@@ -1869,6 +1905,23 @@ func _migrate_6_to_7(payload: Dictionary) -> Dictionary:
 	payload["informants"] = payload.get("informants", [])
 	payload["bounty_outcomes"] = payload.get("bounty_outcomes", [])
 	payload["resting_ids"] = payload.get("resting_ids", [])
+	return payload
+
+
+## v8 adds the wound ledger: a named soldier can come out of a mission
+## walking wounded, and the flag rides the roster entry like everything else
+## about him. Old saves carry nobody wounded, which is also what a missing
+## key means on read - so this rung only has to exist to stamp the version.
+func _migrate_7_to_8(payload: Dictionary) -> Dictionary:
+	# The reshape is the promise itself: v8 has a roster array whose entries
+	# carry a wounded boolean. Materialising the key is what keeps the
+	# ladder's no-gaps check honest about this rung doing real work.
+	payload["roster"] = payload.get("roster", [])
+	if typeof(payload.roster) == TYPE_ARRAY:
+		for entry: Variant in payload.roster:
+			if typeof(entry) == TYPE_DICTIONARY:
+				(entry as Dictionary)["wounded"] = bool(
+						(entry as Dictionary).get("wounded", false))
 	return payload
 
 
@@ -2078,6 +2131,7 @@ func _read_roster(raw: Variant) -> Array:
 			# guaranteed informant.
 			"presence": maxi(int(soldier.get("presence", 0)), 0),
 			"guile": maxi(int(soldier.get("guile", 0)), 0),
+			"wounded": bool(soldier.get("wounded", false)),
 		})
 	return out
 
