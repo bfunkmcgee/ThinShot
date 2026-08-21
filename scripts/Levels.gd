@@ -221,6 +221,19 @@ const LEVELS: Array[Dictionary] = [
 				"cells": [Vector2i(10, 4)],
 			},
 		],
+		# What the mast is FOR. While it stands, the yard's call is out, and
+		# every few turns somebody answers it off the freight line on the east
+		# rim - so a body count can never finish this map, and the relay stops
+		# being a side errand the moment the second patrol walks on. Light
+		# arrivals only: the yard is calling neighbours, not a garrison.
+		"pressure": {
+			"while_objective": 1,
+			"first_turn": 3,
+			"every": 3,
+			"edge": "east",
+			"units": [[5], [6, 6], [4]],
+			"banner": "THE MAST IS STILL CALLING",
+		},
 		"zone_seed": 21,
 		"shade_seed": 34,
 		# Was [-0.5, -0.2], which handed zone 2 nearly the whole yard and made
@@ -302,6 +315,20 @@ const LEVELS: Array[Dictionary] = [
 				],
 			},
 		],
+		# The withdrawal is chased. Two blasts big enough to open the west
+		# zone are big enough to be heard by every patrol the garrison has
+		# out, and they come home through the desert on the east rim - so the
+		# walk back out is fought against arrivals, not just survivors. The
+		# clock starts when the second store goes, which is the moment the
+		# squad chose to be loud.
+		"pressure": {
+			"after_objective": 0,
+			"first_turn": 2,
+			"every": 2,
+			"edge": "east",
+			"units": [[4, 6], [6]],
+			"banner": "PATROLS COMING HOME - KEEP MOVING",
+		},
 		# Desert outside the wall, concrete inside it. The inset is the
 		# courtyard east of the west wall and north of the south wall, so the
 		# staging ground the squad crosses is still open sand and the fortress
@@ -639,6 +666,92 @@ const LEGAL_CHARS := ".#Wjpdsc=t"
 
 ## Validates every level. push_error-based so it also reports in release
 ## builds (asserts are stripped there); debug builds additionally hard-stop.
+## The clock a mission can put on the squad. A level's optional "pressure"
+## table schedules Thirst arrivals off the turn counter, gated on the state
+## of the objectives - so the thing calling for help is also the tap that
+## shuts the arrivals off, and the player closes it by doing the mission.
+##
+##   "pressure": {
+##       "while_objective": 1,     # waves only while objectives[1] is NOT done
+##       "after_objective": 0,     # or: only once objectives[0] IS done
+##       "first_turn": 3,          # turns before the first wave (from the gate
+##                                 # opening, for after-gated pressure)
+##       "every": 3,               # cadence after that
+##       "edge": "east",           # the rim they walk on from
+##       "units": [[5], [6, 6]],   # Kind ordinals - one list per wave, and the
+##                                 # list of lists IS the cap
+##       "banner": "...",          # what the arrival says on screen
+##   }
+##
+## Pure arithmetic over the level dict, so tools/test_pressure.gd can pin the
+## cadence and both gates without standing up a scene: Battle hands in the
+## turn, which objectives are done, and (for after-gated pressure) the turn
+## the gate opened, and gets back the wave due this turn or {}.
+static func pressure_wave(level: Dictionary, turn: int, objectives_done: Array,
+		gate_open_turn := -1) -> Dictionary:
+	var pressure: Dictionary = level.get("pressure", {})
+	if pressure.is_empty():
+		return {}
+	var gate_while := int(pressure.get("while_objective", -1))
+	if gate_while >= 0 and gate_while < objectives_done.size() \
+			and bool(objectives_done[gate_while]):
+		return {}  # the thing calling for help is down
+	var base := 0
+	if pressure.has("after_objective"):
+		if gate_open_turn < 0:
+			return {}  # nothing to chase yet
+		base = gate_open_turn
+	var first := int(pressure.get("first_turn", 2))
+	var every := maxi(int(pressure.get("every", 3)), 1)
+	if turn < base + first or (turn - base - first) % every != 0:
+		return {}
+	var waves: Array = pressure.get("units", [])
+	var index := (turn - base - first) / every
+	if index >= waves.size():
+		return {}  # the tap has run dry on its own
+	return {
+		"units": waves[index],
+		"edge": str(pressure.get("edge", "east")),
+		"banner": str(pressure.get("banner", "")),
+	}
+
+
+## The pressure table is data, so a typo in it is a shipped bug like any other
+## map defect - checked with the same _check the rest of the schema uses.
+static func _validate_pressure(data: Dictionary, label: String) -> bool:
+	if not data.has("pressure"):
+		return true
+	var ok := true
+	var p: Dictionary = data.pressure
+	var objectives: Array = data.get("objectives", [])
+	for key in ["while_objective", "after_objective"]:
+		if p.has(key):
+			var idx := int(p[key])
+			ok = _check(idx >= 0 and idx < objectives.size(),
+					"%s: pressure %s out of range" % [label, key]) and ok
+	ok = _check(not (p.has("while_objective") and p.has("after_objective")),
+			"%s: pressure cannot be both while- and after-gated" % label) and ok
+	ok = _check(int(p.get("first_turn", 2)) >= 1,
+			"%s: pressure first_turn must be >= 1" % label) and ok
+	ok = _check(int(p.get("every", 3)) >= 1,
+			"%s: pressure every must be >= 1" % label) and ok
+	ok = _check(["north", "south", "east", "west"].has(str(p.get("edge", "east"))),
+			"%s: pressure edge '%s' unknown" % [label, str(p.get("edge", ""))]) and ok
+	var waves: Array = p.get("units", [])
+	ok = _check(not waves.is_empty(), "%s: pressure has no waves" % label) and ok
+	for wave in waves:
+		ok = _check(wave is Array and not (wave as Array).is_empty(),
+				"%s: each pressure wave is a non-empty kind list" % label) and ok
+		if wave is Array:
+			for kind in wave:
+				# 3..7 are the Thirst's fighting kinds; 8 is the CIVILIAN and
+				# pressure must never conscript bystanders.
+				ok = _check(int(kind) >= 3 and int(kind) <= 7,
+						"%s: pressure kind %s is not a Thirst fighter"
+						% [label, str(kind)]) and ok
+	return ok
+
+
 static func validate_all() -> void:
 	var ok := true
 	for i in LEVELS.size():
@@ -730,6 +843,7 @@ static func _validate(index: int) -> bool:
 		ok = _check(visited.has(spawn),
 				"%s: spawn %s unreachable from %s" % [label, spawn, start]) and ok
 	ok = _validate_objectives(data, label, walkable, visited, seen_spawn) and ok
+	ok = _validate_pressure(data, label) and ok
 	ok = _validate_floor(data, label, grid) and ok
 	ok = _validate_zones(data, label) and ok
 	ok = _validate_roads(data, label, grid) and ok

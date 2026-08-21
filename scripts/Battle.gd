@@ -322,6 +322,10 @@ var _end_turn_confirm_until := 0
 var selected: Unit = null
 var hover_cell := Board.NO_CELL
 var turn_number := 1
+# The turn an after-gated pressure clock started (see Levels.pressure_wave):
+# latched by _refresh_objectives the moment the gate objective completes, -1
+# while it is still shut. Per-battle, like the turn counter itself.
+var _pressure_gate_turn := -1
 var enemy_turn_running := false
 var player_turn_ready_msec := 0
 var danger_on := false
@@ -1656,6 +1660,37 @@ func _land_returners() -> void:
 		show_banner("%s HAS BROUGHT A WARBAND" % chief.to_upper())
 	else:
 		show_banner("%s CAME BACK" % ", ".join(names).to_upper())
+	await get_tree().create_timer(0.9).timeout
+
+
+## The mission's own clock: arrivals the ground calls in, scheduled by
+## Levels.pressure_wave off the turn counter and the objective state, riding
+## the same rim-arrival machinery the returners do. Landed at the same moment
+## for the same reason: run_enemy_turn snapshots its squad on its first
+## statement, so a body added later would stand still for a turn.
+func _land_pressure() -> void:
+	if state == State.GAME_OVER or Game.on_bounty():
+		return
+	var done: Array = []
+	for i in _objectives().size():
+		done.append(_objective_complete(i))
+	var wave := Levels.pressure_wave(level, turn_number, done, _pressure_gate_turn)
+	if wave.is_empty():
+		return
+	var landed := 0
+	for kind in wave.units:
+		var cell := _arrival_cell(str(wave.edge))
+		if cell == Board.NO_CELL:
+			continue  # every rim cell taken - this one stays out there
+		_spawn_unit(int(kind), cell)
+		landed += 1
+	if landed == 0:
+		return
+	Sfx.play("turn_enemy", 0.0, 0.0)
+	var banner := str(wave.banner)
+	show_banner(banner if banner != "" else "THE THIRST SENDS MORE")
+	print("[Sandline]   pressure: %d walked on from the %s (turn %d)" % [
+			landed, wave.edge, turn_number])
 	await get_tree().create_timer(0.9).timeout
 
 
@@ -3426,6 +3461,15 @@ func _refresh_objectives() -> void:
 		beacons.append(prisoner.position)
 	if objective_marks != null:
 		objective_marks.set_marks(beacons)
+	# The after-gate for the mission's pressure clock: the first refresh that
+	# sees the gate objective done stamps the turn, and the cadence in
+	# Levels.pressure_wave counts from that moment - blowing the stores on
+	# turn 9 is chased from turn 9, not from a schedule the squad never heard.
+	if _pressure_gate_turn < 0:
+		var pressure: Dictionary = level.get("pressure", {})
+		if pressure.has("after_objective") \
+				and _objective_complete(int(pressure.after_objective)):
+			_pressure_gate_turn = turn_number
 	_update_objective_label()
 
 
@@ -4274,6 +4318,7 @@ func end_player_turn(force := false) -> void:
 	# there was a war on. Arriving now, it is refreshed by the loop below and
 	# is in that snapshot, so it acts on the turn it lands.
 	await _land_returners()
+	await _land_pressure()
 	# Goblins refresh at the start of THEIR turn (expires last turn's
 	# unfired goblin overwatch at the right moment).
 	for goblin in living_units(Unit.TEAM_GOBLIN):

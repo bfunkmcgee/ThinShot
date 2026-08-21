@@ -174,12 +174,19 @@ Which is why each map asks for something different:
    body count does not end this one; you can win with goblins still standing,
    and you can wipe them out and still not be finished. The crates turn out to
    hold machined ordnance — and the mast carries the same depot mark, which is
-   what points you at Outpost 7.
+   what points you at Outpost 7. **The mast is not set dressing while it
+   stands**: every third turn it calls another patrol in off the freight line
+   on the east rim, so the yard never runs out of defenders until you put it
+   down — the relay is the tap, and dropping it is how you shut the water off.
 3. **Outpost 7** — a raid with a way out. **Blow both ammo stores** at opposite
    ends of the compound, *then* **walk the whole squad back to the extraction
    zone** on the west edge. The zone stays shut until the charges go off, so
    the last stretch is a fighting withdrawal across ground you already crossed
-   once — with whatever the Thirst has left chasing you.
+   once — with whatever the Thirst has left chasing you, **and its patrols
+   coming home**: two blasts loud enough to open the extraction zone are loud
+   enough to be heard for miles, and from the moment the second store goes,
+   fresh rifles walk in off the east rim every other turn while the squad runs
+   west.
 4. **The Holding Pens** — a rescue behind **barbed wire**, which is the only
    thing on the board that stops movement and nothing else: you can see the
    prisoners from your start line and shoot the guards straight through the
