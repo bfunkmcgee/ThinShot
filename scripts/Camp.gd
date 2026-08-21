@@ -592,6 +592,15 @@ func _build_fixtures() -> void:
 				"pos": board.cell_to_global(board_cell),
 				"label": "the bounty board", "id": 0,
 			})
+	# The ledger is read at the memorial, which is where a campaign keeps
+	# what it cannot get back. Garrison only, because the cross is.
+	var cross: Vector2i = _fixture_cell("memorial_cross")
+	if cross.x >= 0:
+		fixtures.append({
+			"kind": "ledger", "cell": cross,
+			"pos": board.cell_to_global(cross),
+			"label": "the ledger", "id": 0,
+		})
 	# Replacements are a garrison thing. Out on operation the squad fights
 	# with whoever walked away from the last mission.
 	var post: Vector2i = spots.recruit
@@ -744,6 +753,8 @@ func _prompt_for(fixture: Dictionary) -> String:
 			return "E  -  levy post: %d levy/levies available" % short
 		"bounties":
 			return "E  -  bounty board: %d posted" % _bounties_posted
+		"ledger":
+			return "E  -  the campaign's ledger"
 	return ""
 
 
@@ -781,6 +792,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_open_recruit()
 		"bounties":
 			_open_bounties()
+		"ledger":
+			_open_ledger()
 
 
 # ------------------------------------------------------------------ bounties --
@@ -880,6 +893,19 @@ func _open_bounty_hunters(offer: Dictionary) -> void:
 
 
 # ------------------------------------------------------------------- modal --
+
+
+## The war so far, read at the cross. The modal carries the digest; the whole
+## document - squad records, the files, the district's opinion, the notebook -
+## is written to user://chronicle.txt where the player can keep it.
+func _open_ledger() -> void:
+	var file := FileAccess.open("user://chronicle.txt", FileAccess.WRITE)
+	if file != null:
+		file.store_string(Game.chronicle())
+		file.close()
+	var body := Game.chronicle_digest()
+	body += "\n\nThe full ledger is written to user://chronicle.txt."
+	_open_modal("THE LEDGER", body)
 
 
 func _open_modal(title: String, body: String, a := "", b := "") -> void:

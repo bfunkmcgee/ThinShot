@@ -252,6 +252,11 @@ using:
 - **The briefing table** gives the next mission's orders and deploys you.
 - **The assignment post** — garrison only — signs on replacements for anyone
   lost, green: no rank, no specialty, nothing the squad lost with them.
+- **The ledger** — garrison only, read at the memorial cross. The whole war so
+  far: every soldier's record, the dead, the adversary files, the district's
+  opinion settlement by settlement, and Dava's notebook — and the full document
+  is written to `user://chronicle.txt`, so the campaign's memory is something
+  you can keep.
 
 Who you walk around as follows the chain of command: **Rodar Akai, then the
 machinegunner, then a rifleman**, and within a role the senior survivor. Nobody

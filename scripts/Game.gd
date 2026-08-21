@@ -1006,6 +1006,95 @@ func new_campaign() -> bool:
 	return true
 
 
+## The whole war, written out. Everything the campaign remembers - the
+## soldiers and their records, the dead, the adversary files, the district's
+## opinion settlement by settlement, the notebook - composed as one document.
+## The thesis of the campaign is that it remembers; this is the page that
+## proves it, and user://chronicle.txt is the copy the player can keep.
+func chronicle() -> String:
+	var lines: Array[String] = []
+	lines.append("SANDLINE - THE CAMPAIGN'S LEDGER")
+	lines.append("campaign %d - %s, mission %d of %d - %d attempt(s) spent"
+			% [campaign_seed, str(operation().name), mission_number(),
+					mission_count(), mission_attempts])
+	lines.append("")
+	lines.append("THE SQUAD")
+	for soldier: Dictionary in roster:
+		var perk_names: Array[String] = []
+		for perk: String in soldier.get("perks", []):
+			perk_names.append(str(PERKS[perk].name))
+		var marks: Array[String] = []
+		if not bool(soldier.alive):
+			marks.append("KILLED IN ACTION")
+		elif bool(soldier.get("wounded", false)):
+			marks.append("walking wounded")
+		if int(soldier.get("presence", 0)) > 0:
+			marks.append("presence %d" % int(soldier.presence))
+		if int(soldier.get("guile", 0)) > 0:
+			marks.append("guile %d" % int(soldier.guile))
+		lines.append("  %-16s %-18s %-16s %3d xp%s%s" % [
+				full_name(soldier), Unit.kind_role_name(int(soldier.kind)),
+				rank_title(int(soldier.rank)), int(soldier.xp),
+				"  " + ", ".join(perk_names) if not perk_names.is_empty() else "",
+				"  [" + "; ".join(marks) + "]" if not marks.is_empty() else ""])
+	if not district_standing.is_empty():
+		lines.append("")
+		lines.append("THE DISTRICT'S OPINION")
+		for settlement: String in district_standing:
+			lines.append("  %-16s %d" % [settlement, int(district_standing[settlement])])
+	lines.append("  theater strain     %d" % alliance_strain)
+	if not adversaries.is_empty():
+		lines.append("")
+		lines.append("THE FILES")
+		for rec: Dictionary in adversaries:
+			var state := str(rec.get("state", ""))
+			lines.append("  %s%s" % [adversary_line(rec),
+					"" if state.is_empty() else "  (%s)" % state])
+	if not informants.is_empty():
+		lines.append("")
+		lines.append("THE TURNED")
+		for rec: Dictionary in informants:
+			lines.append("  %s of %s" % [str(rec.get("name", "")),
+					str(rec.get("settlement", ""))])
+	var by_settlement := notebook_by_settlement()
+	if not by_settlement.is_empty():
+		lines.append("")
+		lines.append("DAVA'S NOTEBOOK")
+		for settlement: String in by_settlement:
+			lines.append("  %s:" % settlement)
+			for entry: Dictionary in by_settlement[settlement]:
+				lines.append("    %s, %s" % [str(entry.get("name", "")),
+						str(entry.get("fate", ""))])
+	return "\n".join(lines)
+
+
+## The chronicle, cut down to what a modal can hold: the counts and the names
+## that matter. The full document is the file.
+func chronicle_digest() -> String:
+	var alive := 0
+	var dead: Array[String] = []
+	for soldier: Dictionary in roster:
+		if bool(soldier.alive):
+			alive += 1
+		else:
+			dead.append(full_name(soldier))
+	var lines: Array[String] = [
+		campaign_summary(),
+		"%d attempt(s) spent, %d soldier(s) standing" % [mission_attempts, alive],
+	]
+	if not dead.is_empty():
+		lines.append("The dead: %s." % ", ".join(dead))
+	if not adversaries.is_empty():
+		lines.append("%d name(s) in the files, %d turned."
+				% [adversaries.size(), informants.size()])
+	if not district_standing.is_empty():
+		var parts: Array[String] = []
+		for settlement: String in district_standing:
+			parts.append("%s %d" % [settlement, int(district_standing[settlement])])
+		lines.append("Standing: %s." % ", ".join(parts))
+	return "\n".join(lines)
+
+
 ## A one-line description of what is on disk, for the menu to print. Empty when
 ## there is nothing to continue.
 func campaign_summary() -> String:
