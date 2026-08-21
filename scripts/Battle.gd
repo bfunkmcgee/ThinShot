@@ -5569,9 +5569,37 @@ func _show_briefing() -> void:
 			Game.operation().name, Game.mission_number(), Game.mission_count()]
 	briefing_title_label.text = str(level.name)
 	briefing_fiction_label.text = str(level.get("fiction", ""))
+	# Dava's notebook, read out where it can still change a decision: the
+	# briefing names the men the campaign expects on this ground. Two lines
+	# at most - the histories live in the notebook and on THE ROLL.
+	if not Game.on_bounty():
+		var expected := _notebook_warnings()
+		if not expected.is_empty():
+			body += "\n\nDAVA'S NOTEBOOK: " + "\n".join(expected)
 	briefing_body_label.text = body
 	briefing_orders_label.text = "ORDERS:  %s" % level.get("orders", "")
 	briefing_panel.visible = true
+
+
+## The men the campaign expects back on this ground, as briefing lines. A
+## warband is announced by the man who gathered it; loose returners are named
+## with where the squad last settled them. Reads the same deterministic lists
+## _schedule_returners reads, so the warning and the arrival can never
+## disagree - and never a turn or a rim, because a notebook holds what a man
+## did, not where he will stand.
+func _notebook_warnings() -> Array[String]:
+	var lines: Array[String] = []
+	var band: Dictionary = Game.warband_for(Game.current_level)
+	if not band.is_empty():
+		var leader: Dictionary = band.get("leader", {})
+		lines.append("%s of %s has been gathering men. Expect the warband."
+				% [str(leader.get("name", "somebody")),
+						str(leader.get("settlement", "out there"))])
+		return lines
+	var coming: Array = Game.adversaries_for(Game.current_level)
+	for rec: Dictionary in coming.slice(0, 2):
+		lines.append("%s. Expect him." % Game.adversary_line(rec))
+	return lines
 
 
 func _dismiss_briefing() -> void:

@@ -112,7 +112,10 @@ That cuts both ways for him. A four-time survivor is very hard to put down for
 good and physically almost nothing: a wretch who will not die rather than a
 boss who cannot be hurt. And the campaign keeps his file — every mission he has
 run from and every one he was left for dead on, under the name he had the first
-time.
+time. **The file is read back where it matters**: when the notebook expects a
+man on the next map, the briefing says so by name — a warband by the man who
+gathered it — and a returner wears his tally on the field, one bone-white
+notch beside his health per time the squad already settled him.
 
 Whether any of it is worth it is the point. Shooting a routing man costs
 Standing; letting him go costs you nothing today and might cost you a flank in
