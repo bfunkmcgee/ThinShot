@@ -119,6 +119,14 @@ Standing; letting him go costs you nothing today and might cost you a flank in
 three missions' time. Finishing a wounded man properly costs you the shot that
 would have done it.
 
+**And Standing shoots back.** A settlement's opinion of the squad decides what
+breaking means for its sons: where the squad is trusted, a broken fighter puts
+his hands up with one rifle fewer on him, and a cornered man is likelier to
+take the offer a bounty hunter makes. Where it is feared, nobody surrenders at
+all — every broken man runs for the rim, because the district has heard what
+happens to the ones who stop. A fresh campaign sits in the middle and the rule
+stays invisible until a reputation has actually been earned.
+
 Seven missions across two operations, on 16×10 isometric maps. It is one story,
 and **the objectives are how it is told** — each mission opens with a briefing
 and closes on a debrief that sets up the next.

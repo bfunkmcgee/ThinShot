@@ -612,18 +612,42 @@ static func never_breaks(kind: int) -> bool:
 ## are brave" - and it was prose with nothing behind it until starting_morale()
 ## made three of its thirteen defenders breakable on the first round. A shipped
 ## claim about how the world works is a rule; this is where it lives.
+## What the district's opinion of the squad is worth at the exact moment a
+## man's nerve fails. Standing never touches morale itself - a fighter's
+## nerve is his own - it decides what breaking MEANS. Where the squad is
+## known to take prisoners and let runners run, surrender is survivable and
+## one gun on him is enough to raise his hands to. Where it is known for
+## shooting the running and finishing the wounded, no sane man stops moving:
+## he breaks to the rim instead, whatever is pointed at him.
+##
+## Expressed as a shift on the guns a surrender needs rather than as a morale
+## term, so the two break outcomes stay exhaustive and mutually exclusive by
+## construction at every standing. The thresholds are deliberately wide of
+## STANDING_START: a fresh campaign sits in the middle band and the rule is
+## invisible until the player has actually built a reputation either way.
+const STANDING_TRUSTED := 70
+const STANDING_FEARED := 30
+
+static func surrender_guns_needed(standing: int) -> int:
+	if standing <= STANDING_FEARED:
+		return 99  # nobody puts his hands up to a squad that shoots them
+	if standing >= STANDING_TRUSTED:
+		return maxi(MORALE_SURRENDER_GUNS - 1, 1)
+	return MORALE_SURRENDER_GUNS
+
+
 static func breaks_to_surrender(kind: int, morale: int, guns: int,
-		holds := false) -> bool:
+		holds := false, standing := STANDING_START) -> bool:
 	if holds or never_breaks(kind) or not is_broken(morale):
 		return false
-	return guns >= MORALE_SURRENDER_GUNS
+	return guns >= surrender_guns_needed(standing)
 
 
 static func breaks_to_rout(kind: int, morale: int, guns: int,
-		holds := false) -> bool:
+		holds := false, standing := STANDING_START) -> bool:
 	if holds or never_breaks(kind) or not is_broken(morale):
 		return false
-	return guns < MORALE_SURRENDER_GUNS
+	return guns < surrender_guns_needed(standing)
 
 
 # --- Breaking as a formation --------------------------------------------------

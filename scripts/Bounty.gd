@@ -394,6 +394,12 @@ const SURRENDER_PER_SURVIVAL := 8
 const SURRENDER_WARBAND := 15
 ## Being already hurt when the offer is made.
 const SURRENDER_WOUNDED := 20
+## His settlement's opinion of the squad, one point per five from neutral -
+## +-10 across the full range. The same reputation that decides what a broken
+## fighter does mid-battle (Rules.surrender_guns_needed) leans on the offer
+## made to a cornered one: a man surrenders to soldiers his town says keep
+## prisoners alive, and not to ones it says do not.
+const SURRENDER_STANDING_DIV := 5
 
 ## Turning him. Harder than a surrender in every case, which is the point: it
 ## is the best outcome and it should be the one that needs a specialist.
@@ -421,13 +427,14 @@ static func question_chance(guile: int, refusals: int) -> int:
 
 ## Whether he puts his weapon down when asked.
 static func surrender_chance(presence: int, survivals: int, warband_up: bool,
-		wounded: bool) -> int:
+		wounded: bool, standing := Rules.STANDING_START) -> int:
 	var pct := SURRENDER_BASE + SURRENDER_PER_PRESENCE * maxi(presence, 0)
 	pct -= SURRENDER_PER_SURVIVAL * maxi(survivals, 0)
 	if warband_up:
 		pct -= SURRENDER_WARBAND
 	if wounded:
 		pct += SURRENDER_WOUNDED
+	pct += (standing - Rules.STANDING_START) / SURRENDER_STANDING_DIV
 	return _clamped(pct)
 
 

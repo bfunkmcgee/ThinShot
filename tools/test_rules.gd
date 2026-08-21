@@ -25,7 +25,8 @@ extends SceneTree
 ##      cell-and-facing form, is scoring what the resolver will apply
 ##      (in tools/check_cover_rules.gd, over all seven shipped maps)
 ##   9. a broken unit surrenders where somebody can take it and runs where
-##      nobody can, and the Marksman does neither
+##      nobody can; the district's opinion moves that line, and the Marksman
+##      does neither at any reputation
 ##  10. a clean kill costs nothing; every other conduct is priced
 ##  11. the grenadier alone puts ordnance further than an arm can throw it,
 ##      and not further than the Thirst's longest weapon can answer
@@ -907,6 +908,26 @@ func _test_morale() -> void:
 	_check(gap.is_empty(),
 			"and every breakable unit that breaks does one of them (%s)"
 			% [gap.slice(0, 3)])
+
+	# Standing decides what breaking MEANS. The trusted squad is surrendered
+	# to a gun earlier; the feared one is never surrendered to at all - and
+	# the two outcomes stay exhaustive and exclusive at every reputation.
+	var trusted: int = int(_k.STANDING_TRUSTED)
+	var feared: int = int(_k.STANDING_FEARED)
+	_check(_rules.call("breaks_to_surrender", smg, brk, guns - 1, false, trusted),
+			"a town that trusts the squad: one gun fewer takes the surrender")
+	_check(_rules.call("breaks_to_rout", smg, brk, 3, false, feared)
+			and not _rules.call("breaks_to_surrender", smg, brk, 3, false, feared),
+			"a town that fears it: three guns on him and he still runs")
+	var standing_overlap := 0
+	for st in [0, feared, feared + 1, 49, 50, trusted - 1, trusted, 100]:
+		for g in 4:
+			var s2: bool = _rules.call("breaks_to_surrender", smg, brk, g, false, st)
+			var r2: bool = _rules.call("breaks_to_rout", smg, brk, g, false, st)
+			if s2 == r2:
+				standing_overlap += 1
+	_check(standing_overlap == 0,
+			"and the pair stays exhaustive-exclusive at every reputation")
 
 	# The kill floor. One class holds, and it is the one the bolt already rooted.
 	_check(_rules.call("never_breaks", bolt),

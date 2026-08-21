@@ -4457,6 +4457,14 @@ func run_enemy_turn() -> void:
 ## The order is deliberate. Pressure is applied first, then the break is tested,
 ## then a unit already running keeps running. A fighter who breaks this turn
 ## does not also get to shoot on the way out.
+## The settlement's opinion of the squad, read off the fighter's identity.
+## A fighter with no settlement on file - or one from ground the squad has
+## never touched - answers with the neutral start, so the rule stays silent
+## until a reputation has actually been earned somewhere.
+func _standing_for(goblin: Unit) -> int:
+	return Game.standing_of(str(goblin.identity.get("settlement", "")))
+
+
 func _resolve_morale(goblin: Unit, index: int, squad_size: int) -> bool:
 	# A unit under a beaten zone erodes. One that had a genuinely quiet turn
 	# steadies. One that was shot at does neither: it holds where the player
@@ -4510,7 +4518,9 @@ func _resolve_morale(goblin: Unit, index: int, squad_size: int) -> bool:
 				% [index, squad_size, recent, still_up, rifles, before, goblin.morale])
 
 	var guns := _guns_on(goblin)
-	if Rules.breaks_to_surrender(goblin.kind, goblin.morale, guns, _fighters_hold()):
+	var standing := _standing_for(goblin)
+	if Rules.breaks_to_surrender(goblin.kind, goblin.morale, guns,
+			_fighters_hold(), standing):
 		goblin.surrender()
 		_record_on_roll(goblin, "surrendered")
 		Sfx.play("overwatch_set", -6.0, 0.0)
@@ -4519,7 +4529,8 @@ func _resolve_morale(goblin: Unit, index: int, squad_size: int) -> bool:
 		_refresh_objectives()
 		check_game_over()
 		return true
-	if Rules.breaks_to_rout(goblin.kind, goblin.morale, guns, _fighters_hold()):
+	if Rules.breaks_to_rout(goblin.kind, goblin.morale, guns,
+			_fighters_hold(), standing):
 		goblin.begin_rout()
 		print("[Sandline]   goblin %d/%d breaks at %s (morale %d, %d guns)" % [
 				index, squad_size, goblin.cell, goblin.morale, guns])
@@ -4882,7 +4893,8 @@ func _try_parley(want: String) -> void:
 	var wounded := target.hp * 2 <= target.max_hp
 	var chance := 0
 	if want == "surrender":
-		chance = Bounty.surrender_chance(presence, target.survivals, band_up, wounded)
+		chance = Bounty.surrender_chance(presence, target.survivals, band_up,
+				wounded, _standing_for(target))
 	else:
 		chance = Bounty.informant_chance(guile, presence, target.survivals,
 				band_up, not str(offer.get("grievance", "")).is_empty())
