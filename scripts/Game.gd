@@ -1633,13 +1633,28 @@ func save() -> void:
 		# v4: who the garrison picked.
 		"deployed_ids": deployed_ids,
 	}
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	# Written to a sibling and renamed into place, never straight over the only
+	# copy. A crash or power cut mid-store_string used to truncate
+	# campaign.json - and the migration ladder is version-shaped, not
+	# corruption-shaped: it cannot help a half-written file. The rename is the
+	# atomic step; worst case now is a stale save plus an orphaned .tmp, never
+	# a lost campaign.
+	var tmp_path := SAVE_PATH + ".tmp"
+	var f := FileAccess.open(tmp_path, FileAccess.WRITE)
 	if f == null:
 		push_error("[Sandline] cannot write %s: %s" % [
-				SAVE_PATH, error_string(FileAccess.get_open_error())])
+				tmp_path, error_string(FileAccess.get_open_error())])
 		return
 	f.store_string(JSON.stringify(payload, "\t"))
 	f.close()
+	var dir := DirAccess.open("user://")
+	if dir == null:
+		push_error("[Sandline] cannot open user:// to finish the save")
+		return
+	var err := dir.rename(tmp_path.get_file(), SAVE_PATH.get_file())
+	if err != OK:
+		push_error("[Sandline] cannot move %s into place: %s"
+				% [tmp_path, error_string(err)])
 
 
 # ---------------------------------------------------------------- migration --
@@ -2012,7 +2027,10 @@ func load_save() -> bool:
 func delete_save() -> void:
 	if not FileAccess.file_exists(SAVE_PATH):
 		return
-	var err := DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
+	# Through user:// directly rather than a globalized absolute path - same
+	# operation, but portable to every platform Godot resolves user:// on.
+	var dir := DirAccess.open("user://")
+	var err := dir.remove(SAVE_PATH.get_file()) if dir != null else FAILED
 	if err != OK:
 		push_error("[Sandline] cannot delete %s: %s" % [SAVE_PATH, error_string(err)])
 
