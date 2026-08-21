@@ -191,6 +191,14 @@ func _test_notebook_screen() -> void:
 	var game: Node = root.get_node("/root/Game")
 	game.notebook = []
 	game.district_standing = {}
+	# Cleared for the same reason the two above are, and it was the one piece of
+	# global state this test forgot: STILL OUT THERE is driven by
+	# Game.adversaries, so without this the "no empty heading" check below is
+	# really asking whether the DEVELOPER'S campaign has ever let anybody escape.
+	# It passes on a fresh machine and fails on any machine that has played the
+	# game, which is the worst way for a test to fail - it looks like whatever
+	# you changed most recently.
+	game.adversaries = []
 	var menu: Node = (load("res://scenes/MainMenu.tscn") as PackedScene).instantiate()
 	root.add_child(menu)
 	await process_frame
