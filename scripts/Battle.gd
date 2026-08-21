@@ -2267,8 +2267,8 @@ func _update_unit_panel() -> void:
 		panel_status_label.text = "PINNED - CANNOT MOVE"
 		panel_status_label.modulate = Unit.SUPPRESSED_COLOR
 		return
-	if unit.mag_size > 0 and unit.ammo == 0:
-		panel_status_label.text = "OUT OF AMMO - RELOAD (R)"
+	if unit.needs_reload():
+		panel_status_label.text = "OUT OF AMMO - RELOAD (R)" if unit.ammo == 0 				else "%d ROUND LEFT - TOO FEW TO FIRE - RELOAD (R)" % unit.ammo
 		panel_status_label.modulate = Color("ff5a3c")
 		return
 	panel_status_label.text = _unit_status(unit)
@@ -2495,7 +2495,10 @@ func _refresh_highlights() -> void:
 		moves = board.flood_fill(selected.cell, selected.move_range,
 				_blocked_for_team.bind(selected.team))
 	var attacks: Array[Vector2i] = []
-	if not selected.acted and selected.has_ammo():
+	# min_rounds, not 1: the gunner's last belt round cannot be aimed at a man
+	# (his lightest trigger is a burst), and painting the tile red used to
+	# promise a shot that then failed without a sound.
+	if not selected.acted and selected.has_ammo(selected.min_rounds()):
 		for enemy in living_units(Unit.TEAM_GOBLIN):
 			if Board.manhattan(selected.cell, enemy.cell) <= selected.attack_range \
 					and board.can_engage(selected.cell, enemy.cell):

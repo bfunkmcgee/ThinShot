@@ -1859,6 +1859,15 @@ func has_ammo(rounds := 1) -> bool:
 	return mag_size == 0 or ammo >= rounds
 
 
+## The fewest rounds this weapon can AIM at somebody. The machinegunner has no
+## semi-automatic setting - his lightest trigger is a two-round burst - so his
+## last belt round can never be fired at a man. It is not a dead round: drum
+## shots and the overwatch reaction genuinely spend single rounds, which is why
+## their gates stay has_ammo() while everything aimed asks for this.
+func min_rounds() -> int:
+	return 1 if can_single_shot() else 2
+
+
 func spend_ammo() -> void:
 	if mag_size > 0:
 		ammo = maxi(ammo - 1, 0)
@@ -1891,8 +1900,11 @@ func rally(bonus: int) -> void:
 
 ## Dry and carrying a magazine, so it cannot shoot until it reloads. Units
 ## with unlimited ammo (mag_size 0) never need one.
+## Below the weapon's own minimum, not merely empty. The distinction is the
+## machinegunner's: at one round he is not out, but nothing he can aim at a
+## man will fire, and every prompt built on this used to stay silent about it.
 func needs_reload() -> bool:
-	return mag_size > 0 and ammo == 0
+	return mag_size > 0 and not has_ammo(min_rounds())
 
 
 ## Lean out around a corner and settle back. Same channel as recoil, so a

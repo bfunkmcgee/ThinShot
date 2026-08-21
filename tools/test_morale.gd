@@ -127,6 +127,7 @@ func _run() -> void:
 	await _test_shock_and_being_outnumbered()
 	await _test_raider_breaks_contact()
 	await _test_warband_lands_together()
+	await _test_gunner_last_round()
 
 	# Moving and surrendering play pooled SFX. Sfx assigns `player.stream` and
 	# never clears it, so whichever player went last is still holding its WAV
@@ -793,3 +794,47 @@ func _test_warband_lands_together() -> void:
 	await _dismiss(battle)
 	game.adversaries = kept_adversaries
 	game.campaign_seed = kept_seed
+
+
+# --- 14. the machinegunner's last round ---------------------------------------
+#
+# His lightest trigger is a two-round burst, so a lone belt round can never be
+# aimed at a man - but the attack overlay used to paint the tile red anyway,
+# and the shot then failed with no sound, no banner, and no prompt. min_rounds
+# is the fix; this drives the real overlay to prove the gate reads it.
+
+func _test_gunner_last_round() -> void:
+	print("
+[14] the gunner's last round cannot be promised to a target")
+	var battle: Node = await _battle(0)
+	var gunner: Node2D = null
+	for u in battle.living_units(TEAM_SCOUT):
+		if not u.can_single_shot():
+			gunner = u
+			break
+	if gunner == null:
+		_check(false, "expected the wash to field the machinegunner")
+		await _dismiss(battle)
+		return
+	var goblin: Node2D = battle.living_units(TEAM_GOBLIN)[0]
+	_place(battle, gunner, goblin.cell + Vector2i(0, 1))
+
+	_check(gunner.min_rounds() == 2 and battle.living_units(TEAM_SCOUT)[0]
+			.min_rounds() <= gunner.min_rounds(),
+			"the gunner needs two where a rifleman needs one")
+	gunner.ammo = 1
+	_check(gunner.needs_reload(),
+			"one round in a two-round weapon reads as needing a reload")
+	battle.select(gunner)
+	_check(not battle.board.attack_cells.has(goblin.cell),
+			"...and the overlay no longer offers the man beside him")
+	# The round is not dead - the single-round spenders keep it.
+	_check(gunner.has_ammo(),
+			"the round itself is still there for overwatch and drums")
+
+	gunner.ammo = 2
+	_check(not gunner.needs_reload(), "two rounds is a working weapon again")
+	battle.select(gunner)
+	_check(battle.board.attack_cells.has(goblin.cell),
+			"...and the overlay offers the shot")
+	await _dismiss(battle)
