@@ -2016,6 +2016,44 @@ func _mode_accuracy(unit: Unit, mode: FireMode) -> int:
 	return mod
 
 
+## The promise from a cell the soldier is not standing on yet. Answered by
+## the same Rules.shot_preview every real shot resolves through - the unit is
+## stood on the candidate cell for the length of one question and put back -
+## so the projected number IS the number he gets standing there, inspiration
+## aura and all. No second spelling of the rule exists to drift.
+##
+## Quoted at the mode he would actually hold after walking: bracing is gone,
+## so a rifleman projects his single shot and the gunner his hip burst.
+func _projected_shot(unit: Unit, from_cell: Vector2i, target: Unit) -> Dictionary:
+	var real := unit.cell
+	unit.cell = from_cell
+	var mode := _default_fire_mode(unit)
+	var shot := Rules.shot_preview(board, unit, target,
+			_mode_accuracy(unit, mode), _inspiration_bonus(unit))
+	unit.cell = real
+	return shot
+
+
+## Best answer the hovered destination offers: the highest-odds target the
+## soldier could engage from there (with how many are in reach at all), or {}
+## when the cell has no shot.
+func _best_projected_shot(unit: Unit, from_cell: Vector2i) -> Dictionary:
+	var best := {}
+	var count := 0
+	for goblin in living_soldiers(Unit.TEAM_GOBLIN):
+		if Board.manhattan(from_cell, goblin.cell) > unit.attack_range \
+				or not board.can_engage(from_cell, goblin.cell):
+			continue
+		count += 1
+		var shot := _projected_shot(unit, from_cell, goblin)
+		if best.is_empty() or int(shot.chance) > int(best.chance):
+			shot["target"] = goblin
+			best = shot
+	if not best.is_empty():
+		best["count"] = count
+	return best
+
+
 func select(unit: Unit) -> void:
 	_clear_aim_mode()
 	if selected != null:
@@ -2276,6 +2314,30 @@ func _update_unit_panel() -> void:
 				shot.chance, shot.dmg, "  " + note if note != "" else ""]
 		panel_status_label.modulate = Color("7ae8ff") if flanking else Color.WHITE
 		return
+	# Hovering ground the soldier could walk to: answer the move before it is
+	# made. The cover half of that answer is already on the board - the cover
+	# overlay previews the hovered destination - and this line is the fire
+	# half: the best shot the cell offers, from the function that will keep
+	# the promise, plus whether a goblin's watch is on the ground itself.
+	if unit == selected and selected != null and hover_cell != Board.NO_CELL \
+			and board.move_dests.has(hover_cell) and _armed(selected):
+		var projected := _best_projected_shot(selected, hover_cell)
+		var line := ""
+		if projected.is_empty():
+			line = "FROM HERE: NO SHOT"
+		else:
+			var mark: Unit = projected.target
+			line = "FROM HERE: %d%% ON %s - %d DMG" % [
+					int(projected.chance), mark.role_name().to_upper(),
+					int(projected.dmg)]
+			if int(projected.count) > 1:
+				line += " (+%d MORE)" % (int(projected.count) - 1)
+		if _hostile_watch_covers(hover_cell):
+			line += " - WATCHED GROUND"
+		panel_status_label.text = line
+		panel_status_label.modulate = Color("ffb84a") \
+				if _hostile_watch_covers(hover_cell) else Color.WHITE
+		return
 	if unit == selected and fire_mode != FireMode.SINGLE:
 		match fire_mode:
 			FireMode.AUTO:
@@ -2482,6 +2544,16 @@ func _refresh_cover() -> void:
 	for team: int in [Unit.TEAM_SCOUT, Unit.TEAM_GOBLIN]:
 		for unit in living_units(team):
 			unit.set_in_cover(_cover_for(unit))
+
+
+## Whether any goblin's held arc covers `cell` - the same sets the amber
+## overlay paints, asked cell-at-a-time for the hover line.
+func _hostile_watch_covers(cell: Vector2i) -> bool:
+	for watcher in living_units(Unit.TEAM_GOBLIN):
+		if watcher.overwatching and watcher.has_ammo() \
+				and _overwatch_cells_for(watcher, watcher.facing_sector).has(cell):
+			return true
+	return false
 
 
 func _refresh_watch_cells() -> void:

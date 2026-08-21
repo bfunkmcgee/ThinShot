@@ -117,6 +117,8 @@ jobs:
           harness test_morale
           harness test_overwatch
           harness test_undo
+          harness test_aiplan
+          harness test_projection
           harness test_menu
           harness test_save_load
           harness test_progression
