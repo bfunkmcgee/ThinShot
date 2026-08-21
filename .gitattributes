@@ -1,0 +1,33 @@
+# One answer to line endings, so git stops asking per-file.
+#
+# The repository has always stored LF (verified: every sampled blob is i/lf);
+# only Windows' core.autocrlf=true was converting working copies to CRLF and
+# warning about it on every touch. Declaring eol=lf here makes the stored form
+# explicit, ends the warnings, and gives every future checkout - including
+# CI's Linux runner - byte-identical text files.
+
+* text=auto
+
+# Everything the project treats as source is LF.
+*.gd text eol=lf
+*.gdshader text eol=lf
+*.tscn text eol=lf
+*.tres text eol=lf
+*.import text eol=lf
+*.godot text eol=lf
+*.cfg text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.py text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.svg text eol=lf
+*.gitignore text eol=lf
+*.gitattributes text eol=lf
+*.gdignore text eol=lf
+
+# Never touch binaries.
+*.png binary
+*.wav binary
+*.ttf binary
+*.zip binary
