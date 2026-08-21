@@ -1,0 +1,148 @@
+# The suite, on every push - so a green sweep is a property of the branch
+# rather than of whichever machine last ran it.
+#
+# Three things worth knowing before editing this file:
+#
+#   1. Every harness prints "RESULT: PASS" or "RESULT: FAIL" and that LINE is
+#      the verdict. Godot's exit codes are not trusted here (the project's own
+#      README says why: a scene can fail to compile and still exit 0), and
+#      test_save_load legitimately logs a handful of SCRIPT ERRORs on its way
+#      to PASS - it feeds the loader hostile files on purpose - so grepping
+#      for script errors would false-fail it. Boot smokes are the opposite:
+#      they have no RESULT line, so for them SCRIPT ERROR is the failure.
+#
+#   2. The import step matters. A fresh checkout has no .godot/imported, and
+#      the harnesses load real textures; without --import first, every load()
+#      fails. The imported cache is keyed on the .import sidecars, so pushes
+#      that touch no art skip the multi-minute reimport of 9,000+ PNGs.
+#
+#   3. Failures upload the full logs as an artifact. The step summary carries
+#      the verdict table; the logs carry the why.
+
+name: tests
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: "4.7"
+
+jobs:
+  suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache the Godot binary
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/godot-bin
+          key: godot-${{ env.GODOT_VERSION }}-stable-linux-x86_64
+
+      - name: Install Godot ${{ env.GODOT_VERSION }}
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot-bin
+          curl -fsSL -o /tmp/godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot-bin
+          mv ~/godot-bin/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot-bin/godot
+          chmod +x ~/godot-bin/godot
+
+      - name: Cache imported assets
+        uses: actions/cache@v4
+        with:
+          path: .godot/imported
+          key: imported-${{ env.GODOT_VERSION }}-${{ hashFiles('**/*.import', 'project.godot') }}
+          restore-keys: |
+            imported-${{ env.GODOT_VERSION }}-
+
+      - name: Import resources
+        run: |
+          ~/godot-bin/godot --headless --path . --import 2>&1 | tail -n 5
+
+      - name: Run the suite
+        run: |
+          set -u
+          GODOT=~/godot-bin/godot
+          mkdir -p ci-logs
+          failed=0
+
+          harness() {
+            local name="$1"; shift
+            "$GODOT" --headless --path . -s "tools/${name}.gd" "$@" \
+              > "ci-logs/${name}.log" 2>&1 || true
+            if grep -q "RESULT: PASS" "ci-logs/${name}.log"; then
+              echo "| ${name} | PASS |" >> "$GITHUB_STEP_SUMMARY"
+              echo "ok    ${name}"
+            else
+              echo "| ${name} | **FAIL** |" >> "$GITHUB_STEP_SUMMARY"
+              echo "FAIL  ${name}"
+              tail -n 40 "ci-logs/${name}.log"
+              failed=1
+            fi
+          }
+
+          boot() {
+            local name="$1"; shift
+            # --quit-after is an ENGINE flag and must precede the scene and any
+            # `--` user-arg separator - placed after them it becomes a user arg,
+            # the engine never quits, and the job hangs to its timeout.
+            "$GODOT" --headless --path . --quit-after 200 "$@" \
+              > "ci-logs/boot-${name}.log" 2>&1 || true
+            if grep -q "SCRIPT ERROR" "ci-logs/boot-${name}.log"; then
+              echo "| boot: ${name} | **FAIL** |" >> "$GITHUB_STEP_SUMMARY"
+              echo "FAIL  boot ${name}"
+              grep -A 4 "SCRIPT ERROR" "ci-logs/boot-${name}.log" | head -n 30
+              failed=1
+            else
+              echo "| boot: ${name} | PASS |" >> "$GITHUB_STEP_SUMMARY"
+              echo "ok    boot ${name}"
+            fi
+          }
+
+          echo "## Sandline suite" >> "$GITHUB_STEP_SUMMARY"
+          echo "| check | result |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+
+          harness test_rules
+          harness test_roll
+          harness test_morale
+          harness test_overwatch
+          harness test_menu
+          harness test_save_load
+          harness test_progression
+          harness test_hero_gameover
+          harness test_returners
+          harness test_bounty
+          harness test_occlusion
+          harness check_level -- --all
+          harness check_briefing_fit
+          harness check_cover_rules
+          harness check_tile_catalog
+          harness check_floor_sheets
+          harness check_unit_art
+          harness check_prop_tables
+
+          boot menu
+          boot camp res://scenes/Camp.tscn
+          boot camp-field res://scenes/Camp.tscn -- --field
+          boot battle res://scenes/Battle.tscn
+          boot battle-l2 res://scenes/Battle.tscn -- --level 2
+
+          exit $failed
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-logs
+          path: ci-logs/
+          retention-days: 14
