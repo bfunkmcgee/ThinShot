@@ -130,7 +130,7 @@ all — every broken man runs for the rim, because the district has heard what
 happens to the ones who stop. A fresh campaign sits in the middle and the rule
 stays invisible until a reputation has actually been earned.
 
-Seven missions across two operations, on 16×10 isometric maps. It is one story,
+Nine missions across three operations, on 16×10 isometric maps. It is one story,
 and **the objectives are how it is told** — each mission opens with a briefing
 and closes on a debrief that sets up the next.
 
@@ -176,6 +176,27 @@ and where it went.
    nothing; this is the one time the killing is the point, and the man who
    made it so is not among the bodies.
 
+### Operation Burnt Survey
+
+The reading is ended and the man who kept it is not among the bodies. Follow
+him out through the country the Thirst burned behind itself — the epilogue
+operation, fought on ash.
+
+8. **The Cinder Road** — he went west with a rearguard and more supply than a
+   running man needs, through country with nothing left to live on. **Burn his
+   three supply drops** where the fire line stalled — and while they stand,
+   his rearguard keeps being fed off the road, so the supply is the tap and
+   burning it is what shuts the reinforcements off. The drops turn out to hold
+   map cases and well surveys, not food: he is carrying the reading out of the
+   campaign, and he has one man left worth guarding.
+9. **The Cold Well** — the last well on the survey, capped eleven years ago,
+   with the last surveyor held at the wellhead and **wire around both**. One
+   gate in the wire, his marksman rooted on it. **Reach the surveyor, then
+   walk him out** — the extraction zone is the west edge the squad started
+   from, and it does not open until the man they came for is aboard. The
+   Surveyor himself is, again, not among the bodies; the notebook keeps the
+   rest.
+
 Which is why each map asks for something different:
 
 1. **Dry Wash** — open skirmish. Kill every goblin. The teaching level.
@@ -211,8 +232,8 @@ Which is why each map asks for something different:
    which makes the walk home a problem of tempo rather than of covering fire.
 
 The Thirst gets heavier as you go — 9 goblins on Dry Wash, 13 in the bowl at
-the end — but so does your squad, and by the second operation your veterans
-have specialties.
+the survey camp — but so does your squad, and by the second operation your
+veterans have specialties.
 
 Kestrel Squad is elite — tougher, faster, longer-ranged — but the Thirst has
 numbers, holds the ground, and is fighting where it lives.

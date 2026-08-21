@@ -608,6 +608,116 @@ const LEVELS: Array[Dictionary] = [
 		"shade_seed": 34,
 		"zone_thresholds": [-0.05, 0.30],
 	},
+	{
+		# The epilogue road. Burnt country in depth - wall stubs where the
+		# hamlet stood, drums the fire never found - with his three supply
+		# drops strung along the road line, corner to corner, so no one
+		# position covers two of them. The rearguard holds the middle ground
+		# and keeps being fed from the east while the drops stand: the
+		# pressure table is the mission's argument, and burning the supply is
+		# what shuts it off.
+		"name": "THE CINDER ROAD",
+		"fiction": "The country west of the survey camp, burned by the Thirst as it broke up. The road through it is the only thing the fire could not take.",
+		"briefing": "The bowl is cleared and the reading is ended, and the man who kept them together is not among the bodies.\n\nHe went west on the old survey road, with a rearguard and more supply than a running man needs. The country he is crossing is the country the Thirst burned behind itself, so there is nothing out there to live on but what he carries.\n\nBurn what he dropped along the cinder road, and he arrives at the end of it with nothing.",
+		"orders": "BURN HIS SUPPLY DROPS",
+		"debrief": "Three drops, burned where the fire line stalled.\n\nWhat was in them was not food. Map cases, instrument crates, a folio of well surveys under Crown stamps - he is not running from the campaign, he is carrying the reading out of it.\n\nAnd the rearguard fought for the crates, not for the road. He has one man left worth guarding and one place left to read. The cold well, at the end of the survey. Go and get the last surveyor back.",
+		"size": Vector2i(16, 10),
+		"map": [
+			"..p....#.....j..",
+			".....j....W...s.",
+			"..j...W...W..j..",
+			".p...jW....d....",
+			".......s..W....j",
+			"...j...W......d.",
+			"......jW...W....",
+			".j.....W..sW.j..",
+			"....j...W....j..",
+			".p....#.....j...",
+		],
+		"scout_spawns": [Vector2i(1, 2), Vector2i(2, 7), Vector2i(2, 4)],
+		"lead_spawns": [Vector2i(0, 4)],
+		"gunner_spawns": [Vector2i(1, 5)],
+		"goblin_spawns": [Vector2i(10, 3), Vector2i(9, 6), Vector2i(12, 7)],
+		"smg_spawns": [Vector2i(13, 4), Vector2i(12, 5)],
+		"novice_spawns": [Vector2i(14, 2), Vector2i(12, 2), Vector2i(12, 8)],
+		"bolt_spawns": [Vector2i(15, 5)],
+		"structures": [],
+		"objectives": [
+			{
+				"kind": "destroy",
+				"label": "BURN THE SUPPLY DROPS",
+				"prop": "crates",
+				"cells": [Vector2i(12, 3), Vector2i(13, 6), Vector2i(11, 8)],
+			},
+		],
+		# While his supply stands, the rearguard keeps being fed off the road
+		# east - the drops are what they are here to hold, so burning the
+		# drops is what ends the feeding. Conscripts and a runner: he is
+		# spending what he has least need of to keep what he cannot replace.
+		"pressure": {
+			"while_objective": 0,
+			"first_turn": 3,
+			"every": 3,
+			"edge": "east",
+			"units": [[6], [4], [6, 6]],
+			"banner": "HIS REARGUARD KEEPS COMING",
+		},
+		"floor": "ash",
+		"zone_seed": 41,
+		"shade_seed": 12,
+		"zone_thresholds": [-0.05, 0.30],
+	},
+	{
+		# The end of the survey. A full wire fence north to south with one
+		# gate, his marksman rooted on the gate lane behind the one wall that
+		# breaks it, and the capped well in the rock on the far side with the
+		# last surveyor beside it. Reaching him is the rescue; the walk home
+		# is the mission - the extraction zone is the west edge the squad
+		# started from, and it does not open until the surveyor is aboard.
+		"name": "THE COLD WELL",
+		"fiction": "The last well on the survey, capped eleven years ago. The one man who can still read the district's water is being made to read it here.",
+		"briefing": "The well was capped in the first survey, and it was capped because it was worth capping: the aquifer under it feeds every line on the maps the Assembly lost.\n\nHe has the last surveyor at the wellhead, and wire around both. When the reading is done he will not need the man any more, and nothing in his file says he keeps what he does not need.\n\nOne gate in the wire. His marksman is on it. Go through, reach the surveyor, and walk him home.",
+		"orders": "REACH THE SURVEYOR, THEN WALK HIM OUT",
+		"debrief": "The surveyor is out, and the maps in his head are out with him.\n\nThe man who held him is not among the bodies. He was not among them at the survey camp either, and the file the campaign keeps on him reads like the files it keeps on the ones who will not die: seen twice, settled never.\n\nThe district has its water on paper again. The Accord has its questions. The squad goes home by the burnt road, and whatever walks out of the ash behind it is somebody else's war.\n\nThe notebook keeps the rest.",
+		"size": Vector2i(16, 10),
+		"map": [
+			"..p....#=...j...",
+			".....j..=.W..s..",
+			"..j.....=..#....",
+			".p..j...=..##...",
+			"..j..W..=...#...",
+			"...W.........#.s",
+			"......jW=..s....",
+			".j......=W...j..",
+			"....j...=..W.j..",
+			".p...#..=....j..",
+		],
+		"scout_spawns": [Vector2i(1, 2), Vector2i(2, 7), Vector2i(1, 8)],
+		"lead_spawns": [Vector2i(0, 4)],
+		"gunner_spawns": [Vector2i(0, 5)],
+		"goblin_spawns": [Vector2i(10, 2), Vector2i(13, 6), Vector2i(10, 8)],
+		"smg_spawns": [Vector2i(13, 2), Vector2i(12, 7)],
+		"novice_spawns": [Vector2i(9, 5), Vector2i(10, 4), Vector2i(12, 8)],
+		"bolt_spawns": [Vector2i(12, 5)],
+		"prisoner_spawns": [Vector2i(13, 4)],
+		"structures": [],
+		"objectives": [
+			{"kind": "rescue", "label": "REACH THE SURVEYOR"},
+			{
+				"kind": "extract",
+				"label": "WALK HIM OUT",
+				# Six cells: five Kestrels and the man they came for.
+				"cells": [
+					Vector2i(0, 2), Vector2i(0, 3), Vector2i(0, 4),
+					Vector2i(0, 5), Vector2i(0, 6), Vector2i(0, 7),
+				],
+			},
+		],
+		"floor": "ash",
+		"zone_seed": 58,
+		"shade_seed": 21,
+		"zone_thresholds": [0.0, 0.32],
+	},
 ]
 
 ## The operations the campaign is made of. `missions` are indices into LEVELS,
@@ -632,6 +742,15 @@ const OPERATIONS: Array[Dictionary] = [
 		# gathering, because the water the column was hauling only makes sense
 		# once you find who it was being hauled to.
 		"missions": [3, 4, 5, 6],
+	},
+	{
+		"name": "OPERATION BURNT SURVEY",
+		# The epilogue is fought out on the ash, which finally gives the third
+		# tilesheet an operation of its own - the field camp between the two
+		# missions stands on burnt ground.
+		"biome": "ash",
+		"summary": "The reading is ended and the man who kept it is not among the bodies. Follow him out through the country the Thirst burned behind itself.",
+		"missions": [7, 8],
 	},
 ]
 
