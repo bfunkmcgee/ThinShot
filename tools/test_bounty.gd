@@ -387,7 +387,19 @@ func _test_the_whole_mission() -> void:
 	game.award_stat(int(staged.hunter.id), "presence", 9)
 	var standing_before: int = game.standing_of(str(staged.offer.settlement))
 	var strain_before: int = game.alliance_strain
-	await battle._try_parley("informant")
+	# Driven through the BUTTON, not the function. The informant ending shipped
+	# reachable only from this file - no key, no button ever called it in play -
+	# and a test that dials the function directly would keep certifying exactly
+	# that gap. The panel refresh is what shows the buttons; press what a player
+	# would press.
+	battle._update_unit_panel()
+	_check(battle.informant_button.visible,
+			"with the man in reach, the deal is on screen")
+	_check(battle.parley_button.visible
+			and battle.parley_button.text.begins_with("Demand"),
+			"...beside the surrender demand")
+	battle.informant_button.pressed.emit()
+	await process_frame
 	_check(battle.bounty_outcome == "informant", "he takes the other offer")
 	_check(battle.bounty_target.surrendered,
 			"...and stops being something to shoot")

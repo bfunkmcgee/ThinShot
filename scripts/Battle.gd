@@ -434,6 +434,12 @@ var _occlusion_watch := Vector2.ZERO
 @onready var smoke_button: Button = $UI/SmokeButton
 @onready var ability_1_button: Button = $UI/Ability1Button
 @onready var ability_2_button: Button = $UI/Ability2Button
+## The bounty conversation, on buttons as well as on Z. The informant button is
+## the whole reason these exist: the third ending was implemented, tested, and
+## reachable by NOTHING in play - Z offered only question/surrender, so the
+## mission's stated three-way choice was a two-way choice with a test.
+@onready var parley_button: Button = $UI/ParleyButton
+@onready var informant_button: Button = $UI/InformantButton
 @onready var unit_panel: PanelContainer = $UI/UnitPanel
 @onready var panel_name_label: Label = $UI/UnitPanel/Margin/Rows/NameLabel
 @onready var panel_progress_label: Label = $UI/UnitPanel/Margin/Rows/ProgressLabel
@@ -588,6 +594,8 @@ func _finish_setup() -> void:
 	smoke_button.toggled.connect(_on_aim_button_toggled.bind(AimMode.THROW_SMOKE))
 	ability_1_button.pressed.connect(_use_ability.bind(0))
 	ability_2_button.pressed.connect(_use_ability.bind(1))
+	parley_button.pressed.connect(_on_parley_pressed)
+	informant_button.pressed.connect(_try_parley.bind("informant"))
 	# Grenadier: a gunner packing them puts one more frag in the squad's pool.
 	# Once, not per holder - the blurb promises "one more", and the pool is
 	# squad ordnance rather than anybody's webbing.
@@ -780,7 +788,8 @@ func _build_hud() -> void:
 	hud.battle = self
 	ui.add_child(hud)
 	ui.move_child(hud, 0)
-	hud.adopt([ability_1_button, ability_2_button, face_button, reload_button,
+	hud.adopt([ability_1_button, ability_2_button, parley_button,
+			informant_button, face_button, reload_button,
 			burst_button, auto_button, suppress_button, frag_button,
 			smoke_button, demolish_button, overwatch_button, danger_button,
 			end_turn_button], unit_panel, turn_banner)
@@ -2116,8 +2125,10 @@ func _cycle_unit() -> void:
 ## Bottom-left stat readout: hovered unit wins over the selected one.
 func _update_unit_panel() -> void:
 	# Every state change that could move an ability's usability funnels
-	# through here already, so the two buttons ride along.
+	# through here already, so the two buttons ride along - and the bounty
+	# conversation's pair with them, since reach changes on the same events.
 	_refresh_ability_buttons()
+	_refresh_parley_buttons()
 	var unit := unit_at(hover_cell) if hover_cell != Board.NO_CELL else null
 	if unit == null:
 		unit = selected
@@ -2903,6 +2914,47 @@ func _refresh_ability_buttons() -> void:
 				or (perk == "field_dressing" and selected.field_dressing_used)
 		buttons[i].text = str(ACTIVE_LABELS[perk]) + (" (spent)" if spent else "")
 		buttons[i].disabled = not _can_use_active(selected, perk)
+
+
+## The bounty conversation's buttons, refreshed on the same funnel the ability
+## buttons ride (_update_unit_panel). Three states:
+##   somebody unasked in reach  -> "Ask (Z)"
+##   the posted man in reach    -> "Demand Surrender (Z)" + "Offer Deal"
+##   neither                    -> hidden
+## The reach helpers already answer false once the bounty is settled or before
+## the man is found, so the buttons cannot outlive the conversation.
+func _refresh_parley_buttons() -> void:
+	if not Game.on_bounty() or state != State.PLAYER_TURN:
+		parley_button.visible = false
+		informant_button.visible = false
+		return
+	var resident := _resident_in_reach()
+	var target := _target_in_reach()
+	# The enemy-turn lock sets .disabled the way it does for every button; the
+	# ability buttons un-stick themselves in their own refresh, so this pair
+	# does the same rather than relying on the blanket re-enable block.
+	parley_button.disabled = false
+	informant_button.disabled = false
+	informant_button.visible = target != null
+	if target != null:
+		parley_button.visible = true
+		parley_button.text = "Demand Surrender (Z)"
+	elif resident != null:
+		parley_button.visible = true
+		parley_button.text = "Ask (Z)"
+	else:
+		parley_button.visible = false
+
+
+## The button mirrors Z exactly: ask if somebody is there to ask, else put the
+## surrender demand to the man himself.
+func _on_parley_pressed() -> void:
+	if state != State.PLAYER_TURN:
+		return
+	if _resident_in_reach() != null:
+		_try_question()
+	elif _target_in_reach() != null:
+		_try_parley("surrender")
 
 
 ## Q (slot 0) / T (slot 1), and the two buttons: dispatch to whichever active
@@ -4020,6 +4072,8 @@ func end_player_turn() -> void:
 	smoke_button.disabled = true
 	ability_1_button.disabled = true
 	ability_2_button.disabled = true
+	parley_button.disabled = true
+	informant_button.disabled = true
 	# The ones who ran, walking back on. Deliberately here and not a line
 	# later: run_enemy_turn() snapshots its squad on its first statement, so a
 	# body added after this point would stand still for a turn before noticing

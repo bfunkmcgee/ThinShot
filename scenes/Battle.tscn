@@ -66,6 +66,34 @@ focus_mode = 0
 theme_override_font_sizes/font_size = 20
 text = "Ability (T)"
 
+[node name="ParleyButton" type="Button" parent="UI"]
+visible = false
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -655.0
+offset_top = -267.0
+offset_right = -513.0
+offset_bottom = -195.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+text = "Ask (Z)"
+
+[node name="InformantButton" type="Button" parent="UI"]
+visible = false
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -498.0
+offset_top = -267.0
+offset_right = -356.0
+offset_bottom = -195.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+text = "Offer Deal"
+
 [node name="DemolishButton" type="Button" parent="UI"]
 anchor_left = 1.0
 anchor_top = 1.0
