@@ -241,6 +241,12 @@ const MOVE_STEP_TIME := 0.16
 const TRACER_TIME := 0.09
 const AI_BEAT := 0.12
 const ACT_LEAD_IN := 0.15  # pause after marking a goblin, before it acts
+# What a candidate destination pays for walking into a live overwatch arc,
+# per watcher whose cone the path would cross. Sized to lose to having a shot
+# at all (-1000) but to dominate distance ties and cover terms - so a goblin
+# routes around a covered lane when a clean way exists, and still crosses when
+# crossing is the only way to fight.
+const AI_WATCHED_LANE := 120
 const SWAY_SPEED := 1.6      # radians/sec of the plant sway cycle
 const SWAY_TEXELS := 1.0     # sprite texels a plant leans at full sway
 # The to-hit arithmetic lives on Rules now, and the numbers it reads went with
@@ -4449,6 +4455,13 @@ func _best_ai_dest(goblin: Unit, reach: Dictionary, scouts: Array[Unit],
 	# not occupied; standing still is always an option.
 	var candidates: Array = _free_dests(reach).keys()
 	candidates.append(goblin.cell)
+	# The arcs held against this mover, one cell-set per watcher - the same
+	# gate _overwatchers_against applies when a step actually triggers, so the
+	# route planner and the reaction can never disagree about what is covered.
+	var watch_sets: Array[Dictionary] = []
+	for watcher in living_units(_enemy_team_of(goblin)):
+		if watcher.overwatching and watcher.has_ammo() and watcher.is_combatant():
+			watch_sets.append(_overwatch_cells_for(watcher, watcher.facing_sector))
 	var best := Vector2i(-1, -1)
 	var best_score := 999999
 	for cell: Vector2i in candidates:
@@ -4471,6 +4484,16 @@ func _best_ai_dest(goblin: Unit, reach: Dictionary, scouts: Array[Unit],
 		var end_facing := end_sector if end_sector >= 0 else goblin.facing_sector
 		var score := Board.manhattan(cell, chase_cell)
 		score += exposure_weight * _exposure_at(cell, end_facing, goblin.arc_half, scouts)
+		# A reaction is drawn on the first watched cell entered, so the honest
+		# cost is per watcher engaged along the walk, not per tile inside the
+		# cone. Standing still triggers nothing and costs nothing.
+		if not watch_sets.is_empty() and cell != goblin.cell:
+			var walk := board.reconstruct_path(reach, cell)
+			for watched: Dictionary in watch_sets:
+				for step: Vector2i in walk:
+					if watched.has(step):
+						score += AI_WATCHED_LANE
+						break
 		if mark != null:
 			score -= 1000
 			# A clean firing position beats one where the target is dug in. The

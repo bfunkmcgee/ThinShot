@@ -136,6 +136,7 @@ func _run() -> void:
 	await _test_miss_does_not()
 	await _test_symmetry_and_reset()
 	await _test_through_the_turn_loop()
+	await _test_ai_routes_around()
 	_restore()
 	print("\nRESULT: ", "FAIL" if _failed else "PASS")
 	quit(1 if _failed else 0)
@@ -277,4 +278,79 @@ func _test_through_the_turn_loop() -> void:
 	_check(scout.hp == 40,
 			"and never fired - the soldier is untouched at %d hp" % scout.hp)
 	_check(not scout.overwatching, "the soldier's reaction was spent")
+	await _dismiss(battle)
+
+
+# --- 5. the route planner respects a held arc --------------------------------
+
+## _best_ai_dest charges a candidate destination for every watcher whose cone
+## its actual walk would cross - the same reconstruct_path do_move will walk,
+## so the planner and the reaction can never disagree. Two properties matter:
+## the goblin routes around the cone when a clean advance exists, and it never
+## stalls just because ground is being watched.
+func _test_ai_routes_around() -> void:
+	print("\n[5] the AI walks around a watched lane when a clean way exists")
+	var battle: Node = await _battle(0)
+	var lane := _find_lane(battle, 9)
+	_check(not lane.is_empty(), "found a nine-cell lane with a watch post")
+	if lane.is_empty():
+		await _dismiss(battle)
+		return
+
+	var soldiers: Array = battle.living_soldiers(TEAM_SCOUT)
+	var watcher: Node2D = soldiers[0]
+	var bait: Node2D = soldiers[1]
+	var goblin: Node2D = battle.living_units(TEAM_GOBLIN)[0]
+	_clear_board_except(battle, [watcher, bait, goblin])
+	_place(battle, goblin, lane.start)
+	_place(battle, watcher, lane.watch)
+	_place(battle, bait, lane.dest)
+	watcher.set_facing_sector(Board.sector_from_to(lane.watch, lane.mid))
+	watcher.attack_range = 2  # a short cone, so the map still offers a way around
+	watcher.set_overwatch(true)
+	goblin.hp = 4             # healthy - exposure stays a tie-breaker
+	goblin.move_range = 4
+	goblin.attack_range = 3   # the bait sits 8 out: no shot from anywhere reachable
+
+	# The scorer is handed only the bait as a target, so a shot on the watcher
+	# cannot outbid the property under test - the cone still comes from the
+	# watcher, because _best_ai_dest reads the board for arcs itself.
+	var scouts: Array = battle.living_soldiers(TEAM_SCOUT).slice(1, 2)
+	var watched: Dictionary = battle._overwatch_cells_for(watcher, watcher.facing_sector)
+	var reach: Dictionary = battle.board.flood_fill(goblin.cell, goblin.move_range,
+			battle._blocked_for_team.bind(goblin.team))
+
+	# The map has to actually offer a choice, or the clean-walk check below is
+	# vacuous. Counted with the very same path logic the scorer uses.
+	var clean_advances := 0
+	for cell: Vector2i in battle._free_dests(reach):
+		if Board.manhattan(cell, bait.cell) >= Board.manhattan(goblin.cell, bait.cell):
+			continue
+		var clean := true
+		for step: Vector2i in battle.board.reconstruct_path(reach, cell):
+			if watched.has(step):
+				clean = false
+				break
+		if clean:
+			clean_advances += 1
+	_check(clean_advances > 0,
+			"a clean advancing route exists (%d found)" % clean_advances)
+
+	var dest: Vector2i = battle._best_ai_dest(goblin, reach, scouts, bait.cell)
+	_check(dest != goblin.cell,
+			"the goblin still advances (%s -> %s)" % [goblin.cell, dest])
+	_check(Board.manhattan(dest, bait.cell) < Board.manhattan(goblin.cell, bait.cell),
+			"and closes on the chase target")
+	var crossed := false
+	for step: Vector2i in battle.board.reconstruct_path(reach, dest):
+		if watched.has(step):
+			crossed = true
+			break
+	_check(not crossed, "without walking through the watched cone")
+
+	# Watch down, same ground: the direct route is back on the table.
+	watcher.set_overwatch(false)
+	var direct: Vector2i = battle._best_ai_dest(goblin, reach, scouts, bait.cell)
+	_check(Board.manhattan(direct, bait.cell) <= Board.manhattan(dest, bait.cell),
+			"with the watch down the route is at least as direct")
 	await _dismiss(battle)
