@@ -402,6 +402,11 @@ campaign and playing again starts you with five fresh recruits.
 - **E** or the **End Turn** button — end your turn
 - **1 / 2 / 3** — jump to a level (also buttons on the result screen)
 - A stat panel (bottom-left) shows the hovered or selected unit
+- **Settings**, on the main menu: master volume, screen shake, hit-stop,
+  whether the danger overlay starts each battle on, and a high-contrast
+  option that turns the friendly overwatch arcs blue for color vision the
+  green/amber pairing does not serve. Kept in `user://settings.json`, apart
+  from the campaign.
 
 ## Rules
 

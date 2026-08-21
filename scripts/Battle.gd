@@ -509,6 +509,11 @@ func _ready() -> void:
 	Levels.validate_all()  # push_error-based, so it reports in release too
 	_apply_cmdline_overrides()
 	level = Game.data()
+	# The install's preferences, applied before anything draws: the danger
+	# overlay's opening state and the friendly-arc palette are both the
+	# player's call now, not the code's.
+	danger_on = bool(Game.setting("danger_default"))
+	board.high_contrast = bool(Game.setting("high_contrast"))
 	# Bring the squad up to strength (replacing anyone lost) and snapshot it,
 	# so a failed mission can be rolled back wholesale.
 	Game.ensure_roster(level)
@@ -5701,6 +5706,8 @@ func _sway_plants() -> void:
 
 
 func _screen_shake(strength := 1.0) -> void:
+	if not bool(Game.setting("screen_shake")):
+		return
 	if _shake_tween != null and _shake_tween.is_valid():
 		_shake_tween.kill()
 	var gain := strength / maxf(base_zoom.x, 0.01)
@@ -5712,6 +5719,8 @@ func _screen_shake(strength := 1.0) -> void:
 ## A snap away from the shot direction that eases back - the camera reacts to
 ## where the round went instead of doing the same wiggle every time.
 func _camera_kick(dir: Vector2) -> void:
+	if not bool(Game.setting("screen_shake")):
+		return
 	if _kick_tween != null and _kick_tween.is_valid():
 		_kick_tween.kill()
 	_cam_lean = -dir * 5.0 / maxf(base_zoom.x, 0.01)
@@ -5727,6 +5736,8 @@ func _camera_kick(dir: Vector2) -> void:
 ## Every caller must await this - that serialization is what keeps overlapping
 ## hit-stops from stacking.
 func _hit_stop(scale: float, real_seconds: float) -> void:
+	if not bool(Game.setting("hit_stop")):
+		return
 	Engine.time_scale = scale
 	var timer := get_tree().create_timer(real_seconds, true, false, true)
 	timer.timeout.connect(Engine.set_time_scale.bind(1.0))

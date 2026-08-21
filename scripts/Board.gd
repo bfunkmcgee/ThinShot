@@ -297,6 +297,14 @@ const WATCH_FILL := Color(1.0, 0.72, 0.28, 0.10)
 const WATCH_HATCH := Color(1.0, 0.72, 0.28, 0.26)
 const WATCH_FILL_ALLY := Color(0.45, 0.92, 0.5, 0.10)
 const WATCH_HATCH_ALLY := Color(0.5, 0.95, 0.55, 0.26)
+# The high-contrast alternates cover the one pairing that leans on red-green
+# telling: friendly arcs go BLUE instead of green, so hostile amber and your
+# own covered ground read apart by hue family under every kind of color
+# vision. Everything else on the board already separates by lightness.
+const WATCH_FILL_ALLY_HC := Color(0.35, 0.62, 1.0, 0.12)
+const WATCH_HATCH_ALLY_HC := Color(0.42, 0.68, 1.0, 0.30)
+# Set from the settings by Battle; a bare Board (tests, the camp) keeps green.
+var high_contrast := false
 
 const NO_CELL := Vector2i(-1, -1)
 
@@ -1271,8 +1279,10 @@ func _draw() -> void:
 	for cell: Vector2i in watch_cells:
 		var hostile: bool = watch_cells[cell]
 		var w := _diamond(cell)
-		draw_colored_polygon(w, WATCH_FILL if hostile else WATCH_FILL_ALLY)
-		var hatch := WATCH_HATCH if hostile else WATCH_HATCH_ALLY
+		var ally_fill := WATCH_FILL_ALLY_HC if high_contrast else WATCH_FILL_ALLY
+		draw_colored_polygon(w, WATCH_FILL if hostile else ally_fill)
+		var hatch := WATCH_HATCH if hostile \
+				else (WATCH_HATCH_ALLY_HC if high_contrast else WATCH_HATCH_ALLY)
 		for f in [0.3, 0.6]:
 			draw_line(w[3].lerp(w[0], f), w[2].lerp(w[1], f), hatch, 1.0, true)
 	for cell: Vector2i in move_dests:

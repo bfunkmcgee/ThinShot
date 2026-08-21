@@ -442,7 +442,69 @@ const ROSTER_STRENGTH := {
 }
 
 
+# ---------------------------------------------------------------- settings --
+# Player preferences, apart from the campaign on purpose: they describe the
+# install, not the war, so they live in their own file with no version ladder
+# - a missing or mangled key falls back to its default and the next write
+# repairs the file. Volume is applied at the audio bus so one number covers
+# every sound the game will ever make.
+const SETTINGS_PATH := "user://settings.json"
+const SETTINGS_DEFAULTS := {
+	"volume": 100,          # master bus, percent
+	"screen_shake": true,   # camera shake and kicks
+	"hit_stop": true,       # the sub-second slow-motion on a landed hit
+	"danger_default": true, # the danger overlay starts each battle on
+	"high_contrast": false, # colorblind-safe friendly-arc alternates
+}
+var settings: Dictionary = SETTINGS_DEFAULTS.duplicate()
+
+
+func setting(name: String) -> Variant:
+	return settings.get(name, SETTINGS_DEFAULTS.get(name))
+
+
+func set_setting(name: String, value: Variant) -> void:
+	if not SETTINGS_DEFAULTS.has(name):
+		push_error("[Sandline] no such setting: %s" % name)
+		return
+	settings[name] = value
+	if name == "volume":
+		_apply_volume()
+	save_settings()
+
+
+func _apply_volume() -> void:
+	var linear := clampf(int(setting("volume")) / 100.0, 0.0, 1.0)
+	AudioServer.set_bus_volume_db(0, linear_to_db(linear))
+
+
+func load_settings() -> void:
+	if FileAccess.file_exists(SETTINGS_PATH):
+		var raw := FileAccess.open(SETTINGS_PATH, FileAccess.READ).get_as_text()
+		var parsed: Variant = JSON.parse_string(raw)
+		if typeof(parsed) == TYPE_DICTIONARY:
+			for key: String in SETTINGS_DEFAULTS:
+				if (parsed as Dictionary).has(key):
+					# Coerced per key: JSON round-trips ints as floats, and a
+					# hand-edited file should degrade to defaults, not crash.
+					if typeof(SETTINGS_DEFAULTS[key]) == TYPE_BOOL:
+						settings[key] = bool(parsed[key])
+					else:
+						settings[key] = int(parsed[key])
+	_apply_volume()
+
+
+func save_settings() -> void:
+	var file := FileAccess.open(SETTINGS_PATH, FileAccess.WRITE)
+	if file == null:
+		push_error("[Sandline] cannot write %s" % SETTINGS_PATH)
+		return
+	file.store_string(JSON.stringify(settings, "\t"))
+	file.close()
+
+
 func _ready() -> void:
+	load_settings()
 	_rng.randomize()
 	load_save()
 	# A campaign that has never been saved has no identity yet. load_save() mints

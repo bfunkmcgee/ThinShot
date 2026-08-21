@@ -28,6 +28,12 @@ extends Control
 @onready var confirm_yes: Button = $Confirm/ConfirmYes
 @onready var confirm_no: Button = $Confirm/ConfirmNo
 
+# The settings panel is built in code, the way the battle HUD is: five rows
+# that all show one value each are layout the scene file does not need to
+# carry, and the Settings button itself rides the existing button column.
+var settings_panel: ColorRect = null
+var _settings_rows: Dictionary = {}  # setting key -> the Button that shows it
+
 
 func _ready() -> void:
 	# Game's own _ready() has already read the save by the time any scene runs,
@@ -43,6 +49,7 @@ func _ready() -> void:
 	new_button.pressed.connect(_on_new)
 	notebook_button.pressed.connect(_open_notebook)
 	quit_button.pressed.connect(_on_quit)
+	_build_settings()
 	notebook_back.pressed.connect(_close_notebook)
 	confirm_yes.pressed.connect(_start_new_campaign)
 	confirm_no.pressed.connect(_close_confirm)
@@ -55,6 +62,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if notebook_panel.visible:
 		_close_notebook()
+	elif settings_panel != null and settings_panel.visible:
+		_close_settings()
 	elif confirm_panel.visible:
 		_close_confirm()
 
@@ -97,6 +106,85 @@ func _start_new_campaign() -> void:
 
 func _on_quit() -> void:
 	get_tree().quit()
+
+
+# ---------------------------------------------------------------- settings --
+# What each row is: the setting it drives, the words on it, and how a click
+# moves it. Booleans flip; volume walks a five-step ladder, because a slider
+# is a lot of widget for a number most players set once.
+const SETTING_ROWS := [
+	{"key": "volume", "label": "Master volume"},
+	{"key": "screen_shake", "label": "Screen shake"},
+	{"key": "hit_stop", "label": "Hit-stop on landed shots"},
+	{"key": "danger_default", "label": "Danger overlay starts on"},
+	{"key": "high_contrast", "label": "High-contrast friendly arcs"},
+]
+const VOLUME_STEPS := [0, 25, 50, 75, 100]
+
+
+func _build_settings() -> void:
+	var settings_button := Button.new()
+	settings_button.text = "Settings"
+	settings_button.pressed.connect(_open_settings)
+	# Above Quit, below the campaign rows: preferences are not a destination.
+	var buttons := quit_button.get_parent()
+	buttons.add_child(settings_button)
+	buttons.move_child(settings_button, quit_button.get_index())
+
+	settings_panel = ColorRect.new()
+	settings_panel.color = Color(0.06, 0.05, 0.04, 0.92)
+	settings_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	settings_panel.visible = false
+	add_child(settings_panel)
+	var box := VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_CENTER)
+	box.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	box.grow_vertical = Control.GROW_DIRECTION_BOTH
+	box.add_theme_constant_override("separation", 14)
+	settings_panel.add_child(box)
+	var title := Label.new()
+	title.text = "SETTINGS"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
+	for row: Dictionary in SETTING_ROWS:
+		var button := Button.new()
+		button.custom_minimum_size = Vector2(420, 0)
+		button.pressed.connect(_on_setting_row.bind(str(row.key)))
+		box.add_child(button)
+		_settings_rows[str(row.key)] = button
+	var back := Button.new()
+	back.text = "Back"
+	back.pressed.connect(_close_settings)
+	box.add_child(back)
+
+
+func _open_settings() -> void:
+	_refresh_settings_rows()
+	settings_panel.visible = true
+
+
+func _close_settings() -> void:
+	settings_panel.visible = false
+
+
+func _on_setting_row(key: String) -> void:
+	if key == "volume":
+		var at := VOLUME_STEPS.find(int(Game.setting("volume")))
+		Game.set_setting("volume", VOLUME_STEPS[(at + 1) % VOLUME_STEPS.size()])
+	else:
+		Game.set_setting(key, not bool(Game.setting(key)))
+	_refresh_settings_rows()
+
+
+func _refresh_settings_rows() -> void:
+	for row: Dictionary in SETTING_ROWS:
+		var key := str(row.key)
+		var shown := ""
+		if key == "volume":
+			shown = "%d%%" % int(Game.setting(key))
+		else:
+			shown = "ON" if bool(Game.setting(key)) else "OFF"
+		(_settings_rows[key] as Button).text = "%s:  %s" % [row.label, shown]
 
 
 # ---------------------------------------------------------------- notebook --
