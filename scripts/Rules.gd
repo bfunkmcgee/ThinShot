@@ -277,6 +277,28 @@ static func reaction_interrupts(hit: bool) -> bool:
 	return hit
 
 
+## Every cell a unit on overwatch covers from `sector`: inside its reaction
+## reach, inside the watched arc, walkable, and in line of sight. One rule,
+## three askers - the overlay paints exactly this, the AI routes against
+## exactly this, and the cells a step actually triggers on are these - so the
+## cone the player reads and the cone the Thirst avoids can never drift apart.
+static func overwatch_cells(board: Board, unit: Unit, sector: int) -> Dictionary:
+	var cells := {}
+	var r := unit.overwatch_range()  # the gunner watches further than he shoots
+	for dy in range(-r, r + 1):
+		var w := r - absi(dy)
+		for dx in range(-w, w + 1):
+			var cell: Vector2i = unit.cell + Vector2i(dx, dy)
+			if cell == unit.cell or not board.in_bounds(cell) or not board.is_walkable(cell):
+				continue
+			var to_cell := Board.sector_from_to(unit.cell, cell)
+			if absi(wrapi(to_cell - sector + 4, 0, 8) - 4) > unit.arc_half:
+				continue
+			if board.has_line_of_sight(unit.cell, cell):
+				cells[cell] = true
+	return cells
+
+
 # --- Thrown ordnance ----------------------------------------------------------
 
 ## How far a soldier can put a grenade, in tiles, before line of sight is

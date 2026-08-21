@@ -241,12 +241,6 @@ const MOVE_STEP_TIME := 0.16
 const TRACER_TIME := 0.09
 const AI_BEAT := 0.12
 const ACT_LEAD_IN := 0.15  # pause after marking a goblin, before it acts
-# What a candidate destination pays for walking into a live overwatch arc,
-# per watcher whose cone the path would cross. Sized to lose to having a shot
-# at all (-1000) but to dominate distance ties and cover terms - so a goblin
-# routes around a covered lane when a clean way exists, and still crosses when
-# crossing is the only way to fight.
-const AI_WATCHED_LANE := 120
 const SWAY_SPEED := 1.6      # radians/sec of the plant sway cycle
 const SWAY_TEXELS := 1.0     # sprite texels a plant leans at full sway
 # The to-hit arithmetic lives on Rules now, and the numbers it reads went with
@@ -330,6 +324,14 @@ var aim_mode := AimMode.NONE
 # nobody's information - no reaction drawn, no prisoner freed, nothing done
 # since. One slot, because only the last move is ever honestly reversible.
 var _undo: Dictionary = {}
+# Every unit this battle ever spawned, corpses included - the index behind
+# living_units()/unit_at(), so occupancy checks stop walking (and allocating)
+# the ~50-child entity list per call. Appended in _spawn_unit; the escapee
+# _run_for_it frees is erased where it is freed, and every reader still
+# guards with is_instance_valid - the harnesses free units directly (see
+# tools/test_morale.gd's outnumbered scenario), and a stale entry must read
+# as absent, never crash.
+var _units: Array[Unit] = []
 var level: Dictionary = {}
 var last_result_won := false
 var base_camera_pos := Vector2.ZERO
@@ -1142,8 +1144,8 @@ func _watch_for_occlusion(delta: float) -> void:
 	if _occluders.is_empty():
 		return
 	var now := Vector2.ZERO
-	for unit in entities_node.get_children():
-		if unit is Unit and unit.is_alive():
+	for unit in _units:
+		if is_instance_valid(unit) and unit.is_alive():
 			now += unit.global_position
 	if not now.is_equal_approx(_occlusion_watch):
 		_occlusion_watch = now
@@ -1420,6 +1422,7 @@ func _spawn_structure(s: Dictionary) -> void:
 func _spawn_unit(kind: Unit.Kind, spawn_cell: Vector2i, soldier := {}) -> void:
 	var unit: Unit = UNIT_SCENE.instantiate()
 	entities_node.add_child(unit)
+	_units.append(unit)
 	unit.setup(kind, spawn_cell)
 	if not soldier.is_empty():
 		# Strictly after setup(), which assigns every stat from scratch.
@@ -1808,18 +1811,15 @@ func captives() -> Array[Unit]:
 
 func living_units(team: int) -> Array[Unit]:
 	var result: Array[Unit] = []
-	for child in entities_node.get_children():
-		var unit := child as Unit
-		if unit != null and unit.is_alive():
-			if unit.team == team:
-				result.append(unit)
+	for unit in _units:
+		if is_instance_valid(unit) and unit.is_alive() and unit.team == team:
+			result.append(unit)
 	return result
 
 
 func unit_at(cell: Vector2i) -> Unit:
-	for child in entities_node.get_children():
-		var unit := child as Unit
-		if unit != null and unit.is_alive() and unit.cell == cell:
+	for unit in _units:
+		if is_instance_valid(unit) and unit.is_alive() and unit.cell == cell:
 			return unit
 	return null
 
@@ -2457,20 +2457,9 @@ func _commit_aim(cell: Vector2i) -> void:
 
 ## Cells an overwatching unit would cover: in range, in arc, with LOS.
 func _overwatch_cells_for(unit: Unit, sector: int) -> Dictionary:
-	var cells := {}
-	var r := unit.overwatch_range()  # the gunner watches further than he shoots
-	for dy in range(-r, r + 1):
-		var w := r - absi(dy)
-		for dx in range(-w, w + 1):
-			var cell: Vector2i = unit.cell + Vector2i(dx, dy)
-			if cell == unit.cell or not board.in_bounds(cell) or not board.is_walkable(cell):
-				continue
-			var to_cell := Board.sector_from_to(unit.cell, cell)
-			if absi(wrapi(to_cell - sector + 4, 0, 8) - 4) > unit.arc_half:
-				continue
-			if board.has_line_of_sight(unit.cell, cell):
-				cells[cell] = true
-	return cells
+	# The geometry is Rules' now - one cone for the overlay, the AI and the
+	# trigger check alike. See Rules.overwatch_cells.
+	return Rules.overwatch_cells(board, unit, sector)
 
 
 ## Every overwatch arc on the board: hostile arcs (amber) are threats to
@@ -4124,9 +4113,9 @@ func _overwatchers_against(mover: Unit) -> Array[Unit]:
 	var result: Array[Unit] = []
 	if not mover.is_combatant():
 		return result  # nobody wastes a reaction shot on the prisoner
-	for child in entities_node.get_children():
-		var watcher := child as Unit
-		if watcher == null or not watcher.is_alive() or not watcher.overwatching:
+	for watcher in _units:
+		if not is_instance_valid(watcher) or not watcher.is_alive() \
+				or not watcher.overwatching:
 			continue
 		if watcher.team == mover.team or not watcher.has_ammo():
 			continue
@@ -4425,6 +4414,7 @@ func _run_for_it(goblin: Unit, index: int, squad_size: int) -> bool:
 		goblin.hide()
 		# Off the board rather than dead: removed from every query the turn
 		# loop and the objectives make, without a corpse or a death sound.
+		_units.erase(goblin)
 		goblin.queue_free()
 		await get_tree().process_frame
 		_refresh_objectives()
@@ -4468,149 +4458,47 @@ func _ai_fire(attacker: Unit, target: Unit) -> void:
 
 
 func _shootable_from(from_cell: Vector2i, attack_range: int, targets: Array[Unit]) -> Array[Unit]:
-	var result: Array[Unit] = []
-	for unit in targets:
-		if Board.manhattan(from_cell, unit.cell) <= attack_range \
-				and board.can_engage(from_cell, unit.cell):
-			result.append(unit)
-	return result
+	return AiPlan.shootable_from(board, from_cell, attack_range, targets)
 
 
 func _nearest(from_cell: Vector2i, candidates: Array[Unit]) -> Unit:
-	var best: Unit = candidates[0]
-	for unit in candidates:
-		if Board.manhattan(from_cell, unit.cell) < Board.manhattan(from_cell, best.cell):
-			best = unit
-	return best
+	return AiPlan.nearest(from_cell, candidates)
 
 
-## How exposed a cell is to scout fire: 2 per clean firing line, 1 per line
-## that has to cross junk (those shots only land for half damage). This is
-## what makes the goblins actually value the cover on the map.
-##
-## The goblin is the TARGET of every shot counted here, so the facing that
-## decides its cover is its own - the one it would be holding on arrival, which
-## is why `_best_ai_dest` works `end_sector` out before it calls this. A cell
-## with a wall behind the goblin's back is not cover, and used to score as if it
-## were: this asked `board.cover_between`, which does not know which way anyone
-## is looking, while the shot it was predicting resolves through
-## Rules.effective_cover, which does. Both go through Rules.cover_at now.
-func _exposure_at(cell: Vector2i, facing_sector: int, arc_half: int,
-		scouts: Array[Unit]) -> int:
-	var score := 0
-	for scout in scouts:
-		if Board.manhattan(cell, scout.cell) <= scout.attack_range \
-				and board.can_engage(scout.cell, cell):
-			# Now measured from the cover the cell itself would give, which is
-			# what makes the AI move wall to wall rather than just away.
-			match Rules.cover_at(board, cell, facing_sector, arc_half, scout.cell):
-				Board.CoverLevel.FULL:
-					score += 0
-				Board.CoverLevel.HALF:
-					score += 1
-				_:
-					score += 2
-	return score
+## The judgement below is AiPlan's now (see scripts/AiPlan.gd), where
+## tools/test_aiplan.gd pins it without standing up a scene. These forwarders
+## assemble the two things the planner is not allowed to know - occupancy and
+## which arcs are live - and keep every call site reading as before.
 
-
-## Best move destination for an AI unit. A cell it can shoot a scout from
-## beats every cell it can't; exposure to scout fire costs a little when
-## healthy and a lot when wounded (so 1 HP goblins with no shot retreat to
-## cover); nearer the chase target breaks remaining ties.
-## `reach` is the flood_fill result (cell -> predecessor), which also tells us
-## which way the goblin would be facing when it arrives.
+## Best move destination for an AI unit. Occupancy is the controller's
+## knowledge, so the free destinations are gathered here; the watch sets use
+## the same gate _overwatchers_against applies when a step actually triggers,
+## so the route planner and the reaction can never disagree about what is
+## covered.
 func _best_ai_dest(goblin: Unit, reach: Dictionary, scouts: Array[Unit],
 		chase_cell: Vector2i) -> Vector2i:
-	var exposure_weight := 25 if goblin.hp <= 2 else 2
 	# Reachable cells include squadmates' tiles, which can be crossed but
 	# not occupied; standing still is always an option.
 	var candidates: Array = _free_dests(reach).keys()
 	candidates.append(goblin.cell)
-	# The arcs held against this mover, one cell-set per watcher - the same
-	# gate _overwatchers_against applies when a step actually triggers, so the
-	# route planner and the reaction can never disagree about what is covered.
 	var watch_sets: Array[Dictionary] = []
 	for watcher in living_units(_enemy_team_of(goblin)):
 		if watcher.overwatching and watcher.has_ammo() and watcher.is_combatant():
 			watch_sets.append(_overwatch_cells_for(watcher, watcher.facing_sector))
-	var best := Vector2i(-1, -1)
-	var best_score := 999999
-	for cell: Vector2i in candidates:
-		# Which way the goblin would be looking once it got here, worked out
-		# before anything is scored because its own facing decides the cover it
-		# would have (see _exposure_at). A goblin with a shot turns to take it;
-		# one without walks in facing the way it came. Neither is on the unit
-		# yet, which is what Rules.cover_at exists to be asked about.
-		var shots := _shootable_from(cell, goblin.attack_range, scouts)
-		var mark: Unit = null
-		var end_sector := -1
-		if not shots.is_empty():
-			mark = _nearest(cell, shots)
-			end_sector = Board.sector_from_to(cell, mark.cell)
-		elif reach.has(cell):
-			end_sector = Board.sector_from_to(reach[cell], cell)
-		# Standing still with no shot ends the turn on overwatch, which picks its
-		# own sector later; the facing we can honestly predict there is the one
-		# the goblin already has.
-		var end_facing := end_sector if end_sector >= 0 else goblin.facing_sector
-		var score := Board.manhattan(cell, chase_cell)
-		score += exposure_weight * _exposure_at(cell, end_facing, goblin.arc_half, scouts)
-		# A reaction is drawn on the first watched cell entered, so the honest
-		# cost is per watcher engaged along the walk, not per tile inside the
-		# cone. Standing still triggers nothing and costs nothing.
-		if not watch_sets.is_empty() and cell != goblin.cell:
-			var walk := board.reconstruct_path(reach, cell)
-			for watched: Dictionary in watch_sets:
-				for step: Vector2i in walk:
-					if watched.has(step):
-						score += AI_WATCHED_LANE
-						break
-		if mark != null:
-			score -= 1000
-			# A clean firing position beats one where the target is dug in. The
-			# target is a live scout standing where it stands, so the facing that
-			# decides ITS cover is its real one, read off the unit - the opposite
-			# perspective to the exposure term above, and the reason both are
-			# asked through the same function rather than through cover_between.
-			if Rules.cover_at(board, mark.cell, mark.facing_sector, mark.arc_half,
-					cell) != Board.CoverLevel.NONE:
-				score += 400
-			# Shooting someone in the back bypasses their cover.
-			if not mark.covers_sector(Board.sector_from_to(mark.cell, cell)):
-				score -= 60
-		# Do not turn your back on the rest of the squad.
-		if end_sector >= 0:
-			for scout in scouts:
-				if Board.manhattan(cell, scout.cell) <= scout.attack_range \
-						and board.has_line_of_sight(scout.cell, cell) \
-						and absi(wrapi(Board.sector_from_to(cell, scout.cell)
-								- end_sector + 4, 0, 8) - 4) > goblin.arc_half:
-					score += 6
-		if score < best_score:
-			best_score = score
-			best = cell
-	return best
+	return AiPlan.best_dest(board, goblin, reach, candidates, scouts,
+			chase_cell, watch_sets)
 
 
-## Which way a dug-in goblin should watch: the arc covering the most cells
-## the scouts could advance through. Integer scoring keeps ties deterministic.
+## Which way a dug-in goblin should watch. The scouts' reach is gathered here
+## - reachability depends on who is standing where - and AiPlan scores the
+## eight arcs over it.
 func _best_watch_sector(goblin: Unit, scouts: Array[Unit]) -> int:
 	var approach := {}
 	for scout in scouts:
 		approach.merge(board.flood_fill(scout.cell, scout.move_range,
 				_blocked_for_team.bind(scout.team)))
 		approach[scout.cell] = true
-	var best_sector := goblin.facing_sector
-	var best_count := -1
-	for sector in 8:
-		var count := 0
-		for cell: Vector2i in _overwatch_cells_for(goblin, sector):
-			if approach.has(cell):
-				count += 1
-		if count > best_count:
-			best_count = count
-			best_sector = sector
-	return best_sector
+	return AiPlan.best_watch_sector(board, goblin, approach)
 
 
 # --- Win / lose --------------------------------------------------------------
@@ -5291,9 +5179,9 @@ func check_game_over() -> bool:
 ## lives or when the level never deployed him (a roster short of its hero
 ## simply fights without one - it must not read as an instant loss).
 func _fallen_hero() -> Unit:
-	for child in entities_node.get_children():
-		var unit := child as Unit
-		if unit != null and unit.kind == Unit.Kind.HERO and not unit.is_alive():
+	for unit in _units:
+		if is_instance_valid(unit) and unit.kind == Unit.Kind.HERO \
+				and not unit.is_alive():
 			return unit
 	return null
 
