@@ -326,6 +326,10 @@ var player_turn_ready_msec := 0
 var danger_on := false
 var fire_mode := FireMode.SINGLE
 var aim_mode := AimMode.NONE
+# The take-back slot: the last player move, held for as long as it is still
+# nobody's information - no reaction drawn, no prisoner freed, nothing done
+# since. One slot, because only the last move is ever honestly reversible.
+var _undo: Dictionary = {}
 var level: Dictionary = {}
 var last_result_won := false
 var base_camera_pos := Vector2.ZERO
@@ -1890,6 +1894,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("hustle"):
 		_try_hustle()
 		return
+	if event.is_action_pressed("undo_move"):
+		_try_undo_move()
+		return
 	if event.is_action_pressed("ability_primary"):
 		_use_ability(0)
 		return
@@ -2631,6 +2638,16 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 		state = prev_state
 		return
 	var path := board.reconstruct_path(came_from, dest)
+	# A new walk always replaces the take-back slot - whatever was pending is
+	# no longer the last move. Snapshot what an undo would need to restore and
+	# what it must verify went unchanged.
+	_undo = {}
+	var undo_from := unit.cell
+	var undo_facing := unit.facing_sector
+	var undo_watch := unit.overwatching
+	var undo_acted := unit.acted
+	var undo_captives := captives().size()
+	var reaction_fired := false
 	if unit.overwatching:
 		# Only Protective Fire can produce a mover still on watch (its carried
 		# overwatch survives start_turn). The stance does not survive walking.
@@ -2652,6 +2669,7 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 		from_pos = step_pos
 		var watchers := _overwatchers_against(unit)
 		if not watchers.is_empty():
+			reaction_fired = true
 			unit.stop_walking()
 			for watcher in watchers:
 				if not unit.is_alive():
@@ -2699,6 +2717,13 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 		# "x4 AUTO @ 58%" while _fire_selected_at silently fires 2 at 73%.
 		if selected == unit and not _can_use_mode(unit, fire_mode):
 			_set_fire_mode(_default_fire_mode(unit))
+		# The walk is reversible only while it changed nothing but the cell.
+		if unit.team == Unit.TEAM_SCOUT and not reaction_fired \
+				and not unit.interrupted and captives().size() == undo_captives:
+			_undo = {"unit": unit, "from": undo_from, "dest": unit.cell,
+					"facing": undo_facing, "watch": undo_watch,
+					"acted": undo_acted, "ammo": unit.ammo, "hp": unit.hp,
+					"turn": turn_number}
 		_refresh_danger()
 		_refresh_watch_cells()
 		_update_unit_panel()
@@ -2876,6 +2901,52 @@ func _try_hustle() -> void:
 	_set_fire_mode(_default_fire_mode(selected))
 	_refresh_highlights()
 	_update_unit_panel()
+
+
+## Take the last move back. Only while it is still nobody's information: the
+## walk drew no reaction, freed no prisoner, and the soldier has done nothing
+## since - anything else is a decision the battle has already answered, and it
+## stands. Restores cell, facing and a Protective Fire watch the walk broke.
+func _try_undo_move() -> void:
+	if state != State.PLAYER_TURN:
+		return
+	if _undo.is_empty():
+		show_banner("NOTHING TO TAKE BACK")
+		return
+	var unit: Unit = _undo.unit
+	if not _can_undo_move(unit):
+		show_banner("TOO LATE TO TAKE BACK")
+		return
+	unit.cell = _undo.from
+	unit.position = board.cell_to_global(_undo.from)
+	unit.moved = false
+	unit.set_facing_sector(_undo.facing)
+	if _undo.watch:
+		unit.set_overwatch(true)
+	print("[Sandline] %s takes the move back to %s" % [
+			unit.display_name(), unit.cell])
+	Sfx.play("select", -3.0, 0.0)
+	show_banner("MOVE TAKEN BACK")
+	_undo = {}
+	if selected == unit:
+		_set_fire_mode(_default_fire_mode(unit))
+	_refresh_danger()
+	_refresh_watch_cells()
+	_refresh_objectives()
+	_update_unit_panel()
+	if selected == unit:
+		_refresh_highlights()
+
+
+## Whether the held slot still describes the board. Every field the move could
+## legitimately have changed is verified unchanged, so a slot that survived a
+## reload, a shot, a patch-up or a new turn can never restore stale state.
+func _can_undo_move(unit: Unit) -> bool:
+	return is_instance_valid(unit) and unit.is_alive() \
+			and int(_undo.turn) == turn_number \
+			and unit.moved and unit.cell == _undo.dest \
+			and unit.acted == _undo.acted \
+			and unit.ammo == int(_undo.ammo) and unit.hp == int(_undo.hp)
 
 
 # ------------------------------------------------------------ class actives --

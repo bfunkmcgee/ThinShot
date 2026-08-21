@@ -346,6 +346,9 @@ campaign and playing again starts you with five fresh recruits.
   how many goblins it would pin.
 - **V** — **Hustle** (scout specialty): give up this soldier's shot to move a
   second time.
+- **U** — take the last move back. Only while it is still nobody's
+  information: the walk drew no overwatch fire, freed no prisoner, and the
+  soldier has done nothing since. A walk the battle answered stands.
 - **Q / T** — the selected soldier's **active specialties** (Called Shot,
   Rally, Field Dressing), on the two ability buttons that appear when a
   soldier owns one. Called Shot aims like a throw: arm it, then click the
