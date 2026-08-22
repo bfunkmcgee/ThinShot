@@ -4,9 +4,19 @@ What a new soldier has to ship so it drops into `Unit.gd` without new code
 paths. Measured off the sixteen units in `assets/sprites/` (everything there
 except `Environment/`), and checked against what the loader actually reads.
 
-Companion to [ASSETS.md](ASSETS.md), which says *which* assets are worth making.
-This says *what shape they have to be*.
+Companion to [ASSETS.md](ASSETS.md), which says *which* assets are worth making,
+and to [artgen/UNIT_PIPELINE.md](artgen/UNIT_PIPELINE.md), which says *how one is
+generated* (runbook, cost model, gates, failure playbook — driven by the
+`/generate-unit` skill). This says *what shape they have to be*.
 
+> **Tier status — read STYLE.md §1 before authoring.** The hi-res program below
+> is **suspended by user verdict (2026-08-15)** and the 2×-class is the standard:
+> HD Rodar and HD Scout were generated, validated, judge-accepted, promoted and
+> then reverted at the in-game gate. The `[v2]` rows are the contract for when
+> the program resumes, not a licence to author at 120px today. Everything else
+> here — the eight directions, the eleven sets, the canonical layout,
+> `metadata.json`, the wiring checklist — binds at either tier.
+>
 > **v2 (2026-08-15, hi-res program).** New units and regenerations are
 > authored on a **doubled canvas drawn at 1×** instead of a small canvas
 > scaled 2×: same on-screen size, native pixels. Everything marked **[v2]**

@@ -3,6 +3,8 @@
 How a batch of ground art goes from prompt to shipped sheet. The style rules
 live in [STYLE.md](STYLE.md); the numbers live in [style.json](style.json);
 this file is the *order of operations* and what to do when a stage fails.
+**Ground art only** — units run a different loop, with different tools, gates
+and failure modes: see [UNIT_PIPELINE.md](UNIT_PIPELINE.md).
 
 All commands run from the repo root in PowerShell. All batch state lives in
 `artgen/staging/<batch>/manifest.json` — the loop is resumable from files
