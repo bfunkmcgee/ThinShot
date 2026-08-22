@@ -533,36 +533,49 @@ func _ready() -> void:
 	# find out which cells those were.
 	_spawn_decals()
 	board.set_prop_shadows(_prop_shadows)
+	# The muster locks the moment the operation's first story mission begins:
+	# computed through Ratline - which Game may not import - and handed over
+	# as a plain int. lock_ratline_strength is once-only, so a retried first
+	# mission keeps the season it already settled. Debug jumps mid-operation
+	# arrive unlocked and read as 100, which is vanilla.
+	if not Game.on_bounty() and not Game.on_interdiction() \
+			and Game.mission_number() == 1:
+		Game.lock_ratline_strength(
+				Ratline.strength(Game.ratline_done.size(), Ratline.OFFERS))
 	if Game.on_bounty():
-		_spawn_bounty_party()
+		_spawn_detachment(int(Game.bounty.get("hunter_id", 0)))
 		_spawn_bounty_residents()
+	elif Game.on_interdiction():
+		_spawn_detachment(int(Game.interdiction.get("leader_id", 0)))
+		_spawn_enemy_lists({})
 	else:
 		_spawn_campaign_squad()
 	_finish_setup()
 
 
-## The hunting party: the soldier the player chose, and two riflemen lent to
-## them. Deliberately NOT the deployment machinery - a bounty is not the squad
-## going out, it is one person being sent, and the two who go with them are
-## anonymous on purpose. They are drawn as generic Kestrel troops, which is what
-## Scout/ exists for (see the enum comment in Unit.gd).
-func _spawn_bounty_party() -> void:
+## The detachment: the soldier the player chose, and two riflemen lent to
+## them - a bounty party or an interdiction run, same shape either way.
+## Deliberately NOT the deployment machinery: this is not the squad going
+## out, it is one person being sent, and the two who go with them are
+## anonymous on purpose. They are drawn as generic Kestrel troops, which is
+## what Scout/ exists for (see the enum comment in Unit.gd).
+func _spawn_detachment(leader_id: int) -> void:
 	var spawns: Array = level.get("scout_spawns", [])
 	if spawns.is_empty():
-		push_error("[Sandline] a bounty board with nowhere to land")
+		push_error("[Sandline] a generated board with nowhere to land")
 		return
-	var hunter: Dictionary = Game.soldier_by_id(int(Game.bounty.get("hunter_id", 0)))
-	if hunter.is_empty():
-		push_error("[Sandline] the bounty's hunter is not on the roster")
+	var leader: Dictionary = Game.soldier_by_id(leader_id)
+	if leader.is_empty():
+		push_error("[Sandline] the detachment's leader is not on the roster")
 		return
-	_spawn_unit(int(hunter.get("kind", Unit.Kind.SCOUT)), spawns[0], hunter)
+	_spawn_unit(int(leader.get("kind", Unit.Kind.SCOUT)), spawns[0], leader)
 	bounty_hunter = unit_at(spawns[0])
 	for i in range(1, spawns.size()):
 		# No roster record, so no name, no rank and no progression: these two are
 		# not the player's people and are not at risk of being permanently lost.
 		_spawn_unit(Unit.Kind.SCOUT, spawns[i])
-	print("[Sandline] bounty party: %s and %d riflemen"
-			% [Game.full_name(hunter), spawns.size() - 1])
+	print("[Sandline] detachment: %s and %d riflemen"
+			% [Game.full_name(leader), spawns.size() - 1])
 
 
 ## The people who live here. Goblins by sprite and by kind, and fighters by
@@ -593,14 +606,49 @@ func _spawn_campaign_squad() -> void:
 	_spawn_squad(Unit.Kind.HERO, level.get("lead_spawns", []))
 	_spawn_squad(Unit.Kind.MACHINEGUNNER, level.get("gunner_spawns", []))
 	_spawn_rifle_slots(level.scout_spawns)
+	# The ratline's bill, paid at muster: below base strength some of the men
+	# this map was authored with never made the crossing. Which cells stay
+	# empty is Ratline's draw off (campaign_seed, level) - mission_attempts is
+	# deliberately not in the salt, so a retried mission faces the same
+	# absences the operation settled on.
+	var muster := Game.ratline_strength_now()
+	var skip := {}
+	if muster < 100:
+		for cell: Vector2i in Ratline.trim_cells(_ratline_eligible(), muster,
+				Game.campaign_seed, Game.current_level):
+			skip[cell] = true
+		if not skip.is_empty():
+			print("[Sandline] ratline: %d fighter(s) never made the crossing (muster %d%%)"
+					% [skip.size(), muster])
+	_spawn_enemy_lists(skip)
+
+
+## The fighters the muster arithmetic may touch, merged in _spawn_cells'
+## order - determinism rides the list order. Bolts are not here: a map's
+## authored marksman is a mission mechanic, not a smuggled body. Prisoners
+## and bystanders are not here for the stronger reason that they are the
+## story.
+func _ratline_eligible() -> Array:
+	return level.goblin_spawns + level.get("smg_spawns", []) \
+			+ level.get("smg_alt_spawns", []) + level.get("novice_spawns", [])
+
+
+## The authored enemy lists, one unit per cell, minus whatever `skip` says
+## never arrived. The bolt, prisoner and bystander loops take no skip check
+## on purpose - they are untouchable by construction, not by discipline.
+func _spawn_enemy_lists(skip: Dictionary) -> void:
 	for spawn: Vector2i in level.goblin_spawns:
-		_spawn_unit(Unit.Kind.GOBLIN, spawn)
+		if not skip.has(spawn):
+			_spawn_unit(Unit.Kind.GOBLIN, spawn)
 	for spawn: Vector2i in level.get("smg_spawns", []):
-		_spawn_unit(Unit.Kind.GOBLIN_SMG, spawn)
+		if not skip.has(spawn):
+			_spawn_unit(Unit.Kind.GOBLIN_SMG, spawn)
 	for spawn: Vector2i in level.get("smg_alt_spawns", []):
-		_spawn_unit(Unit.Kind.GOBLIN_SMG_ALT, spawn)
+		if not skip.has(spawn):
+			_spawn_unit(Unit.Kind.GOBLIN_SMG_ALT, spawn)
 	for spawn: Vector2i in level.get("novice_spawns", []):
-		_spawn_unit(Unit.Kind.GOBLIN_REVOLVER, spawn)
+		if not skip.has(spawn):
+			_spawn_unit(Unit.Kind.GOBLIN_REVOLVER, spawn)
 	for spawn: Vector2i in level.get("bolt_spawns", []):
 		_spawn_unit(Unit.Kind.GOBLIN_BOLT, spawn)
 	for spawn: Vector2i in level.get("prisoner_spawns", []):
@@ -1677,8 +1725,38 @@ func _land_returners() -> void:
 ## the same rim-arrival machinery the returners do. Landed at the same moment
 ## for the same reason: run_enemy_turn snapshots its squad on its first
 ## statement, so a body added later would stand still for a turn.
+## The ratline's dividend: crossings the garrison ignored walk their cargo
+## over the east rim - the border is east - on turns 2 and 3, riding the same
+## arrival machinery as the pressure waves and for the same snapshot reason.
+## Story missions only; a generated board answers to nobody's muster.
+func _land_ratline() -> void:
+	if state == State.GAME_OVER or Game.on_bounty() or Game.on_interdiction():
+		return
+	var muster := Game.ratline_strength_now()
+	if muster <= 100:
+		return
+	var kinds: Array = Ratline.surplus_schedule(_ratline_eligible().size(),
+			muster, Game.campaign_seed, Game.current_level).get(turn_number, [])
+	if kinds.is_empty():
+		return
+	var landed := 0
+	for kind in kinds:
+		var cell := _arrival_cell("east")
+		if cell == Board.NO_CELL:
+			continue  # every rim cell taken - this one stays out there
+		_spawn_unit(int(kind), cell)
+		landed += 1
+	if landed == 0:
+		return
+	Sfx.play("turn_enemy", 0.0, 0.0)
+	show_banner("THE RATLINE DELIVERS")
+	print("[Sandline]   ratline: %d smuggled gun(s) walked on (turn %d)"
+			% [landed, turn_number])
+	await get_tree().create_timer(0.9).timeout
+
+
 func _land_pressure() -> void:
-	if state == State.GAME_OVER or Game.on_bounty():
+	if state == State.GAME_OVER or Game.on_bounty() or Game.on_interdiction():
 		return
 	var done: Array = []
 	for i in _objectives().size():
@@ -4328,6 +4406,7 @@ func end_player_turn(force := false) -> void:
 	# is in that snapshot, so it acts on the turn it lands.
 	await _land_returners()
 	await _land_pressure()
+	await _land_ratline()
 	# Goblins refresh at the start of THEIR turn (expires last turn's
 	# unfired goblin overwatch at the right moment).
 	for goblin in living_units(Unit.TEAM_GOBLIN):
@@ -5377,11 +5456,22 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 					{"id": int(spec.get("target_id", 0)),
 					"name": str(spec.get("name", "")),
 					"settlement": str(spec.get("settlement", ""))})
+		elif Game.on_interdiction():
+			# Same contract as a bounty: a side mission must not advance the
+			# operation. finish_interdiction banks the crossing, rests the
+			# leader, and saves; commit_mission is deliberately not called.
+			var run: Dictionary = level.get("ratline", {})
+			Game.finish_interdiction(bounty_hunter.soldier_id
+					if bounty_hunter != null else 0,
+					int(run.get("ordinal", -1)))
 		else:
 			Game.commit_mission()
 	else:
 		# Nothing earned in a failed attempt sticks, so retrying cannot be
-		# farmed for XP - and the fallen are un-killed along with it.
+		# farmed for XP - and the fallen are un-killed along with it. For a
+		# generated mission, abort_mission also clears the installed board -
+		# and a lost interdiction banks nothing, which is the rule: the
+		# crossing ran whether you ignored it or failed to stop it.
 		Game.abort_mission()
 	if won and Game.is_last_level():
 		text = "CAMPAIGN COMPLETE - THE WASTES FALL SILENT"
@@ -5581,6 +5671,13 @@ func _show_briefing() -> void:
 		var expected := _notebook_warnings()
 		if not expected.is_empty():
 			body += "\n\nDAVA'S NOTEBOOK: " + "\n".join(expected)
+	# The season's muster, on the one screen where it can still shape a plan.
+	# One sentence, shared with the field radio's projection so the two can
+	# never disagree.
+	if not Game.on_bounty() and not Game.on_interdiction() \
+			and Game.ratline_strength_now() != 100:
+		body += "\n\nTHE RATLINE: %s" % Ratline.strength_line(
+				Game.ratline_strength_now())
 	briefing_body_label.text = body
 	briefing_orders_label.text = "ORDERS:  %s" % level.get("orders", "")
 	briefing_panel.visible = true
@@ -5619,7 +5716,11 @@ func _dismiss_briefing() -> void:
 ## to face with the soldier who earned them, so this screen only has to report
 ## and hand back.
 func _on_restart() -> void:
-	if last_result_won:
+	# Read off `level`, not Game.on_bounty()/on_interdiction(): the finish
+	# functions have already cleared the campaign-side state by the time this
+	# button exists (the same reasoning the debrief block documents).
+	var side_mission: bool = level.has("bounty") or level.has("ratline")
+	if last_result_won and not side_mission:
 		# Asked before advancing: advance_mission() winds the operation pointer
 		# back to zero when the campaign loops, so afterwards there is no way
 		# left to tell a fresh campaign from the first operation of any other.
@@ -5629,6 +5730,12 @@ func _on_restart() -> void:
 		Game.advance_mission()
 		if campaign_over:
 			Game.reset_roster()  # the campaign looped; the squad starts over
+	elif last_result_won:
+		# A won side mission comes home to the same garrison stay it left:
+		# the operation has not started, so there is nothing to advance. This
+		# guard is also what stops a won BOUNTY from silently skipping the
+		# operation's first mission, which it used to.
+		pass
 	else:
 		# A lost mission is retried from the same camp it was launched from.
 		Game.in_the_field = Game.mission_number() > 1

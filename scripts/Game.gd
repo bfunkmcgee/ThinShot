@@ -104,6 +104,21 @@ var bounty_outcomes: Array = []
 ## bounty now costs the main line the person who took it, so sending your best
 ## negotiator is a decision about the NEXT fight as well as this one.
 var resting_ids: Array = []
+# --- the ratline (v9) ---------------------------------------------------------
+## The generated interdiction board while one is being fought, {} otherwise.
+## Not saved - a pure function of (campaign_seed, operation, ordinal); the
+## field radio rebuilds it.
+var interdiction_level: Dictionary = {}
+## {"leader_id": int, "ordinal": int} while one is running.
+var interdiction: Dictionary = {}
+## Crossing ordinals RUN DOWN this garrison stay. A lost attempt is not here -
+## the crossing ran, and the offer stays open for retry until the operation
+## starts.
+var ratline_done: Array = []
+## The muster strength the operation in progress locked at its first story
+## mission, 0 while unlocked. Battle computes the value through Ratline (which
+## this file may not import) and hands it over as a plain int.
+var ratline_strength := 0
 var _next_adversary_id := 1
 # v4: which three of the six rifle-slot Kestrels go out this mission, by id.
 # Ids rather than indices - the roster reorders as people die, and an index
@@ -530,6 +545,8 @@ func _ready() -> void:
 func data() -> Dictionary:
 	if not bounty_level.is_empty():
 		return bounty_level
+	if not interdiction_level.is_empty():
+		return interdiction_level
 	return Levels.LEVELS[current_level]
 
 
@@ -587,6 +604,57 @@ func finish_bounty(outcome: String, hunter_id: int, target: Dictionary) -> void:
 	rest_from_bounty(hunter_id)
 	clear_bounty()
 	save()
+
+
+## Is the detachment out on an interdiction rather than a campaign mission?
+func on_interdiction() -> bool:
+	return not interdiction.is_empty() and not interdiction_level.is_empty()
+
+
+## Take a crossing. `level` is the generated board; the field radio built it -
+## the same layering as begin_bounty, because Game may not import Ratline.
+func begin_interdiction(leader_id: int, ordinal: int, level: Dictionary) -> void:
+	interdiction = {"leader_id": leader_id, "ordinal": ordinal}
+	interdiction_level = level
+	print("[Sandline] interdiction accepted: soldier %d against crossing %d"
+			% [leader_id, ordinal])
+
+
+func clear_interdiction() -> void:
+	interdiction = {}
+	interdiction_level = {}
+
+
+## A crossing run down. WIN only - a loss goes through abort_mission, which
+## clears the board and leaves the offer open, because a crossing the squad
+## failed to stop is a crossing that ran.
+func finish_interdiction(leader_id: int, ordinal: int) -> void:
+	if ordinal >= 0 and not ratline_done.has(ordinal):
+		ratline_done.append(ordinal)
+	# Whoever led is off the next main mission - the same rest, booked at the
+	# same moment and for the same reason, as a bounty hunter's.
+	rest_from_bounty(leader_id)
+	clear_interdiction()
+	save()
+	print("[Sandline] crossing %d run down - %d of the net shut"
+			% [ordinal, ratline_done.size()])
+
+
+## The muster the coming operation fights at, locked exactly once - at its
+## first story mission - so a retried attempt cannot re-roll the season.
+## Battle hands the value in; 0 stays the unlocked sentinel.
+func lock_ratline_strength(value: int) -> void:
+	if ratline_strength != 0:
+		return
+	ratline_strength = clampi(value, 80, 115)
+	save()
+	print("[Sandline] the ratline settles: the Thirst musters at %d%%"
+			% ratline_strength)
+
+
+## The number everything reads, so "0 = unlocked" never leaks into arithmetic.
+func ratline_strength_now() -> int:
+	return ratline_strength if ratline_strength > 0 else 100
 
 
 ## Raise one of the two negotiation stats on a soldier. Named rather than let
@@ -692,6 +760,10 @@ func advance_mission() -> bool:
 	for soldier: Dictionary in roster:
 		if bool(soldier.get("wounded", false)):
 			soldier.wounded = false
+	# Home again: the season's net is settled and a new one is cast. The radio
+	# posts three fresh crossings against the operation just now pending.
+	ratline_done.clear()
+	ratline_strength = 0
 	return true
 
 
@@ -1059,6 +1131,9 @@ func new_campaign() -> bool:
 	bounty_outcomes.clear()
 	resting_ids.clear()
 	clear_bounty()
+	clear_interdiction()
+	ratline_done.clear()
+	ratline_strength = 0
 	_next_adversary_id = 1
 	deployed_ids.clear()
 	# A new campaign is a different campaign, so it fights different dice.
@@ -1118,6 +1193,13 @@ func chronicle() -> String:
 		for rec: Dictionary in informants:
 			lines.append("  %s of %s" % [str(rec.get("name", "")),
 					str(rec.get("settlement", ""))])
+	if not ratline_done.is_empty() or ratline_strength != 0:
+		lines.append("")
+		lines.append("THE RATLINE")
+		lines.append("  %d of 3 crossings run down this stay%s" % [
+				ratline_done.size(),
+				"" if ratline_strength == 0
+						else " - the Thirst musters at %d%%" % ratline_strength])
 	var by_settlement := notebook_by_settlement()
 	if not by_settlement.is_empty():
 		lines.append("")
@@ -1722,6 +1804,14 @@ func commit_mission() -> void:
 ## Mission lost, retried, or abandoned via the level buttons: put the squad back
 ## exactly as it was when the mission started, XP and casualties included.
 func abort_mission() -> void:
+	# A lost or abandoned generated mission must not leave its board installed:
+	# data() would keep returning it and camp would deploy straight back into
+	# it. Cleared here rather than at the call sites so every abort path - the
+	# loss screen, the debug level jumps, whatever comes third - is covered.
+	# Clearing state is not settling the offer: a lost bounty stays postable
+	# and a lost crossing stays open.
+	clear_bounty()
+	clear_interdiction()
 	if _snapshot.is_empty():
 		return
 	roster = _deep_copy(_snapshot)
@@ -1767,7 +1857,7 @@ const SAVE_PATH := "user://campaign.json"
 # Raise this in the same commit that adds the migration step reaching it, and
 # never one without the other - _migrate_step() is what turns a number into a
 # shape the rest of this file can read.
-const SAVE_VERSION := 8
+const SAVE_VERSION := 9
 
 # Raised, and never lowered again, when load_save() finds a campaign written by
 # a build newer than this one. Refusing to READ such a file is only half the
@@ -1815,6 +1905,11 @@ func save() -> void:
 		"informants": informants,
 		"bounty_outcomes": bounty_outcomes,
 		"resting_ids": resting_ids,
+		# v9: the ratline. The generated board is NOT here - derivable, like
+		# a bounty's - so only which crossings were run down and what the
+		# operation locked are kept.
+		"ratline_done": ratline_done,
+		"ratline_strength": ratline_strength,
 		# v4: who the garrison picked.
 		"deployed_ids": deployed_ids,
 	}
@@ -1887,6 +1982,8 @@ func _migrate_step(payload: Dictionary, from: int) -> Dictionary:
 			return _migrate_6_to_7(payload)
 		7:
 			return _migrate_7_to_8(payload)
+		8:
+			return _migrate_8_to_9(payload)
 	return {}
 
 
@@ -2063,6 +2160,17 @@ func _migrate_6_to_7(payload: Dictionary) -> Dictionary:
 ## walking wounded, and the flag rides the roster entry like everything else
 ## about him. Old saves carry nobody wounded, which is also what a missing
 ## key means on read - so this rung only has to exist to stamp the version.
+## v9 adds the ratline: which of the garrison's interdiction offers were run
+## down, and the muster strength the operation locked. Materialising both
+## keys is the reshape itself - an old save has run nothing down and locked
+## nothing, which is exactly what these say - and it is what keeps the
+## ladder's no-gaps check honest about this rung.
+func _migrate_8_to_9(payload: Dictionary) -> Dictionary:
+	payload["ratline_done"] = payload.get("ratline_done", [])
+	payload["ratline_strength"] = int(payload.get("ratline_strength", 0))
+	return payload
+
+
 func _migrate_7_to_8(payload: Dictionary) -> Dictionary:
 	# The reshape is the promise itself: v8 has a roster array whose entries
 	# carry a wounded boolean. Materialising the key is what keeps the
@@ -2187,10 +2295,26 @@ func load_save() -> bool:
 	# Defaults to nobody resting, which is why this needed no version of its
 	# own: a save written before rests existed is a save where nobody is on one.
 	resting_ids = _read_int_list(payload.get("resting_ids", []))
+	# Not _read_int_list: that reader is for id lists and drops zero, and the
+	# first crossing on the net is ordinal 0.
+	ratline_done = []
+	var raw_ratline: Variant = payload.get("ratline_done", [])
+	if typeof(raw_ratline) == TYPE_ARRAY:
+		for entry: Variant in raw_ratline:
+			var ordinal := int(entry)
+			if ordinal >= 0 and not ratline_done.has(ordinal):
+				ratline_done.append(ordinal)
+	ratline_strength = int(payload.get("ratline_strength", 0))
+	# 0 stays the unlocked sentinel; anything locked is clamped so a
+	# hand-edited 40 cannot halve an operation.
+	if ratline_strength != 0:
+		ratline_strength = clampi(ratline_strength, 80, 115)
 	# A bounty in progress is never resumed: the board is regenerated at the
 	# notice board, and a save written mid-bounty should come back to a garrison
-	# rather than to half a mission.
+	# rather than to half a mission. An interdiction gets the same treatment
+	# for the same reason.
 	clear_bounty()
+	clear_interdiction()
 	_next_adversary_id = maxi(int(payload.get("next_adversary_id", 1)), 1)
 	for rec: Dictionary in adversaries:
 		_next_adversary_id = maxi(_next_adversary_id, int(rec.get("id", 0)) + 1)
