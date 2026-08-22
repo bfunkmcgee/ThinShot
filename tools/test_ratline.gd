@@ -68,6 +68,11 @@ func _run() -> void:
 	_test_strength_table()
 	_test_trim()
 	_test_surplus()
+	await _test_crossing_won()
+	await _test_waystation_won()
+	await _test_loss_clears_both_rails()
+	await _test_lock_reuse_reset()
+	await _test_muster_reaches_the_battle()
 	await _test_save_v9()
 	_restore()
 	print("\nRESULT: ", "FAIL" if _failed else "PASS")
@@ -248,3 +253,220 @@ func _test_save_v9() -> void:
 	_check(not (game._migrate_step({}, 8) as Dictionary).is_empty(),
 			"the ladder has a rung out of version 8")
 	game.delete_save()
+
+# --- engine half: the mission, played ----------------------------------------
+
+func _battle() -> Node:
+	var battle: Node = (load("res://scenes/Battle.tscn") as PackedScene).instantiate()
+	root.add_child(battle)
+	await process_frame
+	await process_frame
+	return battle
+
+
+func _drop(battle: Node) -> void:
+	battle.queue_free()
+	await process_frame
+	await process_frame
+
+
+func _offer(archetype: String) -> Dictionary:
+	return {"ordinal": 0, "operation": 0, "archetype": archetype,
+			"place": "the Dry Ford", "where": "where the wash narrows",
+			"title": "TEST", "floor": "desert"}
+
+
+func _fresh_garrison(game: Node) -> void:
+	game.new_campaign()
+	game.ensure_roster(Levels.LEVELS[0])
+	game.current_level = 0
+	game.in_the_field = false
+
+
+# --- 6. a crossing, played and won -------------------------------------------
+
+func _test_crossing_won() -> void:
+	print("\n[6] a crossing, played and won")
+	var game: Node = root.get_node("/root/Game")
+	_fresh_garrison(game)
+	var leader_id := int((game.roster[0] as Dictionary).id)
+	var generated: Dictionary = _ratline.generate(_offer("crossing"), game.campaign_seed)
+	_check(not generated.is_empty(), "the crossing generates")
+	game.begin_interdiction(leader_id, 0, generated)
+	_check(game.on_interdiction(), "the campaign knows the detachment is out")
+
+	var battle: Node = await _battle()
+	var party: Array = battle.living_units(TEAM_SCOUT)
+	var named := 0
+	for unit in party:
+		if unit.soldier_id != 0:
+			named += 1
+	_check(party.size() == 3 and named == 1,
+			"three walk on and exactly one is somebody (%d/%d)" % [named, party.size()])
+	_check(battle.bounty_hunter != null
+			and battle.bounty_hunter.soldier_id == leader_id,
+			"and the somebody is the chosen leader")
+	var enemies: Array = battle.living_units(TEAM_GOBLIN)
+	_check(enemies.size() >= 5, "the column is on the track (%d)" % enemies.size())
+	_check(battle.caches.is_empty(), "a crossing stages nothing to demolish")
+
+	var lvl_before := int(game.current_level)
+	var op_before := int(game.current_operation)
+	for goblin in enemies:
+		goblin.hp = 0
+		battle._on_unit_died(goblin)
+	await process_frame
+	_check(battle.state == battle.State.GAME_OVER and battle.last_result_won,
+			"running down the column wins the mission")
+	_check(game.ratline_done == [0], "the crossing is banked")
+	_check(not game.on_interdiction(), "and the board is cleared")
+	_check(str(game.data().name) == str(Levels.LEVELS[0].name),
+			"data() serves the story mission again")
+	_check(game.is_resting(leader_id), "the leader sits the next mission out")
+	_check(int(game.current_level) == lvl_before
+			and int(game.current_operation) == op_before,
+			"the operation pointer never moved")
+	_check(battle.level.has("ratline"),
+			"and the restart path can see this was a side mission")
+	await _drop(battle)
+
+
+# --- 7. a waystation, played and won -----------------------------------------
+
+func _test_waystation_won() -> void:
+	print("\n[7] a waystation win does not need the guard dead")
+	var game: Node = root.get_node("/root/Game")
+	_fresh_garrison(game)
+	var leader_id := int((game.roster[1] as Dictionary).id)
+	var generated: Dictionary = _ratline.generate(_offer("waystation"), game.campaign_seed)
+	_check(not generated.is_empty(), "the waystation generates")
+	game.begin_interdiction(leader_id, 0, generated)
+	var battle: Node = await _battle()
+	_check((battle.caches as Array).size() == 2, "two caches staged")
+	var guards: int = battle.living_units(TEAM_GOBLIN).size()
+	_check(guards >= 3, "under a guard (%d)" % guards)
+	# Burned by hand rather than through the demolish animation - the
+	# objective pass and the win check are what this case is about.
+	for cache: Dictionary in battle.caches:
+		cache.destroyed = true
+	battle._refresh_objectives()
+	battle.check_game_over()
+	await process_frame
+	_check(battle.state == battle.State.GAME_OVER and battle.last_result_won,
+			"both caches burned is the whole mission")
+	_check(battle.living_units(TEAM_GOBLIN).size() == guards,
+			"and the guard is still breathing")
+	_check(game.ratline_done == [0], "the crossing is banked")
+	await _drop(battle)
+
+
+# --- 8. a loss is a neglect, and the board clears - both rails ----------------
+
+func _test_loss_clears_both_rails() -> void:
+	print("\n[8] a loss banks nothing and clears the generated board - both rails")
+	var game: Node = root.get_node("/root/Game")
+	_fresh_garrison(game)
+	var leader_id := int((game.roster[0] as Dictionary).id)
+	game.begin_interdiction(leader_id, 1,
+			_ratline.generate(_offer("crossing"), game.campaign_seed))
+	var battle: Node = await _battle()
+	for unit in battle.living_units(TEAM_SCOUT):
+		unit.hp = 0
+		battle._on_unit_died(unit)
+	await process_frame
+	_check(battle.state == battle.State.GAME_OVER and not battle.last_result_won,
+			"the detachment is gone and the mission with it")
+	_check(game.ratline_done.is_empty(), "a failed stop banks nothing - the crossing ran")
+	_check(not game.on_interdiction(), "the interdiction state is cleared")
+	_check(str(game.data().name) == str(Levels.LEVELS[0].name),
+			"and data() serves the story mission, not the dead board")
+	await _drop(battle)
+
+	# The same fix on the bounty rail - the pre-existing hole this feature
+	# forced into the open: a LOST bounty used to leave its board installed.
+	game.adversaries = [{"id": 7, "name": "Ghazan", "settlement": "Kessit",
+			"kind": 4, "survivals": 1, "injuries": 0, "state": "escaped",
+			"grievance": "", "age": 30, "history": [], "warband": 0,
+			"edge": "east"}]
+	# Bounty is load()ed, never named: naming it compiles Unit before the
+	# autoloads exist - the trap the header warns about.
+	var bounty_script: GDScript = load("res://scripts/Bounty.gd") as GDScript
+	var offer: Dictionary = bounty_script.offer_for(game.campaign_seed,
+			game.adversaries[0])
+	var board_level: Dictionary = bounty_script.generate(offer, game.campaign_seed)
+	_check(not board_level.is_empty(), "the bounty board generates")
+	game.begin_bounty(int((game.roster[0] as Dictionary).id), 7, board_level)
+	var hunt: Node = await _battle()
+	for unit in hunt.living_units(TEAM_SCOUT):
+		unit.hp = 0
+		hunt._on_unit_died(unit)
+	await process_frame
+	_check(not game.on_bounty(), "a lost bounty clears its state now")
+	_check(str(game.data().name) == str(Levels.LEVELS[0].name),
+			"and its board is no longer installed")
+	await _drop(hunt)
+
+
+# --- 9. the lock: once, held through a retry, reset at home -------------------
+
+func _test_lock_reuse_reset() -> void:
+	print("\n[9] the muster locks once, holds through a retry, resets at home")
+	var game: Node = root.get_node("/root/Game")
+	_fresh_garrison(game)
+	game.ratline_done = [0, 2]
+	var battle: Node = await _battle()
+	_check(game.ratline_strength == 92, "two of three run down locks 92")
+	await _drop(battle)
+	game.abort_mission()
+	var again: Node = await _battle()
+	_check(game.ratline_strength == 92, "a retried first mission keeps its season")
+	await _drop(again)
+	game.abort_mission()
+	game.current_level = int((game.operation().missions as Array).back())
+	game.advance_mission()
+	_check(game.ratline_strength == 0 and game.ratline_done.is_empty(),
+			"home again: the net is settled and a new one is cast")
+
+
+# --- 10. the muster reaches a real battle ------------------------------------
+
+func _test_muster_reaches_the_battle() -> void:
+	print("\n[10] the trim and the surplus reach a real story battle")
+	var game: Node = root.get_node("/root/Game")
+	var level: Dictionary = Levels.LEVELS[0]
+	var eligible: Array = level.goblin_spawns + level.get("smg_spawns", []) \
+			+ level.get("smg_alt_spawns", []) + level.get("novice_spawns", [])
+	var bolts: Array = level.get("bolt_spawns", [])
+	var full: int = eligible.size() + bolts.size()
+
+	_fresh_garrison(game)
+	game.ratline_done = [0, 1, 2]  # the net shut: 80
+	var battle: Node = await _battle()
+	_check(game.ratline_strength == 80, "the net shut locks 80")
+	var expected: int = full - int(_ratline.trim_count(eligible.size(), 80))
+	var present: int = battle.living_units(TEAM_GOBLIN).size()
+	_check(present == expected,
+			"the muster is short exactly the trim (%d of %d)" % [present, full])
+	var bolts_stand := true
+	for cell: Vector2i in bolts:
+		if battle.unit_at(cell) == null:
+			bolts_stand = false
+	_check(bolts_stand, "and every authored marksman still stands his post")
+	await _drop(battle)
+	game.abort_mission()
+
+	_fresh_garrison(game)  # nothing run down: 115, and the border delivers
+	var swollen: Node = await _battle()
+	_check(game.ratline_strength == 115, "nothing run down locks 115")
+	var before: int = swollen.living_units(TEAM_GOBLIN).size()
+	_check(before == full, "at muster the authored map is exactly itself")
+	var total_extra: int = _ratline.surplus_count(eligible.size(), 115)
+	swollen.turn_number = 2
+	await swollen._land_ratline()
+	swollen.turn_number = 3
+	await swollen._land_ratline()
+	var after: int = swollen.living_units(TEAM_GOBLIN).size()
+	_check(after == before + total_extra,
+			"the ignored crossings deliver every gun (%d walked on)" % (after - before))
+	await _drop(swollen)
+	game.abort_mission()
