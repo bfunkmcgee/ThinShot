@@ -127,6 +127,7 @@ jobs:
           harness test_hero_gameover
           harness test_returners
           harness test_bounty
+          harness test_ratline
           harness test_occlusion
           harness check_level -- --all
           harness check_briefing_fit

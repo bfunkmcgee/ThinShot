@@ -592,6 +592,21 @@ func _build_fixtures() -> void:
 				"pos": board.cell_to_global(board_cell),
 				"label": "the bounty board", "id": 0,
 			})
+	# The field radio is where interdiction runs are taken: the net over the
+	# crossings that would feed the NEXT operation its fighters. Garrison
+	# only by construction - the field camp's prop table has no radio - and
+	# always present there, unlike the bounty board: the net always has
+	# three crossings on it, worked or not.
+	if not in_field:
+		_ratline_offers = Ratline.offers(Game.campaign_seed,
+				Game.current_operation, Game.ratline_done)
+		var radio: Vector2i = _fixture_cell("field_radio")
+		if radio.x >= 0:
+			fixtures.append({
+				"kind": "ratline", "cell": radio,
+				"pos": board.cell_to_global(radio),
+				"label": "the field radio", "id": 0,
+			})
 	# The ledger is read at the memorial, which is where a campaign keeps
 	# what it cannot get back. Garrison only, because the cross is.
 	var cross: Vector2i = _fixture_cell("memorial_cross")
@@ -755,6 +770,14 @@ func _prompt_for(fixture: Dictionary) -> String:
 			return "E  -  bounty board: %d posted" % _bounties_posted
 		"ledger":
 			return "E  -  the campaign's ledger"
+		"ratline":
+			if Game.ratline_strength != 0:
+				return "E  -  field radio: the operation is on - the net is closed"
+			var open_count := 0
+			for offer: Dictionary in _ratline_offers:
+				if not bool(offer.get("settled", false)):
+					open_count += 1
+			return "E  -  field radio: %d crossing(s) on the net" % open_count
 	return ""
 
 
@@ -794,6 +817,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_open_bounties()
 		"ledger":
 			_open_ledger()
+		"ratline":
+			_open_ratline()
 
 
 # ------------------------------------------------------------------ bounties --
@@ -806,6 +831,10 @@ func _unhandled_input(event: InputEvent) -> void:
 ## one that matters: it shows each candidate's PRESENCE and GUILE against the
 ## odds they would actually face, so choosing a hunter is choosing an approach.
 var _bounty_offer: Dictionary = {}
+## The three crossings posted this stay, settled flags included - computed
+## once at _ready for the same reason _bounties_posted is: the list only
+## moves across a battle, and every battle comes back through a fresh Camp.
+var _ratline_offers: Array = []
 ## How many bounties the board is posting, settled once at _ready. The list
 ## only changes across a battle, and every battle comes back through a fresh
 ## Camp scene - so a per-visit cache is exact, and the per-frame prompt stops
@@ -888,6 +917,82 @@ func _open_bounty_hunters(offer: Dictionary) -> void:
 	_choice_args = [offer, candidates]
 	_open_modal("WHO GOES", "
 ".join(lines),
+			Game.soldier_label(candidates[0]),
+			Game.soldier_label(candidates[1]) if candidates.size() > 1 else "")
+
+
+## The net. Three crossings against the coming operation, what running them
+## down is worth, and what ignoring them costs - the projection quoted
+## through the same Ratline.strength_line the battle briefing reads, so the
+## promise and the season can never disagree.
+func _open_ratline() -> void:
+	if Game.ratline_strength != 0:
+		_open_modal("THE FIELD RADIO",
+				"The operation has begun. What crossed, crossed.\n\nAs it stands, %s"
+				% Ratline.strength_line(Game.ratline_strength))
+		return
+	var done := Game.ratline_done.size()
+	var lines: Array[String] = [
+		"Sillae's set is tuned to the smugglers' band. Three crossings are",
+		"feeding the operation the squad is about to fly out on.",
+		"",
+	]
+	var open_offers: Array = []
+	for i in _ratline_offers.size():
+		var offer: Dictionary = _ratline_offers[i]
+		if bool(offer.get("settled", false)):
+			lines.append("%d.  %s at %s  -  RUN DOWN" % [i + 1,
+					str(offer.title), str(offer.place)])
+		else:
+			lines.append("%d.  %s at %s" % [i + 1, str(offer.title),
+					str(offer.place)])
+			lines.append("     %s" % str(offer.where))
+			open_offers.append(offer)
+		lines.append("")
+	lines.append("As it stands, %s" % Ratline.strength_line(
+			Ratline.strength(done, Ratline.OFFERS)))
+	if done < Ratline.OFFERS:
+		lines.append("Run them all down and %s" % Ratline.strength_line(
+				Ratline.strength(Ratline.OFFERS, Ratline.OFFERS)))
+	if open_offers.is_empty():
+		_open_modal("THE FIELD RADIO", "\n".join(lines))
+		return
+	_choice_action = "ratline_pick"
+	_choice_args = [open_offers]
+	# Two buttons, the board's own compromise: at most the first two open
+	# crossings are takeable from here, and finishing one promotes the third.
+	_open_modal("THE FIELD RADIO", "\n".join(lines),
+			"Work: %s" % str(open_offers[0].place),
+			"Work: %s" % str(open_offers[1].place) if open_offers.size() > 1 else "")
+
+
+## Who leads the run. No negotiation odds - an interdiction is a gunfight -
+## so the panel shows who they are rather than what they would roll.
+func _open_ratline_leaders(offer: Dictionary) -> void:
+	var candidates: Array = []
+	for soldier: Dictionary in Game.roster:
+		if bool(soldier.get("alive", false)):
+			candidates.append(soldier)
+	if candidates.is_empty():
+		_open_modal("NOBODY TO SEND", "There is no one on their feet.")
+		return
+	var lines: Array[String] = [
+		"%s at %s - %s." % [str(offer.title).capitalize(), str(offer.place),
+				str(offer.where)],
+		"",
+		"Two riflemen go with whoever you send, and whoever leads sits out",
+		"the next mission.",
+		"",
+	]
+	for i in mini(candidates.size(), 2):
+		var s: Dictionary = candidates[i]
+		lines.append("%s  -  %s, %s" % [Game.soldier_label(s),
+				Unit.kind_role_name(int(s.kind)),
+				Game.rank_title(int(s.get("rank", 0)))])
+		lines.append("")
+	_choice_action = "ratline_send"
+	_choice_args = [offer, candidates]
+	_open_modal("WHO LEADS", "\n".join(lines),
 			Game.soldier_label(candidates[0]),
 			Game.soldier_label(candidates[1]) if candidates.size() > 1 else "")
 
@@ -1202,6 +1307,30 @@ func _on_choice(slot: int) -> void:
 			Game.begin_bounty(int(hunter.id), int(offer.target_id), generated)
 			print("[Sandline] bounty: %s after %s at %s" % [
 					Game.full_name(hunter), offer.name, offer.place])
+			Game.go_to_battle()
+		"ratline_pick":
+			var open_offers: Array = _choice_args[0]
+			if slot < open_offers.size():
+				_close_modal()
+				_open_ratline_leaders(open_offers[slot])
+		"ratline_send":
+			var offer: Dictionary = _choice_args[0]
+			var people: Array = _choice_args[1]
+			if slot >= people.size():
+				return
+			var leader: Dictionary = people[slot]
+			# Built here rather than in Game, which may not name Ratline - the
+			# same layering note as the bounty arm above. A generator that
+			# cannot produce a sound board refuses the run; the crossing
+			# stays on the net to be taken again.
+			var generated: Dictionary = Ratline.generate(offer, Game.campaign_seed)
+			if generated.is_empty():
+				_open_modal("NO ROUTE",
+						"The crossing cannot be found tonight. Try another.")
+				return
+			Game.begin_interdiction(int(leader.id), int(offer.ordinal), generated)
+			print("[Sandline] interdiction: %s against %s at %s" % [
+					Game.full_name(leader), str(offer.title), str(offer.place)])
 			Game.go_to_battle()
 		"deploy":
 			# Recorded before the scene changes: Battle reads the choice back

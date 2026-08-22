@@ -278,6 +278,39 @@ using:
   opinion settlement by settlement, and Dava's notebook — and the full document
   is written to `user://chronicle.txt`, so the campaign's memory is something
   you can keep.
+- **The field radio** — garrison only, and the other half of why the garrison
+  matters: **the ratline**. See below.
+
+### The ratline
+
+The Thirst's fighters are not born on the maps you fight them on — they are
+**walked in from across the border**, through crossings the Accord does not
+watch. At every garrison stay the field radio posts **three of them**:
+smuggling runs feeding the operation the squad is about to fly out on, each a
+procedurally generated mission on ground the campaign has never shown you — a
+**column caught strung out on the track** and run down to the last man, or a
+**waystation's staged stock burned** under its guard's nose (the guard does
+not have to die for the route to).
+
+An interdiction is a detachment job, like a bounty: one chosen leader and two
+anonymous riflemen, and **whoever leads sits out the next mission** — shrinking
+the next operation costs the current squad a body. What you do about the net
+settles the whole operation's muster:
+
+- **Run all three down and the Thirst musters at 80%** — up to a fifth fewer
+  rifles on every map of the operation, trimmed from the authored spawns
+  (never the marksmen, never the prisoners: a map's bolt rifle is a mission
+  mechanic, not a smuggled body).
+- **Ignore them and it musters at 115%** — the men you didn't stop walk in
+  over the east rim on the opening turns, submachine guns and revolvers only,
+  because nobody smuggles a bolt rifle team.
+- A run that is **fought and lost counts as ignored** — the crossing ran
+  either way — but the offer stays on the net for another try until the
+  operation's first mission begins, at which point the season locks and the
+  radio reads it back.
+
+The muster is quoted in every story briefing and projected at the radio
+through the same sentence, so the promise and the season never disagree.
 
 Who you walk around as follows the chain of command: **Rodar Akai, then the
 machinegunner, then a rifleman**, and within a role the senior survivor. Nobody
