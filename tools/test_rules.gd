@@ -12,7 +12,8 @@ extends SceneTree
 ##      takes the flank bonus, and does NOT also charge the full-cover penalty
 ##   2. the long-shot threshold is `attack_range / 2` in INTEGER division, so a
 ##      5-tile weapon is comfortable to 2 exactly like a 4-tile one
-##   3. the [20, 99] clamp, inclusive at both ends, and Marksman's exemption
+##   3. the [20, 99] clamp on the position, inclusive at both ends, the pin's
+##      quarter taken after it, and Marksman's exemption
 ##   4. cover halves damage with `>>`, which is why every base damage is even
 ##   5. Executioner adds its point on a flank and can never add it through cover
 ##   6. peek_origin leans around the END of a wall run and not around its MIDDLE
@@ -24,7 +25,8 @@ extends SceneTree
 ##      cell-and-facing form, is scoring what the resolver will apply
 ##      (in tools/check_cover_rules.gd, over all seven shipped maps)
 ##   9. a broken unit surrenders where somebody can take it and runs where
-##      nobody can, and the Marksman does neither
+##      nobody can; the district's opinion moves that line, and the Marksman
+##      does neither at any reputation
 ##  10. a clean kill costs nothing; every other conduct is priced
 ##  11. the grenadier alone puts ordnance further than an arm can throw it,
 ##      and not further than the Thirst's longest weapon can answer
@@ -452,13 +454,20 @@ func _test_clamp_bounds() -> void:
 	_check(_chance(board, shooter, target, _k.MIN_HIT_CHANCE - base - 1) == _k.MIN_HIT_CHANCE,
 			"one point under is pushed back up to it")
 
-	# A bad shooter, pinned: 10 - 25 is well under the floor.
-	shooter.accuracy = 10
+	# Pinned: the position clamps FIRST, and the pin then takes its quarter
+	# of whatever is left - the same fraction against a hopeless shot as
+	# against a clean one, and the one number allowed below the floor.
 	shooter.suppress()
 	_check(shooter.is_suppressed(), "the shooter is pinned")
-	_check(_chance(board, shooter, target) == _k.MIN_HIT_CHANCE,
-			"10%% accuracy minus the %d-point pin still gets a %d%% shot"
-			% [_k.SUPPRESSION_ACCURACY, _k.MIN_HIT_CHANCE])
+	_check(_chance(board, shooter, target)
+					== base * (100 - _k.SUPPRESSION_ACCURACY) / 100,
+			"the pin takes %d%% of a clean %d%% shot" % [
+					_k.SUPPRESSION_ACCURACY, base])
+	shooter.accuracy = 10
+	_check(_chance(board, shooter, target)
+					== _k.MIN_HIT_CHANCE * (100 - _k.SUPPRESSION_ACCURACY) / 100,
+			"and %d%% of the floored %d%% - never nothing, never free"
+			% [100 - _k.SUPPRESSION_ACCURACY, _k.MIN_HIT_CHANCE])
 	shooter.suppression = 0
 	shooter.accuracy = base
 
@@ -899,6 +908,26 @@ func _test_morale() -> void:
 	_check(gap.is_empty(),
 			"and every breakable unit that breaks does one of them (%s)"
 			% [gap.slice(0, 3)])
+
+	# Standing decides what breaking MEANS. The trusted squad is surrendered
+	# to a gun earlier; the feared one is never surrendered to at all - and
+	# the two outcomes stay exhaustive and exclusive at every reputation.
+	var trusted: int = int(_k.STANDING_TRUSTED)
+	var feared: int = int(_k.STANDING_FEARED)
+	_check(_rules.call("breaks_to_surrender", smg, brk, guns - 1, false, trusted),
+			"a town that trusts the squad: one gun fewer takes the surrender")
+	_check(_rules.call("breaks_to_rout", smg, brk, 3, false, feared)
+			and not _rules.call("breaks_to_surrender", smg, brk, 3, false, feared),
+			"a town that fears it: three guns on him and he still runs")
+	var standing_overlap := 0
+	for st in [0, feared, feared + 1, 49, 50, trusted - 1, trusted, 100]:
+		for g in 4:
+			var s2: bool = _rules.call("breaks_to_surrender", smg, brk, g, false, st)
+			var r2: bool = _rules.call("breaks_to_rout", smg, brk, g, false, st)
+			if s2 == r2:
+				standing_overlap += 1
+	_check(standing_overlap == 0,
+			"and the pair stays exhaustive-exclusive at every reputation")
 
 	# The kill floor. One class holds, and it is the one the bolt already rooted.
 	_check(_rules.call("never_breaks", bolt),

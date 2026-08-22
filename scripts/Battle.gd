@@ -254,7 +254,14 @@ const BURST_GAP := 0.13  # pause between the rounds of a burst
 const AUTO_GAP := 0.07   # full auto cycles faster than a burst
 const BURST_ROUNDS := 2
 const AUTO_ROUNDS := 4
-const AUTO_ACCURACY := -15  # per-round penalty for walking the gun
+# Fire-mode accuracy. The audit's arithmetic, adopted: at -15, four autofire
+# rounds strictly dominated the two-round burst for a stationary gunner
+# (4.64 vs 2.92 expected damage, same action), and a free burst strictly
+# dominated the single shot. Priced so each step up in volume costs real
+# accuracy: precision is the default, the burst buys volume with -8 a round,
+# and walking the gun is a genuine trade rather than the obvious button.
+const AUTO_ACCURACY := -35  # per-round penalty for walking the gun
+const BURST_ACCURACY := -8  # per-round penalty for the two-round burst
 const WALKING_FIRE_ACCURACY := -10  # Walking Fire's extra for full auto off the advance
 const SUPPRESS_ROUNDS := 3
 # The beaten zone's radius lives on Unit (suppress_radius()), because Wide
@@ -315,11 +322,27 @@ var _end_turn_confirm_until := 0
 var selected: Unit = null
 var hover_cell := Board.NO_CELL
 var turn_number := 1
+# The turn an after-gated pressure clock started (see Levels.pressure_wave):
+# latched by _refresh_objectives the moment the gate objective completes, -1
+# while it is still shut. Per-battle, like the turn counter itself.
+var _pressure_gate_turn := -1
 var enemy_turn_running := false
 var player_turn_ready_msec := 0
 var danger_on := false
 var fire_mode := FireMode.SINGLE
 var aim_mode := AimMode.NONE
+# The take-back slot: the last player move, held for as long as it is still
+# nobody's information - no reaction drawn, no prisoner freed, nothing done
+# since. One slot, because only the last move is ever honestly reversible.
+var _undo: Dictionary = {}
+# Every unit this battle ever spawned, corpses included - the index behind
+# living_units()/unit_at(), so occupancy checks stop walking (and allocating)
+# the ~50-child entity list per call. Appended in _spawn_unit; the escapee
+# _run_for_it frees is erased where it is freed, and every reader still
+# guards with is_instance_valid - the harnesses free units directly (see
+# tools/test_morale.gd's outnumbered scenario), and a stale entry must read
+# as absent, never crash.
+var _units: Array[Unit] = []
 var level: Dictionary = {}
 var last_result_won := false
 var base_camera_pos := Vector2.ZERO
@@ -486,6 +509,11 @@ func _ready() -> void:
 	Levels.validate_all()  # push_error-based, so it reports in release too
 	_apply_cmdline_overrides()
 	level = Game.data()
+	# The install's preferences, applied before anything draws: the danger
+	# overlay's opening state and the friendly-arc palette are both the
+	# player's call now, not the code's.
+	danger_on = bool(Game.setting("danger_default"))
+	board.high_contrast = bool(Game.setting("high_contrast"))
 	# Bring the squad up to strength (replacing anyone lost) and snapshot it,
 	# so a failed mission can be rolled back wholesale.
 	Game.ensure_roster(level)
@@ -1132,8 +1160,8 @@ func _watch_for_occlusion(delta: float) -> void:
 	if _occluders.is_empty():
 		return
 	var now := Vector2.ZERO
-	for unit in entities_node.get_children():
-		if unit is Unit and unit.is_alive():
+	for unit in _units:
+		if is_instance_valid(unit) and unit.is_alive():
 			now += unit.global_position
 	if not now.is_equal_approx(_occlusion_watch):
 		_occlusion_watch = now
@@ -1410,10 +1438,15 @@ func _spawn_structure(s: Dictionary) -> void:
 func _spawn_unit(kind: Unit.Kind, spawn_cell: Vector2i, soldier := {}) -> void:
 	var unit: Unit = UNIT_SCENE.instantiate()
 	entities_node.add_child(unit)
+	_units.append(unit)
 	unit.setup(kind, spawn_cell)
 	if not soldier.is_empty():
 		# Strictly after setup(), which assigns every stat from scratch.
 		unit.apply_progression(soldier)
+		# The wound ledger needs to know who actually fought this mission -
+		# commit_mission heals the wounded who did NOT.
+		if unit.soldier_id != 0 and not Game.mission_fielded.has(unit.soldier_id):
+			Game.mission_fielded.append(unit.soldier_id)
 	elif unit.team == Unit.TEAM_GOBLIN:
 		unit.identity = Roll.identity(Game.campaign_seed, Game.current_level,
 				_enemy_ordinal, kind)
@@ -1639,6 +1672,37 @@ func _land_returners() -> void:
 	await get_tree().create_timer(0.9).timeout
 
 
+## The mission's own clock: arrivals the ground calls in, scheduled by
+## Levels.pressure_wave off the turn counter and the objective state, riding
+## the same rim-arrival machinery the returners do. Landed at the same moment
+## for the same reason: run_enemy_turn snapshots its squad on its first
+## statement, so a body added later would stand still for a turn.
+func _land_pressure() -> void:
+	if state == State.GAME_OVER or Game.on_bounty():
+		return
+	var done: Array = []
+	for i in _objectives().size():
+		done.append(_objective_complete(i))
+	var wave := Levels.pressure_wave(level, turn_number, done, _pressure_gate_turn)
+	if wave.is_empty():
+		return
+	var landed := 0
+	for kind in wave.units:
+		var cell := _arrival_cell(str(wave.edge))
+		if cell == Board.NO_CELL:
+			continue  # every rim cell taken - this one stays out there
+		_spawn_unit(int(kind), cell)
+		landed += 1
+	if landed == 0:
+		return
+	Sfx.play("turn_enemy", 0.0, 0.0)
+	var banner := str(wave.banner)
+	show_banner(banner if banner != "" else "THE THIRST SENDS MORE")
+	print("[Sandline]   pressure: %d walked on from the %s (turn %d)" % [
+			landed, wave.edge, turn_number])
+	await get_tree().create_timer(0.9).timeout
+
+
 ## One returning fighter, carrying the name he had when he ran.
 func _spawn_returner(entry: Dictionary, cell: Vector2i) -> void:
 	_spawn_unit(int(entry.get("kind", 3)), cell)
@@ -1798,18 +1862,15 @@ func captives() -> Array[Unit]:
 
 func living_units(team: int) -> Array[Unit]:
 	var result: Array[Unit] = []
-	for child in entities_node.get_children():
-		var unit := child as Unit
-		if unit != null and unit.is_alive():
-			if unit.team == team:
-				result.append(unit)
+	for unit in _units:
+		if is_instance_valid(unit) and unit.is_alive() and unit.team == team:
+			result.append(unit)
 	return result
 
 
 func unit_at(cell: Vector2i) -> Unit:
-	for child in entities_node.get_children():
-		var unit := child as Unit
-		if unit != null and unit.is_alive() and unit.cell == cell:
+	for unit in _units:
+		if is_instance_valid(unit) and unit.is_alive() and unit.cell == cell:
 			return unit
 	return null
 
@@ -1883,6 +1944,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("hustle"):
 		_try_hustle()
+		return
+	if event.is_action_pressed("undo_move"):
+		_try_undo_move()
 		return
 	if event.is_action_pressed("ability_primary"):
 		_use_ability(0)
@@ -1981,7 +2045,8 @@ func _fire_selected_at(target: Unit) -> void:
 			return
 	match mode:
 		FireMode.BURST:
-			do_volley(selected, target, BURST_ROUNDS, BURST_GAP, 0)
+			do_volley(selected, target, BURST_ROUNDS, BURST_GAP,
+					_mode_accuracy(selected, FireMode.BURST))
 		FireMode.AUTO:
 			do_volley(selected, target, AUTO_ROUNDS, AUTO_GAP,
 					_mode_accuracy(selected, FireMode.AUTO))
@@ -1995,12 +2060,52 @@ func _fire_selected_at(target: Unit) -> void:
 ## so the panel's preview and the resolved volley can never disagree. Walking
 ## Fire pays another 10 points for firing full auto off the advance.
 func _mode_accuracy(unit: Unit, mode: FireMode) -> int:
+	if mode == FireMode.BURST:
+		return BURST_ACCURACY
 	if mode != FireMode.AUTO:
 		return 0
 	var mod := AUTO_ACCURACY
 	if unit != null and unit.moved:
 		mod += WALKING_FIRE_ACCURACY  # only reachable with walking_fire
 	return mod
+
+
+## The promise from a cell the soldier is not standing on yet. Answered by
+## the same Rules.shot_preview every real shot resolves through - the unit is
+## stood on the candidate cell for the length of one question and put back -
+## so the projected number IS the number he gets standing there, inspiration
+## aura and all. No second spelling of the rule exists to drift.
+##
+## Quoted at the mode he would actually hold after walking: bracing is gone,
+## so a rifleman projects his single shot and the gunner his hip burst.
+func _projected_shot(unit: Unit, from_cell: Vector2i, target: Unit) -> Dictionary:
+	var real := unit.cell
+	unit.cell = from_cell
+	var mode := _default_fire_mode(unit)
+	var shot := Rules.shot_preview(board, unit, target,
+			_mode_accuracy(unit, mode), _inspiration_bonus(unit))
+	unit.cell = real
+	return shot
+
+
+## Best answer the hovered destination offers: the highest-odds target the
+## soldier could engage from there (with how many are in reach at all), or {}
+## when the cell has no shot.
+func _best_projected_shot(unit: Unit, from_cell: Vector2i) -> Dictionary:
+	var best := {}
+	var count := 0
+	for goblin in living_soldiers(Unit.TEAM_GOBLIN):
+		if Board.manhattan(from_cell, goblin.cell) > unit.attack_range \
+				or not board.can_engage(from_cell, goblin.cell):
+			continue
+		count += 1
+		var shot := _projected_shot(unit, from_cell, goblin)
+		if best.is_empty() or int(shot.chance) > int(best.chance):
+			shot["target"] = goblin
+			best = shot
+	if not best.is_empty():
+		best["count"] = count
+	return best
 
 
 func select(unit: Unit) -> void:
@@ -2263,6 +2368,30 @@ func _update_unit_panel() -> void:
 				shot.chance, shot.dmg, "  " + note if note != "" else ""]
 		panel_status_label.modulate = Color("7ae8ff") if flanking else Color.WHITE
 		return
+	# Hovering ground the soldier could walk to: answer the move before it is
+	# made. The cover half of that answer is already on the board - the cover
+	# overlay previews the hovered destination - and this line is the fire
+	# half: the best shot the cell offers, from the function that will keep
+	# the promise, plus whether a goblin's watch is on the ground itself.
+	if unit == selected and selected != null and hover_cell != Board.NO_CELL \
+			and board.move_dests.has(hover_cell) and _armed(selected):
+		var projected := _best_projected_shot(selected, hover_cell)
+		var line := ""
+		if projected.is_empty():
+			line = "FROM HERE: NO SHOT"
+		else:
+			var mark: Unit = projected.target
+			line = "FROM HERE: %d%% ON %s - %d DMG" % [
+					int(projected.chance), mark.role_name().to_upper(),
+					int(projected.dmg)]
+			if int(projected.count) > 1:
+				line += " (+%d MORE)" % (int(projected.count) - 1)
+		if _hostile_watch_covers(hover_cell):
+			line += " - WATCHED GROUND"
+		panel_status_label.text = line
+		panel_status_label.modulate = Color("ffb84a") \
+				if _hostile_watch_covers(hover_cell) else Color.WHITE
+		return
 	if unit == selected and fire_mode != FireMode.SINGLE:
 		match fire_mode:
 			FireMode.AUTO:
@@ -2444,20 +2573,9 @@ func _commit_aim(cell: Vector2i) -> void:
 
 ## Cells an overwatching unit would cover: in range, in arc, with LOS.
 func _overwatch_cells_for(unit: Unit, sector: int) -> Dictionary:
-	var cells := {}
-	var r := unit.overwatch_range()  # the gunner watches further than he shoots
-	for dy in range(-r, r + 1):
-		var w := r - absi(dy)
-		for dx in range(-w, w + 1):
-			var cell: Vector2i = unit.cell + Vector2i(dx, dy)
-			if cell == unit.cell or not board.in_bounds(cell) or not board.is_walkable(cell):
-				continue
-			var to_cell := Board.sector_from_to(unit.cell, cell)
-			if absi(wrapi(to_cell - sector + 4, 0, 8) - 4) > unit.arc_half:
-				continue
-			if board.has_line_of_sight(unit.cell, cell):
-				cells[cell] = true
-	return cells
+	# The geometry is Rules' now - one cone for the overlay, the AI and the
+	# trigger check alike. See Rules.overwatch_cells.
+	return Rules.overwatch_cells(board, unit, sector)
 
 
 ## Every overwatch arc on the board: hostile arcs (amber) are threats to
@@ -2480,6 +2598,16 @@ func _refresh_cover() -> void:
 	for team: int in [Unit.TEAM_SCOUT, Unit.TEAM_GOBLIN]:
 		for unit in living_units(team):
 			unit.set_in_cover(_cover_for(unit))
+
+
+## Whether any goblin's held arc covers `cell` - the same sets the amber
+## overlay paints, asked cell-at-a-time for the hover line.
+func _hostile_watch_covers(cell: Vector2i) -> bool:
+	for watcher in living_units(Unit.TEAM_GOBLIN):
+		if watcher.overwatching and watcher.has_ammo() \
+				and _overwatch_cells_for(watcher, watcher.facing_sector).has(cell):
+			return true
+	return false
 
 
 func _refresh_watch_cells() -> void:
@@ -2625,6 +2753,16 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 		state = prev_state
 		return
 	var path := board.reconstruct_path(came_from, dest)
+	# A new walk always replaces the take-back slot - whatever was pending is
+	# no longer the last move. Snapshot what an undo would need to restore and
+	# what it must verify went unchanged.
+	_undo = {}
+	var undo_from := unit.cell
+	var undo_facing := unit.facing_sector
+	var undo_watch := unit.overwatching
+	var undo_acted := unit.acted
+	var undo_captives := captives().size()
+	var reaction_fired := false
 	if unit.overwatching:
 		# Only Protective Fire can produce a mover still on watch (its carried
 		# overwatch survives start_turn). The stance does not survive walking.
@@ -2646,6 +2784,7 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 		from_pos = step_pos
 		var watchers := _overwatchers_against(unit)
 		if not watchers.is_empty():
+			reaction_fired = true
 			unit.stop_walking()
 			for watcher in watchers:
 				if not unit.is_alive():
@@ -2693,6 +2832,13 @@ func do_move(unit: Unit, dest: Vector2i) -> void:
 		# "x4 AUTO @ 58%" while _fire_selected_at silently fires 2 at 73%.
 		if selected == unit and not _can_use_mode(unit, fire_mode):
 			_set_fire_mode(_default_fire_mode(unit))
+		# The walk is reversible only while it changed nothing but the cell.
+		if unit.team == Unit.TEAM_SCOUT and not reaction_fired \
+				and not unit.interrupted and captives().size() == undo_captives:
+			_undo = {"unit": unit, "from": undo_from, "dest": unit.cell,
+					"facing": undo_facing, "watch": undo_watch,
+					"acted": undo_acted, "ammo": unit.ammo, "hp": unit.hp,
+					"turn": turn_number}
 		_refresh_danger()
 		_refresh_watch_cells()
 		_update_unit_panel()
@@ -2870,6 +3016,52 @@ func _try_hustle() -> void:
 	_set_fire_mode(_default_fire_mode(selected))
 	_refresh_highlights()
 	_update_unit_panel()
+
+
+## Take the last move back. Only while it is still nobody's information: the
+## walk drew no reaction, freed no prisoner, and the soldier has done nothing
+## since - anything else is a decision the battle has already answered, and it
+## stands. Restores cell, facing and a Protective Fire watch the walk broke.
+func _try_undo_move() -> void:
+	if state != State.PLAYER_TURN:
+		return
+	if _undo.is_empty():
+		show_banner("NOTHING TO TAKE BACK")
+		return
+	var unit: Unit = _undo.unit
+	if not _can_undo_move(unit):
+		show_banner("TOO LATE TO TAKE BACK")
+		return
+	unit.cell = _undo.from
+	unit.position = board.cell_to_global(_undo.from)
+	unit.moved = false
+	unit.set_facing_sector(_undo.facing)
+	if _undo.watch:
+		unit.set_overwatch(true)
+	print("[Sandline] %s takes the move back to %s" % [
+			unit.display_name(), unit.cell])
+	Sfx.play("select", -3.0, 0.0)
+	show_banner("MOVE TAKEN BACK")
+	_undo = {}
+	if selected == unit:
+		_set_fire_mode(_default_fire_mode(unit))
+	_refresh_danger()
+	_refresh_watch_cells()
+	_refresh_objectives()
+	_update_unit_panel()
+	if selected == unit:
+		_refresh_highlights()
+
+
+## Whether the held slot still describes the board. Every field the move could
+## legitimately have changed is verified unchanged, so a slot that survived a
+## reload, a shot, a patch-up or a new turn can never restore stale state.
+func _can_undo_move(unit: Unit) -> bool:
+	return is_instance_valid(unit) and unit.is_alive() \
+			and int(_undo.turn) == turn_number \
+			and unit.moved and unit.cell == _undo.dest \
+			and unit.acted == _undo.acted \
+			and unit.ammo == int(_undo.ammo) and unit.hp == int(_undo.hp)
 
 
 # ------------------------------------------------------------ class actives --
@@ -3278,6 +3470,15 @@ func _refresh_objectives() -> void:
 		beacons.append(prisoner.position)
 	if objective_marks != null:
 		objective_marks.set_marks(beacons)
+	# The after-gate for the mission's pressure clock: the first refresh that
+	# sees the gate objective done stamps the turn, and the cadence in
+	# Levels.pressure_wave counts from that moment - blowing the stores on
+	# turn 9 is chased from turn 9, not from a schedule the squad never heard.
+	if _pressure_gate_turn < 0:
+		var pressure: Dictionary = level.get("pressure", {})
+		if pressure.has("after_objective") \
+				and _objective_complete(int(pressure.after_objective)):
+			_pressure_gate_turn = turn_number
 	_update_objective_label()
 
 
@@ -4047,9 +4248,9 @@ func _overwatchers_against(mover: Unit) -> Array[Unit]:
 	var result: Array[Unit] = []
 	if not mover.is_combatant():
 		return result  # nobody wastes a reaction shot on the prisoner
-	for child in entities_node.get_children():
-		var watcher := child as Unit
-		if watcher == null or not watcher.is_alive() or not watcher.overwatching:
+	for watcher in _units:
+		if not is_instance_valid(watcher) or not watcher.is_alive() \
+				or not watcher.overwatching:
 			continue
 		if watcher.team == mover.team or not watcher.has_ammo():
 			continue
@@ -4126,6 +4327,7 @@ func end_player_turn(force := false) -> void:
 	# there was a war on. Arriving now, it is refreshed by the loop below and
 	# is in that snapshot, so it acts on the turn it lands.
 	await _land_returners()
+	await _land_pressure()
 	# Goblins refresh at the start of THEIR turn (expires last turn's
 	# unfired goblin overwatch at the right moment).
 	for goblin in living_units(Unit.TEAM_GOBLIN):
@@ -4264,6 +4466,14 @@ func run_enemy_turn() -> void:
 ## The order is deliberate. Pressure is applied first, then the break is tested,
 ## then a unit already running keeps running. A fighter who breaks this turn
 ## does not also get to shoot on the way out.
+## The settlement's opinion of the squad, read off the fighter's identity.
+## A fighter with no settlement on file - or one from ground the squad has
+## never touched - answers with the neutral start, so the rule stays silent
+## until a reputation has actually been earned somewhere.
+func _standing_for(goblin: Unit) -> int:
+	return Game.standing_of(str(goblin.identity.get("settlement", "")))
+
+
 func _resolve_morale(goblin: Unit, index: int, squad_size: int) -> bool:
 	# A unit under a beaten zone erodes. One that had a genuinely quiet turn
 	# steadies. One that was shot at does neither: it holds where the player
@@ -4317,7 +4527,9 @@ func _resolve_morale(goblin: Unit, index: int, squad_size: int) -> bool:
 				% [index, squad_size, recent, still_up, rifles, before, goblin.morale])
 
 	var guns := _guns_on(goblin)
-	if Rules.breaks_to_surrender(goblin.kind, goblin.morale, guns, _fighters_hold()):
+	var standing := _standing_for(goblin)
+	if Rules.breaks_to_surrender(goblin.kind, goblin.morale, guns,
+			_fighters_hold(), standing):
 		goblin.surrender()
 		_record_on_roll(goblin, "surrendered")
 		Sfx.play("overwatch_set", -6.0, 0.0)
@@ -4326,7 +4538,8 @@ func _resolve_morale(goblin: Unit, index: int, squad_size: int) -> bool:
 		_refresh_objectives()
 		check_game_over()
 		return true
-	if Rules.breaks_to_rout(goblin.kind, goblin.morale, guns, _fighters_hold()):
+	if Rules.breaks_to_rout(goblin.kind, goblin.morale, guns,
+			_fighters_hold(), standing):
 		goblin.begin_rout()
 		print("[Sandline]   goblin %d/%d breaks at %s (morale %d, %d guns)" % [
 				index, squad_size, goblin.cell, goblin.morale, guns])
@@ -4348,6 +4561,7 @@ func _run_for_it(goblin: Unit, index: int, squad_size: int) -> bool:
 		goblin.hide()
 		# Off the board rather than dead: removed from every query the turn
 		# loop and the objectives make, without a corpse or a death sound.
+		_units.erase(goblin)
 		goblin.queue_free()
 		await get_tree().process_frame
 		_refresh_objectives()
@@ -4385,138 +4599,56 @@ func _ai_fire(attacker: Unit, target: Unit) -> void:
 	if attacker.raider and attacker.raid_shots_left > 0:
 		attacker.raid_shots_left -= 1
 	if _can_use_mode(attacker, FireMode.BURST):
+		# The Thirst's burst goes out unpriced. BURST_ACCURACY exists to make
+		# the squad's trigger settings a real choice; a Runner has no single
+		# setting to choose instead, and his 58 already is his burst.
 		await do_volley(attacker, target, BURST_ROUNDS, BURST_GAP, 0)
 	else:
 		await do_attack(attacker, target)
 
 
 func _shootable_from(from_cell: Vector2i, attack_range: int, targets: Array[Unit]) -> Array[Unit]:
-	var result: Array[Unit] = []
-	for unit in targets:
-		if Board.manhattan(from_cell, unit.cell) <= attack_range \
-				and board.can_engage(from_cell, unit.cell):
-			result.append(unit)
-	return result
+	return AiPlan.shootable_from(board, from_cell, attack_range, targets)
 
 
 func _nearest(from_cell: Vector2i, candidates: Array[Unit]) -> Unit:
-	var best: Unit = candidates[0]
-	for unit in candidates:
-		if Board.manhattan(from_cell, unit.cell) < Board.manhattan(from_cell, best.cell):
-			best = unit
-	return best
+	return AiPlan.nearest(from_cell, candidates)
 
 
-## How exposed a cell is to scout fire: 2 per clean firing line, 1 per line
-## that has to cross junk (those shots only land for half damage). This is
-## what makes the goblins actually value the cover on the map.
-##
-## The goblin is the TARGET of every shot counted here, so the facing that
-## decides its cover is its own - the one it would be holding on arrival, which
-## is why `_best_ai_dest` works `end_sector` out before it calls this. A cell
-## with a wall behind the goblin's back is not cover, and used to score as if it
-## were: this asked `board.cover_between`, which does not know which way anyone
-## is looking, while the shot it was predicting resolves through
-## Rules.effective_cover, which does. Both go through Rules.cover_at now.
-func _exposure_at(cell: Vector2i, facing_sector: int, arc_half: int,
-		scouts: Array[Unit]) -> int:
-	var score := 0
-	for scout in scouts:
-		if Board.manhattan(cell, scout.cell) <= scout.attack_range \
-				and board.can_engage(scout.cell, cell):
-			# Now measured from the cover the cell itself would give, which is
-			# what makes the AI move wall to wall rather than just away.
-			match Rules.cover_at(board, cell, facing_sector, arc_half, scout.cell):
-				Board.CoverLevel.FULL:
-					score += 0
-				Board.CoverLevel.HALF:
-					score += 1
-				_:
-					score += 2
-	return score
+## The judgement below is AiPlan's now (see scripts/AiPlan.gd), where
+## tools/test_aiplan.gd pins it without standing up a scene. These forwarders
+## assemble the two things the planner is not allowed to know - occupancy and
+## which arcs are live - and keep every call site reading as before.
 
-
-## Best move destination for an AI unit. A cell it can shoot a scout from
-## beats every cell it can't; exposure to scout fire costs a little when
-## healthy and a lot when wounded (so 1 HP goblins with no shot retreat to
-## cover); nearer the chase target breaks remaining ties.
-## `reach` is the flood_fill result (cell -> predecessor), which also tells us
-## which way the goblin would be facing when it arrives.
+## Best move destination for an AI unit. Occupancy is the controller's
+## knowledge, so the free destinations are gathered here; the watch sets use
+## the same gate _overwatchers_against applies when a step actually triggers,
+## so the route planner and the reaction can never disagree about what is
+## covered.
 func _best_ai_dest(goblin: Unit, reach: Dictionary, scouts: Array[Unit],
 		chase_cell: Vector2i) -> Vector2i:
-	var exposure_weight := 25 if goblin.hp <= 2 else 2
 	# Reachable cells include squadmates' tiles, which can be crossed but
 	# not occupied; standing still is always an option.
 	var candidates: Array = _free_dests(reach).keys()
 	candidates.append(goblin.cell)
-	var best := Vector2i(-1, -1)
-	var best_score := 999999
-	for cell: Vector2i in candidates:
-		# Which way the goblin would be looking once it got here, worked out
-		# before anything is scored because its own facing decides the cover it
-		# would have (see _exposure_at). A goblin with a shot turns to take it;
-		# one without walks in facing the way it came. Neither is on the unit
-		# yet, which is what Rules.cover_at exists to be asked about.
-		var shots := _shootable_from(cell, goblin.attack_range, scouts)
-		var mark: Unit = null
-		var end_sector := -1
-		if not shots.is_empty():
-			mark = _nearest(cell, shots)
-			end_sector = Board.sector_from_to(cell, mark.cell)
-		elif reach.has(cell):
-			end_sector = Board.sector_from_to(reach[cell], cell)
-		# Standing still with no shot ends the turn on overwatch, which picks its
-		# own sector later; the facing we can honestly predict there is the one
-		# the goblin already has.
-		var end_facing := end_sector if end_sector >= 0 else goblin.facing_sector
-		var score := Board.manhattan(cell, chase_cell)
-		score += exposure_weight * _exposure_at(cell, end_facing, goblin.arc_half, scouts)
-		if mark != null:
-			score -= 1000
-			# A clean firing position beats one where the target is dug in. The
-			# target is a live scout standing where it stands, so the facing that
-			# decides ITS cover is its real one, read off the unit - the opposite
-			# perspective to the exposure term above, and the reason both are
-			# asked through the same function rather than through cover_between.
-			if Rules.cover_at(board, mark.cell, mark.facing_sector, mark.arc_half,
-					cell) != Board.CoverLevel.NONE:
-				score += 400
-			# Shooting someone in the back bypasses their cover.
-			if not mark.covers_sector(Board.sector_from_to(mark.cell, cell)):
-				score -= 60
-		# Do not turn your back on the rest of the squad.
-		if end_sector >= 0:
-			for scout in scouts:
-				if Board.manhattan(cell, scout.cell) <= scout.attack_range \
-						and board.has_line_of_sight(scout.cell, cell) \
-						and absi(wrapi(Board.sector_from_to(cell, scout.cell)
-								- end_sector + 4, 0, 8) - 4) > goblin.arc_half:
-					score += 6
-		if score < best_score:
-			best_score = score
-			best = cell
-	return best
+	var watch_sets: Array[Dictionary] = []
+	for watcher in living_units(_enemy_team_of(goblin)):
+		if watcher.overwatching and watcher.has_ammo() and watcher.is_combatant():
+			watch_sets.append(_overwatch_cells_for(watcher, watcher.facing_sector))
+	return AiPlan.best_dest(board, goblin, reach, candidates, scouts,
+			chase_cell, watch_sets)
 
 
-## Which way a dug-in goblin should watch: the arc covering the most cells
-## the scouts could advance through. Integer scoring keeps ties deterministic.
+## Which way a dug-in goblin should watch. The scouts' reach is gathered here
+## - reachability depends on who is standing where - and AiPlan scores the
+## eight arcs over it.
 func _best_watch_sector(goblin: Unit, scouts: Array[Unit]) -> int:
 	var approach := {}
 	for scout in scouts:
 		approach.merge(board.flood_fill(scout.cell, scout.move_range,
 				_blocked_for_team.bind(scout.team)))
 		approach[scout.cell] = true
-	var best_sector := goblin.facing_sector
-	var best_count := -1
-	for sector in 8:
-		var count := 0
-		for cell: Vector2i in _overwatch_cells_for(goblin, sector):
-			if approach.has(cell):
-				count += 1
-		if count > best_count:
-			best_count = count
-			best_sector = sector
-	return best_sector
+	return AiPlan.best_watch_sector(board, goblin, approach)
 
 
 # --- Win / lose --------------------------------------------------------------
@@ -4770,7 +4902,8 @@ func _try_parley(want: String) -> void:
 	var wounded := target.hp * 2 <= target.max_hp
 	var chance := 0
 	if want == "surrender":
-		chance = Bounty.surrender_chance(presence, target.survivals, band_up, wounded)
+		chance = Bounty.surrender_chance(presence, target.survivals, band_up,
+				wounded, _standing_for(target))
 	else:
 		chance = Bounty.informant_chance(guile, presence, target.survivals,
 				band_up, not str(offer.get("grievance", "")).is_empty())
@@ -5197,9 +5330,9 @@ func check_game_over() -> bool:
 ## lives or when the level never deployed him (a roster short of its hero
 ## simply fights without one - it must not read as an instant loss).
 func _fallen_hero() -> Unit:
-	for child in entities_node.get_children():
-		var unit := child as Unit
-		if unit != null and unit.kind == Unit.Kind.HERO and not unit.is_alive():
+	for unit in _units:
+		if is_instance_valid(unit) and unit.kind == Unit.Kind.HERO \
+				and not unit.is_alive():
 			return unit
 	return null
 
@@ -5225,6 +5358,13 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 		_sweep_the_still_running()
 		_apply_conduct()
 		_remember_the_survivors()
+		# The ledger's first half: whoever ends a won mission below half is
+		# walking wounded for the next one. Before commit_mission, so the
+		# flag is part of the state the win banks - and never on a loss,
+		# where the rollback puts everything back anyway.
+		for scout in living_soldiers(Unit.TEAM_SCOUT):
+			if scout.soldier_id != 0 and scout.hp * 2 <= scout.max_hp:
+				Game.mark_wounded(scout.soldier_id)
 		Game.add_to_notebook(Game.current_level, roll)
 		if Game.on_bounty():
 			# A bounty is not a campaign mission and must not advance the
@@ -5434,9 +5574,37 @@ func _show_briefing() -> void:
 			Game.operation().name, Game.mission_number(), Game.mission_count()]
 	briefing_title_label.text = str(level.name)
 	briefing_fiction_label.text = str(level.get("fiction", ""))
+	# Dava's notebook, read out where it can still change a decision: the
+	# briefing names the men the campaign expects on this ground. Two lines
+	# at most - the histories live in the notebook and on THE ROLL.
+	if not Game.on_bounty():
+		var expected := _notebook_warnings()
+		if not expected.is_empty():
+			body += "\n\nDAVA'S NOTEBOOK: " + "\n".join(expected)
 	briefing_body_label.text = body
 	briefing_orders_label.text = "ORDERS:  %s" % level.get("orders", "")
 	briefing_panel.visible = true
+
+
+## The men the campaign expects back on this ground, as briefing lines. A
+## warband is announced by the man who gathered it; loose returners are named
+## with where the squad last settled them. Reads the same deterministic lists
+## _schedule_returners reads, so the warning and the arrival can never
+## disagree - and never a turn or a rim, because a notebook holds what a man
+## did, not where he will stand.
+func _notebook_warnings() -> Array[String]:
+	var lines: Array[String] = []
+	var band: Dictionary = Game.warband_for(Game.current_level)
+	if not band.is_empty():
+		var leader: Dictionary = band.get("leader", {})
+		lines.append("%s of %s has been gathering men. Expect the warband."
+				% [str(leader.get("name", "somebody")),
+						str(leader.get("settlement", "out there"))])
+		return lines
+	var coming: Array = Game.adversaries_for(Game.current_level)
+	for rec: Dictionary in coming.slice(0, 2):
+		lines.append("%s. Expect him." % Game.adversary_line(rec))
+	return lines
 
 
 func _dismiss_briefing() -> void:
@@ -5538,6 +5706,8 @@ func _sway_plants() -> void:
 
 
 func _screen_shake(strength := 1.0) -> void:
+	if not bool(Game.setting("screen_shake")):
+		return
 	if _shake_tween != null and _shake_tween.is_valid():
 		_shake_tween.kill()
 	var gain := strength / maxf(base_zoom.x, 0.01)
@@ -5549,6 +5719,8 @@ func _screen_shake(strength := 1.0) -> void:
 ## A snap away from the shot direction that eases back - the camera reacts to
 ## where the round went instead of doing the same wiggle every time.
 func _camera_kick(dir: Vector2) -> void:
+	if not bool(Game.setting("screen_shake")):
+		return
 	if _kick_tween != null and _kick_tween.is_valid():
 		_kick_tween.kill()
 	_cam_lean = -dir * 5.0 / maxf(base_zoom.x, 0.01)
@@ -5564,6 +5736,8 @@ func _camera_kick(dir: Vector2) -> void:
 ## Every caller must await this - that serialization is what keeps overlapping
 ## hit-stops from stacking.
 func _hit_stop(scale: float, real_seconds: float) -> void:
+	if not bool(Game.setting("hit_stop")):
+		return
 	Engine.time_scale = scale
 	var timer := get_tree().create_timer(real_seconds, true, false, true)
 	timer.timeout.connect(Engine.set_time_scale.bind(1.0))

@@ -112,14 +112,25 @@ That cuts both ways for him. A four-time survivor is very hard to put down for
 good and physically almost nothing: a wretch who will not die rather than a
 boss who cannot be hurt. And the campaign keeps his file — every mission he has
 run from and every one he was left for dead on, under the name he had the first
-time.
+time. **The file is read back where it matters**: when the notebook expects a
+man on the next map, the briefing says so by name — a warband by the man who
+gathered it — and a returner wears his tally on the field, one bone-white
+notch beside his health per time the squad already settled him.
 
 Whether any of it is worth it is the point. Shooting a routing man costs
 Standing; letting him go costs you nothing today and might cost you a flank in
 three missions' time. Finishing a wounded man properly costs you the shot that
 would have done it.
 
-Seven missions across two operations, on 16×10 isometric maps. It is one story,
+**And Standing shoots back.** A settlement's opinion of the squad decides what
+breaking means for its sons: where the squad is trusted, a broken fighter puts
+his hands up with one rifle fewer on him, and a cornered man is likelier to
+take the offer a bounty hunter makes. Where it is feared, nobody surrenders at
+all — every broken man runs for the rim, because the district has heard what
+happens to the ones who stop. A fresh campaign sits in the middle and the rule
+stays invisible until a reputation has actually been earned.
+
+Nine missions across three operations, on 16×10 isometric maps. It is one story,
 and **the objectives are how it is told** — each mission opens with a briefing
 and closes on a debrief that sets up the next.
 
@@ -165,6 +176,27 @@ and where it went.
    nothing; this is the one time the killing is the point, and the man who
    made it so is not among the bodies.
 
+### Operation Burnt Survey
+
+The reading is ended and the man who kept it is not among the bodies. Follow
+him out through the country the Thirst burned behind itself — the epilogue
+operation, fought on ash.
+
+8. **The Cinder Road** — he went west with a rearguard and more supply than a
+   running man needs, through country with nothing left to live on. **Burn his
+   three supply drops** where the fire line stalled — and while they stand,
+   his rearguard keeps being fed off the road, so the supply is the tap and
+   burning it is what shuts the reinforcements off. The drops turn out to hold
+   map cases and well surveys, not food: he is carrying the reading out of the
+   campaign, and he has one man left worth guarding.
+9. **The Cold Well** — the last well on the survey, capped eleven years ago,
+   with the last surveyor held at the wellhead and **wire around both**. One
+   gate in the wire, his marksman rooted on it. **Reach the surveyor, then
+   walk him out** — the extraction zone is the west edge the squad started
+   from, and it does not open until the man they came for is aboard. The
+   Surveyor himself is, again, not among the bodies; the notebook keeps the
+   rest.
+
 Which is why each map asks for something different:
 
 1. **Dry Wash** — open skirmish. Kill every goblin. The teaching level.
@@ -174,12 +206,19 @@ Which is why each map asks for something different:
    body count does not end this one; you can win with goblins still standing,
    and you can wipe them out and still not be finished. The crates turn out to
    hold machined ordnance — and the mast carries the same depot mark, which is
-   what points you at Outpost 7.
+   what points you at Outpost 7. **The mast is not set dressing while it
+   stands**: every third turn it calls another patrol in off the freight line
+   on the east rim, so the yard never runs out of defenders until you put it
+   down — the relay is the tap, and dropping it is how you shut the water off.
 3. **Outpost 7** — a raid with a way out. **Blow both ammo stores** at opposite
    ends of the compound, *then* **walk the whole squad back to the extraction
    zone** on the west edge. The zone stays shut until the charges go off, so
    the last stretch is a fighting withdrawal across ground you already crossed
-   once — with whatever the Thirst has left chasing you.
+   once — with whatever the Thirst has left chasing you, **and its patrols
+   coming home**: two blasts loud enough to open the extraction zone are loud
+   enough to be heard for miles, and from the moment the second store goes,
+   fresh rifles walk in off the east rim every other turn while the squad runs
+   west.
 4. **The Holding Pens** — a rescue behind **barbed wire**, which is the only
    thing on the board that stops movement and nothing else: you can see the
    prisoners from your start line and shoot the guards straight through the
@@ -193,8 +232,8 @@ Which is why each map asks for something different:
    which makes the walk home a problem of tempo rather than of covering fire.
 
 The Thirst gets heavier as you go — 9 goblins on Dry Wash, 13 in the bowl at
-the end — but so does your squad, and by the second operation your veterans
-have specialties.
+the survey camp — but so does your squad, and by the second operation your
+veterans have specialties.
 
 Kestrel Squad is elite — tougher, faster, longer-ranged — but the Thirst has
 numbers, holds the ground, and is fighting where it lives.
@@ -234,6 +273,11 @@ using:
 - **The briefing table** gives the next mission's orders and deploys you.
 - **The assignment post** — garrison only — signs on replacements for anyone
   lost, green: no rank, no specialty, nothing the squad lost with them.
+- **The ledger** — garrison only, read at the memorial cross. The whole war so
+  far: every soldier's record, the dead, the adversary files, the district's
+  opinion settlement by settlement, and Dava's notebook — and the full document
+  is written to `user://chronicle.txt`, so the campaign's memory is something
+  you can keep.
 
 Who you walk around as follows the chain of command: **Rodar Akai, then the
 machinegunner, then a rifleman**, and within a role the senior survivor. Nobody
@@ -251,9 +295,14 @@ gone for the campaign** — nobody replaces them. Lose a scout on Dry Wash and
 you assault The Scrapline four strong, with one fewer rifle for every fight
 that follows.
 
-Everything else resets between missions: **survivors deploy at full HP, with
-full magazines, and the squad's grenades are restocked**. Attrition costs you
-soldiers, never a wounded start.
+Everything else resets between missions — **full magazines, and the squad's
+grenades restocked** — with one graded exception. A soldier who ends a won
+mission **below half his health is walking wounded**: he deploys a point of
+max HP short until he either sits a mission out at the deployment table or the
+squad makes it home to the garrison, whose walls come with a surgeon. Taking
+him anyway is allowed, and the deploy row says what it costs. Attrition still
+costs you soldiers before anything else — a wound is a decision to make, not a
+death sentence on a graze.
 
 | Rank | XP | Gains |
 |---|---|---|
@@ -346,6 +395,9 @@ campaign and playing again starts you with five fresh recruits.
   how many goblins it would pin.
 - **V** — **Hustle** (scout specialty): give up this soldier's shot to move a
   second time.
+- **U** — take the last move back. Only while it is still nobody's
+  information: the walk drew no overwatch fire, freed no prisoner, and the
+  soldier has done nothing since. A walk the battle answered stands.
 - **Q / T** — the selected soldier's **active specialties** (Called Shot,
   Rally, Field Dressing), on the two ability buttons that appear when a
   soldier owns one. Called Shot aims like a throw: arm it, then click the
@@ -371,6 +423,11 @@ campaign and playing again starts you with five fresh recruits.
 - **E** or the **End Turn** button — end your turn
 - **1 / 2 / 3** — jump to a level (also buttons on the result screen)
 - A stat panel (bottom-left) shows the hovered or selected unit
+- **Settings**, on the main menu: master volume, screen shake, hit-stop,
+  whether the danger overlay starts each battle on, and a high-contrast
+  option that turns the friendly overwatch arcs blue for color vision the
+  green/amber pairing does not serve. Kept in `user://settings.json`, apart
+  from the campaign.
 
 ## Rules
 

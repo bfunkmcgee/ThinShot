@@ -208,6 +208,12 @@ func _test_negotiation_odds() -> void:
 	_check(int(_bounty.call("surrender_chance", 2, 1, true, false))
 			< int(_bounty.call("surrender_chance", 2, 1, false, false)),
 			"...and men at his back make him braver")
+	_check(int(_bounty.call("surrender_chance", 2, 1, false, false, 90))
+			> int(_bounty.call("surrender_chance", 2, 1, false, false, 50)),
+			"a town that trusts the squad leans on the offer")
+	_check(int(_bounty.call("surrender_chance", 2, 1, false, false, 10))
+			< int(_bounty.call("surrender_chance", 2, 1, false, false, 50)),
+			"and one that fears it leans the other way")
 	_check(int(_bounty.call("surrender_chance", 2, 1, false, true))
 			> int(_bounty.call("surrender_chance", 2, 1, false, false)),
 			"...while being hurt when you ask makes him listen")

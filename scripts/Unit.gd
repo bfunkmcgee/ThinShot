@@ -609,6 +609,9 @@ const RANK_W := 6.0     # how far the chevron reaches left
 const RANK_H := 4.0     # how far it rises
 const RANK_T := 2.0     # stroke thickness
 const RANK_STEP := 5.0  # vertical pitch between chevrons
+# The notebook's tally, worn on the man himself: bone-white notches for a
+# fighter the squad already settled once and who came back anyway.
+const SURVIVAL_COLOR := Color(0.92, 0.88, 0.78, 0.95)
 
 # How far the body drops when hunkered behind cover. Small on purpose: the
 # prop drawn in front does most of the work, this just breaks the silhouette.
@@ -1228,6 +1231,13 @@ func apply_progression(soldier: Dictionary) -> void:
 		attack_range += 1
 	if has_perk("iron_will"):
 		max_hp += 2
+	# Walking wounded: he chose to deploy rather than sit it out, and the
+	# wound is one point off the top for the whole mission. After the rank
+	# and perk bonuses, so the cost is always exactly one point regardless
+	# of career - and never below 2, so a wound is a handicap, not a death
+	# sentence waiting on a graze.
+	if bool(soldier.get("wounded", false)):
+		max_hp = maxi(max_hp - 1, 2)
 	if has_perk("pack_mule"):
 		mag_size += 2
 	if has_perk("deep_pockets"):
@@ -2145,6 +2155,16 @@ func _draw() -> void:
 				Vector2(rx, ry), Vector2(rx - RANK_W, ry - RANK_H),
 				Vector2(rx - RANK_W, ry - RANK_H + RANK_T), Vector2(rx, ry + RANK_T),
 			]), RANK_COLOR)
+	if returned and survivals > 0 and rank == 0:
+		# The notebook's tally: one notch per time this fighter was settled
+		# and came back. Worn on the same flank the scouts wear rank - a
+		# returner has no rank to collide with - so the eye reads both marks
+		# as "who this one is". Capped at four; past that the health bar is
+		# already telling the story.
+		var nx := start_x - RANK_GAP
+		for i in mini(survivals, 4):
+			draw_rect(Rect2(nx - 2.0 - i * 4.0, PIP_Y - 1.0, 2.0, PIP_SIZE.y + 2.0),
+					SURVIVAL_COLOR)
 	if cover_level > 0:
 		# Shield bars on the right of the HP row, mirroring the rank chevrons
 		# on the left: one bar behind a scrap pile, two behind a wall.

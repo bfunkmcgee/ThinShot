@@ -352,11 +352,13 @@ func _run() -> void:
 	print("\n  walking fire and quick hands")
 	mg.moved = true
 	_check(battle._can_use_mode(mg, MODE_AUTO), "walking_fire arms full auto after moving")
-	_check(battle._mode_accuracy(mg, MODE_AUTO) == -25,
-			"...at -15 auto -10 walking (got %d)" % battle._mode_accuracy(mg, MODE_AUTO))
+	_check(battle._mode_accuracy(mg, MODE_AUTO)
+					== battle.AUTO_ACCURACY + battle.WALKING_FIRE_ACCURACY,
+			"...at auto's %d plus walking's %d (got %d)" % [battle.AUTO_ACCURACY,
+					battle.WALKING_FIRE_ACCURACY, battle._mode_accuracy(mg, MODE_AUTO)])
 	mg.moved = false
-	_check(battle._mode_accuracy(mg, MODE_AUTO) == -15,
-			"...and the ordinary -15 from a firing position")
+	_check(battle._mode_accuracy(mg, MODE_AUTO) == battle.AUTO_ACCURACY,
+			"...and auto's own %d from a firing position" % battle.AUTO_ACCURACY)
 	battle.select(medic)
 	medic.spend_ammo()
 	await battle._try_reload()

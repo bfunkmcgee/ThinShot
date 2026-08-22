@@ -442,7 +442,69 @@ const ROSTER_STRENGTH := {
 }
 
 
+# ---------------------------------------------------------------- settings --
+# Player preferences, apart from the campaign on purpose: they describe the
+# install, not the war, so they live in their own file with no version ladder
+# - a missing or mangled key falls back to its default and the next write
+# repairs the file. Volume is applied at the audio bus so one number covers
+# every sound the game will ever make.
+const SETTINGS_PATH := "user://settings.json"
+const SETTINGS_DEFAULTS := {
+	"volume": 100,          # master bus, percent
+	"screen_shake": true,   # camera shake and kicks
+	"hit_stop": true,       # the sub-second slow-motion on a landed hit
+	"danger_default": true, # the danger overlay starts each battle on
+	"high_contrast": false, # colorblind-safe friendly-arc alternates
+}
+var settings: Dictionary = SETTINGS_DEFAULTS.duplicate()
+
+
+func setting(name: String) -> Variant:
+	return settings.get(name, SETTINGS_DEFAULTS.get(name))
+
+
+func set_setting(name: String, value: Variant) -> void:
+	if not SETTINGS_DEFAULTS.has(name):
+		push_error("[Sandline] no such setting: %s" % name)
+		return
+	settings[name] = value
+	if name == "volume":
+		_apply_volume()
+	save_settings()
+
+
+func _apply_volume() -> void:
+	var linear := clampf(int(setting("volume")) / 100.0, 0.0, 1.0)
+	AudioServer.set_bus_volume_db(0, linear_to_db(linear))
+
+
+func load_settings() -> void:
+	if FileAccess.file_exists(SETTINGS_PATH):
+		var raw := FileAccess.open(SETTINGS_PATH, FileAccess.READ).get_as_text()
+		var parsed: Variant = JSON.parse_string(raw)
+		if typeof(parsed) == TYPE_DICTIONARY:
+			for key: String in SETTINGS_DEFAULTS:
+				if (parsed as Dictionary).has(key):
+					# Coerced per key: JSON round-trips ints as floats, and a
+					# hand-edited file should degrade to defaults, not crash.
+					if typeof(SETTINGS_DEFAULTS[key]) == TYPE_BOOL:
+						settings[key] = bool(parsed[key])
+					else:
+						settings[key] = int(parsed[key])
+	_apply_volume()
+
+
+func save_settings() -> void:
+	var file := FileAccess.open(SETTINGS_PATH, FileAccess.WRITE)
+	if file == null:
+		push_error("[Sandline] cannot write %s" % SETTINGS_PATH)
+		return
+	file.store_string(JSON.stringify(settings, "\t"))
+	file.close()
+
+
 func _ready() -> void:
+	load_settings()
 	_rng.randomize()
 	load_save()
 	# A campaign that has never been saved has no identity yet. load_save() mints
@@ -624,6 +686,12 @@ func advance_mission() -> bool:
 	var next: Array = operation().missions
 	current_level = int(next[0]) if not next.is_empty() else 0
 	in_the_field = false
+	# Walls, stores, and a surgeon with time: coming home clears the wound
+	# ledger outright. The field camp never does - that is the difference
+	# between the two camps with a rule behind it.
+	for soldier: Dictionary in roster:
+		if bool(soldier.get("wounded", false)):
+			soldier.wounded = false
 	return true
 
 
@@ -1000,6 +1068,95 @@ func new_campaign() -> bool:
 	return true
 
 
+## The whole war, written out. Everything the campaign remembers - the
+## soldiers and their records, the dead, the adversary files, the district's
+## opinion settlement by settlement, the notebook - composed as one document.
+## The thesis of the campaign is that it remembers; this is the page that
+## proves it, and user://chronicle.txt is the copy the player can keep.
+func chronicle() -> String:
+	var lines: Array[String] = []
+	lines.append("SANDLINE - THE CAMPAIGN'S LEDGER")
+	lines.append("campaign %d - %s, mission %d of %d - %d attempt(s) spent"
+			% [campaign_seed, str(operation().name), mission_number(),
+					mission_count(), mission_attempts])
+	lines.append("")
+	lines.append("THE SQUAD")
+	for soldier: Dictionary in roster:
+		var perk_names: Array[String] = []
+		for perk: String in soldier.get("perks", []):
+			perk_names.append(str(PERKS[perk].name))
+		var marks: Array[String] = []
+		if not bool(soldier.alive):
+			marks.append("KILLED IN ACTION")
+		elif bool(soldier.get("wounded", false)):
+			marks.append("walking wounded")
+		if int(soldier.get("presence", 0)) > 0:
+			marks.append("presence %d" % int(soldier.presence))
+		if int(soldier.get("guile", 0)) > 0:
+			marks.append("guile %d" % int(soldier.guile))
+		lines.append("  %-16s %-18s %-16s %3d xp%s%s" % [
+				full_name(soldier), Unit.kind_role_name(int(soldier.kind)),
+				rank_title(int(soldier.rank)), int(soldier.xp),
+				"  " + ", ".join(perk_names) if not perk_names.is_empty() else "",
+				"  [" + "; ".join(marks) + "]" if not marks.is_empty() else ""])
+	if not district_standing.is_empty():
+		lines.append("")
+		lines.append("THE DISTRICT'S OPINION")
+		for settlement: String in district_standing:
+			lines.append("  %-16s %d" % [settlement, int(district_standing[settlement])])
+	lines.append("  theater strain     %d" % alliance_strain)
+	if not adversaries.is_empty():
+		lines.append("")
+		lines.append("THE FILES")
+		for rec: Dictionary in adversaries:
+			var state := str(rec.get("state", ""))
+			lines.append("  %s%s" % [adversary_line(rec),
+					"" if state.is_empty() else "  (%s)" % state])
+	if not informants.is_empty():
+		lines.append("")
+		lines.append("THE TURNED")
+		for rec: Dictionary in informants:
+			lines.append("  %s of %s" % [str(rec.get("name", "")),
+					str(rec.get("settlement", ""))])
+	var by_settlement := notebook_by_settlement()
+	if not by_settlement.is_empty():
+		lines.append("")
+		lines.append("DAVA'S NOTEBOOK")
+		for settlement: String in by_settlement:
+			lines.append("  %s:" % settlement)
+			for entry: Dictionary in by_settlement[settlement]:
+				lines.append("    %s, %s" % [str(entry.get("name", "")),
+						str(entry.get("fate", ""))])
+	return "\n".join(lines)
+
+
+## The chronicle, cut down to what a modal can hold: the counts and the names
+## that matter. The full document is the file.
+func chronicle_digest() -> String:
+	var alive := 0
+	var dead: Array[String] = []
+	for soldier: Dictionary in roster:
+		if bool(soldier.alive):
+			alive += 1
+		else:
+			dead.append(full_name(soldier))
+	var lines: Array[String] = [
+		campaign_summary(),
+		"%d attempt(s) spent, %d soldier(s) standing" % [mission_attempts, alive],
+	]
+	if not dead.is_empty():
+		lines.append("The dead: %s." % ", ".join(dead))
+	if not adversaries.is_empty():
+		lines.append("%d name(s) in the files, %d turned."
+				% [adversaries.size(), informants.size()])
+	if not district_standing.is_empty():
+		var parts: Array[String] = []
+		for settlement: String in district_standing:
+			parts.append("%s %d" % [settlement, int(district_standing[settlement])])
+		lines.append("Standing: %s." % ", ".join(parts))
+	return "\n".join(lines)
+
+
 ## A one-line description of what is on disk, for the menu to print. Empty when
 ## there is nothing to continue.
 func campaign_summary() -> String:
@@ -1047,10 +1204,30 @@ func _deep_copy(source: Array) -> Array:
 ## one. Clearing here silently destroyed the pick of anyone who walked to the
 ## briefing table instead of to the promoted soldier. Camp._on_choice removes
 ## each entry as it is spent.
+# Who actually walked out the gate this mission: soldier ids, stamped by
+# Battle as it spawns them. Mission-scoped like mission_xp - reset on load
+# rather than persisted - and what commit_mission reads to heal the wounded
+# who sat the mission out.
+var mission_fielded: Array = []
+
+
+## A mission ended with this soldier badly hurt: below half. He deploys a
+## point of max HP short until he sits a mission out or the squad makes it
+## home to the garrison. Stamped only on a WON mission - a lost attempt rolls
+## back wholesale, wounds included, exactly like the deaths.
+func mark_wounded(id: int) -> void:
+	var soldier := soldier_by_id(id)
+	if soldier.is_empty():
+		return
+	soldier.wounded = true
+	print("[Sandline] %s is walking wounded" % soldier.surname)
+
+
 func begin_mission() -> void:
 	_snapshot = _deep_copy(roster)
 	mission_xp.clear()
 	mission_dead.clear()
+	mission_fielded.clear()
 
 
 func award(id: int, amount: int) -> void:
@@ -1530,6 +1707,14 @@ func commit_mission() -> void:
 		for rank in range(old_rank + 1, new_rank + 1):
 			if not perk_choices(int(soldier.kind), rank).is_empty():
 				pending_promotions.append({"id": int(soldier.id), "rank": rank})
+	# The wound ledger's other half: a soldier who sat this one out has had a
+	# mission's worth of the medic's time, and comes back whole. Deploying
+	# wounded was the player's call; healing is what sitting out is FOR.
+	for soldier: Dictionary in roster:
+		if bool(soldier.alive) and bool(soldier.get("wounded", false)) \
+				and not mission_fielded.has(int(soldier.id)):
+			soldier.wounded = false
+			print("[Sandline] %s is off the wounded list" % soldier.surname)
 	_snapshot.clear()
 	save()
 
@@ -1582,7 +1767,7 @@ const SAVE_PATH := "user://campaign.json"
 # Raise this in the same commit that adds the migration step reaching it, and
 # never one without the other - _migrate_step() is what turns a number into a
 # shape the rest of this file can read.
-const SAVE_VERSION := 7
+const SAVE_VERSION := 8
 
 # Raised, and never lowered again, when load_save() finds a campaign written by
 # a build newer than this one. Refusing to READ such a file is only half the
@@ -1700,6 +1885,8 @@ func _migrate_step(payload: Dictionary, from: int) -> Dictionary:
 			return _migrate_5_to_6(payload)
 		6:
 			return _migrate_6_to_7(payload)
+		7:
+			return _migrate_7_to_8(payload)
 	return {}
 
 
@@ -1869,6 +2056,23 @@ func _migrate_6_to_7(payload: Dictionary) -> Dictionary:
 	payload["informants"] = payload.get("informants", [])
 	payload["bounty_outcomes"] = payload.get("bounty_outcomes", [])
 	payload["resting_ids"] = payload.get("resting_ids", [])
+	return payload
+
+
+## v8 adds the wound ledger: a named soldier can come out of a mission
+## walking wounded, and the flag rides the roster entry like everything else
+## about him. Old saves carry nobody wounded, which is also what a missing
+## key means on read - so this rung only has to exist to stamp the version.
+func _migrate_7_to_8(payload: Dictionary) -> Dictionary:
+	# The reshape is the promise itself: v8 has a roster array whose entries
+	# carry a wounded boolean. Materialising the key is what keeps the
+	# ladder's no-gaps check honest about this rung doing real work.
+	payload["roster"] = payload.get("roster", [])
+	if typeof(payload.roster) == TYPE_ARRAY:
+		for entry: Variant in payload.roster:
+			if typeof(entry) == TYPE_DICTIONARY:
+				(entry as Dictionary)["wounded"] = bool(
+						(entry as Dictionary).get("wounded", false))
 	return payload
 
 
@@ -2078,6 +2282,7 @@ func _read_roster(raw: Variant) -> Array:
 			# guaranteed informant.
 			"presence": maxi(int(soldier.get("presence", 0)), 0),
 			"guile": maxi(int(soldier.get("guile", 0)), 0),
+			"wounded": bool(soldier.get("wounded", false)),
 		})
 	return out
 

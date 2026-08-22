@@ -592,6 +592,15 @@ func _build_fixtures() -> void:
 				"pos": board.cell_to_global(board_cell),
 				"label": "the bounty board", "id": 0,
 			})
+	# The ledger is read at the memorial, which is where a campaign keeps
+	# what it cannot get back. Garrison only, because the cross is.
+	var cross: Vector2i = _fixture_cell("memorial_cross")
+	if cross.x >= 0:
+		fixtures.append({
+			"kind": "ledger", "cell": cross,
+			"pos": board.cell_to_global(cross),
+			"label": "the ledger", "id": 0,
+		})
 	# Replacements are a garrison thing. Out on operation the squad fights
 	# with whoever walked away from the last mission.
 	var post: Vector2i = spots.recruit
@@ -744,6 +753,8 @@ func _prompt_for(fixture: Dictionary) -> String:
 			return "E  -  levy post: %d levy/levies available" % short
 		"bounties":
 			return "E  -  bounty board: %d posted" % _bounties_posted
+		"ledger":
+			return "E  -  the campaign's ledger"
 	return ""
 
 
@@ -781,6 +792,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_open_recruit()
 		"bounties":
 			_open_bounties()
+		"ledger":
+			_open_ledger()
 
 
 # ------------------------------------------------------------------ bounties --
@@ -882,6 +895,19 @@ func _open_bounty_hunters(offer: Dictionary) -> void:
 # ------------------------------------------------------------------- modal --
 
 
+## The war so far, read at the cross. The modal carries the digest; the whole
+## document - squad records, the files, the district's opinion, the notebook -
+## is written to user://chronicle.txt where the player can keep it.
+func _open_ledger() -> void:
+	var file := FileAccess.open("user://chronicle.txt", FileAccess.WRITE)
+	if file != null:
+		file.store_string(Game.chronicle())
+		file.close()
+	var body := Game.chronicle_digest()
+	body += "\n\nThe full ledger is written to user://chronicle.txt."
+	_open_modal("THE LEDGER", body)
+
+
 func _open_modal(title: String, body: String, a := "", b := "") -> void:
 	# Only the briefing shows it, and _open_briefing turns it back on after
 	# calling this. Everything else - a soldier, the stores, the levy post -
@@ -928,6 +954,9 @@ func _open_soldier(id: int) -> void:
 	if str(soldier.get("surname", "")) == "Vekh":
 		lines.append("")
 		lines.append(_sillae_reads_the_district())
+	if bool(soldier.get("wounded", false)):
+		lines.append("Walking wounded - a point of HP short until he sits a")
+		lines.append("mission out, or the squad makes it home.")
 	if perks.is_empty():
 		lines.append("No specialty yet.")
 	else:
@@ -1082,6 +1111,10 @@ func _deployment_row_text(soldier: Dictionary, going: bool) -> String:
 		"%-20s" % Unit.kind_role_name(int(soldier.kind)),
 		"%-16s" % Game.rank_title(int(soldier.rank)),
 	]
+	# The wound rides the row where the deploy decision is made: taking him
+	# anyway is allowed and costs a point of HP; the row is what says so.
+	if bool(soldier.get("wounded", false)):
+		parts.append("WOUNDED -1 HP")
 	var perks: Array = soldier.get("perks", [])
 	var named: Array[String] = []
 	for key: String in perks:

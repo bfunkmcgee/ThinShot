@@ -23,13 +23,26 @@
 > | Danger overlay under-warns | FIXED (`can_engage`) |
 > | End Turn has no guard | FIXED 2026-08-21 (two-press confirm + count) |
 >
-> **"Do this first" (12 items):** 1–10 and 12 are done — including the save
-> system, the `Rules.gd` extraction, `tools/test_rules.gd` (the suite is now
-> 17+ harnesses), the entity-index exception (#8, still open, profiling has
-> not yet justified it), and the visual pass. **#11, the balance pass, was
-> never taken** (`AUTO_ACCURACY` is still −15, suppression still additive) —
-> that is now a deliberate open decision, not an oversight: adopt, adapt, or
-> strike it.
+> **"Do this first" (12 items): all 12 are now done.** 1–10 and 12 landed
+> first — the save system, the `Rules.gd` extraction, `tools/test_rules.gd`,
+> and the visual pass. The 2026-08-21 enactment branch closed the rest: **#8,
+> the entity index** (`Battle._units`, guarded readers), and **#11, the
+> balance pass, taken** — `AUTO_ACCURACY` −35, the burst priced at −8 a
+> round, and suppression made multiplicative after the clamp.
+>
+> **Enacted 2026-08-21 (branch `claude/enact-survey`),** from the field
+> survey that followed this audit: the AI routes around held overwatch arcs
+> (its scoring extracted to `AiPlan.gd`, the cone to `Rules.overwatch_cells`);
+> a clean move can be taken back (U); hovering a move tile projects the shot
+> from the destination through the same `Rules.shot_preview` the round uses;
+> missions can carry a pressure clock (the Scrapline mast calls patrols until
+> it drops, Outpost 7's withdrawal is chased); Standing decides what breaking
+> means and leans on the parley; the squad has a wound ledger (save v8); the
+> briefing reads Dava's notebook back and returners wear their survival
+> tally; the garrison ledger writes the campaign chronicle to
+> `user://chronicle.txt`; a settings file covers volume, shake, hit-stop, the
+> danger default and a high-contrast arc palette; and OPERATION BURNT SURVEY
+> puts two authored missions on the ash tilesheet. The suite is 21 harnesses.
 >
 > The addenda below the metrics line were appended as later features landed
 > and describe shipped systems, not proposals.
