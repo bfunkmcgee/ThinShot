@@ -104,6 +104,8 @@ func _test_new_campaign_resets_everything() -> void:
 	dirty.smokes = 0
 	dirty.mission_attempts = 7
 	dirty.alliance_strain = 61
+	dirty.ratline_done = [0, 2]
+	dirty.ratline_strength = 92
 	dirty.district_standing = {"Kessit": 12, "Bhorra Low": 3}
 	dirty.notebook = [{"level": 2, "name": "Kesh Varr", "age": 33,
 			"settlement": "Kessit", "fate": "killed"}]

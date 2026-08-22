@@ -68,6 +68,7 @@ func _run() -> void:
 	_test_strength_table()
 	_test_trim()
 	_test_surplus()
+	await _test_save_v9()
 	_restore()
 	print("\nRESULT: ", "FAIL" if _failed else "PASS")
 	quit(1 if _failed else 0)
@@ -215,3 +216,35 @@ func _test_surplus() -> void:
 			"and it is the same schedule every time")
 	_check((_ratline.surplus_schedule(20, 95, 777, 3) as Dictionary).is_empty(),
 			"below base the schedule is empty")
+
+# --- 11. save v9 --------------------------------------------------------------
+
+func _test_save_v9() -> void:
+	print("\n[11] the net survives the disk, and a v8 save climbs")
+	var game: Node = root.get_node("/root/Game")
+	game.new_campaign()
+	game.ensure_roster(Levels.LEVELS[0])  # a save with no roster refuses to load
+	game.ratline_done = [0, 2]
+	game.ratline_strength = 92
+	game.save()
+	game.ratline_done = []
+	game.ratline_strength = 0
+	_check(game.load_save(), "the save loads back")
+	_check(game.ratline_done == [0, 2] and game.ratline_strength == 92,
+			"crossings and muster came back intact")
+
+	# A v8 save - no ratline keys at all - climbs to nothing-run-down.
+	var raw := FileAccess.open(SAVE_PATH, FileAccess.READ).get_as_text()
+	var payload: Dictionary = JSON.parse_string(raw)
+	payload["version"] = 8
+	payload.erase("ratline_done")
+	payload.erase("ratline_strength")
+	var out := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	out.store_string(JSON.stringify(payload))
+	out.close()
+	_check(game.load_save(), "the doctored v8 loads")
+	_check(game.ratline_done.is_empty() and game.ratline_strength == 0,
+			"and climbed to nothing run down, nothing locked")
+	_check(not (game._migrate_step({}, 8) as Dictionary).is_empty(),
+			"the ladder has a rung out of version 8")
+	game.delete_save()
