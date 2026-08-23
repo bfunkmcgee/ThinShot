@@ -224,11 +224,17 @@ under the object" in the shared description; 48px batches ride the
 ≤64 colours — the base64 ceiling); 168px pieces generate from prompt alone.
 Anchors: 48px `−(bbox.bottom − 26)`, tall single-cell `−(bbox.bottom − 85)`.
 
-**Map edit riding along** (not art): three new `'j'` cells + `GARRISON_PROPS`
-entries — bounty board on the parade side near the duty roster (~(6,2)),
-paymaster beside the command table (~(9,1)), QM counter between the stores
-and the levy post (~(9,5)). The signals station replaces `field_radio` in
-place. Camp fixture hooks are one `_fixture_cell()` name each.
+**Map edit riding along** (not art) — DONE 2026-08-21, ahead of the art: the
+garrison is 16x12 now, zoned into quarters (command / signals / logistics /
+memorial / domestic / parade), and the Tier 6 stands are reserved as open
+cells so nothing renders as scrap meanwhile: paymaster at (6,1) in the
+command row, QM counter at (11,4) beside the stores tent, bounty board at
+(8,9) next to the duty roster, the signals station replacing `field_radio`
+in place at (12,1), and the second tent holding the surgeon's ground at
+(12,8). When each piece of art lands: flip the cell to `'j'`, add its
+`GARRISON_PROPS` line, and point the fixture hook at the new name. The
+no-art rider shipped with the layout: the bounty board fixture now stands
+from day one with an "E - nothing posted yet" prompt.
 
 ## If you only do three
 

@@ -32,47 +32,87 @@ class_name CampData
 ## The tall four - flagpole, watchtower, water tank, awning - are all on row 1,
 ## against the back wall. That is deliberate and worth keeping: they stand two
 ## soldiers high, and on the back row there is nothing behind them to hide.
+## The garrison is laid out in QUARTERS now, because it stopped being scenery.
+## Four of its fixtures are interactive stations (briefing, stores, bounties,
+## the levy) and four more are becoming ones (signals/ratline, ledger,
+## quartermaster, the surgeon) - and in the old 14x10 yard they all sat in one
+## undifferentiated ring of props. A player looking for "where do missions
+## come from" needs the ground itself to answer, so like goes with like:
+##
+##   NW - COMMAND: the command billet, the colours, the briefing table with
+##        its map crates. Deployment happens here. One cell (6,1) is held
+##        open for the paymaster's desk (ASSETS.md #25).
+##   NE - SIGNALS: the field radio (the ratline net - interdiction missions)
+##        under the watchtower. The Tier 6 signals station (#24) replaces the
+##        radio on its own cell when its art lands.
+##   E  - LOGISTICS: the stores tent with the stores spot at its door, water
+##        tank, ammo, fuel. Cell (11,4) is held open for the quartermaster's
+##        issue counter (#26); until then the QM works off the kit frame.
+##   W  - THE MEMORIAL: the cross alone in a planted row. Nothing else stands
+##        near it, which is the point.
+##   SW - DOMESTIC: the squad billet, the awning's shade, washing, the stove,
+##        the kit frame. Where the soldiers idle.
+##   S  - PARADE: the duty-roster/bounty board and the levy post, on the open
+##        ground the player walks first. Cell (8,9) is held open for the
+##        dedicated bounty board (#23).
+##   SE - the second tent stands where the surgeon's tent (#27) will: the
+##        wounds rule already promises "a surgeon with time", and the ground
+##        now says roughly where he works.
+##
+## The held-open cells are '.' (not 'j') so nothing renders as a scrap pile in
+## the meantime - the garrison's no-junk rule holds. Flipping each to 'j' plus
+## one GARRISON_PROPS line is the whole map edit when the art arrives.
 const GARRISON_PROPS := {
-	# The awning is 256px of canopy on a 128px cell - two tiles wide on a
-	# one-tile stand. Against the back wall its right half hung past the wall
-	# line over open desert, so it sits a rank in where the yard is wide enough
-	# to hold it, still shading the west billet. Nothing else here is wide
-	# enough to care, and the memorial takes the wall cell it gave up.
-	Vector2i(5, 6): "awning",
-	Vector2i(8, 1): "flagpole",       # the colours, behind the command table
-	Vector2i(10, 1): "field_radio",
-	Vector2i(11, 1): "jerry_cans",
-	Vector2i(12, 1): "watchtower",    # the one corner that overlooks the gate road
-	Vector2i(5, 2): "notice_board",   # the duty roster, on the parade side
-	Vector2i(2, 3): "water_bowser",   # the Crown's own water, in a war about water
-	Vector2i(11, 3): "water_tank",
-	Vector2i(2, 4): "kit_frame",
-	Vector2i(11, 5): "ammo_box",
-	Vector2i(3, 1): "memorial_cross", # the garrison is where the dead are replaced
-	Vector2i(3, 7): "washing_line",
-	Vector2i(6, 8): "field_stove",
-	Vector2i(11, 8): "cleaning_bench",
+	# NW - command
+	Vector2i(4, 1): "flagpole",
+	# NE - signals (the ratline's mission-giver rides the radio for now)
+	Vector2i(12, 1): "field_radio",
+	Vector2i(13, 1): "watchtower",
+	# W - the memorial, alone
+	Vector2i(2, 4): "memorial_cross",
+	# E - logistics
+	Vector2i(14, 4): "water_tank",
+	Vector2i(12, 6): "ammo_box",
+	Vector2i(13, 6): "jerry_cans",
+	# W edge of the domestic quarter - the Crown's own water
+	Vector2i(2, 6): "water_bowser",
+	Vector2i(4, 6): "kit_frame",
+	# SW - domestic. The awning is 256px of canopy on a 128px cell - two
+	# tiles wide on a one-tile stand - so it keeps clear cells either side.
+	Vector2i(4, 8): "awning",
+	Vector2i(3, 10): "washing_line",
+	Vector2i(5, 10): "field_stove",
+	# S - parade
+	Vector2i(7, 9): "notice_board",
+	# SE
+	Vector2i(14, 9): "cleaning_bench",
 }
 
 const GARRISON := {
-	"size": Vector2i(14, 10),
+	"size": Vector2i(16, 12),
 	"map": [
-		"WWWWWWWWWWWWWW",
-		"W..j....j.jjjW",
-		"W....j.......W",
-		"W.j........j.W",
-		"W.j..........W",
-		"W..........j.W",
-		"W....j.......W",
-		"W..j.......p.W",
-		"W.....j....j.W",
-		"WWWWWWWWWWWWWW",
+		"WWWWWWWWWWWWWWWW",
+		"W...j.......jj.W",
+		"W..............W",
+		"W..............W",
+		"W.j...........jW",
+		"Wp.p...........W",
+		"W.j.j.......jj.W",
+		"W..............W",
+		"W...j..........W",
+		"W......j......jW",
+		"W..j.j........pW",
+		"WWWWWWWWWWWWWWWW",
 	],
 	"props": GARRISON_PROPS,
 	"structures": [
+		# The command billet and the squad billet anchor their quarters; the
+		# stores tent fronts the logistics yard; the second tent holds the
+		# surgeon's ground until his own art lands.
 		{"kind": "hut_1", "anchor": Vector2i(1, 1), "size": Vector2i(2, 2)},
-		{"kind": "hut_2", "anchor": Vector2i(1, 6), "size": Vector2i(2, 2)},
-		{"kind": "stores_tent", "anchor": Vector2i(10, 6), "size": Vector2i(2, 2)},
+		{"kind": "hut_2", "anchor": Vector2i(1, 7), "size": Vector2i(2, 2)},
+		{"kind": "stores_tent", "anchor": Vector2i(12, 4), "size": Vector2i(2, 2)},
+		{"kind": "field_tent", "anchor": Vector2i(12, 8), "size": Vector2i(2, 2)},
 	],
 	"zone_seed": 91,
 	"shade_seed": 17,
@@ -101,16 +141,22 @@ const FIELD := {
 }
 
 const GARRISON_SPOTS := {
-	"player": Vector2i(6, 5),
-	"briefing": Vector2i(9, 2),
-	"stores": Vector2i(9, 6),
-	# Only the garrison can post replacements.
-	"recruit": Vector2i(4, 8),
+	# The player wakes mid-yard, a short walk from every quarter.
+	"player": Vector2i(7, 6),
+	# The briefing table sits in the command quarter, flag behind it.
+	"briefing": Vector2i(5, 2),
+	# The stores spot is the stores tent's DOOR, not a lone crate in a field.
+	"stores": Vector2i(11, 5),
+	# The levy post works the parade ground. Only the garrison posts one.
+	"recruit": Vector2i(10, 9),
+	# The squad idles where people would: two by the billets, one on the
+	# parade, one by the stores, two loose in the yard.
 	"squad": [
-		Vector2i(4, 3), Vector2i(4, 6), Vector2i(6, 2),
-		Vector2i(7, 7), Vector2i(5, 8), Vector2i(8, 4),
+		Vector2i(5, 4), Vector2i(8, 3), Vector2i(6, 7),
+		Vector2i(9, 7), Vector2i(10, 8), Vector2i(8, 10),
 	],
-	"dressing": [Vector2i(8, 2), Vector2i(10, 2)],
+	# Map crates flanking the briefing table.
+	"dressing": [Vector2i(4, 2), Vector2i(6, 2)],
 }
 
 const FIELD_SPOTS := {

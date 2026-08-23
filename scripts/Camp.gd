@@ -571,9 +571,12 @@ func _build_fixtures() -> void:
 			STORES_TEXTURES[_prop_pick(spots.stores, SALT_CRATE,
 					STORES_TEXTURES.size())],
 			STORES_OFFSET, spots.stores)
-	# The duty roster board doubles as the bounty board. Garrison only, and only
-	# once the campaign has actually let somebody get away - a board with
-	# nothing posted on it is a prompt that wastes a walk.
+	# The duty roster board doubles as the bounty board. Garrison only - and
+	# ALWAYS there, empty or not. It used to exist only once somebody had
+	# escaped, which read as "a board with nothing on it wastes a walk" and
+	# played as "the bounty system is invisible until the campaign stumbles
+	# into it": a conditional fixture cannot teach a player it exists. Now the
+	# board stands from day one and the empty prompt does the teaching.
 	#
 	# The count is computed once and cached. The offer list cannot change while
 	# the player is standing in camp - it moves only when a bounty is settled,
@@ -584,7 +587,6 @@ func _build_fixtures() -> void:
 	if not in_field:
 		_bounties_posted = Bounty.offers(Game.campaign_seed, Game.adversaries,
 				Game.bounties_done).size()
-	if _bounties_posted > 0:
 		var board_cell: Vector2i = _fixture_cell("notice_board")
 		if board_cell.x >= 0:
 			fixtures.append({
@@ -594,9 +596,9 @@ func _build_fixtures() -> void:
 			})
 	# The field radio is where interdiction runs are taken: the net over the
 	# crossings that would feed the NEXT operation its fighters. Garrison
-	# only by construction - the field camp's prop table has no radio - and
-	# always present there, unlike the bounty board: the net always has
-	# three crossings on it, worked or not.
+	# only by construction - the field camp's prop table has no radio. Always
+	# present, like the bounty board now is: the net always has three
+	# crossings on it, worked or not.
 	if not in_field:
 		_ratline_offers = Ratline.offers(Game.campaign_seed,
 				Game.current_operation, Game.ratline_done)
@@ -780,6 +782,8 @@ func _prompt_for(fixture: Dictionary) -> String:
 				return "E  -  levy post: squad at full strength"
 			return "E  -  levy post: %d levy/levies available" % short
 		"bounties":
+			if _bounties_posted == 0:
+				return "E  -  bounty board: nothing posted yet"
 			return "E  -  bounty board: %d posted" % _bounties_posted
 		"ledger":
 			return "E  -  the campaign's ledger"
