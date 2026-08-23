@@ -251,6 +251,8 @@ const LEVELS: Array[Dictionary] = [
 		"fiction": "A Crown forward depot, struck off the maps eleven years ago. The Thirst lives in it now, and the squad goes in at dawn.",
 		"briefing": "Outpost 7 was ours. It is not on any inventory the Accord will admit to holding, and the Thirst has been eating out of it for a decade.\n\nTwo ammunition stores are still standing in there. They are the reason a water dispute has rifles in it.\n\nYou cannot hold the place. There are not enough of you and there never were. Blow the stores and walk the squad back out.",
 		"orders": "BLOW THE AMMO STORES, THEN EXTRACT",
+		# The depot pays: Crown stores, swept or not, still hold saleable stock.
+		"reward": {"scrip": 20},
 		"debrief": "The stores are gone. What was in them was not.\n\nBoth were light - a third full, at most, and swept clean rather than looted. Somebody drew that stock down deliberately and moved it out ahead of you.\n\nRanger liaison has filed the Foundry marks upward and been told the query is above the Accord. Note that and keep it out of the log.\n\nTake the squad home. This is not finished, and the Assembly of Wells has called a strike in three districts over the capping. Whatever comes next is going to happen in front of people.",
 		"size": Vector2i(16, 10),
 		# Scrap in the staging ground west of the compound, so the squad has
@@ -407,6 +409,8 @@ const LEVELS: Array[Dictionary] = [
 		"fiction": "A walled water point on the old survey line. The only water east for a day in either direction, and the Charter says it belongs to a family that has not drawn from it in ninety years.",
 		"briefing": "Every tally in the column names the same place: a cistern on the survey line, walled and held.\n\nIt is the only water east of here, which is why they hold it and why you cannot go around it.\n\nGet the squad through and out the far side. Do not stop to take it - you could not hold it, and the Assembly would hear that the Crown seized a well before the sun went down.",
 		"orders": "BREAK THROUGH TO THE EAST",
+		# A survey-line water point keeps survey-line instruments.
+		"reward": {"item": "glass_sight"},
 		"debrief": "Past the cistern the tracks stop scattering.\n\nEvery path east of the water runs together into one, beaten flat and wide by more feet than the Thirst has ever put in one place - and it does not follow the road. It follows the old riverbed, which has been dry since before the Charter was written.\n\nSomebody is walking them along a watercourse that has no water in it.",
 		"size": Vector2i(16, 10),
 		# Claim markers on the western approach, outside the wall: this is the
@@ -554,6 +558,8 @@ const LEVELS: Array[Dictionary] = [
 		"fiction": "Where every track east of the cistern ends: a camp laid out along a riverbed that has been dry for two hundred years, pitched as though the water were still running.",
 		"briefing": "The tracks end in a bowl in the rock, and the Thirst is in it - all of it, and more than you have seen in one place.\n\nThey did not gather themselves. Somebody down there has been keeping them, and while he keeps them there will always be another column.\n\nFighters in that bowl will not break. Liaison has been clear on this and so has the interrogation of the pen guards: they are not staying because they are brave. They are staying because they have been told how this ends and they believe it.\n\nNo caches this time. No withdrawal.",
 		"orders": "END THE READING",
+		# The keeper's camp strongbox, taken whole.
+		"reward": {"scrip": 30},
 		# The briefing above is not colour: it says these fighters will not
 		# break, and Rules.breaks_to_* honours it. Without this the starting
 		# morale table would have three of the thirteen defenders of the
@@ -678,6 +684,8 @@ const LEVELS: Array[Dictionary] = [
 		"fiction": "The last well on the survey, capped eleven years ago. The one man who can still read the district's water is being made to read it here.",
 		"briefing": "The well was capped in the first survey, and it was capped because it was worth capping: the aquifer under it feeds every line on the maps the Assembly lost.\n\nHe has the last surveyor at the wellhead, and wire around both. When the reading is done he will not need the man any more, and nothing in his file says he keeps what he does not need.\n\nOne gate in the wire. His marksman is on it. Go through, reach the surveyor, and walk him home.",
 		"orders": "REACH THE SURVEYOR, THEN WALK HIM OUT",
+		# The wellhead works: the cap plate alone is worth the carry.
+		"reward": {"scrip": 25, "item": "boiler_plate"},
 		"debrief": "The surveyor is out, and the maps in his head are out with him.\n\nThe man who held him is not among the bodies. He was not among them at the survey camp either, and the file the campaign keeps on him reads like the files it keeps on the ones who will not die: seen twice, settled never.\n\nThe district has its water on paper again. The Accord has its questions. The squad goes home by the burnt road, and whatever walks out of the ash behind it is somebody else's war.\n\nThe notebook keeps the rest.",
 		"size": Vector2i(16, 10),
 		"map": [
@@ -966,6 +974,32 @@ static func _validate(index: int) -> bool:
 	ok = _validate_floor(data, label, grid) and ok
 	ok = _validate_zones(data, label) and ok
 	ok = _validate_roads(data, label, grid) and ok
+	ok = _validate_reward(data, label) and ok
+	return ok
+
+
+## The optional authored "reward" - what a story win pays on top of the flat
+## rate. Keys are exactly {scrip, item}: scrip a non-negative int, item a key
+## the Gear catalog knows. Anything else is an authoring typo that would
+## otherwise silently pay nothing.
+static func _validate_reward(data: Dictionary, label: String) -> bool:
+	if not data.has("reward"):
+		return true
+	var ok := _check(typeof(data.reward) == TYPE_DICTIONARY,
+			"%s: reward must be a Dictionary" % label)
+	if not ok:
+		return false
+	var reward: Dictionary = data.reward
+	for key: String in reward:
+		ok = _check(key == "scrip" or key == "item",
+				"%s: unknown reward key '%s'" % [label, key]) and ok
+	if reward.has("scrip"):
+		ok = _check(typeof(reward.scrip) == TYPE_INT and int(reward.scrip) >= 0,
+				"%s: reward scrip must be a non-negative int" % label) and ok
+	if reward.has("item"):
+		ok = _check(Gear.ITEMS.has(str(reward.get("item", ""))),
+				"%s: reward item '%s' is not in the catalog"
+				% [label, reward.get("item", "")]) and ok
 	return ok
 
 

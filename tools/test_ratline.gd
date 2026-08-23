@@ -312,6 +312,8 @@ func _test_crossing_won() -> void:
 
 	var lvl_before := int(game.current_level)
 	var op_before := int(game.current_operation)
+	var scrip_before := int(game.scrip)
+	var armory_before := int(game.armory.size())
 	for goblin in enemies:
 		goblin.hp = 0
 		battle._on_unit_died(goblin)
@@ -319,6 +321,17 @@ func _test_crossing_won() -> void:
 	_check(battle.state == battle.State.GAME_OVER and battle.last_result_won,
 			"running down the column wins the mission")
 	_check(game.ratline_done == [0], "the crossing is banked")
+	# The pay: a crossing is worth the flat interdiction rate, banked into the
+	# book by finish_interdiction - plus the deterministic drop, if this seed
+	# and ordinal rolled one (the armory grows by exactly the drop's answer).
+	var expect_find: String = Gear.drop(game.campaign_seed, 2000 + 0)
+	_check(int(game.scrip) == scrip_before + game.SCRIP_INTERDICTION,
+			"the crossing paid %d scrip (book %d -> %d)"
+			% [game.SCRIP_INTERDICTION, scrip_before, game.scrip])
+	_check(game.armory.size() == armory_before + (0 if expect_find.is_empty() else 1),
+			"and the drop matched Gear.drop's answer ('%s')" % expect_find)
+	_check(game.mission_scrip == 0 and game.mission_loot.is_empty(),
+			"the mission scratch was zeroed by the banking")
 	_check(not game.on_interdiction(), "and the board is cleared")
 	_check(str(game.data().name) == str(Levels.LEVELS[0].name),
 			"data() serves the story mission again")
@@ -369,6 +382,7 @@ func _test_loss_clears_both_rails() -> void:
 	var leader_id := int((game.roster[0] as Dictionary).id)
 	game.begin_interdiction(leader_id, 1,
 			_ratline.generate(_offer("crossing"), game.campaign_seed))
+	var scrip_before := int(game.scrip)
 	var battle: Node = await _battle()
 	for unit in battle.living_units(TEAM_SCOUT):
 		unit.hp = 0
@@ -377,6 +391,8 @@ func _test_loss_clears_both_rails() -> void:
 	_check(battle.state == battle.State.GAME_OVER and not battle.last_result_won,
 			"the detachment is gone and the mission with it")
 	_check(game.ratline_done.is_empty(), "a failed stop banks nothing - the crossing ran")
+	_check(int(game.scrip) == scrip_before and game.mission_scrip == 0,
+			"and no pay reached the book (%d)" % game.scrip)
 	_check(not game.on_interdiction(), "the interdiction state is cleared")
 	_check(str(game.data().name) == str(Levels.LEVELS[0].name),
 			"and data() serves the story mission, not the dead board")

@@ -301,6 +301,10 @@ func _stage(game: Node, survivals := 1) -> Dictionary:
 	game.bounties_done = []
 	game.informants = []
 	game.bounty_outcomes = []
+	# Zeroed so the pay assertions below read this bounty's earnings alone,
+	# whatever campaign the autoload booted into.
+	game.scrip = 0
+	game.armory = []
 	game.campaign_seed = 31337
 	game.current_level = 0
 	# An empty level wants no hero and no gunner slot, which is exactly what a
@@ -426,6 +430,15 @@ func _test_the_whole_mission() -> void:
 	_check(game.informants.size() == 1,
 			"the informant is on the books (%d)" % game.informants.size())
 	_check(game.bounties_done.has(41), "the bounty comes off the board")
+	# The pay: an informant is the dearest of the three endings, banked by
+	# finish_bounty on the way out - plus whatever Gear.drop deterministically
+	# rolled for this target.
+	var expect_find: String = Gear.drop(game.campaign_seed, 1000 + 41)
+	_check(int(game.scrip) == int(game.SCRIP_BOUNTY.informant),
+			"the informant paid %d scrip (book holds %d)"
+			% [int(game.SCRIP_BOUNTY.informant), game.scrip])
+	_check(game.armory.size() == (0 if expect_find.is_empty() else 1),
+			"and the drop matched Gear.drop's answer ('%s')" % expect_find)
 	_check(game.adversaries.is_empty(),
 			"and he is no longer somebody who walks back onto a mission")
 	_check(not game.on_bounty(), "the campaign is back at the garrison")

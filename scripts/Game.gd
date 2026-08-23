@@ -157,6 +157,12 @@ var mission_dead: Dictionary = {}
 # wipes it.
 var scrip := 0
 var armory: Array = []
+# Mission-scoped reward scratch, the mission_xp construction exactly: Battle
+# accrues into these during the debrief, and only the three win sites bank
+# them into the book. A loss, a retry or a load zeroes them, so a rolled-back
+# mission can never leave its pay behind.
+var mission_scrip := 0
+var mission_loot: Array = []
 
 var _rng := RandomNumberGenerator.new()
 
@@ -398,6 +404,15 @@ const XP_CACHE := 4
 const XP_RESCUE := 4
 const XP_SURVIVE := 3
 
+# What a mission pays the company book, in scrip. XP is a soldier's and pay
+# is the company's - the two never mix. A story win pays a base plus a cut
+# per objective beyond the first; a bounty pays by how it ended, an informant
+# being worth more alive than a corpse is dead; a crossing pays flat.
+const SCRIP_STORY_BASE := 60
+const SCRIP_PER_EXTRA_OBJECTIVE := 15
+const SCRIP_INTERDICTION := 30
+const SCRIP_BOUNTY := {"killed": 20, "surrendered": 30, "informant": 40}
+
 const SURNAMES: Array[String] = [
 	"VANCE", "ORTIZ", "KELLER", "MBEKI", "DRAKE", "SOLIS", "HARGREAVE",
 	"NAKAMURA", "REYES", "FINCH", "ODUYA", "BRANDT", "ILIC", "MARSH",
@@ -604,6 +619,7 @@ func finish_bounty(outcome: String, hunter_id: int, target: Dictionary) -> void:
 	# back - costs nobody anything.
 	rest_from_bounty(hunter_id)
 	clear_bounty()
+	_bank_rewards()
 	save()
 
 
@@ -636,6 +652,7 @@ func finish_interdiction(leader_id: int, ordinal: int) -> void:
 	# same moment and for the same reason, as a bounty hunter's.
 	rest_from_bounty(leader_id)
 	clear_interdiction()
+	_bank_rewards()
 	save()
 	print("[Sandline] crossing %d run down - %d of the net shut"
 			% [ordinal, ratline_done.size()])
@@ -1191,6 +1208,15 @@ func chronicle() -> String:
 				ratline_done.size(),
 				"" if ratline_strength == 0
 						else " - the Thirst musters at %d%%" % ratline_strength])
+	if scrip > 0 or not armory.is_empty():
+		lines.append("")
+		lines.append("THE COMPANY BOOK: %d scrip, %d item(s) in the armory"
+				% [scrip, armory.size()])
+		var shelved: Array[String] = []
+		for key: String in armory:
+			shelved.append(str(Gear.ITEMS[key].name))
+		if not shelved.is_empty():
+			lines.append("  on the rack: %s" % ", ".join(shelved))
 	var by_settlement := notebook_by_settlement()
 	if not by_settlement.is_empty():
 		lines.append("")
@@ -1222,6 +1248,8 @@ func chronicle_digest() -> String:
 	if not adversaries.is_empty():
 		lines.append("%d name(s) in the files, %d turned."
 				% [adversaries.size(), informants.size()])
+	if scrip > 0:
+		lines.append("%d scrip in the company book." % scrip)
 	if not district_standing.is_empty():
 		var parts: Array[String] = []
 		for settlement: String in district_standing:
@@ -1308,6 +1336,8 @@ func begin_mission() -> void:
 	mission_xp.clear()
 	mission_dead.clear()
 	mission_fielded.clear()
+	mission_scrip = 0
+	mission_loot = []
 
 
 func award(id: int, amount: int) -> void:
@@ -1316,6 +1346,37 @@ func award(id: int, amount: int) -> void:
 		return
 	soldier.xp = int(soldier.xp) + amount
 	mission_xp[id] = int(mission_xp.get(id, 0)) + amount
+
+
+## Pay earned this mission, not yet the company's. Banked by the win sites.
+func accrue_scrip(amount: int) -> void:
+	if amount > 0:
+		mission_scrip += amount
+
+
+## An item shaken loose this mission, not yet the armory's. Unknown keys are
+## refused here rather than at the bank, so a bad drop is loud where it rolls.
+func accrue_loot(key: String) -> void:
+	if Gear.ITEMS.has(key):
+		mission_loot.append(key)
+	elif not key.is_empty():
+		push_error("[Sandline] no such item to loot: %s" % key)
+
+
+## Move the mission's pay into the company book. Called from exactly the
+## three win sites - commit_mission, finish_bounty, finish_interdiction -
+## before their save(), and nowhere else: the loss paths just zero the
+## scratch, which is the whole exploit-proofing.
+func _bank_rewards() -> void:
+	if mission_scrip > 0:
+		scrip += mission_scrip
+		print("[Sandline] %d scrip to the company book (%d held)"
+				% [mission_scrip, scrip])
+	for key: String in mission_loot:
+		armory.append(key)
+		print("[Sandline] %s signed into the armory" % str(Gear.ITEMS[key].name))
+	mission_scrip = 0
+	mission_loot = []
 
 
 func mark_dead(id: int) -> void:
@@ -1798,6 +1859,7 @@ func commit_mission() -> void:
 				and not mission_fielded.has(int(soldier.id)):
 			soldier.wounded = false
 			print("[Sandline] %s is off the wounded list" % soldier.surname)
+	_bank_rewards()
 	_snapshot.clear()
 	save()
 
@@ -1822,6 +1884,9 @@ func abort_mission() -> void:
 	# perk of anyone who deployed with one unspent and then lost the mission.
 	mission_xp.clear()
 	mission_dead.clear()
+	# The pay dies with the attempt, exactly like the XP above it.
+	mission_scrip = 0
+	mission_loot = []
 	# The one place an attempt is spent without being kept. Counted here rather
 	# than in begin_mission so that battle_seed() only moves when a mission is
 	# actually being fought AGAIN - a first attempt and the campaign's state
@@ -2384,6 +2449,8 @@ func load_save() -> bool:
 	_snapshot.clear()
 	mission_xp.clear()
 	mission_dead.clear()
+	mission_scrip = 0
+	mission_loot = []
 	print("[Sandline] campaign loaded: %d soldier(s), %s mission %d/%d" % [
 			roster.size(), operation().name, mission_number(), mission_count()])
 	# A climb is checkpointed once, here, and this is the one write load_save()

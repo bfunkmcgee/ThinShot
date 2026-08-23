@@ -852,3 +852,21 @@ func _test_gear_rollback() -> void:
 	var restored: Dictionary = (game.roster[0] as Dictionary).gear
 	_check(str(restored.weapon) == "oiled_sling" and str(restored.armor) == "",
 			"the equip made mid-mission is rolled back (%s)" % [restored])
+	# And the pay follows the same transaction: accrued scratch dies with a
+	# lost attempt, and only a win banks it into the book.
+	game.scrip = 0
+	game.armory = []
+	game.begin_mission()
+	game.accrue_scrip(60)
+	game.accrue_loot("oiled_sling")
+	game.accrue_loot("no_such_item")  # refused loudly, never banked
+	game.abort_mission()
+	_check(game.scrip == 0 and game.armory.is_empty()
+			and game.mission_scrip == 0 and game.mission_loot.is_empty(),
+			"a lost mission's pay dies with the attempt")
+	game.begin_mission()
+	game.accrue_scrip(60)
+	game.accrue_loot("oiled_sling")
+	game.commit_mission()
+	_check(game.scrip == 60 and game.armory == ["oiled_sling"],
+			"a won mission banks it (%d scrip, %s)" % [game.scrip, game.armory])
