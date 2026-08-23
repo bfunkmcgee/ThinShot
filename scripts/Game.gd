@@ -1363,6 +1363,71 @@ func accrue_loot(key: String) -> void:
 		push_error("[Sandline] no such item to loot: %s" % key)
 
 
+## The soldier level the quartermaster's rack unlocks against: the highest
+## LIVING soldier's, so a dead veteran's ghost does not keep tier 3 open.
+func best_living_level() -> int:
+	var best := 1
+	for soldier: Dictionary in roster:
+		if bool(soldier.get("alive", false)):
+			best = maxi(best, int(soldier.get("level", 1)))
+	return best
+
+
+## Sign for an item at the quartermaster: known key, its tier unlocked by the
+## best living soldier's level, and the book can cover it. Into the armory,
+## not onto anybody - equipping is its own decision.
+func buy_item(key: String) -> bool:
+	if not Gear.ITEMS.has(key):
+		return false
+	if best_living_level() < Gear.level_gate(key):
+		return false
+	var price := int(Gear.ITEMS[key].price)
+	if scrip < price:
+		return false
+	scrip -= price
+	armory.append(key)
+	print("[Sandline] signed for %s - %d scrip left in the book"
+			% [str(Gear.ITEMS[key].name), scrip])
+	save()
+	return true
+
+
+## Put an armory item on a soldier ("" unequips the slot). The item must be
+## on the shelf, match the slot, and sit at a tier the SOLDIER's own level
+## has earned; whatever he was carrying goes back to the shelf. One item, one
+## body: equipping removes it from the armory, so two soldiers can only carry
+## two sights if the book paid for two.
+func equip_item(id: int, slot: String, key: String) -> bool:
+	if not Gear.SLOTS.has(slot):
+		return false
+	var soldier := soldier_by_id(id)
+	if soldier.is_empty() or not bool(soldier.get("alive", false)):
+		return false
+	if not key.is_empty():
+		if not armory.has(key):
+			return false
+		if str(Gear.ITEMS[key].slot) != slot:
+			return false
+		if int(soldier.get("level", 1)) < Gear.level_gate(key):
+			return false
+	if not soldier.has("gear"):
+		soldier.gear = {"weapon": "", "armor": "", "kit": ""}
+	var gear: Dictionary = soldier.gear
+	var worn := str(gear.get(slot, ""))
+	if worn == key:
+		return false
+	if not worn.is_empty():
+		armory.append(worn)
+	if not key.is_empty():
+		armory.erase(key)
+	gear[slot] = key
+	print("[Sandline] %s %s %s" % [soldier.surname,
+			"sets down" if key.is_empty() else "takes",
+			str(Gear.ITEMS[worn if key.is_empty() else key].name)])
+	save()
+	return true
+
+
 ## Move the mission's pay into the company book. Called from exactly the
 ## three win sites - commit_mission, finish_bounty, finish_interdiction -
 ## before their save(), and nowhere else: the loss paths just zero the

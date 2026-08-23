@@ -1245,6 +1245,19 @@ func apply_progression(soldier: Dictionary) -> void:
 		mag_size += 2
 	if has_perk("deep_pockets"):
 		mag_size += 2
+	# What he carries. Additive stat mods from the Gear catalog - never
+	# damage, by ALLOWED_MODS - except arc_half, which is set-with-max so a
+	# sentinel's widened watch never narrows and never stacks past itself.
+	for slot: String in Gear.SLOTS:
+		var mods := Gear.mods_of(str((soldier.get("gear", {}) as Dictionary)
+				.get(slot, "")))
+		accuracy += int(mods.get("accuracy", 0))
+		max_hp += int(mods.get("max_hp", 0))
+		move_range += int(mods.get("move_range", 0))
+		attack_range += int(mods.get("attack_range", 0))
+		mag_size += int(mods.get("mag_size", 0))
+		if mods.has("arc_half"):
+			arc_half = maxi(arc_half, int(mods.arc_half))
 	# Nobody becomes a sure thing: capped once, after everything that can
 	# raise it.
 	accuracy = mini(accuracy, Game.ACCURACY_CAP)

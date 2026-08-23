@@ -268,8 +268,28 @@ func _run() -> void:
 			% [lv11.accuracy, lv11.max_hp])
 	_check(lv90.accuracy == cap,
 			"a level 90 hero is capped at %d (got %d)" % [cap, lv90.accuracy])
+
+	print("\n  what he carries: gear mods land, arc_half never stacks")
+	var light: Node2D = _mk_gear(unit_scene, KIND_SCOUT, [],
+			{"weapon": "", "armor": "", "kit": "light_order"})
+	var drummed: Node2D = _mk_gear(unit_scene, KIND_MACHINEGUNNER, [],
+			{"weapon": "drum_feed", "armor": "", "kit": ""})
+	var watcher: Node2D = _mk_gear(unit_scene, KIND_MACHINEGUNNER, [],
+			{"weapon": "", "armor": "", "kit": "swivel_harness"})
+	var both: Node2D = _mk_gear(unit_scene, KIND_MACHINEGUNNER, ["sentinel"],
+			{"weapon": "", "armor": "", "kit": "swivel_harness"})
+	_check(light.move_range == plain_scout.move_range + 1,
+			"light_order is one more tile (got %d)" % light.move_range)
+	_check(drummed.mag_size == plain_mg.mag_size + 3
+			and drummed.ammo == drummed.mag_size,
+			"drum_feed adds 3 rounds and the ammo re-derives (got %d/%d)"
+			% [drummed.ammo, drummed.mag_size])
+	_check(watcher.arc_half == 2, "the harness widens the watch to 2")
+	_check(both.arc_half == 2,
+			"sentinel plus harness is still 2 - set-with-max, never stacked")
 	for u in [plain_scout, sprinter, ranger, snapper, plain_mg, bipod, mule,
-			sweep, sentinel, keeper, willed, pockets, lv2, lv10, lv11, lv90]:
+			sweep, sentinel, keeper, willed, pockets, lv2, lv10, lv11, lv90,
+			light, drummed, watcher, both]:
 		u.free()
 
 	print("\n[4] boot Battle.tscn on a crafted roster (level 1, headless)")
@@ -525,6 +545,16 @@ func _mk_level(unit_scene: PackedScene, kind: int, level: int) -> Node2D:
 	unit.setup(kind, Vector2i(2, 2))
 	unit.apply_progression({"id": 1, "surname": "TEST", "kind": kind, "xp": 0,
 			"level": level, "perks": [] as Array, "alive": true})
+	return unit
+
+
+## And once more with a kit: level 1, chosen perks, chosen gear dict.
+func _mk_gear(unit_scene: PackedScene, kind: int, perks: Array,
+		gear: Dictionary) -> Node2D:
+	var unit: Node2D = unit_scene.instantiate()
+	unit.setup(kind, Vector2i(2, 2))
+	unit.apply_progression({"id": 1, "surname": "TEST", "kind": kind, "xp": 0,
+			"level": 1, "gear": gear, "perks": perks, "alive": true})
 	return unit
 
 
