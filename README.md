@@ -255,24 +255,30 @@ where they are in one:
 operation and you fight the rest of it four strong — that is the cost of the
 loss, and it is felt for as long as the operation lasts. Back at the garrison,
 command signs on however many bodies you are short. What a death takes
-permanently is the rank, the specialties and the kills; what it does not take
-is the campaign.
+permanently is the levels, the specialties and the kills; what it does not
+take is the campaign.
 
 Both camps are **real time and directly controlled** — you walk Rodar Akai
 around with **WASD or the arrows**, and press **E** at anything worth
 using:
 
 - **Your squad** stand around the camp. Walk up to one to read their record —
-  rank, XP, specialties — and if they earned a promotion on the last mission,
-  **you choose their specialty here**, face to face, rather than on a screen
-  that interrupts the debrief. **Standing clear of everyone selects yourself**,
-  which is how you take your own promotion.
+  level, XP, specialties, and what they carry — and if they crossed a specialty
+  gate on the last mission, **you choose their specialty here**, face to face,
+  rather than on a screen that interrupts the debrief. Otherwise the record
+  offers **CHANGE KIT**: pick a slot, pick from the armory's shelf for it, and
+  whatever they were wearing goes back on the shelf. **Standing clear of
+  everyone selects yourself**, which is how you take your own choice.
 - **The stores tent** holds the squad's ordnance. Four pieces between them,
   split however you like: four frags and no smoke, one and three, or the 2/2
   the squad carried before there was anywhere to change it.
 - **The briefing table** gives the next mission's orders and deploys you.
+- **The quartermaster's rack** — garrison only, at the kit frame — sells the
+  armory's catalog for the company book's scrip: eighteen items across weapon
+  fittings, armor and kit, in three tiers that unlock at squad levels 1/10/25.
+  See *The company book* below.
 - **The assignment post** — garrison only — signs on replacements for anyone
-  lost, green: no rank, no specialty, nothing the squad lost with them.
+  lost, green: level 1, no specialty, nothing the squad lost with them.
 - **The ledger** — garrison only, read at the memorial cross. The whole war so
   far: every soldier's record, the dead, the adversary files, the district's
   opinion settlement by settlement, and Dava's notebook — and the full document
@@ -323,7 +329,7 @@ are desert, so nothing looks wrong yet.
 ## The squad
 
 The five soldiers are **named, and they are the same five from one mission to
-the next**. They earn ranks, they specialise, and **when one falls they are
+the next**. They earn levels, they specialise, and **when one falls they are
 gone for the campaign** — nobody replaces them. Lose a scout on Dry Wash and
 you assault The Scrapline four strong, with one fewer rifle for every fight
 that follows.
@@ -337,66 +343,73 @@ him anyway is allowed, and the deploy row says what it costs. Attrition still
 costs you soldiers before anything else — a wound is a decision to make, not a
 death sentence on a graze.
 
-| Rank | XP | Gains |
-|---|---|---|
-| Scout | 0 | — |
-| Corporal | 6 | +3 acc, +1 HP, **choose a specialty** |
-| Sergeant | 14 | +3 acc, +1 HP, **choose a specialty** |
-| Staff Sergeant | 26 | +3 acc, +1 HP, **choose a specialty** |
-| Master Sergeant | 40 | +3 acc, +1 HP, **choose a specialty** |
+Progression is a **career of levels, 1 to 100**, bought with lifetime XP on a
+quadratic curve (`Career.gd`) tuned for the long haul — one campaign lands a
+soldier somewhere around level 30; level 100 (1,226 XP) is a multi-campaign
+veteran:
 
-Rank gains are cumulative, and accuracy is capped at 95% — nobody ever becomes
-a sure thing. Because of the cap the machinegunner (78%) gains far more from
-rank than Rodar, who starts capped — which is why his specialties, not his
-accuracy, are his whole progression.
+| Level | XP | Level | XP |
+|---|---|---|---|
+| 2 | 1 | 25 | 99 |
+| 5 | 7 | 30 | 136 |
+| 10 | 22 | 50 | 337 |
+| 15 | 42 | 100 | 1,226 |
+
+**Every level-up pays exactly one +1**, alternating by parity: even levels
++1 accuracy, odd levels +1 max HP. Accuracy is capped at 95% — nobody ever
+becomes a sure thing — and the cap is applied once, after levels and gear
+alike, so the classes that start near it (Rodar) absorb their late accuracy
+levels into it and live off their specialties instead.
 
 **XP:** 3 a kill, 4 a demolished cache, 4 a rescue, 3 for walking off the map
-alive.
+alive. A side mission's XP counts like any other; only its *pay* is what makes
+it a side mission.
 
-**Specialties** are a two-way choice at every rank — four picks over a full
-career — and **each class chooses from its own tree**:
+**Specialties** are a two-way choice at each of four gates — **levels 5, 15,
+30 and 50** — and **each class chooses from its own tree**:
 
 **Scout — the skirmisher:**
 
-- Corporal: **Sprinter** (+1 tile of movement, permanently) or **Quick Hands**
+- Level 5: **Sprinter** (+1 tile of movement, permanently) or **Quick Hands**
   (reload without giving up the move).
-- Sergeant: **Snap Burst** (burst fire on the move — no bracing needed) or
+- Level 15: **Snap Burst** (burst fire on the move — no bracing needed) or
   **Field Dressing** (**Q**: patch yourself up 3 HP, once per battle; costs the
   shot).
-- Staff Sergeant: **Hustle** (**V**: give up the shot to move a second time —
+- Level 30: **Hustle** (**V**: give up the shot to move a second time —
   the extraction run on Outpost 7 is exactly what it is for) or **Flanker**
   (flanking shots hit 10% harder still).
-- Master Sergeant: **Ranger** (+1 move *and* +1 range) or **Executioner**
+- Level 50: **Ranger** (+1 move *and* +1 range) or **Executioner**
   (+1 damage on flanking shots).
 
 **Brukk Meshan — area denial:**
 
-- Corporal: **Bipod** (overwatch answers with three rounds instead of two) or
+- Level 5: **Bipod** (overwatch answers with three rounds instead of two) or
   **Pack Mule** (two more rounds in the belt).
-- Sergeant: **Wide Sweep** (suppression pins everything within three tiles
+- Level 15: **Wide Sweep** (suppression pins everything within three tiles
   instead of two) or **Grenadier** (the squad carries one more frag).
-- Staff Sergeant: **Sentinel** (a wider overwatch arc) or **Locked Belts**
+- Level 30: **Sentinel** (a wider overwatch arc) or **Locked Belts**
   (suppression pins for an extra turn).
-- Master Sergeant: **Protective Fire** (unfired overwatch carries over to the
+- Level 50: **Protective Fire** (unfired overwatch carries over to the
   next turn — taking any order breaks it) or **Walking Fire** (full auto after
   moving, at another −10% per round).
 
 **Rodar Akai — the marksman-leader:**
 
-- Corporal: **Called Shot** (**Q**: a whole-turn aimed round that ignores cover
+- Level 5: **Called Shot** (**Q**: a whole-turn aimed round that ignores cover
   entirely — the roll is normal, the damage is never halved) or **Iron Will**
   (+2 HP).
-- Sergeant: **Rally** (**T**: clear every pin within four tiles and steady the
+- Level 15: **Rally** (**T**: clear every pin within four tiles and steady the
   squad's aim +10% until their next turn; once per battle, costs the shot) or
   **Marksman** (shots past half range stop losing accuracy).
-- Staff Sergeant: **Inspiration** (every soldier within four tiles of him
+- Level 30: **Inspiration** (every soldier within four tiles of him
   shoots 5% better, always) or **Deep Pockets** (+2 rounds in the magazine).
-- Master Sergeant: **One Shot** (Called Shot hits +2 harder) or **Untouchable**
+- Level 50: **One Shot** (Called Shot hits +2 harder) or **Untouchable**
   (the first killing blow each battle leaves him at 1 HP — the campaign-ending
   bullet, refused once).
 
-Rank shows as chevrons beside a soldier's HP pips, and the info panel carries
-their name, XP, and specialties. When a selected soldier owns an active
+The career shows as chevrons beside a soldier's HP pips — one per twenty
+levels, five at most — and the info panel carries their name, level, XP, and
+specialties. When a selected soldier owns an active
 specialty, its button appears in the bottom row (**Q** and **T**).
 
 **A failed mission counts for nothing.** XP earned in an attempt you lose is
@@ -405,6 +418,37 @@ level, and a wipe costs you the attempt rather than the squad. That is also why
 the campaign can never strand itself: losing every scout loses the mission, so
 a mission you *win* always leaves at least one of them standing. Finishing the
 campaign and playing again starts you with five fresh recruits.
+
+### The company book
+
+Missions pay, in **scrip**, into a book that belongs to the war rather than
+the soldiers: the campaign loop keeps it (play again and the book carries
+over), and only starting a genuinely new campaign wipes it.
+
+- **A story win pays 60**, plus **15 per objective beyond the first**, plus
+  whatever the level authors on top (four missions carry an authored reward —
+  two of them items rather than scrip).
+- **A bounty pays by how it ended**: 20 killed, 30 surrendered, 40 turned
+  informant — a man is worth more alive than dead, and most alive talking.
+- **An interdiction pays a flat 30** for the crossing.
+- Won **side missions can also shake an item loose** — a deterministic 25%
+  drop from the tier-1/2 pool, keyed to the target, unfarmable because a
+  settled target never comes up again.
+
+Pay rides the same transaction as XP: accrued during the mission, **banked
+only on the win**, and a lost attempt dies holding nothing. The debrief's
+`PAY:` line is the receipt.
+
+The one sink is **the quartermaster** (garrison, at the kit frame): eighteen
+items, two per slot per tier, tiers unlocking at squad levels **1 / 10 / 25**
+— judged by the best *living* soldier, so a dead veteran keeps nothing open.
+Items are stat mods only — accuracy, HP, move, range, magazine, overwatch arc
+— and **never damage**, so the even-damage cover arithmetic survives the whole
+catalog (`test_gear.gd` pins that forever). What the book buys goes to **the
+armory**, and from the armory onto exactly one soldier per item: weapon
+fitting, armor, kit — swap freely at any soldier's record, in garrison or
+field. Gear is part of the mission transaction too: equip mid-mission all you
+like, a loss rolls it back with everything else.
 
 ## Controls
 
@@ -698,7 +742,7 @@ the briefing table before every mission:
 None of them is an upgrade on the rifleman — every one pays for what it does,
 and the test suite sweeps for domination so it stays that way. Each also
 **starts holding the perk that is their specialty**, so the choice matters on
-mission one rather than after a promotion.
+mission one rather than five levels in.
 
 Seven of the eight have **their own 8-direction sprite set**, so who is standing
 where is readable on the board without selecting anybody: Rodar's long coat and
@@ -760,19 +804,28 @@ godot --headless --path . res://scenes/Battle.tscn --quit-after 200
 godot --headless --path . res://scenes/Battle.tscn --quit-after 200 -- --level 2
 ```
 
-The harnesses assert rather than smoke-test, and there are twelve of them:
+The harnesses assert rather than smoke-test — nineteen of them, plus seven
+authored-data checks (`tools/run_suite.sh` runs the whole list):
 
 ```
 godot --headless --path . -s tools/test_rules.gd         # to-hit, damage, morale, conduct
 godot --headless --path . -s tools/test_roll.gd          # who the enemy was
+godot --headless --path . -s tools/test_career.gd        # the level curve, gates, growth
+godot --headless --path . -s tools/test_gear.gd          # the catalog, the drop, buy/equip
 godot --headless --path . -s tools/test_morale.gd        # surrender, rout, bystanders
 godot --headless --path . -s tools/test_overwatch.gd     # reactions that interrupt
+godot --headless --path . -s tools/test_undo.gd          # the move taken back
+godot --headless --path . -s tools/test_aiplan.gd        # the enemy's scoring, pinned
+godot --headless --path . -s tools/test_projection.gd    # the destination shot preview
+godot --headless --path . -s tools/test_pressure.gd      # the mission clock
+godot --headless --path . -s tools/test_wounds.gd        # the walking wounded ledger
 godot --headless --path . -s tools/test_menu.gd          # new campaign, the notebook
 godot --headless --path . -s tools/test_save_load.gd     # the save ladder, v1 up
-godot --headless --path . -s tools/test_progression.gd   # xp, ranks, perks
+godot --headless --path . -s tools/test_progression.gd   # xp, levels, perks, gear on units
 godot --headless --path . -s tools/test_hero_gameover.gd # Rodar ends the campaign
 godot --headless --path . -s tools/test_returners.gd     # the ones who came back
 godot --headless --path . -s tools/test_bounty.gd        # generated boards, the parley
+godot --headless --path . -s tools/test_ratline.gd       # interdictions and the muster
 godot --headless --path . -s tools/test_occlusion.gd     # scenery gets out of the way
 godot --headless --path . -s tools/check_level.gd -- --all
 godot --headless --path . -s tools/check_prop_tables.gd  # the three prop-table copies agree
@@ -811,8 +864,13 @@ scripts/
   Rules.gd        # every number: to-hit, damage, morale, conduct, Strain
   Roll.gd         # who the enemy was - names, ages, settlements, grievances
   Levels.gd       # campaign data: maps, spawns, objectives, story + validator
+  Career.gd       # the 1..100 ladder: XP curve, perk gates, per-level growth
+  Gear.gd         # the quartermaster's catalog: items, mods, tiers, the drop
+  Bounty.gd       # generated bounty boards + the parley arithmetic
+  Ratline.gd      # generated interdictions + the operation's muster
+  AiPlan.gd       # the enemy's move scoring, pure and pinned
   ObjectiveMarks.gd # beacons over objectives, above every unit and structure
-  Game.gd         # autoload: roster, ranks, perks, progress, notebook, save v3
+  Game.gd         # autoload: roster, levels, perks, the company book, save v10
   Sfx.gd          # autoload: pooled sound playback
   HitFx.gd        # one-shot code-drawn muzzle flash / impact ring
 tools/            # harnesses + asset generators. test_rules, test_roll,
