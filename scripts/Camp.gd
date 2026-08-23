@@ -501,7 +501,7 @@ func _avatar_soldier() -> Dictionary:
 			continue
 		var best: Dictionary = of_kind[0]
 		for soldier: Dictionary in of_kind:
-			if int(soldier.rank) > int(best.rank):
+			if int(soldier.get("level", 1)) > int(best.get("level", 1)):
 				best = soldier
 		return best
 	# Belt and braces: anyone still standing, if the roster ever holds a role
@@ -988,7 +988,7 @@ func _open_ratline_leaders(offer: Dictionary) -> void:
 		var s: Dictionary = candidates[i]
 		lines.append("%s  -  %s, %s" % [Game.soldier_label(s),
 				Unit.kind_role_name(int(s.kind)),
-				Game.rank_title(int(s.get("rank", 0)))])
+				Career.level_label(int(s.get("level", 1)))])
 		lines.append("")
 	_choice_action = "ratline_send"
 	_choice_args = [offer, candidates]
@@ -1041,12 +1041,12 @@ func _open_soldier(id: int) -> void:
 	if soldier.is_empty():
 		return
 	var xp: int = int(soldier.xp)
-	var to_next := Game.xp_to_next(xp)
+	var to_next := Career.xp_to_next(xp)
 	var perks: Array = soldier.perks
 	var lines: Array[String] = [
 		Unit.kind_role_name(int(soldier.kind)),
-		"%s  -  %d xp%s" % [Game.rank_title(int(soldier.rank)), xp,
-				"" if to_next < 0 else "  (%d to the next rank)" % to_next],
+		"%s  -  %d xp%s" % [Career.level_label(int(soldier.get("level", 1))), xp,
+				"" if to_next < 0 else "  (%d to the next level)" % to_next],
 	]
 	# The named Kestrels are people the campaign is about, so the tent they are
 	# standing in says so. A replacement off the levy post gets his posting.
@@ -1069,21 +1069,24 @@ func _open_soldier(id: int) -> void:
 		for perk: String in perks:
 			names.append("%s - %s" % [Game.PERKS[perk].name, Game.PERKS[perk].blurb])
 		lines.append_array(names)
-	# A promotion waiting on this soldier turns the record into the choice.
+	# A specialty choice waiting on this soldier turns the record into the
+	# choice.
 	for promotion: Dictionary in Game.pending_promotions:
 		if int(promotion.id) != id:
 			continue
-		var rank := int(promotion.rank)
+		var gate_level := int(promotion.level)
 		# The choice comes from this soldier's CLASS tree. _read_promotions
 		# already dropped anything the class cannot answer, but a promotion
 		# queued in-session for an unexpected kind must not crash the modal.
-		var choices: Array = Game.perk_choices(int(soldier.kind), rank)
+		var choices: Array = Game.perk_choices(int(soldier.kind),
+				Career.perk_gate(gate_level))
 		if choices.size() < 2:
 			continue
 		lines.append("")
-		lines.append("PROMOTED TO %s - choose a specialty." % Game.rank_title(rank).to_upper())
+		lines.append("REACHED %s - choose a specialty."
+				% Career.level_label(gate_level).to_upper())
 		_choice_action = "perk"
-		_choice_args = [id, rank, choices]
+		_choice_args = [id, gate_level, choices]
 		var a: Dictionary = Game.PERKS[choices[0]]
 		var b: Dictionary = Game.PERKS[choices[1]]
 		_open_modal(Game.soldier_label(soldier), "\n".join(lines),
@@ -1103,7 +1106,7 @@ func _open_stores() -> void:
 
 
 ## Replacements, garrison only. Filling every gap at once is deliberate: what
-## a death takes permanently is the rank, the perks and the kills, not the
+## a death takes permanently is the levels, the perks and the kills, not the
 ## campaign - and the squad still fought the rest of the operation short.
 func _open_recruit() -> void:
 	var short := Game.vacancy_count(Game.data())
@@ -1121,7 +1124,7 @@ func _open_recruit() -> void:
 	_open_modal("ASSIGNMENT POST",
 			"Command has bodies to spare, and none of them have done this before.\n\n"
 			+ "Open postings:\n" + "\n".join(lines)
-			+ "\n\nThey arrive green - no rank, no specialty, nothing the squad lost.",
+			+ "\n\nThey arrive green - level 1, no specialty, nothing the squad lost.",
 			"SIGN THEM ON\nBring the squad back to strength", "")
 
 
@@ -1214,7 +1217,7 @@ func _deployment_row_text(soldier: Dictionary, going: bool) -> String:
 		("RESTED" if resting else ("GOING " if going else "      ")),
 		"%-14s" % Game.full_name(soldier),
 		"%-20s" % Unit.kind_role_name(int(soldier.kind)),
-		"%-16s" % Game.rank_title(int(soldier.rank)),
+		"%-10s" % Career.level_label(int(soldier.get("level", 1))),
 	]
 	# The wound rides the row where the deploy decision is made: taking him
 	# anyway is allowed and costs a point of HP; the row is what says so.
@@ -1270,7 +1273,7 @@ func _on_choice(slot: int) -> void:
 			# Spend the queued promotion so it is not offered twice.
 			for i in Game.pending_promotions.size():
 				var p: Dictionary = Game.pending_promotions[i]
-				if int(p.id) == id and int(p.rank) == int(_choice_args[1]):
+				if int(p.id) == id and int(p.level) == int(_choice_args[1]):
 					Game.pending_promotions.remove_at(i)
 					break
 			_close_modal()

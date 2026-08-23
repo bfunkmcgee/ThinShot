@@ -656,9 +656,11 @@ var ammo := 0
 
 # Campaign identity, stamped on by apply_progression() from the Game roster.
 # Goblins never carry any: soldier_id 0 means "anonymous".
+# career_level 0 means "not a career soldier" - the Thirst, bystanders, the
+# riflemen lent to a detachment. Roster soldiers are always >= 1.
 var soldier_id := 0
 var surname := ""
-var rank := 0
+var career_level := 0
 var perks: Array = []
 
 var hp := 3
@@ -1207,18 +1209,26 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 	anim_time = float((p_cell.x * 7 + p_cell.y * 13) % 9) / IDLE_FPS
 
 
-## Stamp a campaign soldier onto a freshly-setup unit: name, rank, perks, and
+## Stamp a campaign soldier onto a freshly-setup unit: name, level, perks, and
 ## the stats those have earned. MUST run after setup(), which assigns every
 ## stat from scratch - and note setup() derives hp and ammo from max_hp and
 ## mag_size at its tail, so anything that moves those has to re-derive them or
 ## a promoted soldier deploys already wounded.
+##
+## Order matters and is fixed: level bonuses, then perks, then the accuracy
+## cap ONCE, then the wound. The cap last-but-one is what lets a veteran
+## class absorb late accuracy levels into it; the wound dead last is what
+## keeps its contract - exactly one point off the top, whatever the career.
 func apply_progression(soldier: Dictionary) -> void:
 	soldier_id = int(soldier.id)
 	surname = str(soldier.surname)
-	rank = int(soldier.rank)
+	career_level = int(soldier.get("level", 1))
 	perks = (soldier.perks as Array).duplicate()
-	accuracy = mini(accuracy + rank * Game.ACCURACY_PER_RANK, Game.ACCURACY_CAP)
-	max_hp += rank * Game.HP_PER_RANK
+	# The career ladder: +1 accuracy at every even level, +1 max HP at every
+	# odd one. Career.gd owns the arithmetic; this is the one place it lands
+	# on a unit.
+	accuracy += Career.accuracy_bonus_at(career_level)
+	max_hp += Career.hp_bonus_at(career_level)
 	if has_perk("sprinter"):
 		move_range += 1
 	if has_perk("sentinel"):
@@ -1231,18 +1241,21 @@ func apply_progression(soldier: Dictionary) -> void:
 		attack_range += 1
 	if has_perk("iron_will"):
 		max_hp += 2
-	# Walking wounded: he chose to deploy rather than sit it out, and the
-	# wound is one point off the top for the whole mission. After the rank
-	# and perk bonuses, so the cost is always exactly one point regardless
-	# of career - and never below 2, so a wound is a handicap, not a death
-	# sentence waiting on a graze.
-	if bool(soldier.get("wounded", false)):
-		max_hp = maxi(max_hp - 1, 2)
 	if has_perk("pack_mule"):
 		mag_size += 2
 	if has_perk("deep_pockets"):
 		mag_size += 2
-	# The re-derive tail: setup() already set hp and ammo, so any perk above
+	# Nobody becomes a sure thing: capped once, after everything that can
+	# raise it.
+	accuracy = mini(accuracy, Game.ACCURACY_CAP)
+	# Walking wounded: he chose to deploy rather than sit it out, and the
+	# wound is one point off the top for the whole mission. After every
+	# max_hp bonus, so the cost is always exactly one point regardless of
+	# career - and never below 2, so a wound is a handicap, not a death
+	# sentence waiting on a graze.
+	if bool(soldier.get("wounded", false)):
+		max_hp = maxi(max_hp - 1, 2)
+	# The re-derive tail: setup() already set hp and ammo, so anything above
 	# that moves max_hp or mag_size has to be re-derived here or a promoted
 	# soldier deploys wounded or short-loaded.
 	hp = max_hp
@@ -1721,7 +1734,7 @@ static func kind_role_name(p_kind: Kind) -> String:
 func display_name() -> String:
 	if surname.is_empty():
 		return kind_role_name(kind)
-	return Game.soldier_label({"rank": rank, "surname": surname})
+	return Game.soldier_label({"level": career_level, "surname": surname})
 
 
 func role_name() -> String:
@@ -2144,18 +2157,19 @@ func _draw() -> void:
 		var rect := Rect2(Vector2(start_x + i * (PIP_SIZE.x + PIP_GAP), PIP_Y), PIP_SIZE)
 		draw_rect(rect, PIP_FULL if i < hp else PIP_EMPTY)
 		draw_rect(rect, Color(0, 0, 0, 0.5), false, 1.0)
-	if rank > 0:
-		# Rank chevrons stacked just left of the HP row. Everything else drawn
-		# up here (the overwatch diamond, the suppression and acting chevrons)
-		# is centred on x = 0, so the flank is always clear.
+	if Career.chevrons_for(career_level) > 0:
+		# Career chevrons stacked just left of the HP row - one per 20 levels,
+		# capped at 5, so the stack can never march off the sprite. Everything
+		# else drawn up here (the overwatch diamond, the suppression and
+		# acting chevrons) is centred on x = 0, so the flank is always clear.
 		var rx := start_x - RANK_GAP
-		for i in rank:
+		for i in Career.chevrons_for(career_level):
 			var ry := PIP_Y + PIP_SIZE.y * 0.5 - i * RANK_STEP
 			draw_colored_polygon(PackedVector2Array([
 				Vector2(rx, ry), Vector2(rx - RANK_W, ry - RANK_H),
 				Vector2(rx - RANK_W, ry - RANK_H + RANK_T), Vector2(rx, ry + RANK_T),
 			]), RANK_COLOR)
-	if returned and survivals > 0 and rank == 0:
+	if returned and survivals > 0 and career_level == 0:
 		# The notebook's tally: one notch per time this fighter was settled
 		# and came back. Worn on the same flank the scouts wear rank - a
 		# returner has no rank to collide with - so the eye reads both marks

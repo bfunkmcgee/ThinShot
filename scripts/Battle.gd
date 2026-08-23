@@ -5500,7 +5500,7 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 	else:
 		restart_button.text = "Back to Camp"
 	if not Game.pending_promotions.is_empty():
-		debrief_label.text += "\n\n%d PROMOTION(S) TO HAND OUT BACK AT CAMP" % \
+		debrief_label.text += "\n\n%d SPECIALTY CHOICE(S) WAITING BACK AT CAMP" % \
 				Game.pending_promotions.size()
 	# The number this battle's dice came out of, on the one screen a player is
 	# looking at when a battle goes wrong. `-- --seed N` deals the same hand
@@ -5518,15 +5518,16 @@ func _present_game_over(won: bool) -> void:
 	Sfx.play("win" if won else "lose", 0.0, 0.0)
 
 
-## The panel's second row: role for anyone, plus rank progress and earned
+## The panel's second row: role for anyone, plus level progress and earned
 ## specialties for a named soldier.
 func _progress_text(unit: Unit) -> String:
 	if unit.soldier_id == 0:
 		return unit.role_name()
 	var soldier := Game.soldier_by_id(unit.soldier_id)
 	var xp: int = int(soldier.get("xp", 0))
-	var parts: Array[String] = [unit.role_name()]
-	var to_next := Game.xp_to_next(xp)
+	var parts: Array[String] = [unit.role_name(),
+			Career.level_label(int(soldier.get("level", 1)))]
+	var to_next := Career.xp_to_next(xp)
 	parts.append("%d xp" % xp if to_next < 0 else "%d xp (+%d)" % [xp, to_next])
 	for perk: String in unit.perks:
 		parts.append(str(Game.PERKS[perk].name))

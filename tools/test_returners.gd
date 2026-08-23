@@ -325,7 +325,7 @@ func _test_round_trip(game: Node) -> void:
 	print("
 [3] the roster survives the save, and a v5 save climbs")
 	game.new_campaign()
-	game.roster = [{"id": 1, "surname": "Akai", "kind": 9, "xp": 0, "rank": 0,
+	game.roster = [{"id": 1, "surname": "Akai", "kind": 9, "xp": 0, "level": 1,
 			"perks": [] as Array, "alive": true}]
 	game._next_id = 2
 	game.campaign_seed = 4242

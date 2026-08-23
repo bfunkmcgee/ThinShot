@@ -23,7 +23,7 @@ if [ $# -gt 0 ]; then
     if [ "$h" = "check_level" ]; then run check_level -- --all; else run "$h"; fi
   done
 else
-  run test_rules; run test_roll; run test_morale; run test_overwatch; run test_undo; run test_aiplan; run test_projection; run test_pressure; run test_wounds
+  run test_rules; run test_roll; run test_career; run test_morale; run test_overwatch; run test_undo; run test_aiplan; run test_projection; run test_pressure; run test_wounds
   run test_menu; run test_save_load; run test_progression; run test_hero_gameover
   run test_returners; run test_bounty; run test_ratline; run test_occlusion
   run check_level -- --all; run check_briefing_fit; run check_cover_rules

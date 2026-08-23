@@ -4,7 +4,7 @@ extends Node
 ## reload_current_scene(), and therefore where the squad lives.
 ##
 ## A soldier is a plain Dictionary:
-##   {id, surname, kind, xp, rank, perks: Array[String], alive}
+##   {id, surname, kind, xp, level, gear: Dictionary, perks: Array[String], alive}
 ## Units are rebuilt from scratch every battle, so nothing on Unit persists;
 ## Battle maps roster entries onto the level's spawn slots at spawn time and
 ## Unit.apply_progression() stamps the earned stats on.
@@ -140,7 +140,8 @@ var roster: Array = []
 # so XP earned in a failed attempt cannot be farmed by retrying.
 var _snapshot: Array = []
 var _next_id := 1
-# Promotions earned this mission and not yet spent: [{id, rank}].
+# Specialty choices earned and not yet spent: [{id, level}], the level being
+# the perk gate that granted the pick (one of Career.PERK_LEVELS).
 var pending_promotions: Array = []
 # Per-soldier XP earned this mission, for the debrief: id -> int.
 var mission_xp: Dictionary = {}
@@ -149,32 +150,31 @@ var mission_xp: Dictionary = {}
 # the campaign has ever taken.
 var mission_dead: Dictionary = {}
 
+# The company book: scrip earned by mission rewards, spent at the
+# quartermaster, and the armory of bought-or-found item keys (a multiset -
+# two glass sights are two entries). The book belongs to the war, not the
+# soldiers: reset_roster() keeps it across the campaign loop, new_campaign()
+# wipes it.
+var scrip := 0
+var armory: Array = []
+
 var _rng := RandomNumberGenerator.new()
 
-# Ranks are cumulative: every one adds ACCURACY_PER_RANK and HP_PER_RANK.
-# Every rank past the first additionally offers a choice of two specialties
-# from the soldier's own class tree. Thresholds are tuned to the campaign's
-# real size - 31 goblins and 5 caches across three maps, split five ways - so
-# an average soldier makes Corporal after the first mission and Staff Sergeant
-# by the end, and a standout makes Master Sergeant.
-const RANKS: Array[Dictionary] = [
-	# Rodar enters as a conscript, so the bottom rung says so. Title only -
-	# the threshold and both per-rank bonuses are unchanged.
-	{"title": "Levy", "abbrev": "", "xp": 0},
-	{"title": "Corporal", "abbrev": "Cpl.", "xp": 6},
-	{"title": "Sergeant", "abbrev": "Sgt.", "xp": 14},
-	{"title": "Staff Sergeant", "abbrev": "SSgt.", "xp": 26},
-	{"title": "Master Sergeant", "abbrev": "MSgt.", "xp": 40},
-]
-const ACCURACY_PER_RANK := 3
-const HP_PER_RANK := 1
-# Nobody becomes a sure thing. Without this a Master Sergeant team lead would
-# reach 104%.
+# Progression is Career.gd's ladder now: levels 1..100 off lifetime XP, +1 to
+# one stat every level (even levels accuracy, odd levels max HP), specialty
+# choices at Career.PERK_LEVELS. The military ranks are gone; the class perk
+# trees below are untouched and Career.perk_gate() is the bridge into them.
+#
+# Nobody becomes a sure thing. Without this a level-90 veteran would shoot
+# well past certainty; the cap is applied once, in Unit.apply_progression,
+# after levels AND gear.
 const ACCURACY_CAP := 95
 
-# Which ranks let a soldier choose, and what they choose between - one tree
-# per class, a two-way choice at EVERY rank. Every perk hangs off machinery
-# the game already has rather than adding a subsystem.
+# What a soldier chooses between at each of the four perk gates - one tree
+# per class, a two-way choice at every gate. The inner keys are gate ordinals
+# 1..4; Career.perk_gate() maps a gate LEVEL (5/15/30/50) onto them, so the
+# tables survived the rank system they were named for. Every perk hangs off
+# machinery the game already has rather than adding a subsystem.
 #
 # Keyed by the raw Unit.Kind ordinal (0 SCOUT, 2 MACHINEGUNNER, 9 HERO) rather
 # than the enum name: saves already store the ordinal, and a constant here must
@@ -379,8 +379,9 @@ const PERKS := {
 }
 
 
-## The two specialties a soldier of this kind chooses between at this rank, or
-## [] when that rank and class offer no choice. The one indirection every
+## The two specialties a soldier of this kind chooses between at a gate
+## (ordinal 1..4 - what Career.perk_gate() answers for a gate level), or []
+## when that gate and class offer no choice. The one indirection every
 ## consumer goes through - commit_mission queueing, _read_promotions
 ## validating, and the camp modal filling its two buttons.
 static func perk_choices(kind: int, rank: int) -> Array:
@@ -800,36 +801,12 @@ func go_to_battle() -> void:
 # ------------------------------------------------------------------ roster --
 
 
-func rank_for_xp(xp: int) -> int:
-	var rank := 0
-	for i in RANKS.size():
-		if xp >= int(RANKS[i].xp):
-			rank = i
-	return rank
-
-
-func rank_title(rank: int) -> String:
-	return str(RANKS[clampi(rank, 0, RANKS.size() - 1)].title)
-
-
-func rank_abbrev(rank: int) -> String:
-	return str(RANKS[clampi(rank, 0, RANKS.size() - 1)].abbrev)
-
-
-## XP still needed for the next rank, or -1 at the top of the ladder.
-func xp_to_next(xp: int) -> int:
-	var rank := rank_for_xp(xp)
-	if rank >= RANKS.size() - 1:
-		return -1
-	return int(RANKS[rank + 1].xp) - xp
-
-
-## "SSgt. FINCH", or just "ABARA" for someone who has not been promoted yet -
-## rank 0 has no abbreviation and must not leave a dangling space.
+## "Lv 12 FINCH", or just "ABARA" for someone still at the bottom - level 1 is
+## where everybody starts and does not need announcing.
 func soldier_label(soldier: Dictionary) -> String:
-	var abbrev := rank_abbrev(int(soldier.get("rank", 0)))
+	var level := int(soldier.get("level", 1))
 	var name := str(soldier.get("surname", ""))
-	return name if abbrev.is_empty() else "%s %s" % [abbrev, name]
+	return name if level <= 1 else "Lv %d %s" % [level, name]
 
 
 func soldier_by_id(id: int) -> Dictionary:
@@ -921,10 +898,11 @@ func _next_name_for(kind: int) -> String:
 
 
 ## What to call a soldier when the game is talking about a person rather than
-## filling a slot: "Josen Marr" for the named, "Cpl. KELLER" for everybody else.
+## filling a slot: "Josen Marr" for the named, "Lv 12 KELLER" for everybody
+## else.
 ##
-## The rank is deliberately dropped for the named ones. A rank is what the Crown
-## calls you; these six have names, which is the point of them.
+## The level is deliberately dropped for the named ones. A level is what the
+## ledger says about you; these six have names, which is the point of them.
 func full_name(soldier: Dictionary) -> String:
 	var surname := str(soldier.get("surname", ""))
 	if GIVEN_NAMES.has(surname):
@@ -957,7 +935,10 @@ func _recruit(kind: int) -> Dictionary:
 		"surname": _next_name_for(kind),
 		"kind": kind,
 		"xp": 0,
-		"rank": 0,
+		"level": 1,
+		# One item per slot, "" for nothing. Keys into Gear.ITEMS; Game never
+		# interprets them beyond the whitelist on load - Unit applies the mods.
+		"gear": {"weapon": "", "armor": "", "kit": ""},
 		# Specialists arrive knowing their specialty; everybody else starts
 		# with nothing and earns it.
 		"perks": ([CLASS_STARTING_PERK[kind]] if CLASS_STARTING_PERK.has(kind)
@@ -1010,7 +991,8 @@ func ensure_roster(level_data: Dictionary) -> void:
 		wanted[Unit.Kind.MACHINEGUNNER] = 0
 	var formed := false
 	# Saves from before Rodar existed hold an alive TEAM_LEAD in the slot he
-	# now fills. Convert that soldier in place - id, xp, rank and perks kept -
+	# now fills. Convert that soldier in place - id, xp, level, gear and perks
+	# kept -
 	# rather than recruiting a stranger beside him: the player's veteran lead
 	# BECOMES Rodar, and an orphaned lead would otherwise still stand around
 	# camp next to him. Done here rather than in load_save() because both Camp
@@ -1073,8 +1055,8 @@ func vacancy_count(level_data: Dictionary) -> int:
 
 ## Fill every empty slot with a green recruit. Only the garrison calls this -
 ## inside an operation the squad fights short, and that is the whole cost of
-## losing somebody. What a death takes permanently is the rank, the perks and
-## the kills; what it does not take is the campaign.
+## losing somebody. What a death takes permanently is the levels, the perks
+## and the kills; what it does not take is the campaign.
 func recruit_to_strength(level_data: Dictionary) -> Array:
 	var taken: Array = []
 	var gaps := vacancies(level_data)
@@ -1134,6 +1116,8 @@ func new_campaign() -> bool:
 	clear_interdiction()
 	ratline_done.clear()
 	ratline_strength = 0
+	scrip = 0
+	armory.clear()
 	_next_adversary_id = 1
 	deployed_ids.clear()
 	# A new campaign is a different campaign, so it fights different dice.
@@ -1169,9 +1153,16 @@ func chronicle() -> String:
 			marks.append("presence %d" % int(soldier.presence))
 		if int(soldier.get("guile", 0)) > 0:
 			marks.append("guile %d" % int(soldier.guile))
+		var worn: Array[String] = []
+		for slot: String in Gear.SLOTS:
+			var key := str((soldier.get("gear", {}) as Dictionary).get(slot, ""))
+			if Gear.ITEMS.has(key):
+				worn.append(str(Gear.ITEMS[key].name))
+		if not worn.is_empty():
+			marks.append("carries " + ", ".join(worn))
 		lines.append("  %-16s %-18s %-16s %3d xp%s%s" % [
 				full_name(soldier), Unit.kind_role_name(int(soldier.kind)),
-				rank_title(int(soldier.rank)), int(soldier.xp),
+				Career.level_label(int(soldier.get("level", 1))), int(soldier.xp),
 				"  " + ", ".join(perk_names) if not perk_names.is_empty() else "",
 				"  [" + "; ".join(marks) + "]" if not marks.is_empty() else ""])
 	if not district_standing.is_empty():
@@ -1255,6 +1246,9 @@ func campaign_summary() -> String:
 
 
 func reset_roster() -> void:
+	# Deliberately does NOT touch scrip or the armory: the loop throws the
+	# squad away, but the company book belongs to the war, not the soldiers.
+	# Only new_campaign() wipes the book.
 	roster.clear()
 	_snapshot.clear()
 	pending_promotions.clear()
@@ -1274,6 +1268,10 @@ func _deep_copy(source: Array) -> Array:
 	for soldier: Dictionary in source:
 		var copy := soldier.duplicate()
 		copy.perks = (soldier.perks as Array).duplicate()
+		# Without this line the snapshot's gear dict is the LIVE soldier's gear
+		# dict, and a mid-mission equip would survive the rollback that is this
+		# copy's whole reason to exist. Same trap perks fell into above.
+		copy.gear = (soldier.get("gear", {}) as Dictionary).duplicate()
 		out.append(copy)
 	return out
 
@@ -1282,7 +1280,7 @@ func _deep_copy(source: Array) -> Array:
 ## Deliberately does NOT clear pending_promotions: nothing queues a promotion
 ## during a mission (only commit_mission does, at the end of one), so anything
 ## still queued here is an unspent pick carried in from the last debrief, and
-## commit_mission only ever queues newly-crossed ranks - it can never re-offer
+## commit_mission only ever queues newly-crossed gates - it can never re-offer
 ## one. Clearing here silently destroyed the pick of anyone who walked to the
 ## briefing table instead of to the promoted soldier. Camp._on_choice removes
 ## each entry as it is spent.
@@ -1778,17 +1776,20 @@ func commit_mission() -> void:
 	for soldier: Dictionary in roster:
 		if not bool(soldier.alive):
 			continue
-		var old_rank := int(soldier.rank)
-		var new_rank := rank_for_xp(int(soldier.xp))
-		if new_rank <= old_rank:
+		var old_level := int(soldier.get("level", 1))
+		var new_level := Career.level_for_xp(int(soldier.xp))
+		if new_level <= old_level:
 			continue
-		soldier.rank = new_rank
-		print("[Sandline] %s promoted to %s" % [soldier.surname, rank_title(new_rank)])
-		# Every rank crossed that offers this soldier's class a choice queues
-		# one, so a soldier who jumps two ranks at once still gets both picks.
-		for rank in range(old_rank + 1, new_rank + 1):
-			if not perk_choices(int(soldier.kind), rank).is_empty():
-				pending_promotions.append({"id": int(soldier.id), "rank": rank})
+		soldier.level = new_level
+		print("[Sandline] %s reaches %s" % [soldier.surname, Career.level_label(new_level)])
+		# Only the perk gates queue a choice - every other level pays its stat
+		# point silently. A soldier who crosses two gates in one mission still
+		# gets both picks; the queue stays sparse because gates_crossed() can
+		# only ever answer with a subset of the four gate levels.
+		for gate_level: int in Career.gates_crossed(old_level, new_level):
+			if not perk_choices(int(soldier.kind),
+					Career.perk_gate(gate_level)).is_empty():
+				pending_promotions.append({"id": int(soldier.id), "level": gate_level})
 	# The wound ledger's other half: a soldier who sat this one out has had a
 	# mission's worth of the medic's time, and comes back whole. Deploying
 	# wounded was the player's call; healing is what sitting out is FOR.
@@ -1817,7 +1818,7 @@ func abort_mission() -> void:
 	roster = _deep_copy(_snapshot)
 	# Same reasoning as begin_mission: the queue can only hold carry-over from
 	# an earlier debrief, and the snapshot being restored already contains the
-	# rank that earned it, so the pick is still owed. Clearing it here lost the
+	# XP that earned it, so the pick is still owed. Clearing it here lost the
 	# perk of anyone who deployed with one unspent and then lost the mission.
 	mission_xp.clear()
 	mission_dead.clear()
@@ -1848,8 +1849,9 @@ func choose_perk(id: int, perk: String) -> void:
 #
 # Everything here is a plain int, bool, String or Array of those, so JSON is
 # enough. The one trap is that JSON has a single number type: every int comes
-# back as a float, and a rank that loads as 3.0 breaks the integer comparisons
-# in rank_for_xp in ways that are miserable to track down. So nothing is read
+# back as a float, and a level that loads as 3.0 breaks the integer
+# comparisons in Career.level_for_xp in ways that are miserable to track down.
+# So nothing is read
 # back raw - every field is coerced through int()/bool()/str() below.
 
 
@@ -1857,7 +1859,7 @@ const SAVE_PATH := "user://campaign.json"
 # Raise this in the same commit that adds the migration step reaching it, and
 # never one without the other - _migrate_step() is what turns a number into a
 # shape the rest of this file can read.
-const SAVE_VERSION := 9
+const SAVE_VERSION := 10
 
 # Raised, and never lowered again, when load_save() finds a campaign written by
 # a build newer than this one. Refusing to READ such a file is only half the
@@ -1910,6 +1912,10 @@ func save() -> void:
 		# operation locked are kept.
 		"ratline_done": ratline_done,
 		"ratline_strength": ratline_strength,
+		# v10: the company book. Each soldier's level and gear ride the roster
+		# entries; these two are the campaign's shared half.
+		"scrip": scrip,
+		"armory": armory,
 		# v4: who the garrison picked.
 		"deployed_ids": deployed_ids,
 	}
@@ -1984,6 +1990,8 @@ func _migrate_step(payload: Dictionary, from: int) -> Dictionary:
 			return _migrate_7_to_8(payload)
 		8:
 			return _migrate_8_to_9(payload)
+		9:
+			return _migrate_9_to_10(payload)
 	return {}
 
 
@@ -2184,6 +2192,41 @@ func _migrate_7_to_8(payload: Dictionary) -> Dictionary:
 	return payload
 
 
+## v10 retires the military ranks for the 1..100 career ladder. Each soldier's
+## level is recomputed from the XP he already earned - the rank field is not
+## consulted, because XP was always the ground truth the ranks were derived
+## from - and the rank key is erased. Queued promotions translate rank 1..4
+## onto the four gate levels; anything else in the queue is dropped. An honest
+## reshape, documented here: a migrated veteran keeps every perk already taken
+## and every queued pick, even where his recomputed level sits below the gate
+## that would have offered it - what was earned stays earned.
+func _migrate_9_to_10(payload: Dictionary) -> Dictionary:
+	payload["roster"] = payload.get("roster", [])
+	if typeof(payload.roster) == TYPE_ARRAY:
+		for entry: Variant in payload.roster:
+			if typeof(entry) != TYPE_DICTIONARY:
+				continue
+			var soldier: Dictionary = entry
+			soldier["level"] = maxi(Career.level_for_xp(int(soldier.get("xp", 0))), 1)
+			soldier.erase("rank")
+			soldier["gear"] = {"weapon": "", "armor": "", "kit": ""}
+	var translated: Array = []
+	var raw_pending: Variant = payload.get("pending_promotions", [])
+	if typeof(raw_pending) == TYPE_ARRAY:
+		for entry: Variant in raw_pending:
+			if typeof(entry) != TYPE_DICTIONARY:
+				continue
+			var promotion: Dictionary = entry
+			var rank := int(promotion.get("rank", 0))
+			if rank >= 1 and rank <= Career.PERK_LEVELS.size():
+				translated.append({"id": int(promotion.get("id", 0)),
+						"level": Career.PERK_LEVELS[rank - 1]})
+	payload["pending_promotions"] = translated
+	payload["scrip"] = 0
+	payload["armory"] = []
+	return payload
+
+
 ## A campaign's number. Never 0 - that is the "not minted yet" sentinel, and a
 ## campaign that landed on it would be re-minted on every single load.
 func _mint_campaign_seed() -> int:
@@ -2309,6 +2352,10 @@ func load_save() -> bool:
 	# hand-edited 40 cannot halve an operation.
 	if ratline_strength != 0:
 		ratline_strength = clampi(ratline_strength, 80, 115)
+	# The v10 fields. Scrip floored at 0 - a hand-edited debt is not a
+	# mechanic - and the armory whitelisted key by key.
+	scrip = maxi(int(payload.get("scrip", 0)), 0)
+	armory = _read_armory(payload.get("armory", []))
 	# A bounty in progress is never resumed: the board is regenerated at the
 	# notice board, and a save written mid-bounty should come back to a garrison
 	# rather than to half a mission. An interdiction gets the same treatment
@@ -2393,12 +2440,23 @@ func _read_roster(raw: Variant) -> Array:
 				var perk := str(p)
 				if PERKS.has(perk) and not perks.has(perk):
 					perks.append(perk)
+		# Gear is rebuilt slot by slot: an empty string stays, a key the catalog
+		# knows AND that names this slot stays, and anything else - a deleted
+		# item, a hand-edited weapon in the kit slot - silently becomes "".
+		var gear := {}
+		var raw_gear: Variant = soldier.get("gear", {})
+		for slot: String in Gear.SLOTS:
+			var key := str((raw_gear as Dictionary).get(slot, "")) \
+					if typeof(raw_gear) == TYPE_DICTIONARY else ""
+			gear[slot] = key if Gear.ITEMS.has(key) \
+					and str(Gear.ITEMS[key].slot) == slot else ""
 		out.append({
 			"id": id,
 			"surname": str(soldier.get("surname", "SCOUT-%d" % id)),
 			"kind": int(soldier.get("kind", Unit.Kind.SCOUT)),
 			"xp": maxi(int(soldier.get("xp", 0)), 0),
-			"rank": clampi(int(soldier.get("rank", 0)), 0, RANKS.size() - 1),
+			"level": clampi(int(soldier.get("level", 1)), 1, Career.MAX_LEVEL),
+			"gear": gear,
 			"perks": perks,
 			"alive": bool(soldier.get("alive", true)),
 			# Floored at 0 rather than trusted: these drive negotiation odds,
@@ -2420,15 +2478,40 @@ func _read_promotions(raw: Variant) -> Array:
 			continue
 		var promotion: Dictionary = entry
 		var id := int(promotion.get("id", 0))
-		var rank := int(promotion.get("rank", 0))
-		# Drop anything that no longer names a living soldier, or a rank that
-		# offers that soldier's class no choice - otherwise the camp opens a
-		# modal it cannot fill. Runs after the roster is adopted, so the kind
-		# lookup always sees the loaded soldier.
+		var gate_level := int(promotion.get("level", 0))
+		# Drop anything that no longer names a living soldier, a level that is
+		# not one of the four gates, or a gate that offers that soldier's class
+		# no choice - otherwise the camp opens a modal it cannot fill. Runs
+		# after the roster is adopted, so the kind lookup always sees the
+		# loaded soldier. Deliberately does NOT require soldier.level >= the
+		# gate: a migrated veteran's earned pick survives even where the
+		# recomputed level sits below it (see _migrate_9_to_10).
 		var soldier := soldier_by_id(id)
 		if soldier.is_empty() or not bool(soldier.alive):
 			continue
-		if perk_choices(int(soldier.kind), rank).is_empty():
+		if not Career.PERK_LEVELS.has(gate_level):
 			continue
-		out.append({"id": id, "rank": rank})
+		if perk_choices(int(soldier.kind), Career.perk_gate(gate_level)).is_empty():
+			continue
+		var already_kept := false
+		for kept: Dictionary in out:
+			if int(kept.id) == id and int(kept.level) == gate_level:
+				already_kept = true
+				break
+		if already_kept:
+			continue
+		out.append({"id": id, "level": gate_level})
+	return out
+
+
+## The armory list, rebuilt: only keys the catalog knows survive, and
+## duplicates are KEPT - two bought slings are two slings.
+func _read_armory(raw: Variant) -> Array:
+	var out: Array = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for entry: Variant in raw:
+		var key := str(entry)
+		if Gear.ITEMS.has(key):
+			out.append(key)
 	return out
