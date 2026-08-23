@@ -191,6 +191,45 @@ slots line up.
 
 ---
 
+## Tier 6 — the garrison catches up with the campaign (2026-08-21)
+
+The career merge gave the garrison four new functions and zero new art. All
+four are reachable and all four are wearing somebody else's clothes:
+
+| Function | Rides on | What the art says |
+|---|---|---|
+| Bounty missions | `notice_board` (duty roster) | a duty roster — and only EXISTS once somebody has escaped |
+| Border interdiction (ratline) | `field_radio` (48px manpack on a crate) | a shin-high decoration among 13 others |
+| The ledger (careers, scrip, chronicle) | `memorial_cross` | a grave |
+| Quartermaster (gear shop) | `kit_frame` (drying frame) | laundry |
+
+That is why the new systems feel un-initiatable: the fixtures work, but
+nothing on the ground advertises them. The fix is one dedicated prop per
+function, plus three new `'j'` cells in `CampData.GARRISON` to stand them on.
+
+| # | Asset | Canvas | What it buys | Code |
+|---|---|---|---|---|
+| 23 | **Bounty board** — steel-framed notice board, stencilled ACCORD NOTICES, **two states**: `_posted` (pinned reward sheets, red wax seals) and `_empty` (bare cork, one faded outline) | 48×48 ×2 | The bounty system becomes discoverable. Ship the code rider with it: the fixture stands ALWAYS, showing the empty state with an "E - nothing posted yet" prompt, instead of not existing until the first escapee — an invisible conditional fixture is why nobody finds the feature. Takes the `bounties` hook; the duty roster goes back to being one. | small |
+| 24 | **Signals station** — steel lattice antenna mast on guy wires over an olive field desk: radio set, headset on a hook, border map pinned under celluloid | **168×168 tall single-cell** (mast rule: offset `−(bbox.bottom − 85)`) | Border interdiction gets a LANDMARK. This is a mission-giver that feeds the next operation's enemy strength, and it is currently the smallest prop in the yard. Takes the `ratline` hook in place at (10,1) — the comms corner beside the watchtower; the manpack radio stays as set dressing elsewhere. | small |
+| 25 | **Paymaster's desk** — folding steel field desk, open ledger book, ink stamp, strongbox with scrip chits, folding stool | 48×48 | The chronicle/scrip/careers ledger stops being read at a grave. The memorial cross keeps its one job. (If the read-the-ledger-at-the-memorial pairing was a deliberate tonal choice, keep the CAREERS page there and move only the money here — the hook split is one line.) | small |
+| 26 | **Quartermaster's issue counter** — steel counter, rifle rack behind it, folded armour vests, webbing sets, clipboard on a chain | 48×48 (or 168 tall shelving if it should read at distance) | The gear shop looks like a shop. The three gear slots are weapon / armour / kit, so the art should show all three. Takes the `qm` hook; the drying frame goes back to drying kit. | small |
+| 27 | **Surgeon's tent** — olive medical tent, red-on-white plate, cot visible through the flap | 2×2 structure (168) | The wounds rule ("coming home clears the wound - walls, stores, and a surgeon with time") gets its walls and surgeon. Decorative first; optionally a fixture that lists the walking wounded. | drop-in / small |
+| 28 | **Smugglers' cargo** — roped pack bundles, pack saddles, tarped crate stacks, 3–4 variants | 48×48 ×4 | Set dressing for the generated ratline boards: a waystation dressed in the yard's ammo crates reads as a yard. The columns' cargo is the mission's whole object; it should have its own shape. | drop-in |
+
+**Generation notes** (hard-won, see the prop-recipe memory): name the modern
+material in EVERY item prompt — sheet steel, angle iron, olive drab,
+stencilled — or the model hands back a frontier stockade; put "no sand disc
+under the object" in the shared description; 48px batches ride the
+16-for-20 review pack with 2–3 shipped props as style anchors (quantized
+≤64 colours — the base64 ceiling); 168px pieces generate from prompt alone.
+Anchors: 48px `−(bbox.bottom − 26)`, tall single-cell `−(bbox.bottom − 85)`.
+
+**Map edit riding along** (not art): three new `'j'` cells + `GARRISON_PROPS`
+entries — bounty board on the parade side near the duty roster (~(6,2)),
+paymaster beside the command table (~(9,1)), QM counter between the stores
+and the levy post (~(9,5)). The signals station replaces `field_radio` in
+place. Camp fixture hooks are one `_fixture_cell()` name each.
+
 ## If you only do three
 
 Every drop-in on this list is now shipped — 8, 9, 17 and 18 went in together on
