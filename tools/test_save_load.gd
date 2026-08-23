@@ -4,9 +4,9 @@ extends SceneTree
 ## the values and their TYPES survive.
 ##
 ## The types are the point. JSON has one number type, so every int written out
-## comes back as a float unless it is coerced on the way in - and a rank that
-## loads as 3.0 compares wrong in rank_for_xp() and rank_title(), a kind that
-## loads as 2.0 misses every `match` on Unit.Kind, and neither fails loudly.
+## comes back as a float unless it is coerced on the way in - and a level that
+## loads as 3.0 compares wrong in Career.level_for_xp(), a kind that loads as
+## 2.0 misses every `match` on Unit.Kind, and neither fails loudly.
 ##
 ## Sections 7-11 are the version machinery rather than the round trip: that a
 ## newer save is refused AND left unwritten, that an older one climbs the
@@ -64,17 +64,24 @@ func _init() -> void:
 	# ordinal - 0 SCOUT, 1 TEAM_LEAD, 2 MACHINEGUNNER, and 9 HERO (Rodar Akai,
 	# appended after CIVILIAN=8; the save depends on that ordinal never moving).
 	game.roster = [
-		{"id": 1, "surname": "NAKAMURA", "kind": 1, "xp": 27, "rank": 3,
+		{"id": 1, "surname": "NAKAMURA", "kind": 1, "xp": 27, "level": 11,
+				"gear": {"weapon": "oiled_sling", "armor": "", "kit": ""},
 				"perks": ["marksman", "sentinel"] as Array, "alive": true},
 		# The gunner carries class-tree perk strings: they must round-trip
-		# exactly like the four originals.
-		{"id": 2, "surname": "HARGREAVE", "kind": 2, "xp": 8, "rank": 1,
+		# exactly like the four originals. His weapon slot holds a key the
+		# catalog does not know - it must load back as "", and must not take
+		# the real armor beside it down with it.
+		{"id": 2, "surname": "HARGREAVE", "kind": 2, "xp": 8, "level": 5,
+				"gear": {"weapon": "ghost_item", "armor": "scrap_vest", "kit": ""},
 				"perks": ["pack_mule", "grenadier"] as Array, "alive": true},
 		# A perk string the game does not know must be dropped on load, and
 		# must not take the known one beside it down with it.
-		{"id": 3, "surname": "VANCE", "kind": 0, "xp": 3, "rank": 0,
+		{"id": 3, "surname": "VANCE", "kind": 0, "xp": 3, "level": 3,
 				"perks": ["flanker", "ghost_perk"] as Array, "alive": false},
-		{"id": 4, "surname": "Akai", "kind": 9, "xp": 15, "rank": 2,
+		# A real item in the WRONG slot (armor in the kit slot) is as invalid
+		# as an unknown key, and gets the same "".
+		{"id": 4, "surname": "Akai", "kind": 9, "xp": 15, "level": 8,
+				"gear": {"weapon": "glass_sight", "armor": "", "kit": "scrap_vest"},
 				"perks": ["marksman", "called_shot"] as Array, "alive": true},
 	]
 	game._next_id = 5
@@ -82,13 +89,16 @@ func _init() -> void:
 	var lead: Dictionary = game.roster[0]
 	var fallen: Dictionary = game.roster[2]
 	var fallen_id := int(fallen.id)
-	# The lead's rank-3 pick survives via the TEAM_LEAD->HERO table mapping
-	# (his conversion to Rodar happens after load); the gunner's rank-4 pick is
-	# a class-tree rank that never offered a choice before. Rank 7 exists in no
-	# table and must be dropped.
-	game.pending_promotions.append({"id": int(lead.id), "rank": 3})
-	game.pending_promotions.append({"id": 2, "rank": 4})
-	game.pending_promotions.append({"id": 2, "rank": 7})
+	# The lead's gate-30 pick survives via the TEAM_LEAD->HERO table mapping
+	# (his conversion to Rodar happens after load); the gunner's gate-50 pick
+	# exercises the top gate. Level 7 is no gate at all and must be dropped.
+	game.pending_promotions.append({"id": int(lead.id), "level": 30})
+	game.pending_promotions.append({"id": 2, "level": 50})
+	game.pending_promotions.append({"id": 2, "level": 7})
+	# The company book: a duplicate is two real items, and junk is dropped on
+	# the way back in. Negative scrip is a tamper case tested separately.
+	game.scrip = 123
+	game.armory = ["oiled_sling", "oiled_sling", "boiler_plate", "ghost_item"]
 	game.current_level = 4
 	game.current_operation = 1
 	game.in_the_field = true
@@ -103,8 +113,10 @@ func _init() -> void:
 
 	print("\n[2] scribble over every field, then load")
 	game.roster = [{"id": 99, "surname": "WRONG", "kind": 0, "xp": 0,
-			"rank": 0, "perks": [], "alive": true}]
+			"level": 1, "perks": [], "alive": true}]
 	game.pending_promotions = []
+	game.scrip = 0
+	game.armory = []
 	game.current_level = 0
 	game.current_operation = 0
 	game.in_the_field = false
@@ -131,9 +143,11 @@ func _init() -> void:
 	var back: Dictionary = game.soldier_by_id(int(lead.id))
 	_check(not back.is_empty(), "lead found by id")
 	_check(int(back.get("xp", -1)) == 27, "lead xp 27 (got %s)" % back.get("xp"))
-	_check(int(back.get("rank", -1)) == 3, "lead rank 3 (got %s)" % back.get("rank"))
+	_check(int(back.get("level", -1)) == 11, "lead level 11 (got %s)" % back.get("level"))
 	_check((back.get("perks", []) as Array).has("marksman")
 			and (back.get("perks", []) as Array).has("sentinel"), "both perks kept")
+	_check(str((back.get("gear", {}) as Dictionary).get("weapon", "?")) == "oiled_sling",
+			"the lead's sling round-trips (got %s)" % [back.get("gear")])
 	_check(bool(game.soldier_by_id(fallen_id).get("alive", true)) == false,
 			"the fallen stayed dead")
 	var hero: Dictionary = game.soldier_by_id(4)
@@ -149,27 +163,45 @@ func _init() -> void:
 	_check((game.soldier_by_id(fallen_id).get("perks", []) as Array) == ["flanker"],
 			"unknown perk dropped, the known one kept (got %s)"
 			% [game.soldier_by_id(fallen_id).get("perks")])
+	var gunner_gear: Dictionary = gunner.get("gear", {})
+	_check(str(gunner_gear.get("weapon", "?")) == ""
+			and str(gunner_gear.get("armor", "?")) == "scrap_vest",
+			"unknown gear key dropped to \"\", the real vest kept (got %s)"
+			% [gunner_gear])
+	var hero_gear: Dictionary = hero.get("gear", {})
+	_check(str(hero_gear.get("kit", "?")) == ""
+			and str(hero_gear.get("weapon", "?")) == "glass_sight",
+			"an armor item in the kit slot is dropped to \"\" (got %s)" % [hero_gear])
+	var fallen_gear: Dictionary = game.soldier_by_id(fallen_id).get("gear", {})
+	_check(str(fallen_gear.get("weapon", "?")) == "" and fallen_gear.size() == 3,
+			"a soldier saved without gear loads the three empty slots (got %s)"
+			% [fallen_gear])
 	_check(game.pending_promotions.size() == 2
-			and int(game.pending_promotions[0].rank) == 3
-			and int(game.pending_promotions[1].rank) == 4,
-			"promotion queue survived, rank-7 junk dropped (got %s)"
+			and int(game.pending_promotions[0].level) == 30
+			and int(game.pending_promotions[1].level) == 50,
+			"promotion queue survived, the level-7 junk dropped (got %s)"
 			% [game.pending_promotions])
+	_check(game.scrip == 123, "scrip round-trips (got %d)" % game.scrip)
+	_check(game.armory == ["oiled_sling", "oiled_sling", "boiler_plate"],
+			"the armory keeps its duplicate and drops the junk (got %s)"
+			% [game.armory])
 
 	print("\n[4] types survived JSON (the whole reason for the coercion)")
 	_check(typeof(back["xp"]) == TYPE_INT, "xp is int, not float")
-	_check(typeof(back["rank"]) == TYPE_INT, "rank is int, not float")
+	_check(typeof(back["level"]) == TYPE_INT, "level is int, not float")
 	_check(typeof(back["id"]) == TYPE_INT, "id is int, not float")
 	_check(typeof(back["kind"]) == TYPE_INT, "kind is int, not float")
 	_check(typeof(game.soldier_by_id(4)["kind"]) == TYPE_INT, "hero kind is int, not float")
 	_check(typeof(back["alive"]) == TYPE_BOOL, "alive is bool")
-	_check(typeof(game.pending_promotions[0]["rank"]) == TYPE_INT,
-			"promotion rank is int")
+	_check(typeof(game.pending_promotions[0]["level"]) == TYPE_INT,
+			"promotion level is int")
+	_check(typeof(game.scrip) == TYPE_INT, "scrip is int, not float")
 	# The load must be usable by the code that reads it, not merely equal.
-	_check(game.rank_title(int(back["rank"])) == "Staff Sergeant",
-			"rank_title reads the loaded rank (got '%s')"
-			% game.rank_title(int(back["rank"])))
-	_check(game.rank_for_xp(int(back["xp"])) == 3,
-			"rank_for_xp agrees with the stored rank")
+	_check(Career.level_label(int(back["level"])) == "Level 11",
+			"level_label reads the loaded level (got '%s')"
+			% Career.level_label(int(back["level"])))
+	_check(Career.level_for_xp(int(back["xp"])) == 11,
+			"level_for_xp agrees with the stored level")
 
 	print("\n[5] per-mission scratch was not restored")
 	_check(game._snapshot.is_empty(), "_snapshot cleared")
@@ -234,6 +266,12 @@ func _init() -> void:
 	_check(int(g2.soldier_by_id(2).get("kind", -1)) == 9
 			and int(g2.soldier_by_id(1).get("xp", -1)) == 14,
 			"kinds and xp came through the migration intact")
+	_check(int(g2.soldier_by_id(1).get("level", -1)) == 7
+			and int(g2.soldier_by_id(2).get("level", -1)) == 11,
+			"the v10 rung recomputed levels from the kept XP (got %s/%s)"
+			% [g2.soldier_by_id(1).get("level"), g2.soldier_by_id(2).get("level")])
+	_check(not g2.soldier_by_id(1).has("rank"),
+			"and the rank key is gone from the loaded roster")
 	_check(g2.current_level == 4 and g2.current_operation == 1
 			and g2.frags == 3 and g2.in_the_field,
 			"the v1 fields were not disturbed by the climb")
@@ -354,7 +392,47 @@ func _init() -> void:
 	g4.free()
 	g5.free()
 
-	print("\n[12] the lock is not sticky")
+	print("\n[12] a version-9 save trades its ranks for the career ladder")
+	# The exact shape the ratline build wrote: a ranked soldier with a queued
+	# rank-3 pick. The rung must recompute the level from XP (27 -> 11), erase
+	# the rank, default the gear, translate the pick to gate level 30, and
+	# open an empty company book.
+	var g6: Node = GAME.new()
+	var mf6 := FileAccess.open(g6.SAVE_PATH, FileAccess.WRITE)
+	mf6.store_string(JSON.stringify({
+		"version": 9,
+		"current_operation": 0, "current_level": 1, "in_the_field": false,
+		"frags": 2, "smokes": 2, "next_id": 2,
+		"roster": [{"id": 1, "surname": "KELLER", "kind": 0, "xp": 27, "rank": 3,
+				"perks": ["sprinter"], "alive": true}],
+		"pending_promotions": [{"id": 1, "rank": 3}],
+		"campaign_seed": 777333, "mission_attempts": 1,
+	}, "\t"))
+	mf6.close()
+	_check(g6.load_save(), "load_save() accepted the v9 save")
+	var veteran: Dictionary = g6.soldier_by_id(1)
+	_check(int(veteran.get("level", -1)) == 11,
+			"27 xp becomes level 11 (got %s)" % veteran.get("level"))
+	_check(not veteran.has("rank"), "the rank key is erased")
+	_check((veteran.get("gear", {}) as Dictionary) ==
+			{"weapon": "", "armor": "", "kit": ""},
+			"the gear slots default empty (got %s)" % [veteran.get("gear")])
+	_check(g6.pending_promotions == [{"id": 1, "level": 30}],
+			"the queued rank-3 pick becomes gate level 30 (got %s)"
+			% [g6.pending_promotions])
+	_check(g6.scrip == 0 and g6.armory.is_empty(),
+			"the company book opens empty")
+	# A tampered book: negative scrip must floor at 0 on the way back in.
+	var tampered_book: Dictionary = _read_json(g6.SAVE_PATH)
+	tampered_book["scrip"] = -400
+	var tbf := FileAccess.open(g6.SAVE_PATH, FileAccess.WRITE)
+	tbf.store_string(JSON.stringify(tampered_book, "\t"))
+	tbf.close()
+	_check(g6.load_save() and g6.scrip == 0,
+			"hand-edited debt is floored at 0 (got %d)" % g6.scrip)
+	g6.free()
+
+	print("\n[13] the lock is not sticky")
 	g2.frags = 1
 	g2.smokes = 3
 	g2.save()

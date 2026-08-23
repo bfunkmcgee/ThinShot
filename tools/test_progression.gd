@@ -2,9 +2,11 @@ extends SceneTree
 
 ## The per-class perk trees, end to end:
 ##   1. table integrity - every class offers exactly two known perks at every
-##      rank 1-4, and every blurb fits the fixed-width choice buttons
-##   2. commit_mission queues one choice per crossed rank, per class
-##   3. apply_progression / Unit stamps each perk's stat and gate effects
+##      perk gate 1-4, and every blurb fits the fixed-width choice buttons
+##   2. commit_mission queues one choice per crossed perk gate, per class -
+##      and stamps the career level the XP bought
+##   3. apply_progression / Unit stamps each perk's stat and gate effects,
+##      plus the per-level career bonuses and the once-only accuracy cap
 ##   4. a real Battle.tscn boot on a crafted roster: the ability buttons, the
 ##      quick-hands reload, walking fire's gate, grenadier's frag, Rally,
 ##      Field Dressing, Inspiration, Flanker/Executioner, and Called Shot
@@ -127,15 +129,18 @@ func _run() -> void:
 	_check(int(ordinals.CIVILIAN) == 8 and int(ordinals.HERO) == KIND_HERO,
 			"CIVILIAN 8, HERO 9 (got %d/%d)" % [ordinals.CIVILIAN, ordinals.HERO])
 
-	print("\n[1] table integrity: 2 known choices per class per rank, short blurbs")
+	print("\n[1] table integrity: 2 known choices per class per gate, short blurbs")
 	for kind in [KIND_SCOUT, KIND_MACHINEGUNNER, KIND_HERO]:
-		for rank in [1, 2, 3, 4]:
-			var choices: Array = game.perk_choices(kind, rank)
+		for gate_level: int in Career.PERK_LEVELS:
+			var gate := Career.perk_gate(gate_level)
+			var choices: Array = game.perk_choices(kind, gate)
 			_check(choices.size() == 2,
-					"kind %d rank %d offers 2 (got %d)" % [kind, rank, choices.size()])
+					"kind %d level %d offers 2 (got %d)"
+					% [kind, gate_level, choices.size()])
 			for perk: String in choices:
 				_check(game.PERKS.has(perk),
-						"kind %d rank %d '%s' exists in PERKS" % [kind, rank, perk])
+						"kind %d level %d '%s' exists in PERKS"
+						% [kind, gate_level, perk])
 	var long_blurbs: Array[String] = []
 	for key: String in game.PERKS:
 		if str(game.PERKS[key].blurb).length() > 48:
@@ -147,31 +152,40 @@ func _run() -> void:
 			"retired TEAM_LEAD answers with the hero's tree")
 	_check(game.perk_choices(3, 1).is_empty(), "goblins have no tree")
 
-	print("\n[2] commit_mission queues one choice per crossed rank per class")
+	print("\n[2] commit_mission stamps levels and queues one choice per crossed gate")
 	var g: Node = (load("res://scripts/Game.gd") as GDScript).new()
 	g.roster = [
-		{"id": 1, "surname": "A", "kind": KIND_SCOUT, "xp": 40, "rank": 0,
-				"perks": [] as Array, "alive": true},   # crosses 1-4: 4 picks
-		{"id": 2, "surname": "B", "kind": KIND_MACHINEGUNNER, "xp": 14, "rank": 0,
-				"perks": [] as Array, "alive": true},   # crosses 1-2: 2 picks
-		{"id": 3, "surname": "C", "kind": KIND_HERO, "xp": 6, "rank": 0,
-				"perks": [] as Array, "alive": true},   # crosses 1: 1 pick
-		{"id": 4, "surname": "D", "kind": KIND_SCOUT, "xp": 3, "rank": 0,
-				"perks": [] as Array, "alive": true},   # crosses nothing
-		{"id": 5, "surname": "E", "kind": KIND_SCOUT, "xp": 40, "rank": 0,
+		{"id": 1, "surname": "A", "kind": KIND_SCOUT, "xp": 337, "level": 1,
+				"perks": [] as Array, "alive": true},   # level 50: all 4 gates
+		{"id": 2, "surname": "B", "kind": KIND_MACHINEGUNNER, "xp": 42, "level": 1,
+				"perks": [] as Array, "alive": true},   # level 15: gates 5, 15
+		{"id": 3, "surname": "C", "kind": KIND_HERO, "xp": 7, "level": 1,
+				"perks": [] as Array, "alive": true},   # level 5: gate 5
+		{"id": 4, "surname": "D", "kind": KIND_SCOUT, "xp": 3, "level": 1,
+				"perks": [] as Array, "alive": true},   # level 3: no gate
+		{"id": 5, "surname": "E", "kind": KIND_SCOUT, "xp": 337, "level": 1,
 				"perks": [] as Array, "alive": false},  # the dead earn nothing
 	]
 	g._next_id = 6
 	g.commit_mission()
 	var queued := {}
+	var gate_levels_of_1: Array = []
 	for p: Dictionary in g.pending_promotions:
 		var id: int = int(p.id)
 		queued[id] = int(queued.get(id, 0)) + 1
-	_check(int(queued.get(1, 0)) == 4, "scout xp40 queues 4 (got %s)" % queued.get(1, 0))
-	_check(int(queued.get(2, 0)) == 2, "gunner xp14 queues 2 (got %s)" % queued.get(2, 0))
-	_check(int(queued.get(3, 0)) == 1, "hero xp6 queues 1 (got %s)" % queued.get(3, 0))
+		if id == 1:
+			gate_levels_of_1.append(int(p.level))
+	_check(int(queued.get(1, 0)) == 4, "scout xp337 queues 4 (got %s)" % queued.get(1, 0))
+	_check(gate_levels_of_1 == [5, 15, 30, 50],
+			"...and the queue holds the gate levels, sparse (%s)" % [gate_levels_of_1])
+	_check(int(queued.get(2, 0)) == 2, "gunner xp42 queues 2 (got %s)" % queued.get(2, 0))
+	_check(int(queued.get(3, 0)) == 1, "hero xp7 queues 1 (got %s)" % queued.get(3, 0))
 	_check(not queued.has(4), "xp3 queues nothing")
 	_check(not queued.has(5), "the dead queue nothing")
+	_check(int((g.roster[0] as Dictionary).level) == 50
+			and int((g.roster[3] as Dictionary).level) == 3
+			and int((g.roster[4] as Dictionary).level) == 1,
+			"levels stamped: 50 for the living, 3 below the gates, the dead untouched")
 	g.free()
 
 	print("\n[3] apply_progression and Unit: every stat and gate effect")
@@ -233,23 +247,64 @@ func _run() -> void:
 	_check(plain_scout.hp == 6, "heal(3) heals 3 (got %d)" % plain_scout.hp)
 	plain_scout.heal(99)
 	_check(plain_scout.hp == plain_scout.max_hp, "heal clamps at max_hp")
+
+	print("\n  the career ladder on a unit: one +1 every level, capped once")
+	var base_acc: int = plain_scout.accuracy
+	var base_hp: int = plain_scout.max_hp
+	var cap: int = int(game.ACCURACY_CAP)
+	var lv2: Node2D = _mk_level(unit_scene, KIND_SCOUT, 2)
+	var lv10: Node2D = _mk_level(unit_scene, KIND_SCOUT, 10)
+	var lv11: Node2D = _mk_level(unit_scene, KIND_SCOUT, 11)
+	var lv90: Node2D = _mk_level(unit_scene, KIND_HERO, 90)
+	_check(lv2.accuracy == mini(base_acc + 1, cap) and lv2.max_hp == base_hp,
+			"level 2 pays +1 accuracy and nothing else (got %d/%d)"
+			% [lv2.accuracy, lv2.max_hp])
+	_check(lv10.accuracy == mini(base_acc + 5, cap) and lv10.max_hp == base_hp + 4
+			and lv10.hp == lv10.max_hp,
+			"level 10 is +5 acc / +4 HP, deployed whole (got %d/%d)"
+			% [lv10.accuracy, lv10.max_hp])
+	_check(lv11.accuracy == mini(base_acc + 5, cap) and lv11.max_hp == base_hp + 5,
+			"level 11 adds the odd level's HP point (got %d/%d)"
+			% [lv11.accuracy, lv11.max_hp])
+	_check(lv90.accuracy == cap,
+			"a level 90 hero is capped at %d (got %d)" % [cap, lv90.accuracy])
+
+	print("\n  what he carries: gear mods land, arc_half never stacks")
+	var light: Node2D = _mk_gear(unit_scene, KIND_SCOUT, [],
+			{"weapon": "", "armor": "", "kit": "light_order"})
+	var drummed: Node2D = _mk_gear(unit_scene, KIND_MACHINEGUNNER, [],
+			{"weapon": "drum_feed", "armor": "", "kit": ""})
+	var watcher: Node2D = _mk_gear(unit_scene, KIND_MACHINEGUNNER, [],
+			{"weapon": "", "armor": "", "kit": "swivel_harness"})
+	var both: Node2D = _mk_gear(unit_scene, KIND_MACHINEGUNNER, ["sentinel"],
+			{"weapon": "", "armor": "", "kit": "swivel_harness"})
+	_check(light.move_range == plain_scout.move_range + 1,
+			"light_order is one more tile (got %d)" % light.move_range)
+	_check(drummed.mag_size == plain_mg.mag_size + 3
+			and drummed.ammo == drummed.mag_size,
+			"drum_feed adds 3 rounds and the ammo re-derives (got %d/%d)"
+			% [drummed.ammo, drummed.mag_size])
+	_check(watcher.arc_half == 2, "the harness widens the watch to 2")
+	_check(both.arc_half == 2,
+			"sentinel plus harness is still 2 - set-with-max, never stacked")
 	for u in [plain_scout, sprinter, ranger, snapper, plain_mg, bipod, mule,
-			sweep, sentinel, keeper, willed, pockets]:
+			sweep, sentinel, keeper, willed, pockets, lv2, lv10, lv11, lv90,
+			light, drummed, watcher, both]:
 		u.free()
 
 	print("\n[4] boot Battle.tscn on a crafted roster (level 1, headless)")
 	game.roster = [
-		{"id": 1, "surname": "Akai", "kind": KIND_HERO, "xp": 40, "rank": 4,
+		{"id": 1, "surname": "Akai", "kind": KIND_HERO, "xp": 40, "level": 14,
 				"perks": ["called_shot", "one_shot", "rally", "untouchable",
 						"inspiration"] as Array, "alive": true},
 		{"id": 2, "surname": "HARGREAVE", "kind": KIND_MACHINEGUNNER, "xp": 0,
-				"rank": 0, "perks": ["grenadier", "walking_fire"] as Array,
+				"level": 1, "perks": ["grenadier", "walking_fire"] as Array,
 				"alive": true},
-		{"id": 3, "surname": "VANCE", "kind": KIND_SCOUT, "xp": 0, "rank": 0,
+		{"id": 3, "surname": "VANCE", "kind": KIND_SCOUT, "xp": 0, "level": 1,
 				"perks": ["field_dressing", "quick_hands"] as Array, "alive": true},
-		{"id": 4, "surname": "QUINN", "kind": KIND_SCOUT, "xp": 0, "rank": 0,
+		{"id": 4, "surname": "QUINN", "kind": KIND_SCOUT, "xp": 0, "level": 1,
 				"perks": ["flanker", "executioner"] as Array, "alive": true},
-		{"id": 5, "surname": "ORTIZ", "kind": KIND_SCOUT, "xp": 0, "rank": 0,
+		{"id": 5, "surname": "ORTIZ", "kind": KIND_SCOUT, "xp": 0, "level": 1,
 				"perks": [] as Array, "alive": true},
 	]
 	game._next_id = 6
@@ -474,13 +529,32 @@ func _run() -> void:
 	_finish()
 
 
-## Instantiate a Unit, set it up as `kind`, and stamp a rank-0 soldier with
+## Instantiate a Unit, set it up as `kind`, and stamp a level-1 soldier with
 ## `perks` on it. Lives outside the tree - Unit.setup guards for that.
 func _mk(unit_scene: PackedScene, kind: int, perks: Array) -> Node2D:
 	var unit: Node2D = unit_scene.instantiate()
 	unit.setup(kind, Vector2i(2, 2))
 	unit.apply_progression({"id": 1, "surname": "TEST", "kind": kind, "xp": 0,
-			"rank": 0, "perks": perks, "alive": true})
+			"level": 1, "perks": perks, "alive": true})
+	return unit
+
+
+## The same, but a perkless soldier at a chosen career level.
+func _mk_level(unit_scene: PackedScene, kind: int, level: int) -> Node2D:
+	var unit: Node2D = unit_scene.instantiate()
+	unit.setup(kind, Vector2i(2, 2))
+	unit.apply_progression({"id": 1, "surname": "TEST", "kind": kind, "xp": 0,
+			"level": level, "perks": [] as Array, "alive": true})
+	return unit
+
+
+## And once more with a kit: level 1, chosen perks, chosen gear dict.
+func _mk_gear(unit_scene: PackedScene, kind: int, perks: Array,
+		gear: Dictionary) -> Node2D:
+	var unit: Node2D = unit_scene.instantiate()
+	unit.setup(kind, Vector2i(2, 2))
+	unit.apply_progression({"id": 1, "surname": "TEST", "kind": kind, "xp": 0,
+			"level": 1, "gear": gear, "perks": perks, "alive": true})
 	return unit
 
 
@@ -534,6 +608,7 @@ func _finish() -> void:
 	_test_named_kestrels()
 	_test_specialists()
 	_test_deployment()
+	_test_gear_rollback()
 
 	if _had_save:
 		var rf := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -785,3 +860,43 @@ func _test_deployment() -> void:
 	for soldier: Dictionary in ghosts:
 		_check(bool(soldier.alive), "and everybody who deploys is alive")
 		break
+
+
+# --- 9. the snapshot carries gear ---------------------------------------------
+
+## Pins the one line in _deep_copy that makes gear rollback-safe. Without it
+## the snapshot's gear dict IS the live soldier's gear dict, and a mid-mission
+## equip would survive the wholesale rollback a lost mission promises.
+func _test_gear_rollback() -> void:
+	print("\n[9] a lost mission rolls the kit back with everything else")
+	var game: Node = root.get_node("/root/Game")
+	game.roster = []
+	game._next_id = 1
+	game.ensure_roster(Levels.LEVELS[0])
+	var soldier: Dictionary = game.roster[0]
+	soldier.gear = {"weapon": "oiled_sling", "armor": "", "kit": ""}
+	game.begin_mission()
+	(game.roster[0] as Dictionary).gear["weapon"] = "glass_sight"
+	(game.roster[0] as Dictionary).gear["armor"] = "boiler_plate"
+	game.abort_mission()
+	var restored: Dictionary = (game.roster[0] as Dictionary).gear
+	_check(str(restored.weapon) == "oiled_sling" and str(restored.armor) == "",
+			"the equip made mid-mission is rolled back (%s)" % [restored])
+	# And the pay follows the same transaction: accrued scratch dies with a
+	# lost attempt, and only a win banks it into the book.
+	game.scrip = 0
+	game.armory = []
+	game.begin_mission()
+	game.accrue_scrip(60)
+	game.accrue_loot("oiled_sling")
+	game.accrue_loot("no_such_item")  # refused loudly, never banked
+	game.abort_mission()
+	_check(game.scrip == 0 and game.armory.is_empty()
+			and game.mission_scrip == 0 and game.mission_loot.is_empty(),
+			"a lost mission's pay dies with the attempt")
+	game.begin_mission()
+	game.accrue_scrip(60)
+	game.accrue_loot("oiled_sling")
+	game.commit_mission()
+	_check(game.scrip == 60 and game.armory == ["oiled_sling"],
+			"a won mission banks it (%d scrip, %s)" % [game.scrip, game.armory])

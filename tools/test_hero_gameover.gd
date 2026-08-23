@@ -3,7 +3,7 @@ extends SceneTree
 ## Exercises the two campaign rules Rodar Akai adds, against the real Battle
 ## scene rather than a re-implementation:
 ##   1. an old save's alive TEAM_LEAD is converted in place to the HERO by
-##      ensure_roster() - id, xp, rank and perks kept, surname now Akai, and
+##      ensure_roster() - id, xp, level, gear and perks kept, surname now Akai, and
 ##      no orphaned lead left standing beside him
 ##   2. a SCOUT dying does NOT end the battle while others still stand, but
 ##      the HERO dying loses it on the spot - and the verdict panel waits for
@@ -94,14 +94,15 @@ func _run() -> void:
 	var game: Node = (load("res://scripts/Game.gd") as GDScript).new()
 	game.roster = [
 		{"id": 1, "surname": "NAKAMURA", "kind": KIND_TEAM_LEAD, "xp": 27,
-				"rank": 3, "perks": ["marksman", "sentinel"] as Array, "alive": true},
+				"level": 11, "gear": {"weapon": "oiled_sling", "armor": "", "kit": ""},
+				"perks": ["marksman", "sentinel"] as Array, "alive": true},
 		{"id": 2, "surname": "HARGREAVE", "kind": KIND_MACHINEGUNNER, "xp": 8,
-				"rank": 1, "perks": [] as Array, "alive": true},
-		{"id": 3, "surname": "VANCE", "kind": KIND_SCOUT, "xp": 3, "rank": 0,
+				"level": 5, "perks": [] as Array, "alive": true},
+		{"id": 3, "surname": "VANCE", "kind": KIND_SCOUT, "xp": 3, "level": 3,
 				"perks": [] as Array, "alive": true},
-		{"id": 4, "surname": "QUINN", "kind": KIND_SCOUT, "xp": 0, "rank": 0,
+		{"id": 4, "surname": "QUINN", "kind": KIND_SCOUT, "xp": 0, "level": 1,
 				"perks": [] as Array, "alive": true},
-		{"id": 5, "surname": "ORTIZ", "kind": KIND_SCOUT, "xp": 0, "rank": 0,
+		{"id": 5, "surname": "ORTIZ", "kind": KIND_SCOUT, "xp": 0, "level": 1,
 				"perks": [] as Array, "alive": true},
 	]
 	game._next_id = 6
@@ -113,8 +114,10 @@ func _run() -> void:
 	var hero: Dictionary = game.soldier_by_id(1)
 	_check(int(hero.get("kind", -1)) == KIND_HERO, "lead converted to HERO in place")
 	_check(str(hero.get("surname", "")) == "Akai", "surname is Akai")
-	_check(int(hero.get("xp", 0)) == 27 and int(hero.get("rank", 0)) == 3,
-			"xp and rank kept (%s xp, rank %s)" % [hero.get("xp"), hero.get("rank")])
+	_check(int(hero.get("xp", 0)) == 27 and int(hero.get("level", 0)) == 11,
+			"xp and level kept (%s xp, level %s)" % [hero.get("xp"), hero.get("level")])
+	_check(str((hero.get("gear", {}) as Dictionary).get("weapon", "")) == "oiled_sling",
+			"the lead's gear survives the conversion (%s)" % [hero.get("gear")])
 	_check((hero.get("perks", []) as Array).has("marksman")
 			and (hero.get("perks", []) as Array).has("sentinel"), "perks kept")
 	var orphan := false

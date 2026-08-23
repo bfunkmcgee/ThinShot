@@ -109,9 +109,12 @@ func _test_new_campaign_resets_everything() -> void:
 	dirty.district_standing = {"Kessit": 12, "Bhorra Low": 3}
 	dirty.notebook = [{"level": 2, "name": "Kesh Varr", "age": 33,
 			"settlement": "Kessit", "fate": "killed"}]
-	dirty.pending_promotions = [{"id": 1, "rank": 2}]
-	dirty.roster = [{"id": 1, "surname": "ODUYA", "kind": 0, "xp": 40,
-			"rank": 4, "perks": ["sprinter"], "alive": false}]
+	dirty.pending_promotions = [{"id": 1, "level": 15}]
+	dirty.scrip = 400
+	dirty.armory = ["oiled_sling", "boiler_plate"]
+	dirty.roster = [{"id": 1, "surname": "ODUYA", "kind": 0, "xp": 337,
+			"level": 50, "gear": {"weapon": "glass_sight", "armor": "", "kit": ""},
+			"perks": ["sprinter"], "alive": false}]
 	dirty._next_id = 9
 	# A bare .new() never runs the autoload's _ready(), so mint one by hand -
 	# otherwise old_seed is 0 and "the seed changed" would pass for free.
@@ -173,9 +176,9 @@ func _test_summary() -> void:
 	_check(g.campaign_summary().is_empty(),
 			"empty with no roster, so the menu knows there is nothing to continue")
 	g.roster = [
-		{"id": 1, "surname": "A", "kind": 0, "xp": 0, "rank": 0, "perks": [], "alive": true},
-		{"id": 2, "surname": "B", "kind": 0, "xp": 0, "rank": 0, "perks": [], "alive": true},
-		{"id": 3, "surname": "C", "kind": 0, "xp": 0, "rank": 0, "perks": [], "alive": false},
+		{"id": 1, "surname": "A", "kind": 0, "xp": 0, "level": 1, "perks": [], "alive": true},
+		{"id": 2, "surname": "B", "kind": 0, "xp": 0, "level": 1, "perks": [], "alive": true},
+		{"id": 3, "surname": "C", "kind": 0, "xp": 0, "level": 1, "perks": [], "alive": false},
 	]
 	g.current_level = 0
 	g.current_operation = 0
@@ -250,7 +253,7 @@ func _test_notebook_screen() -> void:
 	# The settled bounties, rendered. One with a hunter still on the roster,
 	# one whose hunter_id resolves to nobody - both lines must hold.
 	game.roster = [{"id": 41, "surname": "Vane", "kind": 10, "xp": 0,
-			"rank": 2, "perks": [], "alive": true, "presence": 1, "guile": 2}]
+			"level": 15, "perks": [], "alive": true, "presence": 1, "guile": 2}]
 	game.bounty_outcomes = [
 		{"id": 7, "name": "Hesh Korrin", "outcome": "informant", "hunter_id": 41},
 		{"id": 8, "name": "Tammar Falk", "outcome": "killed", "hunter_id": 999},
@@ -330,7 +333,7 @@ func _test_button_state() -> void:
 	await process_frame
 
 	# Something to continue.
-	game.roster = [{"id": 1, "surname": "ODUYA", "kind": 0, "xp": 0, "rank": 0,
+	game.roster = [{"id": 1, "surname": "ODUYA", "kind": 0, "xp": 0, "level": 1,
 			"perks": [], "alive": true}]
 	game.current_level = 0
 	game.current_operation = 0

@@ -118,9 +118,10 @@ const COLUMN_WIDTH := 500.0
 const COLUMN_SIZE := 20
 
 ## The tallest the left column can get: heading, a blank, one line per soldier
-## in a full squad, and the two trailing blocks _show_game_over appends.
+## in a full squad, the pay line _debrief_text appends (a blank and the
+## PAY: line), and the two trailing blocks _show_game_over appends.
 const SQUAD_MAX := 6
-const OPERATION_LINES := 2 + SQUAD_MAX + 2 + 2
+const OPERATION_LINES := 2 + SQUAD_MAX + 2 + 2 + 2
 ## The right column is bounded by construction - ROLL_NAMES_SHOWN caps the names
 ## - so its worst case is every optional block present at once.
 ## +2 for the STILL OUT THERE block (a blank and one line). It is one line by

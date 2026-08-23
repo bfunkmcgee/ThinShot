@@ -55,15 +55,16 @@ func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out))
 
 	game.roster = [
-		{"id": 1, "surname": "Akai", "kind": KIND_HERO, "xp": 26, "rank": 3,
+		{"id": 1, "surname": "Akai", "kind": KIND_HERO, "xp": 26, "level": 11,
+				"gear": {"weapon": "glass_sight", "armor": "", "kit": ""},
 				"perks": ["called_shot", "rally"] as Array, "alive": true},
 		{"id": 2, "surname": "HARGREAVE", "kind": KIND_MACHINEGUNNER, "xp": 0,
-				"rank": 0, "perks": [] as Array, "alive": true},
-		{"id": 3, "surname": "VANCE", "kind": KIND_SCOUT, "xp": 0, "rank": 0,
+				"level": 1, "perks": [] as Array, "alive": true},
+		{"id": 3, "surname": "VANCE", "kind": KIND_SCOUT, "xp": 0, "level": 1,
 				"perks": [] as Array, "alive": true},
-		{"id": 4, "surname": "QUINN", "kind": KIND_SCOUT, "xp": 0, "rank": 0,
+		{"id": 4, "surname": "QUINN", "kind": KIND_SCOUT, "xp": 0, "level": 1,
 				"perks": [] as Array, "alive": true},
-		{"id": 5, "surname": "ORTIZ", "kind": KIND_SCOUT, "xp": 0, "rank": 0,
+		{"id": 5, "surname": "ORTIZ", "kind": KIND_SCOUT, "xp": 0, "level": 1,
 				"perks": [] as Array, "alive": true},
 	]
 	game._next_id = 6
@@ -115,8 +116,8 @@ func _run() -> void:
 	battle.queue_free()
 	await process_frame
 
-	# 3. The camp promotion modal offering Rodar's rank-3 class pair.
-	game.pending_promotions = [{"id": 1, "rank": 3}]
+	# 3. The camp promotion modal offering Rodar's gate-30 class pair.
+	game.pending_promotions = [{"id": 1, "level": 30}]
 	var camp: Node = (load("res://scenes/Camp.tscn") as PackedScene).instantiate()
 	root.add_child(camp)
 	await process_frame

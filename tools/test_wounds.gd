@@ -3,7 +3,7 @@ extends SceneTree
 ## The squad's wound ledger, pinned at the Game/Unit seam.
 ##
 ##   1. a wound is stamped, survives a save round-trip, and reads back a bool
-##   2. a wounded soldier deploys a point of max HP short - after rank
+##   2. a wounded soldier deploys a point of max HP short - after level
 ##      bonuses, so the cost is exactly one point at any career
 ##   3. sitting a mission out heals him; fighting it does not
 ##   4. coming home to the garrison clears the ledger outright
@@ -65,7 +65,7 @@ func _run() -> void:
 	_check(bool(game.soldier_by_id(id).get("wounded", false)),
 			"and the wound came back a bool")
 
-	print("\n[2] a wounded soldier deploys a point short, at any rank")
+	print("\n[2] a wounded soldier deploys a point short, at any level")
 	var fresh: Node2D = unit_script.new()
 	fresh.setup(int(game.soldier_by_id(id).kind), Vector2i(1, 1))
 	var whole_hp: int = fresh.max_hp
@@ -74,13 +74,15 @@ func _run() -> void:
 	hurt.apply_progression(game.soldier_by_id(id))
 	_check(hurt.max_hp == whole_hp - 1,
 			"a scout: %d against the whole %d" % [hurt.max_hp, whole_hp])
-	var ranked: Dictionary = game.soldier_by_id(id).duplicate(true)
-	ranked.rank = 3
+	var leveled: Dictionary = game.soldier_by_id(id).duplicate(true)
+	leveled.level = 20
 	var vet: Node2D = unit_script.new()
-	vet.setup(int(ranked.kind), Vector2i(1, 1))
-	vet.apply_progression(ranked)
-	_check(vet.max_hp == whole_hp + 3 * game.HP_PER_RANK - 1,
-			"a staff sergeant: still exactly one point off the top (%d)" % vet.max_hp)
+	vet.setup(int(leveled.kind), Vector2i(1, 1))
+	vet.apply_progression(leveled)
+	# Level 20 has earned +9 max HP (one per odd level), and the wound still
+	# costs exactly one point off that taller top.
+	_check(vet.max_hp == whole_hp + 9 - 1,
+			"a level 20: still exactly one point off the top (%d)" % vet.max_hp)
 	_check(vet.hp == vet.max_hp, "and he deploys at his (reduced) full")
 
 	print("\n[3] sitting out heals; fighting does not")

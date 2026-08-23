@@ -501,7 +501,7 @@ func _avatar_soldier() -> Dictionary:
 			continue
 		var best: Dictionary = of_kind[0]
 		for soldier: Dictionary in of_kind:
-			if int(soldier.rank) > int(best.rank):
+			if int(soldier.get("level", 1)) > int(best.get("level", 1)):
 				best = soldier
 		return best
 	# Belt and braces: anyone still standing, if the roster ever holds a role
@@ -615,6 +615,19 @@ func _build_fixtures() -> void:
 			"kind": "ledger", "cell": cross,
 			"pos": board.cell_to_global(cross),
 			"label": "the ledger", "id": 0,
+		})
+	# The quartermaster works off the kit frame, and the kit frame hangs in
+	# the garrison alone - the field camp's prop table has no rack, so the
+	# lookup below answers (-1,-1) out there and the book stays shut until
+	# the squad is home. Selling mid-operation would also mean selling
+	# mid-transaction: a lost mission rolls the roster back, and the book
+	# must never be part of what a rollback has to untangle.
+	var rack: Vector2i = _fixture_cell("kit_frame")
+	if rack.x >= 0:
+		fixtures.append({
+			"kind": "qm", "cell": rack,
+			"pos": board.cell_to_global(rack),
+			"label": "the quartermaster's rack", "id": 0,
 		})
 	# Replacements are a garrison thing. Out on operation the squad fights
 	# with whoever walked away from the last mission.
@@ -770,6 +783,8 @@ func _prompt_for(fixture: Dictionary) -> String:
 			return "E  -  bounty board: %d posted" % _bounties_posted
 		"ledger":
 			return "E  -  the campaign's ledger"
+		"qm":
+			return "E  -  quartermaster: %d scrip in the book" % Game.scrip
 		"ratline":
 			if Game.ratline_strength != 0:
 				return "E  -  field radio: the operation is on - the net is closed"
@@ -817,6 +832,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_open_bounties()
 		"ledger":
 			_open_ledger()
+		"qm":
+			_open_quartermaster(0)
 		"ratline":
 			_open_ratline()
 
@@ -988,7 +1005,7 @@ func _open_ratline_leaders(offer: Dictionary) -> void:
 		var s: Dictionary = candidates[i]
 		lines.append("%s  -  %s, %s" % [Game.soldier_label(s),
 				Unit.kind_role_name(int(s.kind)),
-				Game.rank_title(int(s.get("rank", 0)))])
+				Career.level_label(int(s.get("level", 1)))])
 		lines.append("")
 	_choice_action = "ratline_send"
 	_choice_args = [offer, candidates]
@@ -1041,12 +1058,12 @@ func _open_soldier(id: int) -> void:
 	if soldier.is_empty():
 		return
 	var xp: int = int(soldier.xp)
-	var to_next := Game.xp_to_next(xp)
+	var to_next := Career.xp_to_next(xp)
 	var perks: Array = soldier.perks
 	var lines: Array[String] = [
 		Unit.kind_role_name(int(soldier.kind)),
-		"%s  -  %d xp%s" % [Game.rank_title(int(soldier.rank)), xp,
-				"" if to_next < 0 else "  (%d to the next rank)" % to_next],
+		"%s  -  %d xp%s" % [Career.level_label(int(soldier.get("level", 1))), xp,
+				"" if to_next < 0 else "  (%d to the next level)" % to_next],
 	]
 	# The named Kestrels are people the campaign is about, so the tent they are
 	# standing in says so. A replacement off the levy post gets his posting.
@@ -1069,28 +1086,46 @@ func _open_soldier(id: int) -> void:
 		for perk: String in perks:
 			names.append("%s - %s" % [Game.PERKS[perk].name, Game.PERKS[perk].blurb])
 		lines.append_array(names)
-	# A promotion waiting on this soldier turns the record into the choice.
+	# What he carries, read off the three slots.
+	var worn_names: Array[String] = []
+	for gear_slot: String in Gear.SLOTS:
+		var worn := str((soldier.get("gear", {}) as Dictionary).get(gear_slot, ""))
+		if Gear.ITEMS.has(worn):
+			worn_names.append(str(Gear.ITEMS[worn].name))
+	lines.append("Carrying: %s" % ", ".join(worn_names)
+			if not worn_names.is_empty()
+			else "Carrying nothing but the issue kit.")
+	# A specialty choice waiting on this soldier turns the record into the
+	# choice.
 	for promotion: Dictionary in Game.pending_promotions:
 		if int(promotion.id) != id:
 			continue
-		var rank := int(promotion.rank)
+		var gate_level := int(promotion.level)
 		# The choice comes from this soldier's CLASS tree. _read_promotions
 		# already dropped anything the class cannot answer, but a promotion
 		# queued in-session for an unexpected kind must not crash the modal.
-		var choices: Array = Game.perk_choices(int(soldier.kind), rank)
+		var choices: Array = Game.perk_choices(int(soldier.kind),
+				Career.perk_gate(gate_level))
 		if choices.size() < 2:
 			continue
 		lines.append("")
-		lines.append("PROMOTED TO %s - choose a specialty." % Game.rank_title(rank).to_upper())
+		lines.append("REACHED %s - choose a specialty."
+				% Career.level_label(gate_level).to_upper())
 		_choice_action = "perk"
-		_choice_args = [id, rank, choices]
+		_choice_args = [id, gate_level, choices]
 		var a: Dictionary = Game.PERKS[choices[0]]
 		var b: Dictionary = Game.PERKS[choices[1]]
 		_open_modal(Game.soldier_label(soldier), "\n".join(lines),
 				"%s\n%s" % [str(a.name).to_upper(), a.blurb],
 				"%s\n%s" % [str(b.name).to_upper(), b.blurb])
 		return
-	_open_modal(Game.soldier_label(soldier), "\n".join(lines))
+	# No choice pending: the record offers the kit instead. Works in the
+	# garrison AND the field - what the armory holds was bought at home, but
+	# handing it around the tent is just the squad packing.
+	_choice_action = "soldier_kit"
+	_choice_args = [id]
+	_open_modal(Game.soldier_label(soldier), "\n".join(lines),
+			"CHANGE KIT\nWhat they carry from the armory", "")
 
 
 func _open_stores() -> void:
@@ -1102,8 +1137,104 @@ func _open_stores() -> void:
 			"MORE FRAGS\nTake one smoke off the rack", "MORE SMOKE\nPut one frag back")
 
 
+## The quartermaster's rack: the unlocked catalog, one item under the marker,
+## two buttons - sign for it or look at the next one. The stores-tent pattern
+## stretched to a list: both buttons re-open this same panel, so the whole
+## shop lives inside the two-button modal the camp already has.
+func _open_quartermaster(at: int) -> void:
+	var best := Game.best_living_level()
+	var unlocked: Array = []
+	for key: String in Gear.ITEMS:
+		if best >= Gear.level_gate(key):
+			unlocked.append(key)
+	at = posmod(at, unlocked.size())
+	var owned := {}
+	for key: String in Game.armory:
+		owned[key] = int(owned.get(key, 0)) + 1
+	var lines: Array[String] = [
+		"The company book holds %d scrip." % Game.scrip, ""]
+	for i in unlocked.size():
+		var key: String = unlocked[i]
+		var item: Dictionary = Gear.ITEMS[key]
+		lines.append("%s %s  -  %d scrip%s" % [
+				">" if i == at else " ", str(item.name), int(item.price),
+				"" if not owned.has(key) else "  (owned x%d)" % int(owned[key])])
+	var pick: String = unlocked[at]
+	lines.append("")
+	lines.append(str(Gear.ITEMS[pick].blurb))
+	# The rack the squad has not earned yet, named so tier 3 is a promise
+	# rather than a secret.
+	for tier: int in [2, 3]:
+		if best < int(Gear.TIER_LEVEL[tier]):
+			lines.append("")
+			lines.append("The back rack waits on a level %d soldier."
+					% int(Gear.TIER_LEVEL[tier]))
+			break
+	_choice_action = "qm"
+	_choice_args = [at, pick]
+	_open_modal("THE QUARTERMASTER", "\n".join(lines),
+			"SIGN FOR: %s - %d SCRIP" % [str(Gear.ITEMS[pick].name),
+					int(Gear.ITEMS[pick].price)],
+			"NEXT ON THE RACK")
+	# After _open_modal - it clears the flag for everybody else's panels.
+	choice_a.disabled = Game.scrip < int(Gear.ITEMS[pick].price)
+
+
+## The slot cycler: which of the three slots to change. Re-opens itself to
+## page, like the quartermaster.
+func _open_kit_slots(id: int, at: int) -> void:
+	var soldier := Game.soldier_by_id(id)
+	if soldier.is_empty():
+		return
+	at = posmod(at, Gear.SLOTS.size())
+	var lines: Array[String] = ["What %s carries:" % Game.full_name(soldier), ""]
+	for i in Gear.SLOTS.size():
+		var gear_slot: String = Gear.SLOTS[i]
+		var worn := str((soldier.get("gear", {}) as Dictionary).get(gear_slot, ""))
+		lines.append("%s %-7s %s" % [">" if i == at else " ", gear_slot,
+				str(Gear.ITEMS[worn].name) if Gear.ITEMS.has(worn)
+						else "issue kit only"])
+	_choice_action = "kit_slot"
+	_choice_args = [id, at]
+	_open_modal("THE KIT", "\n".join(lines),
+			"CHANGE: %s" % str(Gear.SLOTS[at]).to_upper(), "NEXT SLOT")
+
+
+## The item cycler for one slot: nothing, then every armory item this soldier
+## can carry there. Taking goes through Game.equip_item, which swaps whatever
+## he wore back onto the shelf.
+func _open_kit_items(id: int, gear_slot: String, at: int) -> void:
+	var soldier := Game.soldier_by_id(id)
+	if soldier.is_empty():
+		return
+	var options: Array = [""]
+	for key: String in Game.armory:
+		if str(Gear.ITEMS[key].slot) == gear_slot and not options.has(key) \
+				and int(soldier.get("level", 1)) >= Gear.level_gate(key):
+			options.append(key)
+	at = posmod(at, options.size())
+	var lines: Array[String] = ["The armory's %s shelf:" % gear_slot, ""]
+	for i in options.size():
+		var key: String = options[i]
+		lines.append("%s %s" % [">" if i == at else " ",
+				"nothing - the issue kit" if key.is_empty()
+						else "%s - %s" % [str(Gear.ITEMS[key].name),
+								str(Gear.ITEMS[key].blurb)]])
+	if options.size() == 1:
+		lines.append("")
+		lines.append("Nothing on the shelf fits. The quartermaster sells;")
+		lines.append("missions sometimes shake something loose.")
+	var pick: String = options[at]
+	_choice_action = "kit_take"
+	_choice_args = [id, gear_slot, at, pick]
+	_open_modal("THE KIT  -  %s" % gear_slot.to_upper(), "\n".join(lines),
+			"TAKE: %s" % ("NOTHING" if pick.is_empty()
+					else str(Gear.ITEMS[pick].name)),
+			"NEXT" if options.size() > 1 else "")
+
+
 ## Replacements, garrison only. Filling every gap at once is deliberate: what
-## a death takes permanently is the rank, the perks and the kills, not the
+## a death takes permanently is the levels, the perks and the kills, not the
 ## campaign - and the squad still fought the rest of the operation short.
 func _open_recruit() -> void:
 	var short := Game.vacancy_count(Game.data())
@@ -1121,7 +1252,7 @@ func _open_recruit() -> void:
 	_open_modal("ASSIGNMENT POST",
 			"Command has bodies to spare, and none of them have done this before.\n\n"
 			+ "Open postings:\n" + "\n".join(lines)
-			+ "\n\nThey arrive green - no rank, no specialty, nothing the squad lost.",
+			+ "\n\nThey arrive green - level 1, no specialty, nothing the squad lost.",
 			"SIGN THEM ON\nBring the squad back to strength", "")
 
 
@@ -1214,7 +1345,7 @@ func _deployment_row_text(soldier: Dictionary, going: bool) -> String:
 		("RESTED" if resting else ("GOING " if going else "      ")),
 		"%-14s" % Game.full_name(soldier),
 		"%-20s" % Unit.kind_role_name(int(soldier.kind)),
-		"%-16s" % Game.rank_title(int(soldier.rank)),
+		"%-10s" % Career.level_label(int(soldier.get("level", 1))),
 	]
 	# The wound rides the row where the deploy decision is made: taking him
 	# anyway is allowed and costs a point of HP; the row is what says so.
@@ -1270,7 +1401,7 @@ func _on_choice(slot: int) -> void:
 			# Spend the queued promotion so it is not offered twice.
 			for i in Game.pending_promotions.size():
 				var p: Dictionary = Game.pending_promotions[i]
-				if int(p.id) == id and int(p.rank) == int(_choice_args[1]):
+				if int(p.id) == id and int(p.level) == int(_choice_args[1]):
 					Game.pending_promotions.remove_at(i)
 					break
 			_close_modal()
@@ -1278,6 +1409,33 @@ func _on_choice(slot: int) -> void:
 		"loadout":
 			Game.set_loadout(Game.frags + (1 if slot == 0 else -1))
 			_open_stores()  # reopen so the numbers update in place
+		"qm":
+			var rack_at: int = int(_choice_args[0])
+			if slot == 0:
+				Game.buy_item(str(_choice_args[1]))
+				_open_quartermaster(rack_at)  # reopen: the book and OWNED move
+			else:
+				_open_quartermaster(rack_at + 1)
+		"soldier_kit":
+			# The record's CHANGE KIT button: into the slot cycler.
+			_open_kit_slots(int(_choice_args[0]), 0)
+		"kit_slot":
+			var kit_id: int = int(_choice_args[0])
+			var slot_at: int = int(_choice_args[1])
+			if slot == 0:
+				_open_kit_items(kit_id, str(Gear.SLOTS[slot_at]), 0)
+			else:
+				_open_kit_slots(kit_id, slot_at + 1)
+		"kit_take":
+			var take_id: int = int(_choice_args[0])
+			var take_slot: String = str(_choice_args[1])
+			var item_at: int = int(_choice_args[2])
+			if slot == 0:
+				Game.equip_item(take_id, take_slot, str(_choice_args[3]))
+				_close_modal()
+				_open_soldier(take_id)
+			else:
+				_open_kit_items(take_id, take_slot, item_at + 1)
 		"recruit":
 			var taken := Game.recruit_to_strength(Game.data())
 			_close_modal()

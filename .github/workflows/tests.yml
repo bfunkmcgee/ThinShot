@@ -114,6 +114,8 @@ jobs:
 
           harness test_rules
           harness test_roll
+          harness test_career
+          harness test_gear
           harness test_morale
           harness test_overwatch
           harness test_undo

@@ -395,6 +395,12 @@ var bounty_target: Unit = null
 ## informant. This is what ends the mission rather than a body count.
 var bounty_outcome := ""
 
+## What this mission paid, kept battle-side for the debrief: by the time
+## _debrief_text composes, the win sites have already banked and zeroed the
+## Game scratch, so the panel reads these instead.
+var mission_pay := 0
+var mission_find := ""
+
 var _thirst_deaths: Dictionary = {}
 var _returners_due: Dictionary = {}
 ## Everyone this mission actually put back on the board, for mark_returned().
@@ -5445,6 +5451,33 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 			if scout.soldier_id != 0 and scout.hp * 2 <= scout.max_hp:
 				Game.mark_wounded(scout.soldier_id)
 		Game.add_to_notebook(Game.current_level, roll)
+		# The mission's pay, accrued into Game's mission scratch HERE - after
+		# conduct, before the win sites below bank it. A story win pays the
+		# flat rate plus a cut per objective beyond the first plus whatever
+		# the level authored; a bounty pays by outcome; a crossing pays flat.
+		# Side missions can also shake an item loose - deterministic per
+		# target, and unfarmable because the target leaves its pool on the
+		# banked win. mission_pay/mission_find are the debrief's copies.
+		if Game.on_bounty():
+			mission_pay = int(Game.SCRIP_BOUNTY.get(bounty_outcome, 0))
+			mission_find = Gear.drop(Game.campaign_seed,
+					1000 + int(level.get("bounty", {}).get("offer", {})
+							.get("target_id", 0)))
+		elif Game.on_interdiction():
+			mission_pay = Game.SCRIP_INTERDICTION
+			mission_find = Gear.drop(Game.campaign_seed,
+					2000 + int(level.get("ratline", {}).get("ordinal", 0)))
+		else:
+			var extra_objectives: int = maxi(
+					(level.get("objectives", []) as Array).size() - 1, 0)
+			var authored: Dictionary = level.get("reward", {})
+			mission_pay = Game.SCRIP_STORY_BASE \
+					+ extra_objectives * Game.SCRIP_PER_EXTRA_OBJECTIVE \
+					+ int(authored.get("scrip", 0))
+			mission_find = str(authored.get("item", ""))
+		Game.accrue_scrip(mission_pay)
+		if not mission_find.is_empty():
+			Game.accrue_loot(mission_find)
 		if Game.on_bounty():
 			# A bounty is not a campaign mission and must not advance the
 			# operation: the squad went out after one man and came home to the
@@ -5500,7 +5533,7 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 	else:
 		restart_button.text = "Back to Camp"
 	if not Game.pending_promotions.is_empty():
-		debrief_label.text += "\n\n%d PROMOTION(S) TO HAND OUT BACK AT CAMP" % \
+		debrief_label.text += "\n\n%d SPECIALTY CHOICE(S) WAITING BACK AT CAMP" % \
 				Game.pending_promotions.size()
 	# The number this battle's dice came out of, on the one screen a player is
 	# looking at when a battle goes wrong. `-- --seed N` deals the same hand
@@ -5518,15 +5551,16 @@ func _present_game_over(won: bool) -> void:
 	Sfx.play("win" if won else "lose", 0.0, 0.0)
 
 
-## The panel's second row: role for anyone, plus rank progress and earned
+## The panel's second row: role for anyone, plus level progress and earned
 ## specialties for a named soldier.
 func _progress_text(unit: Unit) -> String:
 	if unit.soldier_id == 0:
 		return unit.role_name()
 	var soldier := Game.soldier_by_id(unit.soldier_id)
 	var xp: int = int(soldier.get("xp", 0))
-	var parts: Array[String] = [unit.role_name()]
-	var to_next := Game.xp_to_next(xp)
+	var parts: Array[String] = [unit.role_name(),
+			Career.level_label(int(soldier.get("level", 1)))]
+	var to_next := Career.xp_to_next(xp)
 	parts.append("%d xp" % xp if to_next < 0 else "%d xp (+%d)" % [xp, to_next])
 	for perk: String in unit.perks:
 		parts.append(str(Game.PERKS[perk].name))
@@ -5571,6 +5605,14 @@ func _debrief_text(won: bool) -> String:
 			lines.append("%s  +%d xp" % [who, gained])
 		else:
 			lines.append(who)
+	# The pay line, from the battle-side copies - the Game scratch is already
+	# banked and zeroed by the time this composes. Two lines is exactly what
+	# check_briefing_fit budgets for.
+	if mission_pay > 0:
+		lines.append("")
+		lines.append("PAY: %d SCRIP TO THE COMPANY BOOK%s" % [mission_pay,
+				"" if mission_find.is_empty()
+						else " - FOUND: %s" % str(Gear.ITEMS[mission_find].name)])
 	return "\n".join(lines)
 
 
