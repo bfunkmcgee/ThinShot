@@ -128,6 +128,7 @@ const STRUCTURE_OFFSETS := {
 	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33), "tent": Vector2(0, -33),
 	"stores_tent": Vector2(0, -17), "field_tent": Vector2(0, -23),
 }
+const STRUCTURE_FPS := 7.0  # gentle breeze loops, matching Battle's clock
 const PROP_DUST := preload("res://assets/shaders/prop_dust.gdshader")
 const ROCK_OFFSET := Vector2(0, -18)
 const JUNK_OFFSET := Vector2(0, -20)
@@ -191,6 +192,7 @@ var fixtures: Array = []
 var _focus: Dictionary = {}
 var _dust_materials: Dictionary = {}
 var _swaying: Array = []
+var _animated: Array = []
 # What the two modal buttons currently mean, set when a panel is opened.
 var _choice_action := ""
 var _choice_args: Array = []
@@ -304,11 +306,22 @@ func _spawn_prop(texture: Texture2D, offset: Vector2, cell: Vector2i,
 # so the steel half of the yard is deliberately still and the canvas half moves.
 const SWAY_SPEED := 1.6      # radians/sec, matching Battle's cycle
 const SWAY_TEXELS := 1.0     # sprite texels a thing leans at full sway
+## The cheap wind, for cloth too small to be worth drawing frames for. Anything
+## in FIXTURE_ANIM_DIRS must NOT be here: a fixture that both leans and flaps is
+## being moved by two systems at once, and reads as a wobble rather than wind.
 const SWAYING_FIXTURES := {
-	"awning": true,          # the camo net is the largest cloth in the yard
-	"flagpole": true,        # the colours, and the one thing wind is *for*
-	"washing_line": true,
 	"kit_frame": true,       # webbing and canteens hang loose off the rack
+}
+
+## Fixtures with a generated frame run, at
+## garrison_fixtures/animations/<key>/frame_%03d.png. These are the three cloth
+## pieces large enough on screen that a one-texel lean was not saying much: the
+## camo net, the colours, and the laundry.
+const FIXTURE_ANIM_ROOT := FIXTURE_ROOT + "animations/"
+const FIXTURE_ANIM_DIRS := {
+	"awning": true,
+	"flagpole": true,
+	"washing_line": true,
 }
 
 
@@ -320,6 +333,68 @@ func _sway(sprite: Sprite2D, cell: Vector2i) -> void:
 		"base_x": sprite.position.x,
 		"phase": Board._hash01(cell, _prop_seed + SALT_SWAY) * TAU,
 	})
+
+
+## Walks a frame_000.png, frame_001.png ... run until one is missing.
+##
+## Duplicated from Battle rather than shared, on the same grounds the prop
+## tables are: the two scenes are deliberately independent, and pulling one
+## static helper across is not worth the coupling.
+static func _load_frame_run(base: String) -> Array[Texture2D]:
+	var frames: Array[Texture2D] = []
+	var i := 0
+	while true:
+		var path := "%s/frame_%03d.png" % [base, i]
+		if not ResourceLoader.exists(path):
+			break
+		frames.append(load(path))
+		i += 1
+	return frames
+
+
+## A structure's breeze loop if its art has one, otherwise a one-frame run of
+## the still. The single frame is what keeps the caller honest: a structure with
+## no animation needs no special case, it simply never changes frame.
+static func _load_structure_frames(dir: String) -> Array[Texture2D]:
+	var frames: Array[Texture2D] = []
+	var anim_root := dir + "/animations"
+	var da := DirAccess.open(anim_root)
+	if da != null:
+		for sub in da.get_directories():
+			frames = _load_frame_run("%s/%s/unknown" % [anim_root, sub])
+			if not frames.is_empty():
+				break
+	if frames.is_empty():
+		var still := dir + "/rotations/unknown.png"
+		if ResourceLoader.exists(still):
+			frames.append(load(still))
+	return frames
+
+
+## Registers a sprite on the frame clock. Phase comes from the cell, spread
+## across one whole loop, so no two things in the yard breathe in step.
+func _animate(sprite: Sprite2D, cell: Vector2i, frames: Array[Texture2D]) -> void:
+	if frames.size() < 2:
+		return
+	_animated.append({
+		"sprite": sprite,
+		"frames": frames,
+		"phase": Board._hash01(cell, _prop_seed + SALT_STRUCT_PHASE) 				* float(frames.size()) / STRUCTURE_FPS,
+		"frame": -1,
+	})
+
+
+## Only touches the texture when the index actually changes - at 7fps that is a
+## handful of assignments a second rather than one per sprite per frame.
+func _animate_props() -> void:
+	var t := Time.get_ticks_msec() / 1000.0
+	for entry: Dictionary in _animated:
+		var frames: Array = entry.frames
+		var idx: int = int((t + entry.phase) * STRUCTURE_FPS) % frames.size()
+		if idx == entry.frame:
+			continue
+		entry.frame = idx
+		entry.sprite.texture = frames[idx]
 
 
 func _sway_props() -> void:
@@ -347,6 +422,7 @@ const SALT_JUNK := 5
 const SALT_PLANT := 6
 const SALT_CRATE := 8
 const SALT_SWAY := 9
+const SALT_STRUCT_PHASE := 10
 const SALT_DETRITUS := 12
 const SALT_DETRITUS_PICK := 13
 const SALT_DETRITUS_JITTER := 14
@@ -392,7 +468,10 @@ func _spawn_props() -> void:
 					if FIXTURE_TEXTURES.has(fixture):
 						var fix := _spawn_prop(FIXTURE_TEXTURES[fixture],
 								FIXTURE_OFFSETS[fixture], cell)
-						if SWAYING_FIXTURES.has(fixture):
+						if FIXTURE_ANIM_DIRS.has(fixture):
+							_animate(fix, cell, _load_frame_run(
+									FIXTURE_ANIM_ROOT + fixture))
+						elif SWAYING_FIXTURES.has(fixture):
 							_sway(fix, cell)
 					else:
 						if not fixture.is_empty():
@@ -463,14 +542,17 @@ func _spawn_structure(s: Dictionary) -> void:
 	var anchor: Vector2i = s.anchor
 	var size: Vector2i = s.size
 	var front: Vector2i = anchor + size - Vector2i.ONE
-	var still: String = STRUCTURE_DIRS[s.kind] + "/rotations/unknown.png"
-	if not ResourceLoader.exists(still):
+	# The huts and the rustic tent have shipped with a breeze loop all along;
+	# camp drew the still and never played it. A structure whose art has no
+	# animation comes back as a one-frame run and simply never changes.
+	var frames := _load_structure_frames(STRUCTURE_DIRS[s.kind])
+	if frames.is_empty():
 		push_error("[Camp] no art for structure '%s'" % s.kind)
 		return
 	var root := Node2D.new()
 	root.position = board.cell_to_global(front)
 	var spr := Sprite2D.new()
-	spr.texture = load(still)
+	spr.texture = frames[0]
 	spr.scale = PROP_SCALE
 	spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	spr.material = _dust_material(front)
@@ -479,6 +561,7 @@ func _spawn_structure(s: Dictionary) -> void:
 			- root.position
 	root.add_child(spr)
 	entities.add_child(root)
+	_animate(spr, anchor, frames)
 
 
 # -------------------------------------------------------------------- squad --
@@ -673,6 +756,7 @@ func _process(delta: float) -> void:
 	# Above the player guard on purpose: the wind is the scene's, not his, so it
 	# keeps blowing through the frames where there is nobody to walk around as.
 	_sway_props()
+	_animate_props()
 	if player == null:
 		return
 	var dir := Vector2.ZERO if modal.visible else _walk_input()

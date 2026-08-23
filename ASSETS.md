@@ -319,7 +319,9 @@ borrows the rule instead of inventing a second one: `Camp._sway_props` is
 never shimmers between subpixel positions, phased off the cell so no two things
 sway in step.
 
-Two things about it are deliberate:
+Since then three of them graduated to real frames (see below), so the sway
+is now the *cheap* tier rather than the only one. Two things about it are
+deliberate:
 
 - **Only cloth is on the list** — the camo net, the colours, the laundry, the
   kit rack's hanging webbing, plus the camp's cacti. A jerrican or an ammunition
@@ -329,6 +331,39 @@ Two things about it are deliberate:
 - **The tick sits above `_process`'s player guard.** The wind belongs to the
   scene, not to the avatar, so it keeps blowing through the frames where there
   is nobody to walk around as.
+
+## Generated frames, for cloth big enough to be worth them
+
+A one-texel lean says very little on a canopy that is 256px wide, so the three
+largest cloth pieces have real animation now: the camo net, the colours and the
+laundry. `Camp.FIXTURE_ANIM_DIRS` names them, and their frames live at
+`garrison_fixtures/animations/<key>/frame_%03d.png`.
+
+**A fixture must be in exactly one of the two systems.** Anything in
+`FIXTURE_ANIM_DIRS` is deliberately *not* in `SWAYING_FIXTURES`: something both
+leaning and flapping is being moved by two clocks at once, and reads as a wobble
+rather than as wind.
+
+The plumbing is `Battle._load_frame_run` and its frame-swap tick, duplicated
+into Camp on the same grounds the prop tables already were - the two scenes are
+deliberately independent. `_load_structure_frames` falls back to a one-frame run
+of the still, which is what keeps the caller free of special cases: a structure
+with no animation simply never changes frame.
+
+That fallback turned up something worth knowing. **The huts and the rustic tent
+have shipped with a 9-frame breeze loop all along, and camp drew the still and
+never played it** - Battle animated them, Camp did not. Porting the tick got the
+buildings moving for free; only the fixtures needed new art at all.
+
+On generating the frames: PixelLab's v3 `animate_object` costs about **4
+generations** for a 9-frame run and takes ~8 minutes, not the 30-60s the tool
+advertises. Name what must hold still in the prompt ("the steel mast and
+concrete base completely still") and it honours it - the concrete plinth is
+pixel-identical across all nine frames, with only a few pixels of flicker on the
+halyard cleat. Check the **bottom** of the alpha bbox across the run before
+trusting an existing offset: all three held theirs exactly, so no anchor needed
+re-measuring, but a run that drifts there would sink or float the prop. The
+other edges move - that is the cloth, and is the point.
 
 ## Kestrel canvas is modern; Thirst canvas is not
 

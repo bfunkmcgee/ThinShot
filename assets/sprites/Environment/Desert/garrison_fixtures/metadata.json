@@ -47,7 +47,13 @@
       "rotations": {
         "unknown": "Garrison_washing_line.png"
       },
-      "animations": {}
+      "animations": {
+        "wind": {
+          "description": "the hanging uniforms and towels swinging and fluttering on the line in the wind, the steel posts and the wire completely still",
+          "unknown": "animations/washing_line/frame_%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "11b240f3-62e3-4f9a-a227-28093107afff",
@@ -167,7 +173,13 @@
       "rotations": {
         "unknown": "Garrison_flagpole.png"
       },
-      "animations": {}
+      "animations": {
+        "wind": {
+          "description": "the flag flapping and rippling in a steady desert wind, the steel mast and concrete base completely still",
+          "unknown": "animations/flagpole/frame_%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "b3bbd077-25fb-4819-b877-12dbd66b9f56",
@@ -212,7 +224,13 @@
       "rotations": {
         "unknown": "Garrison_awning.png"
       },
-      "animations": {}
+      "animations": {
+        "wind": {
+          "description": "the camouflage netting canopy rippling and billowing gently in the wind, the steel poles and the workbench underneath completely still",
+          "unknown": "animations/awning/frame_%03d.png",
+          "frames": 9
+        }
+      }
     }
   ],
   "export_version": "1.0",
