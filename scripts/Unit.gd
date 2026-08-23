@@ -373,6 +373,14 @@ const ARC_HALF_SECTORS := 1
 const OVERWATCH_RANGE_BONUS := 2
 const OVERWATCH_VOLLEY := 2
 
+# What suppressive fire adds over the gun's aimed reach. Suppression is area
+# denial that does no damage at all, so the thing it must never require is
+# walking into the beaten zone to deliver it - a machinegun that has to close
+# to rifle distance before it can pin anybody is being used as a bad rifle.
+# Matches OVERWATCH_RANGE_BONUS on purpose: the gun covers the same ground
+# whether it is watching it or firing into it.
+const SUPPRESS_RANGE_BONUS := 2
+
 # Manhattan radius of suppressive fire's beaten zone. Wide on purpose: it
 # deals no damage, so its whole value is how much ground it shuts down at
 # once. Queried through suppress_radius(), which Wide Sweep grows.
@@ -1046,7 +1054,7 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			# the volume of fire to pin a target. Slow to reposition.
 			max_hp = 8
 			move_range = 3
-			attack_range = 4
+			attack_range = 5
 			damage = 2
 			accuracy = 78  # sprays rather than aims
 			mag_size = 6
@@ -1619,6 +1627,14 @@ func overwatch_rounds() -> int:
 ## third ring out.
 func suppress_radius() -> int:
 	return SUPPRESS_RADIUS + (1 if has_perk("wide_sweep") else 0)
+
+
+## How far this unit can PUT a beaten zone, as opposed to how wide that zone is
+## once it lands. Only a suppressor reaches past its aimed range; for everyone
+## else this is the ordinary weapon envelope, so callers can ask without
+## checking who they are asking about.
+func suppress_range() -> int:
+	return attack_range + (SUPPRESS_RANGE_BONUS if can_suppress() else 0)
 
 
 ## Someone who fights. A prisoner is on your side and walks out with you, but

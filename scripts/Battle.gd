@@ -2282,6 +2282,9 @@ func _set_fire_mode(mode: FireMode) -> void:
 	fire_mode = mode
 	board.set_fire_mode(mode)
 	_sync_fire_buttons()
+	# The reach depends on the mode now, so the highlights must be rebuilt when
+	# it changes rather than only when the selection does.
+	_refresh_highlights()
 	_update_unit_panel()
 
 
@@ -2719,12 +2722,19 @@ func _refresh_highlights() -> void:
 		moves = board.flood_fill(selected.cell, selected.move_range,
 				_blocked_for_team.bind(selected.team))
 	var attacks: Array[Vector2i] = []
+	# Suppression reaches further than the aimed shot, so the red tiles have to
+	# grow with the mode - otherwise the gunner's own beaten zone is unclickable
+	# at exactly the distance it exists to cover. Everything downstream gates on
+	# attack_cells, so widening the set here is the whole of the feature.
+	var reach: int = selected.attack_range
+	if fire_mode == FireMode.SUPPRESS and selected.can_suppress():
+		reach = selected.suppress_range()
 	# min_rounds, not 1: the gunner's last belt round cannot be aimed at a man
 	# (his lightest trigger is a burst), and painting the tile red used to
 	# promise a shot that then failed without a sound.
 	if not selected.acted and selected.has_ammo(selected.min_rounds()):
 		for enemy in living_units(Unit.TEAM_GOBLIN):
-			if Board.manhattan(selected.cell, enemy.cell) <= selected.attack_range \
+			if Board.manhattan(selected.cell, enemy.cell) <= reach \
 					and board.can_engage(selected.cell, enemy.cell):
 				attacks.append(enemy.cell)
 	# Even with no moves or targets, the unit stays selected: overwatch (W)
