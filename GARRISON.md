@@ -126,6 +126,13 @@ motor pool inside the gate where trucks fill and park. The memorial keeps
 what the zoning pass gave it — alone, in a planted row — but holds the
 south-west corner now, beside the way out.
 
+## Indoors
+
+What is behind each door is planned and validated in **INTERIORS.md**: six
+rooms where the campaign's saved state becomes furniture — stripped bunks
+for the dead, cots for the walking wounded, the surrendered man in the
+lockup's cell, the company book's stock on the armory racks.
+
 ## The asset bill
 
 Ships today: both huts, the field tent, wire, tower, flag, water tank,
