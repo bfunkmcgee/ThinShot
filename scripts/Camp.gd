@@ -486,6 +486,11 @@ const FIXTURE_ANIM_DIRS := {
 	"target": true,
 	"target_1": true,
 	"firing_point": true,
+	# The interior pair: a powered set's lamp breathing on its own hum, and
+	# canvas riding the air moving through the tent. The rest of the
+	# furniture batch holds still on purpose - steel and timber don't idle.
+	"radio_desk": true,
+	"folding_screen": true,
 }
 
 

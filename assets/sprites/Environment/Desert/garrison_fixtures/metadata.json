@@ -566,7 +566,13 @@
       "rotations": {
         "unknown": "Garrison_folding_screen.png"
       },
-      "animations": {}
+      "animations": {
+        "canvas_breathe": {
+          "description": "the canvas panel breathes in the moving air, the wooden frame completely still",
+          "unknown": "animations/folding_screen/frame_%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "b878059c-6ad2-4486-afa6-5e165e8b39b8",
@@ -641,7 +647,13 @@
       "rotations": {
         "unknown": "Garrison_radio_desk.png"
       },
-      "animations": {}
+      "animations": {
+        "set_hum": {
+          "description": "the indicator lamp pulses with the set's hum, the desk and logbook completely still",
+          "unknown": "animations/radio_desk/frame_%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "a7c361cd-3042-49df-9bdc-1bdec2da2b0a",
