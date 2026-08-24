@@ -17,7 +17,13 @@
       "rotations": {
         "unknown": "rotations/unknown.png"
       },
-      "animations": {}
+      "animations": {
+        "breeze": {
+          "description": "porch awning ripples, antenna sways",
+          "unknown": "animations/breeze/unknown/frame_%%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "1ccab40e-74fb-42a7-aa5a-f8294142a9b9",
@@ -32,7 +38,13 @@
       "rotations": {
         "unknown": "rotations/unknown.png"
       },
-      "animations": {}
+      "animations": {
+        "breeze": {
+          "description": "canvas roof breathes, lanterns swing",
+          "unknown": "animations/breeze/unknown/frame_%%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "eaed585c-5fd3-4104-bb8c-d3e9596324cc",
@@ -47,7 +59,13 @@
       "rotations": {
         "unknown": "rotations/unknown.png"
       },
-      "animations": {}
+      "animations": {
+        "breeze": {
+          "description": "dust wisps off the roof edge",
+          "unknown": "animations/breeze/unknown/frame_%%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "a791cd0c-80e5-4475-a95d-23d639041dd3",
@@ -62,7 +80,13 @@
       "rotations": {
         "unknown": "rotations/unknown.png"
       },
-      "animations": {}
+      "animations": {
+        "breeze": {
+          "description": "the door lamp swings on its bracket",
+          "unknown": "animations/breeze/unknown/frame_%%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "f60e65c5-945e-45cb-8866-22d480534321",
@@ -77,7 +101,13 @@
       "rotations": {
         "unknown": "rotations/unknown.png"
       },
-      "animations": {}
+      "animations": {
+        "breeze": {
+          "description": "canvas breathes, the flap stirs",
+          "unknown": "animations/breeze/unknown/frame_%%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "107e229c-3b02-4b0c-87ee-99872af81e35",

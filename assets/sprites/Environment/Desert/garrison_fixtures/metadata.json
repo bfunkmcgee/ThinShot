@@ -290,7 +290,13 @@
       "rotations": {
         "unknown": "Garrison_target.png"
       },
-      "animations": {}
+      "animations": {
+        "breeze": {
+          "description": "the silhouette rocks on its frame",
+          "unknown": "animations/target/frame_%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "330b8fb1-e2a5-44cc-9834-c7be7a9bc537",
@@ -320,7 +326,13 @@
       "rotations": {
         "unknown": "Garrison_firing_point.png"
       },
-      "animations": {}
+      "animations": {
+        "breeze": {
+          "description": "the mat's loose corner lifts",
+          "unknown": "animations/firing_point/frame_%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "e39a1d5b-254d-4226-b085-bdce1976a462",
@@ -335,7 +347,13 @@
       "rotations": {
         "unknown": "Garrison_bounty_board.png"
       },
-      "animations": {}
+      "animations": {
+        "breeze": {
+          "description": "the reward sheets flutter (posted face only)",
+          "unknown": "animations/bounty_board/frame_%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "dabb0a16-1006-45b4-9206-c138a13e78a1",
@@ -365,7 +383,13 @@
       "rotations": {
         "unknown": "Garrison_paymaster_desk.png"
       },
-      "animations": {}
+      "animations": {
+        "breeze": {
+          "description": "the ledger's pages lift and settle",
+          "unknown": "animations/paymaster_desk/frame_%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "8975e272-04c9-4439-a4ce-e971112f07f6",
@@ -380,7 +404,13 @@
       "rotations": {
         "unknown": "Garrison_qm_counter.png"
       },
-      "animations": {}
+      "animations": {
+        "breeze": {
+          "description": "the clipboard swings on its chain",
+          "unknown": "animations/qm_counter/frame_%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "eee9679f-8e18-45dc-81c0-7ba0ce90754a",
@@ -425,7 +455,13 @@
       "rotations": {
         "unknown": "Garrison_signals_mast.png"
       },
-      "animations": {}
+      "animations": {
+        "breeze": {
+          "description": "the border map flutters under celluloid",
+          "unknown": "animations/signals_mast/frame_%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "ca2c3081-8688-47a0-99a8-7c35d372321b",

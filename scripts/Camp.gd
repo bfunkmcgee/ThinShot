@@ -396,6 +396,17 @@ const FIXTURE_ANIM_DIRS := {
 	"awning": true,
 	"flagpole": true,
 	"washing_line": true,
+	# The stations and the range, each moving by what it is: sheets, pages,
+	# a clipboard on its chain, targets rocking on their frames, a mat's
+	# loose corner, the border map under its celluloid. The berms are absent
+	# deliberately - packed earth that wiggles is a defect, not a breeze.
+	"signals_mast": true,
+	"bounty_board": true,
+	"paymaster_desk": true,
+	"qm_counter": true,
+	"target": true,
+	"target_1": true,
+	"firing_point": true,
 }
 
 
@@ -646,7 +657,10 @@ func _spawn_props() -> void:
 							tex = BOUNTY_BOARD_EMPTY
 						var fix := _spawn_prop(tex,
 								FIXTURE_OFFSETS[fixture], cell)
-						if FIXTURE_ANIM_DIRS.has(fixture):
+						# The empty board stays a still: its frames are the
+						# POSTED face, and animating them onto the bare cork
+						# would undo the state pick a line above.
+						if FIXTURE_ANIM_DIRS.has(fixture) 								and tex == FIXTURE_TEXTURES[fixture]:
 							_animate(fix, cell, _load_frame_run(
 									FIXTURE_ANIM_ROOT + fixture))
 						elif SWAYING_FIXTURES.has(fixture):
@@ -664,7 +678,10 @@ func _spawn_props() -> void:
 				"W":
 					var leaf := str(camp.get("gate", {}).get(cell, ""))
 					if GATE_TEXTURES.has(leaf):
-						_spawn_prop(GATE_TEXTURES[leaf], GATE_OFFSET, cell)
+						var hung := _spawn_prop(GATE_TEXTURES[leaf],
+								GATE_OFFSET, cell)
+						_animate(hung, cell, _load_frame_run(
+								GATE_ROOT + "animations/" + leaf))
 					else:
 						_spawn_prop(_wall_texture(cell), WALL_OFFSET, cell)
 				"=":

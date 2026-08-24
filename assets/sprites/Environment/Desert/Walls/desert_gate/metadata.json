@@ -15,7 +15,13 @@
       "rotations": {
         "unknown": "open_west.png"
       },
-      "animations": {}
+      "animations": {
+        "breeze": {
+          "description": "the leaf sways on its hinges",
+          "unknown": "animations/open_west/frame_%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "54249552-9699-44b1-a0d8-671de0d9f248",
@@ -29,7 +35,13 @@
       "rotations": {
         "unknown": "open_east.png"
       },
-      "animations": {}
+      "animations": {
+        "breeze": {
+          "description": "the leaf sways on its hinges",
+          "unknown": "animations/open_east/frame_%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "bd3276e3-528a-4a02-b640-bef2c41725d8",
