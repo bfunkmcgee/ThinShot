@@ -309,6 +309,67 @@ where one frame shows the whole weapon and the grip must stay in one hand —
 see the brute. Corollary: an aimed stance's weapon *correctly* switches
 sides as the facing swings; only carried stances get the hand-switch check.
 
+---
+
+## 7. The animation program  [proven 2026-08-24, goblin machine-gunner]
+
+How two approved stances become the eight animated sets, one generation
+batch per set, a human checkpoint after each. The whole program cost ~60
+generations on the MG goblin, point repairs included.
+
+**The 9-frame house shape is `keep_first_frame`.** Every shipped set is 9
+frames because frame 0 IS the state's rotation (the reference) and the
+engine generates 8 more (`frame_count: 8, keep_first_frame: true`). The
+shipped Goblin's walk confirms it: walk frame 0 is pixel-identical to its
+idle frame 0. Keep that shape — it is also what makes endpoint sealing (§5,
+assemble step) nearly a no-op instead of a visible snap.
+
+**Which engine mode per set:**
+
+| Set | Mode | Why |
+|---|---|---|
+| `standing_idle`, `standing_idle_alt`, `standing_idle_walk`, `standing-readyToFire_idle`, `standing_idle_damage`, `standing_idle_reload` | plain v3, all 8 directions in one call | v3 loops naturally close back onto their reference (measured seams sit inside the per-step delta range); for the one-shots, say "then returning to his exact starting pose" and the return rule (§3) mostly takes care of itself |
+| `standing_idle_to_readyToFire` | v3 **interpolation**, one call per direction: `custom_start_frame` = idle rotation, `end_frame` = aim rotation | the transition must land on the aim rotation *and* read in reverse as the lower; pinning both ends made every direction land 0–1px off its target |
+| `standing_idle_to_dead` | v3 interpolation: start = idle rotation, end = the **corpse** rotation | the death lands exactly on the corpse the board keeps, so the swap to the static Dead sprite is invisible |
+
+A stance built as a §6 composite animates **each direction on the character
+that owns its rotation** — the aim-idle's south ran on the toward-camera
+state, its north on the away state, the rest on the mechanical pass.
+
+**Always in the action language:** "the weapon completely inactive, not
+firing, no muzzle flash, no sparks, no bright highlights". It reduces but
+does not eliminate flash — which is why the scan below is not optional.
+
+**Scan every batch, before the human looks:**
+`python tools/judge_frames.py anim <set-dir> --gif out.gif --fps <spec fps>`
+— feet weld/bob per direction, row-0, per-frame glint counts, per-step
+deltas, loop seam. A handful of flash pixels is a point repair (recolor to
+the median of the surrounding weapon pixels; erase a detached spark);
+a direction lit in most frames is a re-roll. If a facing keeps re-lighting
+across sets, its ROTATION carries the seed glint: repair the rotation's
+white pixels and re-roll that direction with the repaired frame as
+`custom_start_frame` — negation language alone lost twice before this won.
+The MG goblin's south-east did exactly this in every single set.
+
+**The human judges the GIF, not the strip.** The tool's GIF holds two extra
+beats on frame 0 at the loop point — the in-game snap back to idle — so a
+one-shot that fails to return to neutral shows as the twitch it will be in
+play. Two verdicts from the checkpoint loop worth keeping: "not jarring
+enough" is a real failure of a damage set (re-roll with mechanically bigger
+language: body snaps, head whips, a knee buckles), and a corpse generated on
+an enlarged canvas inflates to fill it (§6 canvas law) — the Dead state is a
+48-canvas state pass with "a small crumpled heap no larger than his standing
+figure's footprint", judged against the shipped corpse for perspective.
+
+**Then assemble.** Write a manifest pointing at the approved staging folders
+and run `python tools/assemble_unit.py <manifest>` — binary alpha, one
+frame-0-anchored transform per direction, endpoint seals, corpse taken from
+the death's last frames. It rebuilt the shipped MG goblin byte-identically
+from staging, so what it enforces is exactly what shipped. From there §5
+takes over: metadata.json by hand (only the operator knows the character ids
+and repair notes), `validate_unit_sprites.py`, wiring, `measure_muzzle.gd`,
+`check_unit_art.gd`, `check_res_case.py`, and the render check.
+
 **Animating: a glint pixel is a firing instruction.** A white highlight on a
 weapon's muzzle in the rotation frame gets read by the animator as "this
 weapon sparks" and grows into muzzle flash in the generated frames (found on
@@ -320,8 +381,11 @@ call), and apply the same repair to the static rotation so still and animation
 agree. Scan every rotation for near-white pixels (`min(RGB) > 200`) before
 animating — and scan every animation for them after.
 
-**Gates before any human judging** (`artgen/staging/brute-tests/judge.py`):
-row 0 must hold <6 opaque px (else the weapon is amputated), feet per
-direction within the family band, figure height against the shipped anchor,
-and a 5× nearest-neighbour compass sheet — measured numbers catch clipping
-and scale, only the eye catches pose lies.
+**Gates before any human judging** (`python tools/judge_frames.py rotations
+<dir> --sheet out.png`): row 0 must hold <6 opaque px (else the weapon is
+amputated), zero near-white glint pixels (see §7 — a glint becomes muzzle
+flash the moment the frame seeds an animation), feet per direction within the
+family band, the carry-side sweep, and a 5× nearest-neighbour compass sheet —
+measured numbers catch clipping and scale, only the eye catches pose lies.
+Spec-number checks (feet band, figure height, palette) stay with
+`measure_rotations.py`; the two tools judge different failures and both run.
