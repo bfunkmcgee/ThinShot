@@ -74,6 +74,9 @@ const AGE_BANDS := {
 	7: [24, 41],  # GOBLIN_BOLT    - marksman
 	15: [28, 46],  # GOBLIN_MG     - the gun goes to somebody trusted
 	16: [22, 39],  # GOBLIN_BRUTE  - strength is a young man's trade
+	17: [55, 78],  # GOBLIN_ELDER  - old enough to remember the wells open
+	18: [30, 55],  # GOBLIN_KEEPER - a stall is a working life's middle years
+	19: [16, 30],  # GOBLIN_CARRIER - hauling water is where working life starts
 }
 const AGE_DEFAULT: Array[int] = [20, 45]
 

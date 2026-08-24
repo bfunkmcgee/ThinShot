@@ -55,6 +55,14 @@ enum Kind {
 	# (UNIT_ASSET_SPEC.md section 6's inversion). Appears where the campaign
 	# is at its most desperate: the survey camp and the cold well.
 	GOBLIN_BRUTE,
+	# The people who live where the fighting happens. Unarmed by kind - zero
+	# range, zero damage - and their non-combatant standing rides the same
+	# `resident` flag it always did; these kinds exist so a settlement stops
+	# being drawn out of the rifle rack. Art reuses idle for every weapon
+	# field, the Kind.CIVILIAN pattern.
+	GOBLIN_ELDER,
+	GOBLIN_KEEPER,
+	GOBLIN_CARRIER,
 }
 
 ## The kinds that can fill one of a mission's three rifle slots. Rodar owns the
@@ -95,6 +103,10 @@ const TECHNICIAN_ROOT := "res://assets/sprites/Kestrel_Technician"
 # The Thirst's belt-fed gunner, on the canonical layout like the Kestrels.
 const GMG_ROOT := "res://assets/sprites/Goblin_MG"
 const BRUTE_ROOT := "res://assets/sprites/Goblin_Brute"
+# The three goblin civilians: townfolk and bounty residents.
+const ELDER_ROOT := "res://assets/sprites/Goblin_Elder"
+const KEEPER_ROOT := "res://assets/sprites/Goblin_Keeper"
+const CARRIER_ROOT := "res://assets/sprites/Goblin_Carrier"
 
 # Directional pixel-art frames, indexed by 45-degree compass sector of the
 # screen-space facing vector: 0=E, 1=SE, 2=S, 3=SW, 4=W, 5=NW, 6=N, 7=NE.
@@ -1251,6 +1263,44 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			idle_alt_frames = BRUTE_IDLE_ALT_FRAMES
 			hurt_frames = BRUTE_HURT_FRAMES
 			reload_frames = BRUTE_RELOAD_FRAMES
+		Kind.GOBLIN_ELDER, Kind.GOBLIN_KEEPER, Kind.GOBLIN_CARRIER:
+			# Townfolk. Zero reach and zero damage BY KIND, so even a bug
+			# that hands one a turn cannot make him fight. The weapon fields
+			# all reuse idle - there is no weapon to raise.
+			max_hp = 3
+			move_range = 4
+			attack_range = 0
+			damage = 0
+			accuracy = 0
+			match kind:
+				Kind.GOBLIN_ELDER:
+					frames = ELDER_FRAMES
+					idle_frames = ELDER_IDLE_FRAMES
+					idle_alt_frames = ELDER_IDLE_ALT_FRAMES
+					walk_frames = ELDER_WALK_FRAMES
+					hurt_frames = ELDER_HURT_FRAMES
+					death_frames = ELDER_DEATH_FRAMES
+					dead_frames = ELDER_DEAD_FRAMES
+				Kind.GOBLIN_KEEPER:
+					frames = KEEPER_FRAMES
+					idle_frames = KEEPER_IDLE_FRAMES
+					idle_alt_frames = KEEPER_IDLE_ALT_FRAMES
+					walk_frames = KEEPER_WALK_FRAMES
+					hurt_frames = KEEPER_HURT_FRAMES
+					death_frames = KEEPER_DEATH_FRAMES
+					dead_frames = KEEPER_DEAD_FRAMES
+				Kind.GOBLIN_CARRIER:
+					frames = CARRIER_FRAMES
+					idle_frames = CARRIER_IDLE_FRAMES
+					idle_alt_frames = CARRIER_IDLE_ALT_FRAMES
+					walk_frames = CARRIER_WALK_FRAMES
+					hurt_frames = CARRIER_HURT_FRAMES
+					death_frames = CARRIER_DEATH_FRAMES
+					dead_frames = CARRIER_DEAD_FRAMES
+			aim_frames = frames
+			raise_frames = idle_frames
+			aim_idle_frames = idle_frames
+			reload_frames = idle_frames
 		Kind.CIVILIAN:
 			# Carries nothing and shoots nothing. Starts huddled where the
 			# Thirst left them; release() puts them on their feet.
@@ -1575,6 +1625,52 @@ static var BRUTE_HURT_FRAMES: Array = _load_dir_frames(
 static var BRUTE_RELOAD_FRAMES: Array = _load_dir_frames(
 		BRUTE_ROOT + "/Goblin_Brute/animations/standing_idle_reload")
 
+# The goblin civilians: five sets each; the weapon fields reuse idle in
+# setup(), so nothing else loads. Names double as the pattern for any future
+# townfolk kind.
+static var ELDER_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		ELDER_ROOT + "/Goblin_Elder/rotations")
+static var ELDER_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		ELDER_ROOT + "/Dead_stance/rotations")
+static var ELDER_IDLE_FRAMES: Array = _load_dir_frames(
+		ELDER_ROOT + "/Goblin_Elder/animations/standing_idle")
+static var ELDER_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		ELDER_ROOT + "/Goblin_Elder/animations/standing_idle_alt")
+static var ELDER_WALK_FRAMES: Array = _load_dir_frames(
+		ELDER_ROOT + "/Goblin_Elder/animations/standing_idle_walk")
+static var ELDER_HURT_FRAMES: Array = _load_dir_frames(
+		ELDER_ROOT + "/Goblin_Elder/animations/standing_idle_damage")
+static var ELDER_DEATH_FRAMES: Array = _load_dir_frames(
+		ELDER_ROOT + "/Goblin_Elder/animations/standing_idle_to_dead")
+static var KEEPER_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		KEEPER_ROOT + "/Goblin_Keeper/rotations")
+static var KEEPER_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		KEEPER_ROOT + "/Dead_stance/rotations")
+static var KEEPER_IDLE_FRAMES: Array = _load_dir_frames(
+		KEEPER_ROOT + "/Goblin_Keeper/animations/standing_idle")
+static var KEEPER_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		KEEPER_ROOT + "/Goblin_Keeper/animations/standing_idle_alt")
+static var KEEPER_WALK_FRAMES: Array = _load_dir_frames(
+		KEEPER_ROOT + "/Goblin_Keeper/animations/standing_idle_walk")
+static var KEEPER_HURT_FRAMES: Array = _load_dir_frames(
+		KEEPER_ROOT + "/Goblin_Keeper/animations/standing_idle_damage")
+static var KEEPER_DEATH_FRAMES: Array = _load_dir_frames(
+		KEEPER_ROOT + "/Goblin_Keeper/animations/standing_idle_to_dead")
+static var CARRIER_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		CARRIER_ROOT + "/Goblin_Carrier/rotations")
+static var CARRIER_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		CARRIER_ROOT + "/Dead_stance/rotations")
+static var CARRIER_IDLE_FRAMES: Array = _load_dir_frames(
+		CARRIER_ROOT + "/Goblin_Carrier/animations/standing_idle")
+static var CARRIER_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		CARRIER_ROOT + "/Goblin_Carrier/animations/standing_idle_alt")
+static var CARRIER_WALK_FRAMES: Array = _load_dir_frames(
+		CARRIER_ROOT + "/Goblin_Carrier/animations/standing_idle_walk")
+static var CARRIER_HURT_FRAMES: Array = _load_dir_frames(
+		CARRIER_ROOT + "/Goblin_Carrier/animations/standing_idle_damage")
+static var CARRIER_DEATH_FRAMES: Array = _load_dir_frames(
+		CARRIER_ROOT + "/Goblin_Carrier/animations/standing_idle_to_dead")
+
 
 static func _load_dir_frames(base: String) -> Array:
 	var result: Array = []
@@ -1889,6 +1985,12 @@ static func kind_role_name(p_kind: Kind) -> String:
 			return "Thirst Gunner"
 		Kind.GOBLIN_BRUTE:
 			return "Thirst Breaker"
+		Kind.GOBLIN_ELDER:
+			return "Settlement Elder"
+		Kind.GOBLIN_KEEPER:
+			return "Stallkeeper"
+		Kind.GOBLIN_CARRIER:
+			return "Water-carrier"
 		Kind.GOBLIN_REVOLVER:
 			return "Pressed Conscript"
 		Kind.GRENADIER:

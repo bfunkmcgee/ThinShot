@@ -44,6 +44,9 @@ const ANIM_FIELDS := ["idle_frames", "walk_frames", "raise_frames",
 ## the check stays strict everywhere else.
 const REUSES := {
 	"CIVILIAN": "carries no weapon: aim, raise, aim-idle, hurt and reload are all the cower loop",
+	"GOBLIN_ELDER": "carries no weapon: aim reuses the standing rotations; raise, aim-idle and reload reuse the idle loop",
+	"GOBLIN_KEEPER": "carries no weapon: aim reuses the standing rotations; raise, aim-idle and reload reuse the idle loop",
+	"GOBLIN_CARRIER": "carries no weapon: aim reuses the standing rotations; raise, aim-idle and reload reuse the idle loop",
 }
 
 

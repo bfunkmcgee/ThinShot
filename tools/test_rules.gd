@@ -66,6 +66,8 @@ const KIND_NAMES: Array[String] = [
 	"GOBLIN_MG",
 	# The brute, fielded where the campaign is at its most desperate.
 	"GOBLIN_BRUTE",
+	# The three goblin civilians: townfolk and bounty residents.
+	"GOBLIN_ELDER", "GOBLIN_KEEPER", "GOBLIN_CARRIER",
 ]
 
 var _failed := false

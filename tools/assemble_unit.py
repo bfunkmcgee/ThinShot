@@ -158,9 +158,17 @@ def main():
     if os.path.exists(dest) and not args.force and not args.out:
         sys.exit(f"{dest} exists - pass --force to replace it, or --out for a dry run")
 
-    missing = [k for k in SEALS if k not in m["sets"]]
-    if missing:
-        sys.exit("manifest is missing sets: " + ", ".join(missing))
+    # A fighting unit ships all eight sets. A CIVILIAN ships a subset (idle,
+    # alt, walk, damage, death) and wires the weapon fields to the idle arrays
+    # in Unit.gd - the Kind.CIVILIAN reuse pattern, declared in
+    # check_unit_art.gd's REUSES. So only the sets present in the manifest are
+    # assembled; the death set stays mandatory because the corpse rotations
+    # are its last frames.
+    unknown = [k for k in m["sets"] if k not in SEALS]
+    if unknown:
+        sys.exit("manifest names unknown sets: " + ", ".join(unknown))
+    if "standing_idle_to_dead" not in m["sets"]:
+        sys.exit("standing_idle_to_dead is mandatory - the corpse comes from it")
 
     semi = [0]
 
@@ -170,15 +178,24 @@ def main():
         im.save(p)
 
     rot = {"idle": {}, "ready": {}}
-    for key, src in [("idle", m["idle_rotations"]), ("ready", m["ready_rotations"])]:
+    sources = [("idle", m["idle_rotations"])]
+    # An unarmed unit has no aim stance; its aim fields reuse idle in Unit.gd.
+    has_ready = "ready_rotations" in m
+    if has_ready:
+        sources.append(("ready", m["ready_rotations"]))
+    for key, src in sources:
         for d in ORDER:
             im = load_bin(os.path.join(src, d + ".png"), semi)
             rot[key][d] = place([im], canvas, feet_y, f"{key} rotation {d}")[0]
+    if not has_ready:
+        rot["ready"] = rot["idle"]
+    written = 0
     for d in ORDER:
         save(rot["idle"][d], unit, "rotations", d + ".png")
-        save(rot["ready"][d], "ReadyToFire_Stance", "rotations", d + ".png")
-
-    written = 16
+        written += 1
+        if has_ready:
+            save(rot["ready"][d], "ReadyToFire_Stance", "rotations", d + ".png")
+            written += 1
     dead = {}
     for name, src in m["sets"].items():
         seal = SEALS[name]

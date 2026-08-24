@@ -609,17 +609,26 @@ func _spawn_detachment(leader_id: int) -> void:
 ## one is scored as killing a civilian. Every one of them can be asked once.
 func _spawn_bounty_residents() -> void:
 	var spec: Dictionary = level.get("bounty", {})
+	# The people asked used to be drawn out of the rifle rack (Kind.GOBLIN
+	# with the resident flag doing all the work). Now the settlement looks
+	# like one: elders, stallkeepers and water-carriers, drawn by hash so the
+	# same campaign meets the same faces on a reload.
+	var civilian_kinds: Array = [Unit.Kind.GOBLIN_ELDER,
+			Unit.Kind.GOBLIN_KEEPER, Unit.Kind.GOBLIN_CARRIER]
 	var ordinal := 0
 	for cell: Vector2i in spec.get("residents", []):
 		if not board.in_bounds(cell) or unit_at(cell) != null:
 			continue
-		_spawn_unit(Unit.Kind.GOBLIN, cell)
+		var civ_kind: Unit.Kind = civilian_kinds[Roll.pick(Game.campaign_seed,
+				Game.current_level + 900, "resident_kind_%d" % ordinal,
+				civilian_kinds.size())]
+		_spawn_unit(civ_kind, cell)
 		var who := unit_at(cell)
 		if who == null:
 			continue
 		who.resident = true
 		who.identity = Roll.identity(Game.campaign_seed,
-				Game.current_level + 900, ordinal, Unit.Kind.GOBLIN)
+				Game.current_level + 900, ordinal, civ_kind)
 		who.set_facing_sector(Board.sector_from_to(cell, board.size / 2))
 		residents.append(who)
 		ordinal += 1
