@@ -127,6 +127,13 @@ const GARRISON := {
 		"WWWWWWWWW..WWWWWWWWWWW",
 	],
 	"props": GARRISON_PROPS,
+	# The two wall cells flanking the gateway carry the gate art: piers with
+	# their steel leaves standing OPEN against the wall, so the gap reads as
+	# a way through that somebody could close, which is what a gate is.
+	"gate": {
+		Vector2i(8, 11): "open_west",
+		Vector2i(11, 11): "open_east",
+	},
 	"structures": [
 		# The billet row holds the west wall; the five buildings of the
 		# construction pass (GARRISON.md) hold their quarters. The gate is
@@ -140,6 +147,9 @@ const GARRISON := {
 		{"kind": "surgeon_tent", "anchor": Vector2i(4, 3), "size": Vector2i(2, 2)},
 		{"kind": "canteen", "anchor": Vector2i(4, 8), "size": Vector2i(2, 2)},
 		{"kind": "armory", "anchor": Vector2i(13, 6), "size": Vector2i(2, 2)},
+		# The motor pool's one vehicle, parked between the armory yard and
+		# the lockup, nose to the pen wire - in service, not a wreck.
+		{"kind": "water_truck", "anchor": Vector2i(17, 7), "size": Vector2i(2, 2)},
 		{"kind": "lockup", "anchor": Vector2i(17, 9), "size": Vector2i(2, 2)},
 	],
 	"zone_seed": 91,

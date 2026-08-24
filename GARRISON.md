@@ -137,8 +137,8 @@ flag; sandbags stand in for the berm until it has its own art.
 | ~~Earth berm~~ — **shipped** ×3 | 48×48 | `Garrison_berm{,_1,_2}`, offsets −15/−17/−20 |
 | ~~Range target~~ — **shipped** ×2 | 48×48 | `Garrison_target{,_1}`, offset −21 |
 | ~~Firing point~~ — **shipped** | 48×48 | `Garrison_firing_point`, offset −20 |
-| Gate | 68×68 wall-format | already specced as #2; camp wants the OPEN state |
-| ~~Water truck~~ — **shipped** | 2×2 (168) | `garrison_buildings/Water_truck`, offset −29 |
+| ~~Gate~~ — **shipped** | 68×68 | `Walls/desert_gate/` — open leaves hung at (8,11)/(11,11); closed, blown, piers, boom and checkpoint banked for #2's battle half |
+| ~~Water truck~~ — **shipped & parked** | 2×2 (168) | structure at (17,7), nose to the pen wire |
 
 The stations shipped with the same batch and are LIVE in the current 16×12
 yard already (Tier 6's own landing plan): the signals mast carries the
@@ -173,10 +173,12 @@ mast would double #24's, and the sign was louder than this game's voice.
   `STRUCTURE_OFFSETS`, measured off the art's opaque bounds as always.
 - The gate ships as two open wall-row cells. Camp's bounds keep the player
   inside; the gateway is somewhere to stand, not somewhere to leave.
-- The tower at (12,10) is a tall prop at the front of the yard: it will
-  occlude a walking soldier two rows behind it. Battle solved this with the
-  occlusion fade; port it to Camp if it bothers, and until then the motor
-  pool keeps its ground clutter low.
+- ~~The tower's front-row occlusion~~ — solved: Battle's occlusion fade is
+  ported, with one load-bearing departure. Battle's structures are sliced
+  into region strips, so their rects are honest; Camp's are whole 168px
+  canvases, and judged by canvas the entire yard faded the moment anybody
+  walked it. Each occluder is measured once by its OPAQUE bounds instead,
+  and the fade judges what the art actually covers.
 - The awning keeps clear cells either side — its canopy is two tiles wide
   on a one-tile stand. (12,8) has both.
 - Staged landing order, each step leaving the yard coherent: (1) map +

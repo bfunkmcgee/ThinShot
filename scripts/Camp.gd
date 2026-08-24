@@ -161,6 +161,15 @@ const STRUCTURE_OFFSETS := {
 	"surgeon_tent": Vector2(0, -26), "water_truck": Vector2(0, -29),
 }
 const STRUCTURE_FPS := 7.0  # gentle breeze loops, matching Battle's clock
+# The occlusion fade, ported from Battle with its constants intact: the
+# garrison finally has buildings, and a building that swallows the man
+# walking behind it is the exact bug the battlefield already solved. Same
+# numbers, same rule - the head-and-shoulders band, the real-coverage gate
+# that keeps a mostly-transparent rectangle from counting, the same speed.
+const OCCLUDED_ALPHA := 0.42
+const RECOGNISE_BAND := 0.62
+const OCCLUDED_FRACTION := 0.22
+const OCCLUSION_FADE := 4.0
 # The board's other face: bare cork, one faded outline where a sheet was
 # taken down. Which face stands is decided when the camp is built - the offer
 # list cannot change while the player is standing in it.
@@ -185,6 +194,14 @@ const ROCK_OFFSET := Vector2(0, -18)
 const JUNK_OFFSET := Vector2(0, -20)
 const PLANT_OFFSET := Vector2(0, -17)
 const WALL_OFFSET := Vector2(0, -15)
+# The gateway's two flanking piers, leaves standing open against the wall.
+# Same 68px class as the wall pieces, one texel shallower at the base.
+const GATE_ROOT := "res://assets/sprites/Environment/Desert/Walls/desert_gate/"
+const GATE_TEXTURES := {
+	"open_west": preload(GATE_ROOT + "open_west.png"),
+	"open_east": preload(GATE_ROOT + "open_east.png"),
+}
+const GATE_OFFSET := Vector2(0, -14)
 # The pile, the loose crates and both tables are all nearest-downsampled into
 # the 48px class now, so everything standing in camp draws at PROP_SCALE and
 # the offsets are halved to match - the painted bases stay on their cells.
@@ -243,6 +260,10 @@ var fixtures: Array = []
 var _focus: Dictionary = {}
 var _dust_materials: Dictionary = {}
 var _swaying: Array = []
+# The scenery that can stand in front of somebody. Collected once after every
+# spawner has run; pairs of (sprite, sorts_by) because a structure's draw order
+# belongs to its root while its pixels belong to the child.
+var _occluders: Array = []
 var _animated: Array = []
 # What the two modal buttons currently mean, set when a panel is opened.
 var _choice_action := ""
@@ -266,6 +287,7 @@ func _ready() -> void:
 	Game.ensure_roster(Game.data())
 	_spawn_squad()
 	_build_fixtures()
+	_collect_occluders()
 	close_button.pressed.connect(_close_modal)
 	choice_a.pressed.connect(_on_choice.bind(0))
 	choice_b.pressed.connect(_on_choice.bind(1))
@@ -459,6 +481,88 @@ func _sway_props() -> void:
 
 
 ## Which way a wire cell runs, read off its neighbours - Battle's rule.
+## One departure from Battle's port, and it is load-bearing: Battle's
+## structures are sliced into region strips, so their rects are honest.
+## Camp's are whole 168x168 canvases - at 2x that is a 336px rectangle that
+## is mostly transparency, and judged by canvas the whole yard fades the
+## moment anybody walks it. So each occluder is measured ONCE by its opaque
+## bounds, and the fade judges what the art actually covers.
+func _collect_occluders() -> void:
+	_occluders.clear()
+	var bounds_cache := {}
+	for child in entities.get_children():
+		if child is Unit:
+			continue
+		if child is Sprite2D:
+			_add_occluder(child, child, bounds_cache)
+			continue
+		for grandchild in child.get_children():
+			if grandchild is Sprite2D:
+				_add_occluder(grandchild, child, bounds_cache)
+
+
+func _add_occluder(spr: Sprite2D, sorts_by: Node2D, cache: Dictionary) -> void:
+	if spr.texture == null:
+		return
+	var key := spr.texture.get_rid()
+	if not cache.has(key):
+		var img := spr.texture.get_image()
+		cache[key] = Rect2(img.get_used_rect()) if img != null 				else Rect2(Vector2.ZERO, Vector2(spr.texture.get_size()))
+	var used: Rect2 = cache[key]
+	var canvas := Vector2(spr.texture.get_size())
+	_occluders.append({
+		"sprite": spr, "sorts_by": sorts_by,
+		# From the sprite's drawn centre to the opaque region's centre, in
+		# texels - scaled at query time so this survives any future rescale.
+		"off": used.get_center() - canvas * 0.5,
+		"size": used.size,
+	})
+
+
+func _occluder_rect(entry: Dictionary) -> Rect2:
+	var spr: Sprite2D = entry.sprite
+	var centre: Vector2 = spr.global_position 			+ (spr.offset + entry.off) * spr.scale
+	var size: Vector2 = entry.size * spr.scale
+	return Rect2(centre - size * 0.5, size)
+
+
+func _sprite_rect(spr: Sprite2D) -> Rect2:
+	var size: Vector2 = spr.region_rect.size if spr.region_enabled 			else Vector2(spr.texture.get_size())
+	size *= spr.scale
+	var centre := spr.global_position + spr.offset * spr.scale
+	return Rect2(centre - size * 0.5, size)
+
+
+## Battle's rule, applied to the people who live here: anything drawn after a
+## unit whose rectangle genuinely covers his head and shoulders steps aside to
+## 42% while he is there. In camp that is the player walking behind the armory
+## and the idlers the buildings would otherwise swallow whole.
+func _refresh_occlusion(delta: float) -> void:
+	var hiding := {}
+	for child in entities.get_children():
+		var unit := child as Unit
+		if unit == null or unit.sprite == null or unit.sprite.texture == null:
+			continue
+		var body := _sprite_rect(unit.sprite)
+		body.size.y *= RECOGNISE_BAND
+		var need := body.size.x * body.size.y * OCCLUDED_FRACTION
+		for i in _occluders.size():
+			if hiding.has(i):
+				continue
+			var entry: Dictionary = _occluders[i]
+			if (entry.sorts_by as Node2D).global_position.y <= unit.global_position.y:
+				continue
+			var over := body.intersection(_occluder_rect(entry))
+			if over.size.x * over.size.y >= need:
+				hiding[i] = true
+	for i in _occluders.size():
+		var spr: Sprite2D = _occluders[i].sprite
+		var want := OCCLUDED_ALPHA if hiding.has(i) else 1.0
+		if is_equal_approx(spr.modulate.a, want):
+			continue
+		spr.modulate.a = move_toward(spr.modulate.a, want, OCCLUSION_FADE * delta)
+
+
 func _wire_kind(cell: Vector2i) -> String:
 	var has_x := board.map_char(cell + Vector2i(1, 0)) == "=" 			or board.map_char(cell + Vector2i(-1, 0)) == "="
 	var has_y := board.map_char(cell + Vector2i(0, 1)) == "=" 			or board.map_char(cell + Vector2i(0, -1)) == "="
@@ -558,7 +662,11 @@ func _spawn_props() -> void:
 					_sway(_spawn_prop(PLANT_TEXTURES[_prop_pick(cell, SALT_PLANT,
 							PLANT_TEXTURES.size())], PLANT_OFFSET, cell), cell)
 				"W":
-					_spawn_prop(_wall_texture(cell), WALL_OFFSET, cell)
+					var leaf := str(camp.get("gate", {}).get(cell, ""))
+					if GATE_TEXTURES.has(leaf):
+						_spawn_prop(GATE_TEXTURES[leaf], GATE_OFFSET, cell)
+					else:
+						_spawn_prop(_wall_texture(cell), WALL_OFFSET, cell)
 				"=":
 					var run := _wire_kind(cell)
 					_spawn_prop(WIRE_TEXTURES[run], WIRE_OFFSETS[run], cell)
@@ -839,6 +947,7 @@ func _process(delta: float) -> void:
 	# keeps blowing through the frames where there is nobody to walk around as.
 	_sway_props()
 	_animate_props()
+	_refresh_occlusion(delta)
 	if player == null:
 		return
 	var dir := Vector2.ZERO if modal.visible else _walk_input()
