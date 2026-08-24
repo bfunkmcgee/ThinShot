@@ -123,10 +123,21 @@ const STRUCTURE_DIRS := {
 	"tent": STRUCTURE_ROOT + "/desert_hut/Desert_hut_2",
 	"stores_tent": STRUCTURE_ROOT + "/camp_tents/Stores_tent",
 	"field_tent": STRUCTURE_ROOT + "/camp_tents/Field_tent",
+	# The construction pass (GARRISON.md). Registered ahead of the map that
+	# places them - these tables are paths, so an unplaced kind costs nothing.
+	"hq": STRUCTURE_ROOT + "/garrison_buildings/Hq_post",
+	"canteen": STRUCTURE_ROOT + "/garrison_buildings/Wet_canteen",
+	"armory": STRUCTURE_ROOT + "/garrison_buildings/Armory_magazine",
+	"lockup": STRUCTURE_ROOT + "/garrison_buildings/Lockup",
+	"surgeon_tent": STRUCTURE_ROOT + "/garrison_buildings/Surgeon_tent",
+	"water_truck": STRUCTURE_ROOT + "/garrison_buildings/Water_truck",
 }
 const STRUCTURE_OFFSETS := {
 	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33), "tent": Vector2(0, -33),
 	"stores_tent": Vector2(0, -17), "field_tent": Vector2(0, -23),
+	"hq": Vector2(0, -36), "canteen": Vector2(0, -37),
+	"armory": Vector2(0, -35), "lockup": Vector2(0, -34),
+	"surgeon_tent": Vector2(0, -26), "water_truck": Vector2(0, -29),
 }
 const STRUCTURE_FPS := 7.0  # gentle breeze loops, matching Battle's clock
 const PROP_DUST := preload("res://assets/shaders/prop_dust.gdshader")

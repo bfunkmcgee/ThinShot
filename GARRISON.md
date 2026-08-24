@@ -130,19 +130,26 @@ flag; sandbags stand in for the berm until it has its own art.
 
 | Piece | Canvas | Notes |
 |---|---|---|
-| HQ command post | 2×2 (168) | mud brick + steel door, antenna stub, porch on the south face |
-| Wet canteen | 2×2 (168) | mud brick, canvas roof, lanterns, benches at the door |
-| Armory magazine | 2×2 (168) | windowless, buttressed, steel double door, stencilled |
-| Lockup blockhouse | 2×2 (168) | barred slits, one steel door facing the pen |
-| Surgeon's tent | 2×2 (168) | already specced as #27 |
+| ~~HQ command post~~ — **shipped** | 2×2 (168) | `garrison_buildings/Hq_post`, offset −36 |
+| ~~Wet canteen~~ — **shipped** | 2×2 (168) | `garrison_buildings/Wet_canteen`, offset −37 |
+| ~~Armory magazine~~ — **shipped** | 2×2 (168) | `garrison_buildings/Armory_magazine`, offset −35 |
+| ~~Lockup blockhouse~~ — **shipped** | 2×2 (168) | `garrison_buildings/Lockup`, offset −34 |
+| ~~Surgeon's tent~~ — **shipped** | 2×2 (168) | `garrison_buildings/Surgeon_tent`, offset −26 — closes #27's art half |
 | Earth berm | 48×48 ×2–3 | replaces the sandbag stand-in; reads as pushed dirt |
 | Range target | 48×48 ×2 | steel silhouette on a timber frame, patched holes |
 | Firing point | 48×48 | mat, sand sock, brass on the ground |
 | Gate | 68×68 wall-format | already specced as #2; camp wants the OPEN state |
-| Water truck (optional) | 2×2 (168) | the motor pool's one vehicle, NOT a wreck |
+| ~~Water truck~~ — **shipped** | 2×2 (168) | `garrison_buildings/Water_truck`, offset −29 |
 
 Generation notes are Tier 6's, unchanged: name the modern material in every
 prompt, no sand disc, 48px batches anchored on shipped props.
+
+All six buildings generated 2026-08-24 (two 168px batches, 50 generations,
+one round, no rejects) and registered as Camp structure kinds `hq`,
+`canteen`, `armory`, `lockup`, `surgeon_tent`, `water_truck` — unplaced
+until the map lands. Two alternate takes (an HQ with its own lattice mast,
+a canteen with a painted sign) stay in the PixelLab library unused: the
+mast would double #24's, and the sign was louder than this game's voice.
 
 ## Implementation notes, for whoever builds it
 
