@@ -918,6 +918,24 @@ static func _hash01(cell: Vector2i, salt: int) -> float:
 	return float(absi(cell.x * 92821 + cell.y * 31337 + salt * 53987) % 997) / 997.0
 
 
+## A cell remapped so that a SECOND hash taken off it is independent of a first.
+##
+## _hash01 is linear in its salt: hash(cell, s) = (A(cell) + 149*s) mod 997,
+## because 53987 mod 997 is 149. Two salts are therefore a fixed offset apart
+## and never decorrelate - so gating a cell on one salt and then picking with
+## another confines the pick to a narrow band of the range. That is not
+## theoretical: the ground detritus gated at 17% on salt 12 and picked on salt
+## 13, which pinned every pick to index 1 or 2, so six of the eight decals never
+## appeared on any board in the game and 60% of them were the same sprite.
+##
+## Translating the cell does NOT fix it - a translation is another offset. The
+## coordinates have to be SCALED, which is the only thing that changes the
+## structure of A(cell). Pass a different (a, b) per stream to get streams that
+## are independent of each other as well as of the gate.
+static func decorrelate(cell: Vector2i, a: int, b: int) -> Vector2i:
+	return Vector2i(cell.x * a + 41, cell.y * b + 89)
+
+
 ## Precompute each cell's tile region, mirror flag, and shade tint.
 ## Everything is seeded/hashed, so a level's floor is identical every run.
 ##

@@ -441,6 +441,7 @@ const DETRITUS_TEXTURES: Array[Texture2D] = [
 	preload(DETRITUS_ROOT + "Desert_detritus_5.png"),
 	preload(DETRITUS_ROOT + "Desert_detritus_6.png"),
 	preload(DETRITUS_ROOT + "Desert_detritus_7.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_8.png"),
 ]
 const DETRITUS_RATE := 0.17
 const DETRITUS_GAP := 1
@@ -523,13 +524,18 @@ func _spawn_detritus() -> void:
 				continue
 			placed.append(cell)
 			var decal := Sprite2D.new()
-			decal.texture = DETRITUS_TEXTURES[_prop_pick(cell, SALT_DETRITUS_PICK,
+			# Same trap Battle's scatter had: the cell was chosen by a hash, so a
+			# second salt off the same cell sits a fixed offset away and lands in
+			# a narrow band of the range. See Board.decorrelate.
+			decal.texture = DETRITUS_TEXTURES[_prop_pick(
+				Board.decorrelate(cell, 3, 5), SALT_DETRITUS_PICK,
 					DETRITUS_TEXTURES.size())]
 			decal.material = _dust_material(cell)
 			decal.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 			decal.position = board.cell_to_local(cell)
-			var hx := Board._hash01(cell, _prop_seed + SALT_DETRITUS_JITTER)
-			var hy := Board._hash01(cell + Vector2i(97, 61),
+			var hx := Board._hash01(Board.decorrelate(cell, 7, 11),
+					_prop_seed + SALT_DETRITUS_JITTER)
+			var hy := Board._hash01(Board.decorrelate(cell, 13, 17),
 					_prop_seed + SALT_DETRITUS_JITTER)
 			decal.position += Vector2(
 					roundf((hx - 0.5) * 2.0 * DETRITUS_JITTER),

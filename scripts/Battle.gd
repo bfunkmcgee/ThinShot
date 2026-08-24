@@ -83,6 +83,7 @@ const DETRITUS_TEXTURES: Array[Texture2D] = [
 	preload(DETRITUS_ROOT + "Desert_detritus_5.png"),
 	preload(DETRITUS_ROOT + "Desert_detritus_6.png"),
 	preload(DETRITUS_ROOT + "Desert_detritus_7.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_8.png"),
 ]
 # What the squad leaves to mark a landing zone. The panel lies flat and is a
 # decal; the other two stand up and are props, so they are anchored on a base
@@ -1099,7 +1100,10 @@ func _spawn_decals() -> void:
 			if not clear:
 				continue
 			placed.append(cell)
-			_spawn_decal(DETRITUS_TEXTURES[_prop_pick(cell, SALT_DETRITUS_PICK,
+			# decorrelate: the cell was chosen by a hash, so picking with a second
+			# salt off the SAME cell lands in a narrow band (see Board.decorrelate).
+			_spawn_decal(DETRITUS_TEXTURES[_prop_pick(
+				Board.decorrelate(cell, 3, 5), SALT_DETRITUS_PICK,
 					DETRITUS_TEXTURES.size())], cell, true)
 
 
@@ -1118,10 +1122,14 @@ func _spawn_decal(texture: Texture2D, cell: Vector2i, jitter: bool) -> Sprite2D:
 	decal.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	decal.position = board.cell_to_local(cell)
 	if jitter:
-		# Two independent hashes off one salt, so drift in x and y are not
-		# the same number and the scatter never falls on a diagonal.
-		var hx := Board._hash01(cell, _prop_seed + SALT_DETRITUS_JITTER)
-		var hy := Board._hash01(cell + Vector2i(97, 61), _prop_seed + SALT_DETRITUS_JITTER)
+		# Two INDEPENDENT hashes off one salt. This used to offset the cell by
+		# (97, 61), which does not decorrelate anything - a translation is just
+		# another constant, so hx tracked the gate exactly and flip_h was false
+		# on every decal in the game. Scaled cells are what breaks the link.
+		var hx := Board._hash01(Board.decorrelate(cell, 7, 11),
+				_prop_seed + SALT_DETRITUS_JITTER)
+		var hy := Board._hash01(Board.decorrelate(cell, 13, 17),
+				_prop_seed + SALT_DETRITUS_JITTER)
 		decal.position += Vector2(
 				roundf((hx - 0.5) * 2.0 * DETRITUS_JITTER),
 				roundf((hy - 0.5) * DETRITUS_JITTER))  # tiles are half as tall
