@@ -179,6 +179,14 @@ mast would double #24's, and the sign was louder than this game's voice.
   canvases, and judged by canvas the entire yard faded the moment anybody
   walked it. Each occluder is measured once by its OPAQUE bounds instead,
   and the fade judges what the art actually covers.
+  And it fades for the PLAYER only: Battle fades for every unit because
+  every unit moves and matters, but the camp's idlers stand deliberately
+  beside the buildings and never move - fading for them ghosted half the
+  yard permanently. A fade that never restores is not a fade.
+- The gate leaves overlay the wall rather than replacing it: the first
+  hanging swapped two chunky wall segments for thin pier art, and the
+  two-cell gap read as four. The wall always draws; the leaves hang over
+  its ends, pulled toward the opening.
 - The awning keeps clear cells either side — its canopy is two tiles wide
   on a one-tile stand. (12,8) has both.
 - Staged landing order, each step leaving the yard coherent: (1) map +
