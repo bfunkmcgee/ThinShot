@@ -121,10 +121,10 @@ const GARRISON := {
 		"W......j.j..j.j.j.j....W",
 		"W...j..........jj......W",
 		"W......j....j......j...W",
-		"W...........j..=...j...W",
-		"W.....j.......=..=.....W",
-		"W.............=..=.....W",
-		"W..............==......W",
+		"W...........j......j...W",
+		"W.....j................W",
+		"W......................W",
+		"W......................W",
 		"W.pjp.......j..........W",
 		"WWWWWWWWW..WWWWWWWWWWWWW",
 	],
@@ -149,12 +149,8 @@ const GARRISON := {
 		{"kind": "surgeon_tent", "anchor": Vector2i(4, 3), "size": Vector2i(2, 2)},
 		{"kind": "canteen", "anchor": Vector2i(4, 8), "size": Vector2i(2, 2)},
 		{"kind": "armory", "anchor": Vector2i(13, 6), "size": Vector2i(2, 2)},
-		# Swapped with the truck after a look at the corner: the lockup's
-		# door is on its south-west face, and at (17,9) it stared straight
-		# into the perimeter wall. Here it faces the pen's gate cell, which
-		# is where a blockhouse door belongs; the truck backs against the
-		# south wall instead, which is where a parked vehicle belongs - it
-		# has no door for the wall to argue with.
+		# Parked clear of every wall: a 168px structure's art overhangs its
+		# footprint, so anything it parks against it parks through.
 		{"kind": "water_truck", "anchor": Vector2i(19, 10), "size": Vector2i(2, 2)},
 		{"kind": "lockup", "anchor": Vector2i(17, 7), "size": Vector2i(2, 2)},
 	],

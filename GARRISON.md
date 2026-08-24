@@ -28,7 +28,8 @@ each is doing work a rule in this game already does.
   behind the firing line, which is where a real range wants it — and where
   the armory already is.
 - **Detention beside the gate.** A man the Accord is collecting leaves
-  without being walked through the middle of the camp.
+  without being walked through the middle of the camp. The blockhouse IS
+  the cell — no pen; a walled room does not need a fence.
 - **Sleep in the west, work in the east.** Billets, washing, the stove and
   the canteen on one side; armory, range, motor pool and the pen on the
   other. Off duty has a side of the yard.
@@ -51,10 +52,10 @@ W......................W
 W......j.j..j.j.j.j....W    duty board(7,5) bounty board(9,5) | range flag(12,5) mats(14,16,18)
 W...j..........jj......W    kit frame(4,6) | ammo(15,6) cleaning(16,6)
 W......j....j......j...W    bowser(7,7) | qm counter(12,7) watertank(19,7)
-W...........j..=...j...W    awning(12,8) | pen wire(15,8), pen gate(16,8) | jerry(19,8)
-W.....j.......=..=.....W    stove(6,9) | pen wire(14,17) pen(15..16,9)
-W.............=..=.....W    pen wire(14,17) pen(15..16,10)
-W..............==......W    pen wire south(15..16,11)
+W...........j......j...W    awning(12,8) | jerry(19,8)
+W.....j................W    stove(6,9)
+W......................W
+W......................W
 W.pjp.......j..........W    memorial(3,12) | tower(12,12)
 WWWWWWWWWGGWWWWWWWWWWWWW    gate(9..10,13)
 ```
@@ -64,7 +65,7 @@ Structures (2×2 anchors): billets `hut_1`(1,1), `hut_2`(1,4), `field_tent`
 **canteen**(4,8), **armory**(13,6), **lockup**(17,7) with its door on the
 pen's gate, and the **water truck**(19,10) parked clear of every wall —
 its art overhangs its footprint by a quarter-cell each side, which is why
-it can never park against one. The pen is wired on all four sides now.
+it can never park against one.
 
 Stations and spots: player wakes mid-parade (9,6); briefing on the HQ porch
 (9,3) with the map crates two cells clear on each side; stores at the armory's south door (14,8);
@@ -103,13 +104,13 @@ and the cleaning bench stand at its east wall where the range's firing line
 starts. One building answers three functions that today stand in three
 corners of the yard.
 
-**The lockup** — a low blockhouse and a wired pen, beside the gate, under
-the tower. The campaign already pays more for a live man and already lets a
-bounty end with "he walked in ahead of the party" — this is where he walks
-IN TO, and where the Accord collects from. The echo is deliberate and the
-game should own it: THE HOLDING PENS is a mission about people kept in a
-pen, and the squad keeps one too. Wire is the battle `=` char — real rules,
-stops movement, no cover — which Camp does not yet draw (see below).
+**The lockup** — a low blockhouse beside the gate, under the tower. The
+campaign already pays more for a live man and already lets a bounty end
+with "he walked in ahead of the party" — this is where he walks IN TO,
+and where the Accord collects from. Prisoners are kept INSIDE it — the
+wired pen the first landing gave it was removed as redundant (a
+blockhouse is the cell), and its wire looked wrong besides. The pen echo
+belongs to THE HOLDING PENS alone.
 
 **The range** — three lanes against the north wall: firing-point mats,
 silhouette targets, an earth berm as the backstop, a red flag flying at the
