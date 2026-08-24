@@ -365,6 +365,50 @@ trusting an existing offset: all three held theirs exactly, so no anchor needed
 re-measuring, but a run that drifts there would sink or float the prop. The
 other edges move - that is the cloth, and is the point.
 
+## The particle layer, and how to look at it
+
+`Fx.gd` is a pooled, code-drawn particle system - no scene per burst, one
+`_draw()` per layer. Battle owns three instances: ground (z -1, under the
+highlights), air (z 0), and an additive glow at z 15.
+
+Particles are transient, so **the only honest way to judge a change is
+`tools/render_fx_bench.gd`**, which fires every effect onto one backdrop using
+those same three layers and saves a frame at `--at <seconds>`. Judge on the
+board's real floor tone (about `#8e7860`), not on bright sand - additive glow
+over a light background saturates to featureless white and will send you tuning
+the wrong thing. The bench's backdrop sits at z -5 for a related reason: at z 0
+it hides the ground layer, and blood spray, footsteps and scorch all silently
+read as missing.
+
+What each particle carries, beyond position and velocity:
+
+- **`rot` / `spin`** - `Shape.PIXEL` is a rotated quad, not an axis-aligned
+  rect. A field of perfectly square, perfectly aligned dots is the loudest tell
+  that a particle system was written rather than drawn, and one angle per
+  particle removes it for four cos/sin. `Shape.SHARD` is the same quad stretched
+  along its travel, for grit and splinters.
+- **`col_end`** - colour over life, not just alpha over life. A spark that cools
+  white → amber → dead ember reads as burning; the same spark holding one colour
+  and dropping alpha reads as a dot going out. **Ramp the hue, not the opacity**:
+  an end colour with alpha 0 fights the fade curve and the particle disappears
+  around a third of the way through its stated life.
+- **`turb`** - a per-particle sideways wander with a baked phase, so a plume
+  curls instead of every mote in it rising on the same straight line.
+
+Two things were tried and backed out, recorded so they are not retried blind:
+
+- **An alpha fade-in** (`smoothstep(0, bloom, k)`) to stop puffs popping in at
+  full strength. It depended on frame timing in a way that could leave dust and
+  smoke at zero alpha for their whole life - the bench showed death puff and
+  standing smoke vanishing completely. Size growth already reads as a bloom;
+  that is what does the job now.
+- **A linear `1 - k` tail** in place of `1 - k*k`, on the theory it was gentler.
+  It is *lower at every point in between*, so it dimmed everything it touched.
+
+The pool holds 512 and overflow drops the particle **closest to death**, not the
+oldest entry: `pop_front()` culled by insertion order, which during a volley
+threw away the long-lived smoke column to make room for brass.
+
 ## Kestrel canvas is modern; Thirst canvas is not
 
 The camps used to pitch `tent` — the shipped rustic pole tent, ragged and
