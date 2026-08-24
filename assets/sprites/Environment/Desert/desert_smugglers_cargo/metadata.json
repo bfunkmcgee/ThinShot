@@ -1,0 +1,69 @@
+{
+  "group_id": [
+    "54c7215b-0926-4594-af4f-a2257cc0eef5"
+  ],
+  "objects": [
+    {
+      "id": "0a240938-b250-4bdf-b06e-7d2c8df758f3",
+      "name": null,
+      "prompt": "smugglers' cargo: roped canvas pack bundles stacked for a long carry",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Smugglers_cargo.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "60fc9aa5-a993-44b7-a3b3-7baee3e5c6cb",
+      "name": null,
+      "prompt": "smugglers' cargo: wooden pack saddles and girth straps piled together",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Smugglers_cargo_1.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "6315e7ce-454e-4fbc-a543-df6a56f60622",
+      "name": null,
+      "prompt": "smugglers' cargo: a tarped crate stack roped down tight",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Smugglers_cargo_2.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "37a4cab8-d014-47dc-af50-3ef2e98d25a9",
+      "name": null,
+      "prompt": "smugglers' cargo: water drums slung in rope carrying nets",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Smugglers_cargo_3.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-08-24T00:00:00.000000"
+}

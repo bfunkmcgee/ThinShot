@@ -135,11 +135,18 @@ flag; sandbags stand in for the berm until it has its own art.
 | ~~Armory magazine~~ — **shipped** | 2×2 (168) | `garrison_buildings/Armory_magazine`, offset −35 |
 | ~~Lockup blockhouse~~ — **shipped** | 2×2 (168) | `garrison_buildings/Lockup`, offset −34 |
 | ~~Surgeon's tent~~ — **shipped** | 2×2 (168) | `garrison_buildings/Surgeon_tent`, offset −26 — closes #27's art half |
-| Earth berm | 48×48 ×2–3 | replaces the sandbag stand-in; reads as pushed dirt |
-| Range target | 48×48 ×2 | steel silhouette on a timber frame, patched holes |
-| Firing point | 48×48 | mat, sand sock, brass on the ground |
+| ~~Earth berm~~ — **shipped** ×3 | 48×48 | `Garrison_berm{,_1,_2}`, offsets −15/−17/−20 |
+| ~~Range target~~ — **shipped** ×2 | 48×48 | `Garrison_target{,_1}`, offset −21 |
+| ~~Firing point~~ — **shipped** | 48×48 | `Garrison_firing_point`, offset −20 |
 | Gate | 68×68 wall-format | already specced as #2; camp wants the OPEN state |
 | ~~Water truck~~ — **shipped** | 2×2 (168) | `garrison_buildings/Water_truck`, offset −29 |
+
+The stations shipped with the same batch and are LIVE in the current 16×12
+yard already (Tier 6's own landing plan): the signals mast carries the
+ratline, the bounty board carries the bounties with a bare-cork empty state,
+the QM counter carries the shop, the paymaster stands as scenery. Spares in
+hand for this layout: a canteen barrel table, a spotting scope with a range
+flag, a tall QM shelving rack, and a sandbagged sentry box for the gate.
 
 Generation notes are Tier 6's, unchanged: name the modern material in every
 prompt, no sand disc, 48px batches anchored on shipped props.

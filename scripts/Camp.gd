@@ -66,6 +66,10 @@ const FIXTURE_TEXTURES := {
 	"memorial_cross": preload(FIXTURE_ROOT + "Garrison_memorial_cross.png"),
 	"notice_board": preload(FIXTURE_ROOT + "Garrison_notice_board.png"),
 	"washing_line": preload(FIXTURE_ROOT + "Garrison_washing_line.png"),
+	"signals_mast": preload(FIXTURE_ROOT + "Garrison_signals_mast.png"),
+	"bounty_board": preload(FIXTURE_ROOT + "Garrison_bounty_board.png"),
+	"paymaster_desk": preload(FIXTURE_ROOT + "Garrison_paymaster_desk.png"),
+	"qm_counter": preload(FIXTURE_ROOT + "Garrison_qm_counter.png"),
 	"watchtower": preload(FIXTURE_ROOT + "Garrison_watchtower.png"),
 	"water_bowser": preload(FIXTURE_ROOT + "Garrison_water_bowser.png"),
 	"water_tank": preload(FIXTURE_ROOT + "Garrison_water_tank.png"),
@@ -83,6 +87,10 @@ const FIXTURE_OFFSETS := {
 	"memorial_cross": Vector2(0, -20),
 	"notice_board": Vector2(0, -20),
 	"washing_line": Vector2(0, -18),
+	"signals_mast": Vector2(0, -76),
+	"bounty_board": Vector2(0, -14),
+	"paymaster_desk": Vector2(0, -20),
+	"qm_counter": Vector2(0, -20),
 	"watchtower": Vector2(0, -73),
 	"water_bowser": Vector2(0, -22),
 	"water_tank": Vector2(0, -63),
@@ -140,6 +148,10 @@ const STRUCTURE_OFFSETS := {
 	"surgeon_tent": Vector2(0, -26), "water_truck": Vector2(0, -29),
 }
 const STRUCTURE_FPS := 7.0  # gentle breeze loops, matching Battle's clock
+# The board's other face: bare cork, one faded outline where a sheet was
+# taken down. Which face stands is decided when the camp is built - the offer
+# list cannot change while the player is standing in it.
+const BOUNTY_BOARD_EMPTY := preload(FIXTURE_ROOT + "Garrison_bounty_board_empty.png")
 const PROP_DUST := preload("res://assets/shaders/prop_dust.gdshader")
 const ROCK_OFFSET := Vector2(0, -18)
 const JUNK_OFFSET := Vector2(0, -20)
@@ -478,7 +490,15 @@ func _spawn_props() -> void:
 					# of its, which is why there is no junk left in it.
 					var fixture := str(camp.get("props", {}).get(cell, ""))
 					if FIXTURE_TEXTURES.has(fixture):
-						var fix := _spawn_prop(FIXTURE_TEXTURES[fixture],
+						var tex: Texture2D = FIXTURE_TEXTURES[fixture]
+						# The Accord's board shows its empty face when there
+						# is nobody to post - the prompt does the teaching,
+						# the bare cork does the telling.
+						if fixture == "bounty_board" and Bounty.offers(
+								Game.campaign_seed, Game.adversaries,
+								Game.bounties_done).is_empty():
+							tex = BOUNTY_BOARD_EMPTY
+						var fix := _spawn_prop(tex,
 								FIXTURE_OFFSETS[fixture], cell)
 						if FIXTURE_ANIM_DIRS.has(fixture):
 							_animate(fix, cell, _load_frame_run(
@@ -687,7 +707,7 @@ func _build_fixtures() -> void:
 	if not in_field:
 		_bounties_posted = Bounty.offers(Game.campaign_seed, Game.adversaries,
 				Game.bounties_done).size()
-		var board_cell: Vector2i = _fixture_cell("notice_board")
+		var board_cell: Vector2i = _fixture_cell("bounty_board")
 		if board_cell.x >= 0:
 			fixtures.append({
 				"kind": "bounties", "cell": board_cell,
@@ -702,12 +722,12 @@ func _build_fixtures() -> void:
 	if not in_field:
 		_ratline_offers = Ratline.offers(Game.campaign_seed,
 				Game.current_operation, Game.ratline_done)
-		var radio: Vector2i = _fixture_cell("field_radio")
+		var radio: Vector2i = _fixture_cell("signals_mast")
 		if radio.x >= 0:
 			fixtures.append({
 				"kind": "ratline", "cell": radio,
 				"pos": board.cell_to_global(radio),
-				"label": "the field radio", "id": 0,
+				"label": "the signals station", "id": 0,
 			})
 	# The ledger is read at the memorial, which is where a campaign keeps
 	# what it cannot get back. Garrison only, because the cross is.
@@ -724,12 +744,12 @@ func _build_fixtures() -> void:
 	# the squad is home. Selling mid-operation would also mean selling
 	# mid-transaction: a lost mission rolls the roster back, and the book
 	# must never be part of what a rollback has to untangle.
-	var rack: Vector2i = _fixture_cell("kit_frame")
+	var rack: Vector2i = _fixture_cell("qm_counter")
 	if rack.x >= 0:
 		fixtures.append({
 			"kind": "qm", "cell": rack,
 			"pos": board.cell_to_global(rack),
-			"label": "the quartermaster's rack", "id": 0,
+			"label": "the quartermaster's counter", "id": 0,
 		})
 	# Replacements are a garrison thing. Out on operation the squad fights
 	# with whoever walked away from the last mission.

@@ -22,7 +22,7 @@ class_name CampData
 ## The base's furniture, keyed by the cell it stands on. Every one of these is
 ## a 'j' in the map below.
 ##
-## Twelve of them, and the garrison has no scrap piles left at all - which was
+## Seventeen of them, and the garrison has no scrap piles left at all - which was
 ## the point. Home used to be a walled yard with eight junk heaps in it, two of
 ## them wrecked car doors, and it read as a scrapheap the squad happened to
 ## sleep in rather than as anywhere the Accord posted them. Nothing here is
@@ -40,37 +40,42 @@ class_name CampData
 ## come from" needs the ground itself to answer, so like goes with like:
 ##
 ##   NW - COMMAND: the command billet, the colours, the briefing table with
-##        its map crates. Deployment happens here. One cell (6,1) is held
-##        open for the paymaster's desk (ASSETS.md #25).
-##   NE - SIGNALS: the field radio (the ratline net - interdiction missions)
-##        under the watchtower. The Tier 6 signals station (#24) replaces the
-##        radio on its own cell when its art lands.
+##        its map crates, and the paymaster's desk (#25) - scenery until the
+##        money moves off the memorial. Deployment happens here.
+##   NE - SIGNALS: the signals station (#24) under the watchtower - a guyed
+##        lattice mast over the border desk. The ratline hook rides it.
 ##   E  - LOGISTICS: the stores tent with the stores spot at its door, water
-##        tank, ammo, fuel. Cell (11,4) is held open for the quartermaster's
-##        issue counter (#26); until then the QM works off the kit frame.
+##        tank, ammo, fuel, and the quartermaster's issue counter (#26) at
+##        the tent's side - the QM hook rides it; the kit frame dries kit.
 ##   W  - THE MEMORIAL: the cross alone in a planted row. Nothing else stands
 ##        near it, which is the point.
 ##   SW - DOMESTIC: the squad billet, the awning's shade, washing, the stove,
 ##        the kit frame. Where the soldiers idle.
-##   S  - PARADE: the duty-roster/bounty board and the levy post, on the open
-##        ground the player walks first. Cell (8,9) is held open for the
-##        dedicated bounty board (#23).
+##   S  - PARADE: the duty roster, the Accord's own bounty board (#23)
+##        beside it - posted sheets or bare cork by the campaign's state -
+##        and the levy post, on the open ground the player walks first.
 ##   SE - the second tent stands where the surgeon's tent (#27) will: the
 ##        wounds rule already promises "a surgeon with time", and the ground
 ##        now says roughly where he works.
 ##
-## The held-open cells are '.' (not 'j') so nothing renders as a scrap pile in
-## the meantime - the garrison's no-junk rule holds. Flipping each to 'j' plus
-## one GARRISON_PROPS line is the whole map edit when the art arrives.
+## The Tier 6 stands landed 2026-08-24 exactly as reserved: each held-open
+## cell flipped to 'j', one props line each, and the hook pointed at the new
+## name - which is what reserving them was for.
 const GARRISON_PROPS := {
 	# NW - command
 	Vector2i(4, 1): "flagpole",
-	# NE - signals (the ratline's mission-giver rides the radio for now)
-	Vector2i(12, 1): "field_radio",
+	# NW - command: the paymaster's desk beside the colours (ASSETS.md #25).
+	# Scenery for now: the ledger stays at the memorial, deliberately.
+	Vector2i(6, 1): "paymaster_desk",
+	# NE - signals: the ratline's mission-giver is a LANDMARK now (#24) - a
+	# guyed lattice mast over the border desk, on the back row with the tall.
+	Vector2i(12, 1): "signals_mast",
 	Vector2i(13, 1): "watchtower",
 	# W - the memorial, alone
 	Vector2i(2, 4): "memorial_cross",
-	# E - logistics
+	# E - logistics. The issue counter (#26) works beside the stores tent's
+	# door; the kit frame goes back to drying kit.
+	Vector2i(11, 4): "qm_counter",
 	Vector2i(14, 4): "water_tank",
 	Vector2i(12, 6): "ammo_box",
 	Vector2i(13, 6): "jerry_cans",
@@ -82,8 +87,9 @@ const GARRISON_PROPS := {
 	Vector2i(4, 8): "awning",
 	Vector2i(3, 10): "washing_line",
 	Vector2i(5, 10): "field_stove",
-	# S - parade
+	# S - parade: the duty roster, and the Accord's own board beside it (#23).
 	Vector2i(7, 9): "notice_board",
+	Vector2i(8, 9): "bounty_board",
 	# SE
 	Vector2i(14, 9): "cleaning_bench",
 }
@@ -92,15 +98,15 @@ const GARRISON := {
 	"size": Vector2i(16, 12),
 	"map": [
 		"WWWWWWWWWWWWWWWW",
-		"W...j.......jj.W",
+		"W...j.j.....jj.W",
 		"W..............W",
 		"W..............W",
-		"W.j...........jW",
+		"W.j........j..jW",
 		"Wp.p...........W",
 		"W.j.j.......jj.W",
 		"W..............W",
 		"W...j..........W",
-		"W......j......jW",
+		"W......jj.....jW",
 		"W..j.j........pW",
 		"WWWWWWWWWWWWWWWW",
 	],
