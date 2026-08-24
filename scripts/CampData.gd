@@ -147,10 +147,14 @@ const GARRISON := {
 		{"kind": "surgeon_tent", "anchor": Vector2i(4, 3), "size": Vector2i(2, 2)},
 		{"kind": "canteen", "anchor": Vector2i(4, 8), "size": Vector2i(2, 2)},
 		{"kind": "armory", "anchor": Vector2i(13, 6), "size": Vector2i(2, 2)},
-		# The motor pool's one vehicle, parked between the armory yard and
-		# the lockup, nose to the pen wire - in service, not a wreck.
-		{"kind": "water_truck", "anchor": Vector2i(17, 7), "size": Vector2i(2, 2)},
-		{"kind": "lockup", "anchor": Vector2i(17, 9), "size": Vector2i(2, 2)},
+		# Swapped with the truck after a look at the corner: the lockup's
+		# door is on its south-west face, and at (17,9) it stared straight
+		# into the perimeter wall. Here it faces the pen's gate cell, which
+		# is where a blockhouse door belongs; the truck backs against the
+		# south wall instead, which is where a parked vehicle belongs - it
+		# has no door for the wall to argue with.
+		{"kind": "water_truck", "anchor": Vector2i(17, 9), "size": Vector2i(2, 2)},
+		{"kind": "lockup", "anchor": Vector2i(17, 7), "size": Vector2i(2, 2)},
 	],
 	"zone_seed": 91,
 	"shade_seed": 17,
@@ -196,7 +200,10 @@ const GARRISON_SPOTS := {
 		Vector2i(5, 5), Vector2i(10, 4), Vector2i(6, 8),
 		Vector2i(17, 5), Vector2i(10, 9), Vector2i(3, 5),
 	],
-	"dressing": [Vector2i(8, 3), Vector2i(10, 3)],
+	# Two cells clear of the table on each side. Flanking it at one-cell
+	# spacing against the HQ facade mashed pile-table-pile-paymaster into
+	# one clipping jumble, with a crate pile standing in the HQ's doorway.
+	"dressing": [Vector2i(7, 3), Vector2i(12, 3)],
 }
 
 const FIELD_SPOTS := {

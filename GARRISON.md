@@ -59,10 +59,12 @@ WWWWWWWWWGGWWWWWWWWWWW    gate(9..10,11)
 
 Structures (2×2 anchors): billets `hut_1`(1,1), `hut_2`(1,4), `field_tent`
 (1,7) — all shipped art; **HQ**(8,1), **surgeon's tent**(4,3) (#27),
-**canteen**(4,8), **armory**(13,6), **lockup**(17,9) — all new.
+**canteen**(4,8), **armory**(13,6), **lockup**(17,7) with its door on the
+pen's gate, the **water truck**(17,9) backed against the south wall and
+serving as the pen's east side — all new.
 
 Stations and spots: player wakes mid-parade (9,6); briefing on the HQ porch
-(9,3) with the map crates flanking; stores at the armory's south door (14,8);
+(9,3) with the map crates two cells clear on each side; stores at the armory's south door (14,8);
 the QM issue counter stands at its west window (12,7) and carries the shop;
 the paymaster's desk beside the HQ at (11,2), scenery still; the duty and
 bounty boards on the parade's north edge facing the HQ, with the levy post
@@ -138,7 +140,7 @@ flag; sandbags stand in for the berm until it has its own art.
 | ~~Range target~~ — **shipped** ×2 | 48×48 | `Garrison_target{,_1}`, offset −21 |
 | ~~Firing point~~ — **shipped** | 48×48 | `Garrison_firing_point`, offset −20 |
 | ~~Gate~~ — **shipped** | 68×68 | `Walls/desert_gate/` — open leaves hung at (8,11)/(11,11); closed, blown, piers, boom and checkpoint banked for #2's battle half |
-| ~~Water truck~~ — **shipped & parked** | 2×2 (168) | structure at (17,7), nose to the pen wire |
+| ~~Water truck~~ — **shipped & parked** | 2×2 (168) | structure at (17,9), backed against the south wall, closing the pen's east side |
 
 The stations shipped with the same batch and are LIVE in the current 16×12
 yard already (Tier 6's own landing plan): the signals mast carries the
