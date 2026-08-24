@@ -236,6 +236,12 @@ in place at (12,1), and the second tent holding the surgeon's ground at
 no-art rider shipped with the layout: the bounty board fixture now stands
 from day one with an "E - nothing posted yet" prompt.
 
+**The construction pass** — the buildings these stations move into (an HQ,
+a wet canteen, an armory, a lockup and a live-fire range, on a 22x12 yard
+with a real gate) are designed and validated in **GARRISON.md**. Tier 6's
+station props all survive into that layout; build the stations first, the
+buildings behind them second.
+
 ## If you only do three
 
 Every drop-in on this list is now shipped — 8, 9, 17 and 18 went in together on
