@@ -115,20 +115,21 @@ def opaque(im):
 
 
 def place(frames, canvas, feet_y, label):
+    cw, ch = canvas
     x0, y0, x1, y1 = bbox(frames[0])
-    dx = canvas // 2 - (x0 + x1) // 2
+    dx = cw // 2 - (x0 + x1) // 2
     dy = feet_y - y1
     boxes = [bbox(f) for f in frames]
     dx = max(dx, -min(b[0] for b in boxes))
-    dx = min(dx, canvas - 1 - max(b[2] for b in boxes))
+    dx = min(dx, cw - 1 - max(b[2] for b in boxes))
     dy = max(dy, -min(b[1] for b in boxes))
-    dy = min(dy, canvas - 1 - max(b[3] for b in boxes))
+    dy = min(dy, ch - 1 - max(b[3] for b in boxes))
     out = []
     for f in frames:
-        o = Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
+        o = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
         o.alpha_composite(f, (dx, dy))
         if opaque(o) != opaque(f):
-            sys.exit(f"{label}: figure cannot fit a {canvas}px canvas even "
+            sys.exit(f"{label}: figure cannot fit a {cw}x{ch} canvas even "
                      f"after clamping - this is a regeneration problem, not a "
                      f"placement one")
         out.append(o)
@@ -148,7 +149,10 @@ def main():
     with open(args.manifest) as f:
         m = json.load(f)
     unit = m["unit"]
-    canvas = int(m["canvas"])
+    # "canvas": 64 for the square family case, or [64, 72] for an oversized
+    # unit (the brute) whose raised weapon needs headroom.
+    raw = m["canvas"]
+    canvas = (int(raw), int(raw)) if isinstance(raw, int) else (int(raw[0]), int(raw[1]))
     feet_y = int(m["feet"])
     dest = args.out or os.path.join("assets", "sprites", unit)
     if os.path.exists(dest) and not args.force and not args.out:

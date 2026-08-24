@@ -64,6 +64,8 @@ const KIND_NAMES: Array[String] = [
 	"GRENADIER", "MARKSMAN", "BREACHER", "MEDIC", "TECHNICIAN",
 	# The Thirst's belt-fed gunner, first fielded in the second operation.
 	"GOBLIN_MG",
+	# The brute, fielded where the campaign is at its most desperate.
+	"GOBLIN_BRUTE",
 ]
 
 var _failed := false

@@ -73,6 +73,7 @@ const AGE_BANDS := {
 	6: [16, 23],  # GOBLIN_REVOLVER - pressed conscript, and this is the point
 	7: [24, 41],  # GOBLIN_BOLT    - marksman
 	15: [28, 46],  # GOBLIN_MG     - the gun goes to somebody trusted
+	16: [22, 39],  # GOBLIN_BRUTE  - strength is a young man's trade
 }
 const AGE_DEFAULT: Array[int] = [20, 45]
 

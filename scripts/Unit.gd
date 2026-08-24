@@ -50,6 +50,11 @@ enum Kind {
 	# OPERATION LONG SURVEY is where the enemy stops being a militia with
 	# scavenged rifles and starts bringing crew weapons.
 	GOBLIN_MG,
+	# The brute. Deliberately breaks the goblin scale rules - ~1.65x a
+	# rifleman with a scrap-iron maul - and the only unit on an 80x72 canvas
+	# (UNIT_ASSET_SPEC.md section 6's inversion). Appears where the campaign
+	# is at its most desperate: the survey camp and the cold well.
+	GOBLIN_BRUTE,
 }
 
 ## The kinds that can fill one of a mission's three rifle slots. Rodar owns the
@@ -89,6 +94,7 @@ const MEDIC_ROOT := "res://assets/sprites/Kestrel_Medic"
 const TECHNICIAN_ROOT := "res://assets/sprites/Kestrel_Technician"
 # The Thirst's belt-fed gunner, on the canonical layout like the Kestrels.
 const GMG_ROOT := "res://assets/sprites/Goblin_MG"
+const BRUTE_ROOT := "res://assets/sprites/Goblin_Brute"
 
 # Directional pixel-art frames, indexed by 45-degree compass sector of the
 # screen-space facing vector: 0=E, 1=SE, 2=S, 3=SW, 4=W, 5=NW, 6=N, 7=NE.
@@ -527,6 +533,21 @@ const GMG_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(-4, -58),   # north (the flash leaves over his shoulder - the gun is hidden behind the body)
 	Vector2(30, -28),   # north-east (band scan)
 ]
+# The brute's "muzzle" is the maul head raised overhead - the impact flash
+# leaves the hammer, not a barrel. Measured as the centroid of the top ten
+# figure rows of each 80x72 aim sheet (the hammer mass), mapped through his
+# own SPRITE_SPECS: (px - (40, 36) + (0, -27)) * 2. measure_muzzle.gd is not
+# used here - it assumes a square canvas and would sit 4px low.
+const BRUTE_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(0, -98),    # east
+	Vector2(0, -92),    # south-east
+	Vector2(-10, -92),  # south
+	Vector2(-28, -102), # south-west
+	Vector2(6, -102),   # west
+	Vector2(28, -98),   # north-west
+	Vector2(8, -90),    # north
+	Vector2(2, -90),    # north-east
+]
 
 # The five specialist Kestrels. Measured by tools/measure_muzzle.gd, which for
 # these units leans on its band scan far more than the shipped set did, for two
@@ -614,6 +635,9 @@ const TECHNICIAN_MUZZLE_OFFSETS: Array[Vector2] = [
 const SPRITE_SPECS: Dictionary = {
 	"DEFAULT": {"scale": Vector2(2, 2), "offset": Vector2(0, -15)},
 	Kind.GOBLIN_SMG_ALT: {"scale": Vector2(2, 2), "offset": Vector2(0, -14)},
+	# 80x72 sheets with feet on y=63: 27px below the canvas centre, so the
+	# offset is -27 where the family's is -15. Same screen anchor rule.
+	Kind.GOBLIN_BRUTE: {"scale": Vector2(2, 2), "offset": Vector2(0, -27)},
 }
 
 const PIP_SIZE := Vector2(7, 5)
@@ -1205,6 +1229,28 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			idle_alt_frames = GMG_IDLE_ALT_FRAMES
 			hurt_frames = GMG_HURT_FRAMES
 			reload_frames = GMG_RELOAD_FRAMES
+		Kind.GOBLIN_BRUTE:
+			# A wall that walks. Reach of an arm's length and a lunge, damage
+			# that ends what it touches, and enough body to absorb a squad's
+			# whole turn. He does not aim, he arrives - kill him on the way
+			# or give him the cell he wants. Default MAX morale: a brute has
+			# never once considered leaving.
+			max_hp = 10
+			move_range = 4
+			attack_range = 2
+			damage = 6  # even, like every base damage: junk cover halves to 3
+			accuracy = 75
+			frames = BRUTE_FRAMES
+			aim_frames = BRUTE_AIM_FRAMES
+			walk_frames = BRUTE_WALK_FRAMES
+			idle_frames = BRUTE_IDLE_FRAMES
+			raise_frames = BRUTE_RAISE_FRAMES
+			aim_idle_frames = BRUTE_AIM_IDLE_FRAMES
+			death_frames = BRUTE_DEATH_FRAMES
+			dead_frames = BRUTE_DEAD_FRAMES
+			idle_alt_frames = BRUTE_IDLE_ALT_FRAMES
+			hurt_frames = BRUTE_HURT_FRAMES
+			reload_frames = BRUTE_RELOAD_FRAMES
 		Kind.CIVILIAN:
 			# Carries nothing and shoots nothing. Starts huddled where the
 			# Thirst left them; release() puts them on their feet.
@@ -1504,6 +1550,31 @@ static var GMG_HURT_FRAMES: Array = _load_dir_frames(
 static var GMG_RELOAD_FRAMES: Array = _load_dir_frames(
 		GMG_ROOT + "/Goblin_MG/animations/standing_idle_reload")
 
+# The brute. 80x72 sheets, feet 27px below canvas centre - his SPRITE_SPECS
+# entry is what keeps him on his diamond.
+static var BRUTE_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		BRUTE_ROOT + "/Goblin_Brute/rotations")
+static var BRUTE_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		BRUTE_ROOT + "/ReadyToFire_Stance/rotations")
+static var BRUTE_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		BRUTE_ROOT + "/Dead_stance/rotations")
+static var BRUTE_IDLE_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/Goblin_Brute/animations/standing_idle")
+static var BRUTE_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/Goblin_Brute/animations/standing_idle_alt")
+static var BRUTE_WALK_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/Goblin_Brute/animations/standing_idle_walk")
+static var BRUTE_RAISE_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/Goblin_Brute/animations/standing_idle_to_readyToFire")
+static var BRUTE_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/ReadyToFire_Stance/animations/standing-readyToFire_idle")
+static var BRUTE_DEATH_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/Goblin_Brute/animations/standing_idle_to_dead")
+static var BRUTE_HURT_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/Goblin_Brute/animations/standing_idle_damage")
+static var BRUTE_RELOAD_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/Goblin_Brute/animations/standing_idle_reload")
+
 
 static func _load_dir_frames(base: String) -> Array:
 	var result: Array = []
@@ -1646,6 +1717,8 @@ func muzzle_point() -> Vector2:
 			offsets = TECHNICIAN_MUZZLE_OFFSETS
 		Kind.GOBLIN_MG:
 			offsets = GMG_MUZZLE_OFFSETS
+		Kind.GOBLIN_BRUTE:
+			offsets = BRUTE_MUZZLE_OFFSETS
 	return to_global(offsets[facing_sector])
 
 
@@ -1814,6 +1887,8 @@ static func kind_role_name(p_kind: Kind) -> String:
 			return "Thirst Marksman"
 		Kind.GOBLIN_MG:
 			return "Thirst Gunner"
+		Kind.GOBLIN_BRUTE:
+			return "Thirst Breaker"
 		Kind.GOBLIN_REVOLVER:
 			return "Pressed Conscript"
 		Kind.GRENADIER:

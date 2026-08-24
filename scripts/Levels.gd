@@ -612,6 +612,9 @@ const LEVELS: Array[Dictionary] = [
 		# The camp's standing gun, at the rear of the bowl where the largest
 		# force in the campaign keeps its base of fire.
 		"heavy_spawns": [Vector2i(13, 2)],
+		# The brute stands mid-bowl in front of the base of fire: the one
+		# defender who walks TOWARD the squad while everyone else holds.
+		"brute_spawns": [Vector2i(10, 4)],
 		"structures": [
 			{"kind": "tent", "anchor": Vector2i(10, 8), "size": Vector2i(2, 2)},
 		],
@@ -725,6 +728,9 @@ const LEVELS: Array[Dictionary] = [
 		# The last gun he has, on the gate lane beside the marksman. Two
 		# weapons on one lane is the argument for not walking through it.
 		"heavy_spawns": [Vector2i(11, 5)],
+		# And the brute just inside the wire, south of the gate: the man he
+		# keeps closest at the end, guarding the one way in on foot.
+		"brute_spawns": [Vector2i(9, 6)],
 		"prisoner_spawns": [Vector2i(13, 4)],
 		"structures": [],
 		"objectives": [
@@ -966,7 +972,7 @@ static func _validate(index: int) -> bool:
 			+ data.get("gunner_spawns", []) + data.goblin_spawns \
 			+ data.get("smg_spawns", []) + data.get("smg_alt_spawns", []) \
 			+ data.get("novice_spawns", []) + data.get("bolt_spawns", []) \
-			+ data.get("heavy_spawns", []) \
+			+ data.get("heavy_spawns", []) + data.get("brute_spawns", []) \
 			+ data.get("prisoner_spawns", []) + data.get("bystander_spawns", [])
 	var seen_spawn := {}
 	for spawn: Vector2i in spawns:
