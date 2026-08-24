@@ -62,6 +62,8 @@ const KIND_NAMES: Array[String] = [
 	# them - every one of these is indexed BY ORDINAL, so a short table does
 	# not fail, it silently stops checking at HERO.
 	"GRENADIER", "MARKSMAN", "BREACHER", "MEDIC", "TECHNICIAN",
+	# The Thirst's belt-fed gunner, first fielded in the second operation.
+	"GOBLIN_MG",
 ]
 
 var _failed := false

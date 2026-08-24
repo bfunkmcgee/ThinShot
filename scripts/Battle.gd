@@ -677,6 +677,11 @@ func _spawn_enemy_lists(skip: Dictionary) -> void:
 			_spawn_unit(Unit.Kind.GOBLIN_REVOLVER, spawn)
 	for spawn: Vector2i in level.get("bolt_spawns", []):
 		_spawn_unit(Unit.Kind.GOBLIN_BOLT, spawn)
+	# The belt-fed gunner arrives with the second operation, which is why no
+	# mission before index 3 lists a heavy_spawns key.
+	for spawn: Vector2i in level.get("heavy_spawns", []):
+		if not skip.has(spawn):
+			_spawn_unit(Unit.Kind.GOBLIN_MG, spawn)
 	for spawn: Vector2i in level.get("prisoner_spawns", []):
 		_spawn_unit(Unit.Kind.CIVILIAN, spawn)
 	for spawn: Vector2i in level.get("bystander_spawns", []):
@@ -986,6 +991,7 @@ func _spawn_cells() -> Array:
 			+ level.get("gunner_spawns", []) + level.goblin_spawns \
 			+ level.get("smg_spawns", []) + level.get("smg_alt_spawns", []) \
 			+ level.get("novice_spawns", []) + level.get("bolt_spawns", []) \
+			+ level.get("heavy_spawns", []) \
 			+ level.get("prisoner_spawns", []) + level.get("bystander_spawns", [])
 
 

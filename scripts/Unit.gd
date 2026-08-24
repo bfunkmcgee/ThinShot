@@ -46,6 +46,10 @@ enum Kind {
 	BREACHER,
 	MEDIC,
 	TECHNICIAN,
+	# The Thirst's belt-fed gunner. First fielded in the second operation -
+	# OPERATION LONG SURVEY is where the enemy stops being a militia with
+	# scavenged rifles and starts bringing crew weapons.
+	GOBLIN_MG,
 }
 
 ## The kinds that can fill one of a mission's three rifle slots. Rodar owns the
@@ -83,6 +87,8 @@ const MARKSMAN_ROOT := "res://assets/sprites/Kestrel_Marksman"
 const BREACHER_ROOT := "res://assets/sprites/Kestrel_Breacher"
 const MEDIC_ROOT := "res://assets/sprites/Kestrel_Medic"
 const TECHNICIAN_ROOT := "res://assets/sprites/Kestrel_Technician"
+# The Thirst's belt-fed gunner, on the canonical layout like the Kestrels.
+const GMG_ROOT := "res://assets/sprites/Goblin_MG"
 
 # Directional pixel-art frames, indexed by 45-degree compass sector of the
 # screen-space facing vector: 0=E, 1=SE, 2=S, 3=SW, 4=W, 5=NW, 6=N, 7=NE.
@@ -507,6 +513,19 @@ const GOBLIN_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(-30, -40),  # north-west
 	Vector2(-6, -60),   # north
 	Vector2(32, -40),   # north-east
+]
+# The belt-fed gun at the shoulder. South and north are drawn genuinely
+# foreshortened at/away from the camera (the muzzle is the dark ring at his
+# chest), so those two are hand-set at the ring rather than scanned.
+const GMG_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(34, -34),   # east
+	Vector2(36, -36),   # south-east (band scan)
+	Vector2(-4, -24),   # south (hand-set: the muzzle ring at the chest - the scan lands on boots)
+	Vector2(-34, -36),  # south-west (band scan)
+	Vector2(-32, -34),  # west
+	Vector2(-26, -42),  # north-west (band scan)
+	Vector2(-4, -58),   # north (the flash leaves over his shoulder - the gun is hidden behind the body)
+	Vector2(30, -28),   # north-east (band scan)
 ]
 
 # The five specialist Kestrels. Measured by tools/measure_muzzle.gd, which for
@@ -1162,6 +1181,30 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			idle_alt_frames = REV_IDLE_ALT_FRAMES
 			hurt_frames = REV_HURT_FRAMES
 			reload_frames = REV_RELOAD_FRAMES
+		Kind.GOBLIN_MG:
+			# The Thirst's crew weapon: a belt-fed gun on a goblin who can
+			# barely carry it. Long reach and a deep belt, but he sprays
+			# rather than aims and repositions slower than anything else the
+			# Thirst fields. Kill him before he settles, or stay out of his
+			# lane. Morale is the default MAX on purpose - the gun goes to
+			# somebody trusted, and he knows what he is holding.
+			max_hp = 5
+			move_range = 3
+			attack_range = 5
+			damage = 2
+			accuracy = 55  # volume of fire, not marksmanship
+			mag_size = 6
+			frames = GMG_FRAMES
+			aim_frames = GMG_AIM_FRAMES
+			walk_frames = GMG_WALK_FRAMES
+			idle_frames = GMG_IDLE_FRAMES
+			raise_frames = GMG_RAISE_FRAMES
+			aim_idle_frames = GMG_AIM_IDLE_FRAMES
+			death_frames = GMG_DEATH_FRAMES
+			dead_frames = GMG_DEAD_FRAMES
+			idle_alt_frames = GMG_IDLE_ALT_FRAMES
+			hurt_frames = GMG_HURT_FRAMES
+			reload_frames = GMG_RELOAD_FRAMES
 		Kind.CIVILIAN:
 			# Carries nothing and shoots nothing. Starts huddled where the
 			# Thirst left them; release() puts them on their feet.
@@ -1436,6 +1479,31 @@ static var TECHNICIAN_RELOAD_FRAMES: Array = _load_dir_frames(
 static var TECHNICIAN_IDLE_ALT_FRAMES: Array = _load_dir_frames(
 		TECHNICIAN_ROOT + "/Kestrel_Technician/animations/standing_idle_alt")
 
+# The goblin machine-gunner. Steel pot helmet, ammunition backpack, and the
+# belt arcing between them - the silhouette no other goblin owns.
+static var GMG_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		GMG_ROOT + "/Goblin_MG/rotations")
+static var GMG_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		GMG_ROOT + "/ReadyToFire_Stance/rotations")
+static var GMG_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		GMG_ROOT + "/Dead_stance/rotations")
+static var GMG_IDLE_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/Goblin_MG/animations/standing_idle")
+static var GMG_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/Goblin_MG/animations/standing_idle_alt")
+static var GMG_WALK_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/Goblin_MG/animations/standing_idle_walk")
+static var GMG_RAISE_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/Goblin_MG/animations/standing_idle_to_readyToFire")
+static var GMG_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/ReadyToFire_Stance/animations/standing-readyToFire_idle")
+static var GMG_DEATH_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/Goblin_MG/animations/standing_idle_to_dead")
+static var GMG_HURT_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/Goblin_MG/animations/standing_idle_damage")
+static var GMG_RELOAD_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/Goblin_MG/animations/standing_idle_reload")
+
 
 static func _load_dir_frames(base: String) -> Array:
 	var result: Array = []
@@ -1576,6 +1644,8 @@ func muzzle_point() -> Vector2:
 			offsets = MEDIC_MUZZLE_OFFSETS
 		Kind.TECHNICIAN:
 			offsets = TECHNICIAN_MUZZLE_OFFSETS
+		Kind.GOBLIN_MG:
+			offsets = GMG_MUZZLE_OFFSETS
 	return to_global(offsets[facing_sector])
 
 
@@ -1588,7 +1658,8 @@ func can_single_shot() -> bool:
 ## The lead's battle rifle is semi-automatic; everything automatic bursts.
 func can_burst() -> bool:
 	return kind == Kind.SCOUT or kind == Kind.MACHINEGUNNER \
-			or kind == Kind.GOBLIN_SMG or kind == Kind.GOBLIN_SMG_ALT
+			or kind == Kind.GOBLIN_SMG or kind == Kind.GOBLIN_SMG_ALT \
+			or kind == Kind.GOBLIN_MG
 
 
 ## Bracing is what buys the rifleman his burst. The gunner's weapon does it
@@ -1741,6 +1812,8 @@ static func kind_role_name(p_kind: Kind) -> String:
 			return "Thirst Light Runner"
 		Kind.GOBLIN_BOLT:
 			return "Thirst Marksman"
+		Kind.GOBLIN_MG:
+			return "Thirst Gunner"
 		Kind.GOBLIN_REVOLVER:
 			return "Pressed Conscript"
 		Kind.GRENADIER:

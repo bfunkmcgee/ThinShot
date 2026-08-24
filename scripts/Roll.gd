@@ -72,6 +72,7 @@ const AGE_BANDS := {
 	5: [18, 31],  # GOBLIN_SMG_ALT - light runner, chosen for being quick
 	6: [16, 23],  # GOBLIN_REVOLVER - pressed conscript, and this is the point
 	7: [24, 41],  # GOBLIN_BOLT    - marksman
+	15: [28, 46],  # GOBLIN_MG     - the gun goes to somebody trusted
 }
 const AGE_DEFAULT: Array[int] = [20, 45]
 

@@ -289,9 +289,17 @@ east/west. The generator cannot do both from one instruction:
    visible as a small circle at the chest, head tucked sighting at the
    viewer") → **south is right**; every other frame now also points at the
    camera.
-3. **Composite**: pass 2's south + pass 1's other seven. Same character, same
-   canvas, feet within a pixel — the splice is invisible. Then level all
-   frames to the family feet line as above.
+3. The same applies to **north**: the mechanical-hold pass renders the rear
+   view holding the gun in side profile, which reads as "not aiming north".
+   A third pass with rendered-result language for the away axis ("seen from
+   behind, the barrel heavily foreshortened, hidden beyond his body") fixes
+   it — accept that the weapon may vanish entirely from behind if the player
+   judges it readable (the MG goblin shipped that way, user-approved).
+4. **Composite**: the toward-camera pass's south + the away-camera pass's
+   north + the mechanical pass's other six. Same character, same canvas,
+   feet within a pixel — the splices are invisible. Then level all frames to
+   the family feet line as above. Animations of the stance follow the same
+   split: animate each direction on the character whose rotation owns it.
 
 **Do not reach for the v3-rotate here.** Rotating from the approved south
 loses the weapon entirely (a foreshortened frame carries no barrel geometry
@@ -300,6 +308,17 @@ for the engine to swing round), and rotating from a full-profile east drifts
 where one frame shows the whole weapon and the grip must stay in one hand —
 see the brute. Corollary: an aimed stance's weapon *correctly* switches
 sides as the facing swings; only carried stances get the hand-switch check.
+
+**Animating: a glint pixel is a firing instruction.** A white highlight on a
+weapon's muzzle in the rotation frame gets read by the animator as "this
+weapon sparks" and grows into muzzle flash in the generated frames (found on
+the MG goblin's south-east: 2 white pixels became flashes in both idle and
+walk). Negation language ("not firing, no muzzle flash") reduces but does not
+stop it. The fix that works: recolor the glint pixels to the weapon's metal in
+the seed frame, pass it via `custom_start_frame_base64` (single-direction v3
+call), and apply the same repair to the static rotation so still and animation
+agree. Scan every rotation for near-white pixels (`min(RGB) > 200`) before
+animating — and scan every animation for them after.
 
 **Gates before any human judging** (`artgen/staging/brute-tests/judge.py`):
 row 0 must hold <6 opaque px (else the weapon is amputated), feet per

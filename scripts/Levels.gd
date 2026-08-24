@@ -380,6 +380,9 @@ const LEVELS: Array[Dictionary] = [
 		"smg_alt_spawns": [Vector2i(11, 3), Vector2i(13, 6)],
 		"novice_spawns": [Vector2i(15, 1), Vector2i(15, 5), Vector2i(15, 8)],
 		"bolt_spawns": [Vector2i(14, 7)],
+		# The second operation is where the Thirst starts bringing crew
+		# weapons: a belt-fed gun walking escort in the middle of the column.
+		"heavy_spawns": [Vector2i(13, 3)],
 		"structures": [],
 		"objectives": [
 			{
@@ -443,6 +446,9 @@ const LEVELS: Array[Dictionary] = [
 		"smg_alt_spawns": [Vector2i(10, 2), Vector2i(10, 6)],
 		"novice_spawns": [Vector2i(13, 3), Vector2i(13, 6), Vector2i(12, 9)],
 		"bolt_spawns": [Vector2i(14, 4)],
+		# The gun sits a step behind the gate holder, firing down the middle
+		# gap's lane - the breakthrough now has a reason to try the south.
+		"heavy_spawns": [Vector2i(9, 4)],
 		# The family the Charter says this water belongs to. No objective points
 		# at them, nothing in the game arranges for them to survive, and the
 		# squad's orders are to pass through rather than stop. They are placed
@@ -522,6 +528,9 @@ const LEVELS: Array[Dictionary] = [
 		"smg_alt_spawns": [Vector2i(8, 4), Vector2i(12, 5)],
 		"novice_spawns": [Vector2i(15, 1), Vector2i(15, 7), Vector2i(14, 4)],
 		"bolt_spawns": [Vector2i(12, 2)],
+		# Dug in directly behind the one hole in the wire. The walk back out
+		# with unarmed prisoners is the mission, and he is why.
+		"heavy_spawns": [Vector2i(11, 4)],
 		"structures": [
 			{"kind": "tent", "anchor": Vector2i(6, 1), "size": Vector2i(2, 2)},
 			# The hauler the water never rode on. Its being dead here is the
@@ -600,6 +609,9 @@ const LEVELS: Array[Dictionary] = [
 		"smg_alt_spawns": [Vector2i(10, 5), Vector2i(13, 4)],
 		"novice_spawns": [Vector2i(14, 2), Vector2i(14, 6), Vector2i(15, 4)],
 		"bolt_spawns": [Vector2i(14, 8)],
+		# The camp's standing gun, at the rear of the bowl where the largest
+		# force in the campaign keeps its base of fire.
+		"heavy_spawns": [Vector2i(13, 2)],
 		"structures": [
 			{"kind": "tent", "anchor": Vector2i(10, 8), "size": Vector2i(2, 2)},
 		],
@@ -647,6 +659,9 @@ const LEVELS: Array[Dictionary] = [
 		"smg_spawns": [Vector2i(13, 4), Vector2i(12, 5)],
 		"novice_spawns": [Vector2i(14, 2), Vector2i(12, 2), Vector2i(12, 8)],
 		"bolt_spawns": [Vector2i(15, 5)],
+		# The rearguard's gun holds the middle ground between the drops - the
+		# reason the road cannot just be walked.
+		"heavy_spawns": [Vector2i(11, 5)],
 		"structures": [],
 		"objectives": [
 			{
@@ -707,6 +722,9 @@ const LEVELS: Array[Dictionary] = [
 		"smg_spawns": [Vector2i(13, 2), Vector2i(12, 7)],
 		"novice_spawns": [Vector2i(9, 5), Vector2i(10, 4), Vector2i(12, 8)],
 		"bolt_spawns": [Vector2i(12, 5)],
+		# The last gun he has, on the gate lane beside the marksman. Two
+		# weapons on one lane is the argument for not walking through it.
+		"heavy_spawns": [Vector2i(11, 5)],
 		"prisoner_spawns": [Vector2i(13, 4)],
 		"structures": [],
 		"objectives": [
@@ -948,6 +966,7 @@ static func _validate(index: int) -> bool:
 			+ data.get("gunner_spawns", []) + data.goblin_spawns \
 			+ data.get("smg_spawns", []) + data.get("smg_alt_spawns", []) \
 			+ data.get("novice_spawns", []) + data.get("bolt_spawns", []) \
+			+ data.get("heavy_spawns", []) \
 			+ data.get("prisoner_spawns", []) + data.get("bystander_spawns", [])
 	var seen_spawn := {}
 	for spawn: Vector2i in spawns:
