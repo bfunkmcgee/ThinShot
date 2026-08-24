@@ -396,6 +396,14 @@ func _test_the_whole_mission() -> void:
 	_check(battle._target_in_reach() == battle.bounty_target,
 			"close enough to make him an offer")
 	game.award_stat(int(staged.hunter.id), "presence", 9)
+	# Staged, not inherited: the autoload already loaded whatever campaign is
+	# on this machine, and a live save sitting at a clamp EDGE - standing at
+	# its 100 ceiling, strain at the floor the load clamps to 1 - makes "the
+	# district notices" and "the theater eases" unprovable however well the
+	# informant deal works. The same isolation lesson test_menu learned about
+	# ambient adversaries.
+	game.set_standing(str(staged.offer.settlement), 50)
+	game.alliance_strain = 10
 	var standing_before: int = game.standing_of(str(staged.offer.settlement))
 	var strain_before: int = game.alliance_strain
 	# Driven through the BUTTON, not the function. The informant ending shipped
