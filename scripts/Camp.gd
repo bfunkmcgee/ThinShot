@@ -70,6 +70,15 @@ const FIXTURE_TEXTURES := {
 	"bounty_board": preload(FIXTURE_ROOT + "Garrison_bounty_board.png"),
 	"paymaster_desk": preload(FIXTURE_ROOT + "Garrison_paymaster_desk.png"),
 	"qm_counter": preload(FIXTURE_ROOT + "Garrison_qm_counter.png"),
+	"berm": preload(FIXTURE_ROOT + "Garrison_berm.png"),
+	"berm_1": preload(FIXTURE_ROOT + "Garrison_berm_1.png"),
+	"berm_2": preload(FIXTURE_ROOT + "Garrison_berm_2.png"),
+	"target": preload(FIXTURE_ROOT + "Garrison_target.png"),
+	"target_1": preload(FIXTURE_ROOT + "Garrison_target_1.png"),
+	"firing_point": preload(FIXTURE_ROOT + "Garrison_firing_point.png"),
+	# The range flag is the extraction marker's banner doing a second job:
+	# same cloth, same wind, and it means the same thing - live ground.
+	"range_flag": preload("res://assets/sprites/Environment/Desert/desert_signal_markers/Signal_banner.png"),
 	"watchtower": preload(FIXTURE_ROOT + "Garrison_watchtower.png"),
 	"water_bowser": preload(FIXTURE_ROOT + "Garrison_water_bowser.png"),
 	"water_tank": preload(FIXTURE_ROOT + "Garrison_water_tank.png"),
@@ -91,6 +100,10 @@ const FIXTURE_OFFSETS := {
 	"bounty_board": Vector2(0, -14),
 	"paymaster_desk": Vector2(0, -20),
 	"qm_counter": Vector2(0, -20),
+	"berm": Vector2(0, -15), "berm_1": Vector2(0, -17), "berm_2": Vector2(0, -20),
+	"target": Vector2(0, -21), "target_1": Vector2(0, -21),
+	"firing_point": Vector2(0, -20),
+	"range_flag": Vector2(0, -17),
 	"watchtower": Vector2(0, -73),
 	"water_bowser": Vector2(0, -22),
 	"water_tank": Vector2(0, -63),
@@ -152,6 +165,21 @@ const STRUCTURE_FPS := 7.0  # gentle breeze loops, matching Battle's clock
 # taken down. Which face stands is decided when the camp is built - the offer
 # list cannot change while the player is standing in it.
 const BOUNTY_BOARD_EMPTY := preload(FIXTURE_ROOT + "Garrison_bounty_board_empty.png")
+# The detention pen's wire. Duplicated from Battle rather than shared, on the
+# grounds the header already gives for every prop table here. Board parses '='
+# as WIRE the moment the map lands - movement was right before this existed;
+# this is only the drawing.
+const WIRE_ROOT := "res://assets/sprites/Environment/Desert/Walls/desert_barbed_wire/rotations/"
+const WIRE_TEXTURES := {
+	"x_run": preload(WIRE_ROOT + "south-west.png"),
+	"y_run": preload(WIRE_ROOT + "south-east.png"),
+	"junction": preload(WIRE_ROOT + "north.png"),
+	"cap": preload(WIRE_ROOT + "east.png"),
+}
+const WIRE_OFFSETS := {
+	"x_run": Vector2(0, -10), "y_run": Vector2(0, -10),
+	"junction": Vector2(0, -4), "cap": Vector2(0, -17),
+}
 const PROP_DUST := preload("res://assets/shaders/prop_dust.gdshader")
 const ROCK_OFFSET := Vector2(0, -18)
 const JUNK_OFFSET := Vector2(0, -20)
@@ -334,6 +362,7 @@ const SWAY_TEXELS := 1.0     # sprite texels a thing leans at full sway
 ## being moved by two systems at once, and reads as a wobble rather than wind.
 const SWAYING_FIXTURES := {
 	"kit_frame": true,       # webbing and canteens hang loose off the rack
+	"range_flag": true,      # the same cloth it is everywhere else
 }
 
 ## Fixtures with a generated frame run, at
@@ -429,6 +458,19 @@ func _sway_props() -> void:
 		entry.sprite.position.x = entry.base_x + step
 
 
+## Which way a wire cell runs, read off its neighbours - Battle's rule.
+func _wire_kind(cell: Vector2i) -> String:
+	var has_x := board.map_char(cell + Vector2i(1, 0)) == "=" 			or board.map_char(cell + Vector2i(-1, 0)) == "="
+	var has_y := board.map_char(cell + Vector2i(0, 1)) == "=" 			or board.map_char(cell + Vector2i(0, -1)) == "="
+	if has_x and has_y:
+		return "junction"
+	if has_x:
+		return "x_run"
+	if has_y:
+		return "y_run"
+	return "cap"
+
+
 func _wall_texture(cell: Vector2i) -> Texture2D:
 	var has_x := board.map_char(cell + Vector2i(1, 0)) == "W" \
 			or board.map_char(cell + Vector2i(-1, 0)) == "W"
@@ -517,6 +559,9 @@ func _spawn_props() -> void:
 							PLANT_TEXTURES.size())], PLANT_OFFSET, cell), cell)
 				"W":
 					_spawn_prop(_wall_texture(cell), WALL_OFFSET, cell)
+				"=":
+					var run := _wire_kind(cell)
+					_spawn_prop(WIRE_TEXTURES[run], WIRE_OFFSETS[run], cell)
 	for cell: Vector2i in spots.dressing:
 		_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, cell)
 	for s: Dictionary in camp.structures:

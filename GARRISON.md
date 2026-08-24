@@ -1,12 +1,11 @@
 # The garrison, built out
 
 The zoning pass (ASSETS.md, Tier 6) gave the yard quarters; this is the
-construction pass that gives the quarters walls. It is a design, not a map
-edit: most of what it places does not have art yet, and nothing here should
-land in `CampData.gd` until its building does. The layout below is validated
-mechanically — every fixture on a named cell, every station spot on open
-ground, the wall ring closed, the pen actually enclosed — so when the art
-arrives the edit is transcription rather than design.
+construction pass that gave the quarters walls. **Landed 2026-08-24**: the
+22×12 yard below is the live `CampData.GARRISON`, all five buildings and the
+range standing, the pen wired, the gate open in the south wall. The layout
+was validated mechanically before a cell of it shipped — and the game's own
+camp validator still caught one thing the script did not (see the notes).
 
 ## Why it is laid out the way it is
 
@@ -46,14 +45,14 @@ wall cells when it lands).
 ```
 WWWWWWWWWWWWWWWWWWWWWW
 W.....j.....jjjjjjjj.W    flag(6,1) | HQ(8,1) | signals(12,1) berm(13..19,1)
-W..j..........j.j.j..W    washing(3,2) | targets(14,16,18 ,2)
+W..j.......j..j.j.j..W    washing(3,2) | paymaster(11,2) | targets(14,16,18)
 W....................W    HQ porch: dressing(8,3)(10,3) briefing(9,3)
 W....................W
-W......j.j..j.j.j.j..W    duty board(7,5) bounty board(9,5) | range flag(12,5) mats(14,16,18 ,5)
+W......j.j..j.j.j.j..W    duty board(7,5) bounty board(9,5) | range flag(12,5) mats(14,16,18)
 W...j..........jj....W    kit frame(4,6) | ammo(15,6) cleaning(16,6)
-W......j...........j.W    bowser(7,7) | water tank(19,7)
-W...........j..=.....W    awning(12,8) | pen wire(15,8), pen gate(16,8)
-W.....j......j=......W    stove(6,9) | jerry cans(13,9) wire(14,9) pen(15..16,9)
+W......j....j......j.W    bowser(7,7) | qm counter(12,7) watertank(19,7)
+W...........j..=...j.W    awning(12,8) | pen wire(15,8), pen gate(16,8) | jerry(19,8)
+W.....j.......=......W    stove(6,9) | wire(14,9) pen(15..16,9)
 W.pjp.......j.=......W    memorial(3,10) | tower(12,10) wire(14,10) pen(15..16,10)
 WWWWWWWWWGGWWWWWWWWWWW    gate(9..10,11)
 ```
@@ -64,11 +63,11 @@ Structures (2×2 anchors): billets `hut_1`(1,1), `hut_2`(1,4), `field_tent`
 
 Stations and spots: player wakes mid-parade (9,6); briefing on the HQ porch
 (9,3) with the map crates flanking; stores at the armory's south door (14,8);
-the QM issue counter at its west window (12,7); paymaster beside the HQ's
-east gable (11,2); the duty and bounty boards on the parade's north edge
-facing the HQ, with the levy post working the same row (8,5); the ledger
-stays at the memorial (3,9) — the money can move to the paymaster when #25
-lands, the CAREERS page stays at the cross if that pairing was the point.
+the QM issue counter stands at its west window (12,7) and carries the shop;
+the paymaster's desk beside the HQ at (11,2), scenery still; the duty and
+bounty boards on the parade's north edge facing the HQ, with the levy post
+working the same row (8,5); the ledger stays at the memorial — the money can
+move to the paymaster later, the names do not.
 Squad idle: two by the canteen and billets, one on the parade, one at the
 firing line (17,5), one by the motor pool, one loose.
 
@@ -160,9 +159,16 @@ mast would double #24's, and the sign was louder than this game's voice.
 
 ## Implementation notes, for whoever builds it
 
-- Camp's prop spawner has no `=` branch: copy Battle's wire-kind selection
-  and textures across (Board already parses `=` as WIRE, so movement is
-  right the moment the map lands; only the drawing is missing).
+- ~~Camp's `=` branch~~ — done: Battle's wire-kind selection and textures
+  copied across, and `=` added to CampData's own legal-char validator,
+  which predated wire and refused the map outright.
+- **The lesson the landing taught**: the camp validator requires every
+  station SPOT reachable from the player spawn by BFS, and the first
+  landing failed it — the armory's south door sat in a pocket sealed by
+  the awning, the armory itself, the pen wire and the jerry cans. The
+  cans moved to the tank's fill point at (19,8). The design script now
+  runs the same BFS, plus a reachable-neighbour check for every HOOKED
+  fixture; a berm sealed behind its own targets is scenery doing its job.
 - New structure kinds are one line each in `Camp.STRUCTURE_DIRS` and
   `STRUCTURE_OFFSETS`, measured off the art's opaque bounds as always.
 - The gate ships as two open wall-row cells. Camp's bounds keep the player
