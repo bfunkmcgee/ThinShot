@@ -24,7 +24,7 @@ if [ $# -gt 0 ]; then
   done
 else
   run test_rules; run test_roll; run test_career; run test_gear; run test_morale; run test_overwatch; run test_undo; run test_aiplan; run test_projection; run test_pressure; run test_wounds
-  run test_menu; run test_save_load; run test_progression; run test_hero_gameover
+  run test_camp_pickers; run test_menu; run test_save_load; run test_progression; run test_hero_gameover
   run test_returners; run test_bounty; run test_ratline; run test_occlusion
   run check_level -- --all; run check_briefing_fit; run check_cover_rules
   run check_tile_catalog; run check_floor_sheets; run check_unit_art; run check_prop_tables

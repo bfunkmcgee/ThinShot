@@ -993,7 +993,7 @@ func _open_bounties() -> void:
 
 
 ## Who to send. Every living named soldier, with what they would actually roll.
-func _open_bounty_hunters(offer: Dictionary) -> void:
+func _open_bounty_hunters(offer: Dictionary, at := 0) -> void:
 	_bounty_offer = offer
 	var candidates: Array = []
 	for soldier: Dictionary in Game.roster:
@@ -1002,6 +1002,10 @@ func _open_bounty_hunters(offer: Dictionary) -> void:
 	if candidates.is_empty():
 		_open_modal("NOBODY TO SEND", "There is no one on their feet.")
 		return
+	# Pages, like the quartermaster's rack. The modal has two buttons and the
+	# roster is eight deep - listing only the first two did not mean the squad
+	# was two men, it meant six of them could never be sent.
+	at = posmod(at, candidates.size())
 	var survivals := int(offer.get("survivals", 0))
 	var has_band := Rules.can_lead_warband(survivals)
 	var lines: Array[String] = [
@@ -1012,24 +1016,30 @@ func _open_bounty_hunters(offer: Dictionary) -> void:
 		"Two riflemen go with whoever you send.",
 		"",
 	]
-	for i in mini(candidates.size(), 2):
-		var s: Dictionary = candidates[i]
-		var presence := int(s.get("presence", 0))
-		var guile := int(s.get("guile", 0))
-		lines.append("%s  -  %s" % [Game.soldier_label(s),
-				Unit.kind_role_name(int(s.kind))])
-		lines.append("   presence %d, guile %d" % [presence, guile])
-		lines.append("   talk him down %d%%   turn him %d%%" % [
-				Bounty.surrender_chance(presence, survivals, has_band, false),
-				Bounty.informant_chance(guile, presence, survivals, has_band,
-						not str(offer.get("grievance", "")).is_empty())])
-		lines.append("")
+	for i in candidates.size():
+		var s2: Dictionary = candidates[i]
+		lines.append("%s %s  -  %s%s" % [
+				">" if i == at else " ", Game.soldier_label(s2),
+				Unit.kind_role_name(int(s2.kind)),
+				"  (resting)" if Game.is_resting(int(s2.get("id", 0))) else ""])
+	# The odds for the one under the cursor. All eight sets at once would be
+	# forty lines of arithmetic to read a name out of.
+	var pick: Dictionary = candidates[at]
+	var presence := int(pick.get("presence", 0))
+	var guile := int(pick.get("guile", 0))
+	lines.append("")
+	lines.append("%s  -  presence %d, guile %d" % [
+			Game.soldier_label(pick), presence, guile])
+	lines.append("talk him down %d%%   turn him %d%%" % [
+			Bounty.surrender_chance(presence, survivals, has_band, false),
+			Bounty.informant_chance(guile, presence, survivals, has_band,
+					not str(offer.get("grievance", "")).is_empty())])
 	_choice_action = "bounty_send"
-	_choice_args = [offer, candidates]
+	_choice_args = [offer, candidates, at]
 	_open_modal("WHO GOES", "
 ".join(lines),
-			Game.soldier_label(candidates[0]),
-			Game.soldier_label(candidates[1]) if candidates.size() > 1 else "")
+			"SEND %s" % Game.soldier_label(pick),
+			"NEXT ON THE ROSTER" if candidates.size() > 1 else "")
 
 
 ## The net. Three crossings against the coming operation, what running them
@@ -1079,7 +1089,7 @@ func _open_ratline() -> void:
 
 ## Who leads the run. No negotiation odds - an interdiction is a gunfight -
 ## so the panel shows who they are rather than what they would roll.
-func _open_ratline_leaders(offer: Dictionary) -> void:
+func _open_ratline_leaders(offer: Dictionary, at := 0) -> void:
 	var candidates: Array = []
 	for soldier: Dictionary in Game.roster:
 		if bool(soldier.get("alive", false)):
@@ -1087,6 +1097,7 @@ func _open_ratline_leaders(offer: Dictionary) -> void:
 	if candidates.is_empty():
 		_open_modal("NOBODY TO SEND", "There is no one on their feet.")
 		return
+	at = posmod(at, candidates.size())
 	var lines: Array[String] = [
 		"%s at %s - %s." % [str(offer.title).capitalize(), str(offer.place),
 				str(offer.where)],
@@ -1095,17 +1106,20 @@ func _open_ratline_leaders(offer: Dictionary) -> void:
 		"the next mission.",
 		"",
 	]
-	for i in mini(candidates.size(), 2):
-		var s: Dictionary = candidates[i]
-		lines.append("%s  -  %s, %s" % [Game.soldier_label(s),
-				Unit.kind_role_name(int(s.kind)),
-				Career.level_label(int(s.get("level", 1)))])
-		lines.append("")
+	for i in candidates.size():
+		var s2: Dictionary = candidates[i]
+		lines.append("%s %s  -  %s, %s%s" % [
+				">" if i == at else " ", Game.soldier_label(s2),
+				Unit.kind_role_name(int(s2.kind)),
+				Career.level_label(int(s2.get("level", 1))),
+				"  (resting)" if Game.is_resting(int(s2.get("id", 0))) else ""])
+	var pick: Dictionary = candidates[at]
 	_choice_action = "ratline_send"
-	_choice_args = [offer, candidates]
-	_open_modal("WHO LEADS", "\n".join(lines),
-			Game.soldier_label(candidates[0]),
-			Game.soldier_label(candidates[1]) if candidates.size() > 1 else "")
+	_choice_args = [offer, candidates, at]
+	_open_modal("WHO LEADS", "
+".join(lines),
+			"SEND %s" % Game.soldier_label(pick),
+			"NEXT ON THE ROSTER" if candidates.size() > 1 else "")
 
 
 # ------------------------------------------------------------------- modal --
@@ -1544,9 +1558,13 @@ func _on_choice(slot: int) -> void:
 		"bounty_send":
 			var offer: Dictionary = _choice_args[0]
 			var people: Array = _choice_args[1]
-			if slot >= people.size():
+			var at: int = int(_choice_args[2])
+			if slot != 0:
+				_open_bounty_hunters(offer, at + 1)
 				return
-			var hunter: Dictionary = people[slot]
+			if at >= people.size():
+				return
+			var hunter: Dictionary = people[at]
 			# Built here rather than in Game, which may not name Bounty - see
 			# the layering note in Bounty.gd. If the generator cannot produce a
 			# sound board the bounty is simply refused: an unfinishable map is
@@ -1568,9 +1586,13 @@ func _on_choice(slot: int) -> void:
 		"ratline_send":
 			var offer: Dictionary = _choice_args[0]
 			var people: Array = _choice_args[1]
-			if slot >= people.size():
+			var at: int = int(_choice_args[2])
+			if slot != 0:
+				_open_ratline_leaders(offer, at + 1)
 				return
-			var leader: Dictionary = people[slot]
+			if at >= people.size():
+				return
+			var leader: Dictionary = people[at]
 			# Built here rather than in Game, which may not name Ratline - the
 			# same layering note as the bounty arm above. A generator that
 			# cannot produce a sound board refuses the run; the crossing
