@@ -5173,6 +5173,27 @@ func _still_out_there() -> String:
 ## it happened. Somebody the squad already knew keeps his id and adds a line to
 ## his history; a stranger is minted one. Either way the next mission that meets
 ## him meets the same man.
+## Everybody the squad accounted for, struck off the standing record.
+##
+## The mirror of _remember_the_survivors(), and it runs on the same branch for
+## the same reason: a lost mission is rolled back wholesale, so a man killed on
+## a mission the squad then lost is still out there and must stay on the books.
+##
+## Only somebody the campaign already had a file on can be struck off - a
+## stranger shot on his first contact was never on the roster to leave it. That
+## is what adversary_id being 0 means, and why this reads it rather than the
+## name.
+func _settle_the_accounted_for() -> void:
+	for entry: Dictionary in roll:
+		var known := int(entry.get("adversary_id", 0))
+		if known == 0:
+			continue
+		var fate := str(entry.get("fate", ""))
+		if fate != "killed" and fate != "surrendered":
+			continue
+		Game.settle_adversary(known, fate, Game.current_level)
+
+
 func _remember_the_survivors() -> void:
 	for entry: Dictionary in roll:
 		var fate := str(entry.get("fate", ""))
@@ -5461,6 +5482,7 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 		_sweep_the_still_running()
 		_apply_conduct()
 		_remember_the_survivors()
+		_settle_the_accounted_for()
 		# The ledger's first half: whoever ends a won mission below half is
 		# walking wounded for the next one. Before commit_mission, so the
 		# flag is part of the state the win banks - and never on a loss,
