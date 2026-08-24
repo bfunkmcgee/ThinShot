@@ -38,8 +38,8 @@ const WALL_OFFSETS := {
 	"junction": Vector2(0, -9), "cap": Vector2(0, -11),
 }
 const WIRE_OFFSETS := {
-	"x_run": Vector2(0, -10), "y_run": Vector2(0, -10),
-	"junction": Vector2(0, -4), "cap": Vector2(0, -17),
+	"x_run": Vector2(0, -15), "y_run": Vector2(0, -13),
+	"junction": Vector2(0, -15), "cap": Vector2(0, -10),
 }
 const ROT_FILES := {
 	"x_run": "south-west.png", "y_run": "south-east.png",

@@ -155,8 +155,8 @@ const WALL_OFFSETS := {
 # its canvas is 97px where the wall's is 68, so the numbers differ but the
 # base lands on the same front vertex.
 const WIRE_OFFSETS := {
-	"x_run": Vector2(0, -10), "y_run": Vector2(0, -10),
-	"junction": Vector2(0, -4), "cap": Vector2(0, -17),
+	"x_run": Vector2(0, -15), "y_run": Vector2(0, -13),
+	"junction": Vector2(0, -15), "cap": Vector2(0, -10),
 }
 const SANDBAG_OFFSET := Vector2(0, -22)
 # A rifle lying where its owner fell, in the direction they were last facing.

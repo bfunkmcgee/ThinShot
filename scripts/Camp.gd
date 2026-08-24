@@ -186,8 +186,8 @@ const WIRE_TEXTURES := {
 	"cap": preload(WIRE_ROOT + "east.png"),
 }
 const WIRE_OFFSETS := {
-	"x_run": Vector2(0, -10), "y_run": Vector2(0, -10),
-	"junction": Vector2(0, -4), "cap": Vector2(0, -17),
+	"x_run": Vector2(0, -15), "y_run": Vector2(0, -13),
+	"junction": Vector2(0, -15), "cap": Vector2(0, -10),
 }
 const PROP_DUST := preload("res://assets/shaders/prop_dust.gdshader")
 const ROCK_OFFSET := Vector2(0, -18)
