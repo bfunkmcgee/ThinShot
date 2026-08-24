@@ -22,6 +22,11 @@ var current_level := 0
 # rather than back at the garrison. Decides which camp the player walks around
 # and whether replacements are available.
 var in_the_field := false
+# Which garrison room the camp scene shows; "" is the yard. Runtime only -
+# deliberately not saved: a reloaded campaign opens on the yard, the same
+# way it opens on the garrison rather than mid-conversation.
+var camp_interior := ""
+var camp_return := Vector2i(-1, -1)
 
 # This campaign's own number, minted once and then never touched again. It is
 # what makes a battle reproducible: the dice a mission rolls are derived from

@@ -217,6 +217,183 @@ const FIELD_SPOTS := {
 }
 
 
+## The rooms behind the garrison's doors (INTERIORS.md). Camp-shaped maps:
+## Board.set_level eats them, and the walk mode, prompts, fade and breeze
+## loops come along for free. Stage one furnishes them from shipped art
+## only - the stand-ins are named for what the cell WILL be, so the
+## furniture batch replaces textures without touching a map.
+##
+## Jail bars are '=': stops movement, seen through, which is what bars are.
+const INTERIORS := {
+	"hq": {
+		"size": Vector2i(10, 7),
+		"map": [
+			"WWWWWWWWWW",
+			"W.j..j..jW",
+			"W........W",
+			"Wj..jj..jW",
+			"W........W",
+			"W........W",
+			"WWWW..WWWW",
+		],
+		"props": {
+			Vector2i(2, 1): "files_cabinet", Vector2i(5, 1): "radio_desk",
+			Vector2i(8, 1): "map_board",
+			Vector2i(1, 3): "command_desk", Vector2i(4, 3): "map_table",
+			Vector2i(5, 3): "map_crates", Vector2i(8, 3): "strong_safe",
+		},
+		"spawn": Vector2i(4, 5),
+		"doors": [Vector2i(4, 6), Vector2i(5, 6)],
+		"floor": "compound",
+		"label": "the command post",
+	},
+	"canteen": {
+		"size": Vector2i(10, 7),
+		"map": [
+			"WWWWWWWWWW",
+			"Wjjj..j.jW",
+			"W........W",
+			"W..j..j..W",
+			"W........W",
+			"W.j....j.W",
+			"WWWW..WWWW",
+		],
+		"props": {
+			Vector2i(1, 1): "bar_counter", Vector2i(2, 1): "bar_counter",
+			Vector2i(3, 1): "bar_counter", Vector2i(6, 1): "bottle_shelf",
+			Vector2i(8, 1): "field_stove",
+			Vector2i(3, 3): "canteen_table", Vector2i(6, 3): "canteen_table",
+			Vector2i(2, 5): "canteen_table", Vector2i(7, 5): "canteen_table",
+		},
+		"spawn": Vector2i(4, 5),
+		"doors": [Vector2i(4, 6), Vector2i(5, 6)],
+		"floor": "desert",
+		"label": "the wet canteen",
+	},
+	"armory": {
+		"size": Vector2i(9, 6),
+		"map": [
+			"WWWWWWWWW",
+			"Wjj.j.jjW",
+			"W.......W",
+			"Wj.....jW",
+			"W.......W",
+			"WWW..WWWW",
+		],
+		"props": {
+			Vector2i(1, 1): "rifle_rack", Vector2i(2, 1): "rifle_rack",
+			Vector2i(4, 1): "qm_shelving",
+			Vector2i(6, 1): "ammo_box", Vector2i(7, 1): "ammo_box",
+			Vector2i(1, 3): "qm_counter", Vector2i(7, 3): "cleaning_bench",
+		},
+		"spawn": Vector2i(3, 4),
+		"doors": [Vector2i(3, 5), Vector2i(4, 5)],
+		"floor": "compound",
+		"label": "the armory",
+	},
+	"lockup": {
+		"size": Vector2i(9, 7),
+		"map": [
+			"WWWWWWWWW",
+			"Wj..W..jW",
+			"W...W...W",
+			"W===W===W",
+			"W.......W",
+			"Wj.....jW",
+			"WWW..WWWW",
+		],
+		"props": {
+			Vector2i(1, 1): "cell_cot", Vector2i(7, 1): "cell_cot",
+			Vector2i(1, 5): "guard_stool", Vector2i(7, 5): "notice_board",
+		},
+		"spawn": Vector2i(3, 5),
+		"doors": [Vector2i(3, 6), Vector2i(4, 6)],
+		"floor": "compound",
+		"label": "the lockup",
+	},
+	"surgeon": {
+		"size": Vector2i(9, 6),
+		"map": [
+			"WWWWWWWWW",
+			"Wj.j.j.jW",
+			"W.......W",
+			"Wj.....jW",
+			"W.......W",
+			"WWW..WWWW",
+		],
+		"props": {
+			Vector2i(1, 1): "cot", Vector2i(3, 1): "cot", Vector2i(5, 1): "cot",
+			Vector2i(7, 1): "medical_chest",
+			Vector2i(1, 3): "wash_stand", Vector2i(7, 3): "folding_screen",
+		},
+		"spawn": Vector2i(3, 4),
+		"doors": [Vector2i(3, 5), Vector2i(4, 5)],
+		"floor": "desert",
+		"label": "the surgeon's tent",
+	},
+	"billet": {
+		"size": Vector2i(9, 6),
+		"map": [
+			"WWWWWWWWW",
+			"Wj.j.j.jW",
+			"W.......W",
+			"Wjj....jW",
+			"W.......W",
+			"WWW..WWWW",
+		],
+		"props": {
+			Vector2i(1, 1): "bunk", Vector2i(3, 1): "bunk",
+			Vector2i(5, 1): "bunk", Vector2i(7, 1): "bunk",
+			Vector2i(1, 3): "footlocker", Vector2i(2, 3): "footlocker",
+			Vector2i(7, 3): "field_stove",
+		},
+		"spawn": Vector2i(3, 4),
+		"doors": [Vector2i(3, 5), Vector2i(4, 5)],
+		"floor": "desert",
+		"label": "the billet",
+	},
+}
+
+## Which yard cell opens which room. All three billets share one map: the
+## rooms are the same because the beds are; who sleeps in which bunk is the
+## roster business, not the map layout.
+const GARRISON_DOORS := {
+	Vector2i(8, 3): "hq",
+	Vector2i(4, 10): "canteen",
+	Vector2i(13, 8): "armory",
+	Vector2i(17, 9): "lockup",
+	Vector2i(4, 5): "surgeon",
+	Vector2i(1, 3): "billet",
+	Vector2i(1, 6): "billet",
+	Vector2i(1, 9): "billet",
+}
+
+
+## An interior, dressed as a camp map. Same shape map_for returns, so
+## Board.set_level and every Camp spawner take it without a special case.
+static func interior_for(name: String) -> Dictionary:
+	var base: Dictionary = INTERIORS[name].duplicate(true)
+	base["structures"] = []
+	base["zone_seed"] = 91
+	base["shade_seed"] = 17
+	base["zone_thresholds"] = [-0.30, 0.10]
+	base["prop_seed"] = 91 * 977 + 101
+	return base
+
+
+## Interior spots: a player and nothing else. The sentinel cells are what
+## _build_fixtures and the validator read as "this camp has no such station".
+static func interior_spots(name: String) -> Dictionary:
+	return {
+		"player": Vector2i(INTERIORS[name].spawn),
+		"briefing": Vector2i(-1, -1),
+		"stores": Vector2i(-1, -1),
+		"recruit": Vector2i(-1, -1),
+		"squad": [],
+		"dressing": [],
+	}
+
+
 ## The map for whichever camp the squad is in, with the biome's floor
 ## character applied: its tilesheet, tile family and shading. The map layout
 ## itself is the same wherever the squad pitches up.
@@ -294,10 +471,18 @@ static func _validate_one(camp: Dictionary, spots: Dictionary, label: String) ->
 	ok = _check(walkable(camp, start), "%s: player spawn %s not walkable" % [label, start]) and ok
 	var reach := _reachable(camp, start)
 	var seen := {start: true}
-	var fixtures: Array[Vector2i] = [spots.briefing, spots.stores]
+	# Sentinel (-1,-1) means "this camp has no such station" - the interiors
+	# carry a player and a door and nothing else.
+	var fixtures: Array[Vector2i] = []
+	for named: Vector2i in [Vector2i(spots.briefing), Vector2i(spots.stores)]:
+		if named.x >= 0:
+			fixtures.append(named)
 	if Vector2i(spots.recruit).x >= 0:
 		fixtures.append(spots.recruit)
 	fixtures.append_array(spots.squad)
+	# An interior's doors are stations too: standing in one must be possible.
+	for door: Vector2i in camp.get("doors", []):
+		fixtures.append(door)
 	for cell: Vector2i in fixtures:
 		ok = _check(walkable(camp, cell),
 				"%s: fixture %s not walkable" % [label, cell]) and ok
@@ -306,9 +491,12 @@ static func _validate_one(camp: Dictionary, spots: Dictionary, label: String) ->
 		ok = _check(not seen.has(cell),
 				"%s: two fixtures share %s" % [label, cell]) and ok
 		seen[cell] = true
-	# The squad has to have somewhere to stand for every slot a level can field.
-	ok = _check((spots.squad as Array).size() >= 5,
-			"%s: only %d squad spots" % [label, (spots.squad as Array).size()]) and ok
+	# The squad has to have somewhere to stand for every slot a level can
+	# field - in a camp that hosts the squad at all. Interiors host one
+	# walker and a door.
+	if not camp.has("doors"):
+		ok = _check((spots.squad as Array).size() >= 5,
+				"%s: only %d squad spots" % [label, (spots.squad as Array).size()]) and ok
 	return ok
 
 
@@ -317,4 +505,11 @@ static func _validate_one(camp: Dictionary, spots: Dictionary, label: String) ->
 static func validate() -> void:
 	var ok := _validate_one(GARRISON, GARRISON_SPOTS, "garrison")
 	ok = _validate_one(FIELD, FIELD_SPOTS, "field camp") and ok
+	for name: String in INTERIORS:
+		ok = _validate_one(interior_for(name), interior_spots(name),
+				"interior '%s'" % name) and ok
+	# Every yard door must stand on open garrison ground.
+	for cell: Vector2i in GARRISON_DOORS:
+		ok = _check(walkable(GARRISON, cell),
+				"door cell %s not walkable in the yard" % cell) and ok
 	assert(ok, "Camp data invalid - see errors above")

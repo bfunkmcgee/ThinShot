@@ -194,8 +194,12 @@ surfaces before accepting.
 
 ## Staging
 
-1. **Shells** — doors, transitions, all six maps furnished from reused
-   props only, compound floor. Playable immediately; rooms are sparse.
+1. ~~**Shells**~~ — **shipped 2026-08-25**: doors, transitions, all six
+   rooms furnished from reused props, `--interior <name>` for screenshot
+   runs, `tools/test_interiors.gd` proving the scene (22 checks), and the
+   desert's detritus stopped at the door. Known stage-one reads: the
+   lockup's `=` draws the outdoor concertina until the bar art lands, and
+   the canteen's counter wears the QM's art.
 2. **Furniture batch** — the bill above lands; rooms are dressed.
 3. **Memory dressing** — stripped bunks, cots for the wounded, the man in
    the cell, stock on the counter, cards on the board. Each is a small

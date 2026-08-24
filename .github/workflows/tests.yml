@@ -124,6 +124,7 @@ jobs:
           harness test_pressure
           harness test_wounds
           harness test_camp_pickers
+          harness test_interiors
           harness test_menu
           harness test_save_load
           harness test_progression

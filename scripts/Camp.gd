@@ -79,6 +79,29 @@ const FIXTURE_TEXTURES := {
 	# The range flag is the extraction marker's banner doing a second job:
 	# same cloth, same wind, and it means the same thing - live ground.
 	"range_flag": preload("res://assets/sprites/Environment/Desert/desert_signal_markers/Signal_banner.png"),
+	# The interiors (INTERIORS.md), stage one: every name is what the cell
+	# WILL be, textured with what already ships. The furniture batch swaps
+	# textures under these names without touching a map.
+	"qm_shelving": preload(FIXTURE_ROOT + "Garrison_qm_shelving.png"),
+	"canteen_table": preload(FIXTURE_ROOT + "Garrison_canteen_table.png"),
+	"files_cabinet": preload(FIXTURE_ROOT + "Garrison_qm_shelving.png"),
+	"radio_desk": preload(FIXTURE_ROOT + "Garrison_field_radio.png"),
+	"map_board": preload(FIXTURE_ROOT + "Garrison_notice_board.png"),
+	"command_desk": preload(FIXTURE_ROOT + "Garrison_paymaster_desk.png"),
+	"map_table": preload("res://assets/sprites/Environment/Desert/Props/Briefing_table/Briefing_table_garrison/rotations/unknown.png"),
+	"map_crates": preload("res://assets/sprites/Environment/Desert/Props/Pile_of_desert_ammo_crates/Pile_of_desert_ammo_crates/rotations/unknown.png"),
+	"strong_safe": preload(FIXTURE_ROOT + "Garrison_ammo_box.png"),
+	"bar_counter": preload(FIXTURE_ROOT + "Garrison_qm_counter.png"),
+	"bottle_shelf": preload(FIXTURE_ROOT + "Garrison_qm_shelving.png"),
+	"rifle_rack": preload(FIXTURE_ROOT + "Garrison_kit_frame.png"),
+	"cell_cot": preload(FIXTURE_ROOT + "Garrison_firing_point.png"),
+	"guard_stool": preload("res://assets/sprites/Environment/Desert/desert_ammo_crates/Desert_ammo_crate.png"),
+	"cot": preload(FIXTURE_ROOT + "Garrison_firing_point.png"),
+	"medical_chest": preload(FIXTURE_ROOT + "Garrison_ammo_box.png"),
+	"wash_stand": preload(FIXTURE_ROOT + "Garrison_jerry_cans.png"),
+	"folding_screen": preload(FIXTURE_ROOT + "Garrison_washing_line.png"),
+	"bunk": preload(FIXTURE_ROOT + "Garrison_firing_point.png"),
+	"footlocker": preload(FIXTURE_ROOT + "Garrison_ammo_box.png"),
 	"watchtower": preload(FIXTURE_ROOT + "Garrison_watchtower.png"),
 	"water_bowser": preload(FIXTURE_ROOT + "Garrison_water_bowser.png"),
 	"water_tank": preload(FIXTURE_ROOT + "Garrison_water_tank.png"),
@@ -104,6 +127,26 @@ const FIXTURE_OFFSETS := {
 	"target": Vector2(0, -21), "target_1": Vector2(0, -21),
 	"firing_point": Vector2(0, -20),
 	"range_flag": Vector2(0, -17),
+	"qm_shelving": Vector2(0, -72),
+	"canteen_table": Vector2(0, -20),
+	"files_cabinet": Vector2(0, -72),
+	"radio_desk": Vector2(0, -21),
+	"map_board": Vector2(0, -20),
+	"command_desk": Vector2(0, -20),
+	"map_table": Vector2(0, -23),
+	"map_crates": Vector2(0, -18),
+	"strong_safe": Vector2(0, -21),
+	"bar_counter": Vector2(0, -20),
+	"bottle_shelf": Vector2(0, -72),
+	"rifle_rack": Vector2(0, -21),
+	"cell_cot": Vector2(0, -20),
+	"guard_stool": Vector2(0, -12),
+	"cot": Vector2(0, -20),
+	"medical_chest": Vector2(0, -21),
+	"wash_stand": Vector2(0, -22),
+	"folding_screen": Vector2(0, -18),
+	"bunk": Vector2(0, -20),
+	"footlocker": Vector2(0, -21),
 	"watchtower": Vector2(0, -73),
 	"water_bowser": Vector2(0, -22),
 	"water_tank": Vector2(0, -63),
@@ -264,6 +307,9 @@ var _swaying: Array = []
 # spawner has run; pairs of (sprite, sorts_by) because a structure's draw order
 # belongs to its root while its pixels belong to the child.
 var _occluders: Array = []
+# Which room the camp is showing; "" is the yard. Mirrors Game.camp_interior
+# at _ready so the whole file can ask one local.
+var interior := ""
 var _animated: Array = []
 # What the two modal buttons currently mean, set when a panel is opened.
 var _choice_action := ""
@@ -276,8 +322,20 @@ func _ready() -> void:
 	# `godot --path . -- --field` drops straight into the field camp, which is
 	# otherwise only reachable by finishing a mission. Mirrors Battle's --level.
 	in_field = Game.in_the_field or OS.get_cmdline_user_args().has("--field")
-	camp = CampData.map_for(in_field, Game.biome())
-	spots = CampData.spots_for(in_field)
+	# `--interior hq` drops straight into a room, mirroring --field: the only
+	# other way in is walking to its door, which a screenshot run cannot do.
+	var args := OS.get_cmdline_user_args()
+	for i in args.size():
+		if args[i] == "--interior" and i + 1 < args.size():
+			Game.camp_interior = args[i + 1]
+	interior = "" if in_field else Game.camp_interior
+	if interior != "" and CampData.INTERIORS.has(interior):
+		camp = CampData.interior_for(interior)
+		spots = CampData.interior_spots(interior)
+	else:
+		interior = ""
+		camp = CampData.map_for(in_field, Game.biome())
+		spots = CampData.spots_for(in_field)
 	board.set_level(camp)
 	_prop_seed = int(camp.get("prop_seed",
 			int(camp.get("zone_seed", 91)) * 977 + 101))
@@ -292,7 +350,10 @@ func _ready() -> void:
 	choice_a.pressed.connect(_on_choice.bind(0))
 	choice_b.pressed.connect(_on_choice.bind(1))
 	modal.visible = false
-	title_label.text = "FIELD CAMP" if in_field else "GARRISON"
+	if interior != "":
+		title_label.text = str(CampData.INTERIORS[interior].label).to_upper()
+	else:
+		title_label.text = "FIELD CAMP" if in_field else "GARRISON"
 	_refresh_subtitle()
 	# Same texel density as the battle: _clamped_camera divides the viewport
 	# by zoom, so the clamping adapts on its own.
@@ -709,6 +770,11 @@ func _spawn_props() -> void:
 ## the walkable spots the player actually interacts with are left clear, since
 ## a bone under the briefing table would read as something to click on.
 func _spawn_detritus() -> void:
+	# The desert stops at the door. Bones and driftwood on a swept interior
+	# floor would say nobody lives here, and the whole point of the rooms is
+	# that somebody does.
+	if interior != "":
+		return
 	var claimed := {}
 	for cell: Vector2i in spots.dressing:
 		claimed[cell] = true
@@ -831,7 +897,12 @@ func _spawn_squad() -> void:
 	if avatar.is_empty():
 		push_error("[Camp] no living soldier to play as")
 		return
-	player = _make_unit(avatar, spots.player)
+	var at: Vector2i = spots.player
+	# Walking out of a room resumes at its yard door, not mid-parade.
+	if interior == "" and Game.camp_return.x >= 0:
+		at = Game.camp_return
+		Game.camp_return = Vector2i(-1, -1)
+	player = _make_unit(avatar, at)
 	player.set_facing(Vector2(0, 1))  # face the camera at rest
 	var slot := 0
 	var squad: Array = spots.squad
@@ -854,23 +925,44 @@ func _spawn_squad() -> void:
 
 
 func _build_fixtures() -> void:
-	fixtures.append({
-		"kind": "briefing", "cell": spots.briefing,
-		"pos": board.cell_to_global(spots.briefing),
-		"label": "the briefing table", "id": 0,
-	})
-	fixtures.append({
-		"kind": "stores", "cell": spots.stores,
-		"pos": board.cell_to_global(spots.stores),
-		"label": "the stores tent", "id": 0,
-	})
+	# The rooms first: a door out, and a door into each building this camp
+	# has. An interior is a camp whose only stations are its exits.
+	if interior != "":
+		for door: Vector2i in camp.get("doors", []):
+			fixtures.append({
+				"kind": "exit", "cell": door,
+				"pos": board.cell_to_global(door),
+				"label": "the yard", "id": 0,
+			})
+	elif not in_field:
+		for door_cell: Vector2i in CampData.GARRISON_DOORS:
+			var room: String = CampData.GARRISON_DOORS[door_cell]
+			fixtures.append({
+				"kind": "enter", "cell": door_cell,
+				"pos": board.cell_to_global(door_cell),
+				"label": str(CampData.INTERIORS[room].label), "id": 0,
+				"interior": room,
+			})
+	if Vector2i(spots.briefing).x >= 0:
+		fixtures.append({
+			"kind": "briefing", "cell": spots.briefing,
+			"pos": board.cell_to_global(spots.briefing),
+			"label": "the briefing table", "id": 0,
+		})
+	if Vector2i(spots.stores).x >= 0:
+		fixtures.append({
+			"kind": "stores", "cell": spots.stores,
+			"pos": board.cell_to_global(spots.stores),
+			"label": "the stores tent", "id": 0,
+		})
 	# The stores had nothing on the ground at all - you walked up to an empty
 	# patch of sand and a prompt appeared. Variant keyed off the cell so the
 	# two camps do not put out the same crate.
-	_spawn_prop(
-			STORES_TEXTURES[_prop_pick(spots.stores, SALT_CRATE,
-					STORES_TEXTURES.size())],
-			STORES_OFFSET, spots.stores)
+	if Vector2i(spots.stores).x >= 0:
+		_spawn_prop(
+				STORES_TEXTURES[_prop_pick(spots.stores, SALT_CRATE,
+						STORES_TEXTURES.size())],
+				STORES_OFFSET, spots.stores)
 	# The duty roster board doubles as the bounty board. Garrison only - and
 	# ALWAYS there, empty or not. It used to exist only once somebody had
 	# escaped, which read as "a board with nothing on it wastes a walk" and
@@ -911,7 +1003,8 @@ func _build_fixtures() -> void:
 			})
 	# The ledger is read at the memorial, which is where a campaign keeps
 	# what it cannot get back. Garrison only, because the cross is.
-	var cross: Vector2i = _fixture_cell("memorial_cross")
+	var cross: Vector2i = _fixture_cell("memorial_cross") \
+			if interior == "" else Vector2i(-1, -1)
 	if cross.x >= 0:
 		fixtures.append({
 			"kind": "ledger", "cell": cross,
@@ -924,7 +1017,8 @@ func _build_fixtures() -> void:
 	# the squad is home. Selling mid-operation would also mean selling
 	# mid-transaction: a lost mission rolls the roster back, and the book
 	# must never be part of what a rollback has to untangle.
-	var rack: Vector2i = _fixture_cell("qm_counter")
+	var rack: Vector2i = _fixture_cell("qm_counter") \
+			if interior == "" else Vector2i(-1, -1)
 	if rack.x >= 0:
 		fixtures.append({
 			"kind": "qm", "cell": rack,
@@ -943,10 +1037,11 @@ func _build_fixtures() -> void:
 		_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, post)
 	# The table itself, so the fixture is the thing it is named after rather than
 	# a crate standing in for one.
-	_spawn_prop(
-			BRIEFING_TEX_FIELD if in_field else BRIEFING_TEX_GARRISON,
-			BRIEFING_OFFSET_FIELD if in_field else BRIEFING_OFFSET_GARRISON,
-			spots.briefing)
+	if Vector2i(spots.briefing).x >= 0:
+		_spawn_prop(
+				BRIEFING_TEX_FIELD if in_field else BRIEFING_TEX_GARRISON,
+				BRIEFING_OFFSET_FIELD if in_field else BRIEFING_OFFSET_GARRISON,
+				spots.briefing)
 
 
 # ----------------------------------------------------------------- movement --
@@ -1091,6 +1186,10 @@ func _prompt_for(fixture: Dictionary) -> String:
 			return "E  -  the campaign's ledger"
 		"qm":
 			return "E  -  quartermaster: %d scrip in the book" % Game.scrip
+		"enter":
+			return "E  -  inside %s" % fixture.label
+		"exit":
+			return "E  -  back to the yard"
 		"ratline":
 			if Game.ratline_strength != 0:
 				return "E  -  field radio: the operation is on - the net is closed"
@@ -1142,6 +1241,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			_open_quartermaster(0)
 		"ratline":
 			_open_ratline()
+		"enter":
+			Game.camp_interior = str(_focus.interior)
+			Game.camp_return = _focus.cell
+			get_tree().reload_current_scene()
+		"exit":
+			Game.camp_interior = ""
+			get_tree().reload_current_scene()
 
 
 # ------------------------------------------------------------------ bounties --
