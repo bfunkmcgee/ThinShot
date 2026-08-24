@@ -105,34 +105,36 @@ const GARRISON_PROPS := {
 	# The tower watches the one gate. It is a tall prop on the FRONT row -
 	# the known cost is that it can occlude a walker two rows behind it;
 	# Battle's occlusion fade is the fix if it bothers.
-	Vector2i(12, 10): "watchtower",
+	Vector2i(12, 12): "watchtower",
 	# SW - the memorial: alone, in a planted row, beside the way out.
-	Vector2i(3, 10): "memorial_cross",
+	Vector2i(3, 12): "memorial_cross",
 }
 
 const GARRISON := {
-	"size": Vector2i(22, 12),
+	"size": Vector2i(24, 14),
 	"map": [
-		"WWWWWWWWWWWWWWWWWWWWWW",
-		"W.....j.....jjjjjjjj.W",
-		"W..j.......j..j.j.j..W",
-		"W....................W",
-		"W....................W",
-		"W......j.j..j.j.j.j..W",
-		"W...j..........jj....W",
-		"W......j....j......j.W",
-		"W...........j..=...j.W",
-		"W.....j.......=......W",
-		"W.pjp.......j.=......W",
-		"WWWWWWWWW..WWWWWWWWWWW",
+		"WWWWWWWWWWWWWWWWWWWWWWWW",
+		"W.....j.....jjjjjjjj...W",
+		"W..j.......j..j.j.j....W",
+		"W......................W",
+		"W......................W",
+		"W......j.j..j.j.j.j....W",
+		"W...j..........jj......W",
+		"W......j....j......j...W",
+		"W...........j..=...j...W",
+		"W.....j.......=..=.....W",
+		"W.............=..=.....W",
+		"W..............==......W",
+		"W.pjp.......j..........W",
+		"WWWWWWWWW..WWWWWWWWWWWWW",
 	],
 	"props": GARRISON_PROPS,
 	# The two wall cells flanking the gateway carry the gate art: piers with
 	# their steel leaves standing OPEN against the wall, so the gap reads as
 	# a way through that somebody could close, which is what a gate is.
 	"gate": {
-		Vector2i(8, 11): "open_west",
-		Vector2i(11, 11): "open_east",
+		Vector2i(8, 13): "open_west",
+		Vector2i(11, 13): "open_east",
 	},
 	"structures": [
 		# The billet row holds the west wall; the five buildings of the
@@ -153,7 +155,7 @@ const GARRISON := {
 		# is where a blockhouse door belongs; the truck backs against the
 		# south wall instead, which is where a parked vehicle belongs - it
 		# has no door for the wall to argue with.
-		{"kind": "water_truck", "anchor": Vector2i(17, 9), "size": Vector2i(2, 2)},
+		{"kind": "water_truck", "anchor": Vector2i(19, 10), "size": Vector2i(2, 2)},
 		{"kind": "lockup", "anchor": Vector2i(17, 7), "size": Vector2i(2, 2)},
 	],
 	"zone_seed": 91,

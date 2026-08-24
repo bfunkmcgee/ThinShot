@@ -38,30 +38,33 @@ each is doing work a rule in this game already does.
 
 ## The map
 
-22×12, against today's 16×12. `G` marks the gate gap — it ships as `.`
+24×14 — grown from the first landing's 22×12 after the south-east corner proved too tight for the truck's overhang. `G` marks the gate gap — it ships as `.`
 (Board has no gate char; the gate art, ASSETS.md #2, hangs on the flanking
 wall cells when it lands).
 
 ```
-WWWWWWWWWWWWWWWWWWWWWW
-W.....j.....jjjjjjjj.W    flag(6,1) | HQ(8,1) | signals(12,1) berm(13..19,1)
-W..j.......j..j.j.j..W    washing(3,2) | paymaster(11,2) | targets(14,16,18)
-W....................W    HQ porch: dressing(8,3)(10,3) briefing(9,3)
-W....................W
-W......j.j..j.j.j.j..W    duty board(7,5) bounty board(9,5) | range flag(12,5) mats(14,16,18)
-W...j..........jj....W    kit frame(4,6) | ammo(15,6) cleaning(16,6)
-W......j....j......j.W    bowser(7,7) | qm counter(12,7) watertank(19,7)
-W...........j..=...j.W    awning(12,8) | pen wire(15,8), pen gate(16,8) | jerry(19,8)
-W.....j.......=......W    stove(6,9) | wire(14,9) pen(15..16,9)
-W.pjp.......j.=......W    memorial(3,10) | tower(12,10) wire(14,10) pen(15..16,10)
-WWWWWWWWWGGWWWWWWWWWWW    gate(9..10,11)
+WWWWWWWWWWWWWWWWWWWWWWWW
+W.....j.....jjjjjjjj...W    flag(6,1) | HQ(8,1) | signals(12,1) berm(13..19,1)
+W..j.......j..j.j.j....W    washing(3,2) | paymaster(11,2) | targets(14,16,18)
+W......................W    HQ porch: dressing(7,3)(12,3) briefing(9,3)
+W......................W
+W......j.j..j.j.j.j....W    duty board(7,5) bounty board(9,5) | range flag(12,5) mats(14,16,18)
+W...j..........jj......W    kit frame(4,6) | ammo(15,6) cleaning(16,6)
+W......j....j......j...W    bowser(7,7) | qm counter(12,7) watertank(19,7)
+W...........j..=...j...W    awning(12,8) | pen wire(15,8), pen gate(16,8) | jerry(19,8)
+W.....j.......=..=.....W    stove(6,9) | pen wire(14,17) pen(15..16,9)
+W.............=..=.....W    pen wire(14,17) pen(15..16,10)
+W..............==......W    pen wire south(15..16,11)
+W.pjp.......j..........W    memorial(3,12) | tower(12,12)
+WWWWWWWWWGGWWWWWWWWWWWWW    gate(9..10,13)
 ```
 
 Structures (2×2 anchors): billets `hut_1`(1,1), `hut_2`(1,4), `field_tent`
 (1,7) — all shipped art; **HQ**(8,1), **surgeon's tent**(4,3) (#27),
 **canteen**(4,8), **armory**(13,6), **lockup**(17,7) with its door on the
-pen's gate, the **water truck**(17,9) backed against the south wall and
-serving as the pen's east side — all new.
+pen's gate, and the **water truck**(19,10) parked clear of every wall —
+its art overhangs its footprint by a quarter-cell each side, which is why
+it can never park against one. The pen is wired on all four sides now.
 
 Stations and spots: player wakes mid-parade (9,6); briefing on the HQ porch
 (9,3) with the map crates two cells clear on each side; stores at the armory's south door (14,8);
@@ -140,7 +143,7 @@ flag; sandbags stand in for the berm until it has its own art.
 | ~~Range target~~ — **shipped** ×2 | 48×48 | `Garrison_target{,_1}`, offset −21 |
 | ~~Firing point~~ — **shipped** | 48×48 | `Garrison_firing_point`, offset −20 |
 | ~~Gate~~ — **shipped** | 68×68 | `Walls/desert_gate/` — open leaves hung at (8,11)/(11,11); closed, blown, piers, boom and checkpoint banked for #2's battle half |
-| ~~Water truck~~ — **shipped & parked** | 2×2 (168) | structure at (17,9), backed against the south wall, closing the pen's east side |
+| ~~Water truck~~ — **shipped & parked** | 2×2 (168) | structure at (19,10), clear of every wall — the art's overhang is why |
 
 The stations shipped with the same batch and are LIVE in the current 16×12
 yard already (Tier 6's own landing plan): the signals mast carries the
