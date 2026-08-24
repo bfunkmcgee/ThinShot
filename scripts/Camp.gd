@@ -544,15 +544,20 @@ func _sprite_rect(spr: Sprite2D) -> Rect2:
 	return Rect2(centre - size * 0.5, size)
 
 
-## Battle's rule, applied to the people who live here: anything drawn after a
-## unit whose rectangle genuinely covers his head and shoulders steps aside to
-## 42% while he is there. In camp that is the player walking behind the armory
-## and the idlers the buildings would otherwise swallow whole.
+## Battle's rule, applied to the ONE person it helps here: the player.
+##
+## Battle fades for every unit because every unit matters tactically and all
+## of them move. The camp's idlers are placed deliberately BESIDE the
+## buildings and never move at all - fading for them ghosted half the yard
+## permanently, which is not a fade, it is broken transparency. The walker is
+## the only body the scenery needs to step aside for.
 func _refresh_occlusion(delta: float) -> void:
 	var hiding := {}
-	for child in entities.get_children():
-		var unit := child as Unit
-		if unit == null or unit.sprite == null or unit.sprite.texture == null:
+	var bodies: Array[Unit] = []
+	if player != null and is_instance_valid(player):
+		bodies.append(player)
+	for unit in bodies:
+		if unit.sprite == null or unit.sprite.texture == null:
 			continue
 		var body := _sprite_rect(unit.sprite)
 		body.size.y *= RECOGNISE_BAND
@@ -676,14 +681,19 @@ func _spawn_props() -> void:
 					_sway(_spawn_prop(PLANT_TEXTURES[_prop_pick(cell, SALT_PLANT,
 							PLANT_TEXTURES.size())], PLANT_OFFSET, cell), cell)
 				"W":
+					# The wall ALWAYS draws - the first hanging of the gate
+					# replaced these two wall segments with thin pier art, and
+					# a chunky run that suddenly becomes a post reads as a
+					# four-cell hole. The leaf overlays the wall end instead,
+					# pulled toward the gap so it hangs over the opening.
+					_spawn_prop(_wall_texture(cell), WALL_OFFSET, cell)
 					var leaf := str(camp.get("gate", {}).get(cell, ""))
 					if GATE_TEXTURES.has(leaf):
+						var toward := 1.0 if leaf.ends_with("_west") else -1.0
 						var hung := _spawn_prop(GATE_TEXTURES[leaf],
-								GATE_OFFSET, cell)
+								GATE_OFFSET + Vector2(toward * 40.0, 22.0), cell)
 						_animate(hung, cell, _load_frame_run(
 								GATE_ROOT + "animations/" + leaf))
-					else:
-						_spawn_prop(_wall_texture(cell), WALL_OFFSET, cell)
 				"=":
 					var run := _wire_kind(cell)
 					_spawn_prop(WIRE_TEXTURES[run], WIRE_OFFSETS[run], cell)
