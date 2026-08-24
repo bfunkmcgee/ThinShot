@@ -392,6 +392,21 @@ var residents: Array[Unit] = []
 var bounty_refusals := 0
 ## The posted man, once somebody has said where he is. Null until then.
 var bounty_target: Unit = null
+## The manhunt before the fight.
+##
+## A bounty does not open as a battle. The party walks into somewhere people
+## live, asks after a man, and only becomes a firefight if the asking fails -
+## so until he is found the board runs in real time and the tactical layer is
+## not merely hidden, it is not running at all. Turns do not advance, nothing
+## is scheduled, and the only order the player can give is to speak.
+var roaming := false
+const ROAM_SPEED := 168.0        # matching the camp's walk
+const ROAM_SQUASH := 0.469       # Board.TILE_H / Board.TILE_W
+const ESCORT_STANDOFF := 46.0    # how far back the two riflemen hang
+var parley_dialog: ColorRect = null
+var parley_who_label: Label = null
+var parley_file_label: Label = null
+var parley_odds_label: Label = null
 ## What became of him: "" while it is still open, then killed / surrendered /
 ## informant. This is what ends the mission rather than a body count.
 var bounty_outcome := ""
@@ -552,6 +567,10 @@ func _ready() -> void:
 	if Game.on_bounty():
 		_spawn_detachment(int(Game.bounty.get("hunter_id", 0)))
 		_spawn_bounty_residents()
+		# Real time until he is found. _finish_setup still lays the tactical
+		# layer out underneath, so the switch is one flag rather than a second
+		# scene: everything the fight needs is already standing there.
+		roaming = true
 	elif Game.on_interdiction():
 		_spawn_detachment(int(Game.interdiction.get("leader_id", 0)))
 		_spawn_enemy_lists({})
@@ -709,12 +728,26 @@ func _finish_setup() -> void:
 			level_buttons[i].pressed.connect(_go_to_level.bind(i))
 		else:
 			level_buttons[i].visible = false
+	_build_parley_dialog()
+	if roaming:
+		# Somebody has to be the man being walked, and the tactical layer would
+		# not have selected anyone until the first click. The order bar is locked
+		# here too: nothing else runs before the first turn to lock it.
+		if bounty_hunter != null and is_instance_valid(bounty_hunter):
+			select(bounty_hunter)
+		_lock_tactical_orders(true)
 	_refresh_objectives()
 	_refresh_watch_cells()  # also settles everyone into whatever cover they spawned in
 	_show_briefing()
 	# After every spawner has run, so the scenery list is the whole board.
 	_collect_occluders()
-	_schedule_returners()
+	# Not on a bounty. The man's own warband is the reinforcement a manhunt
+	# has; campaign returners walking onto it as well is the stream of
+	# arrivals _schedule_returners already refuses to make out of a warband,
+	# and on a board where the fight may never start at all it would land
+	# strangers next to people the party is trying to talk to.
+	if not Game.on_bounty():
+		_schedule_returners()
 	show_banner("%s  -  %s" % [Game.operation().name, level.name])
 	player_turn_ready_msec = Time.get_ticks_msec()
 	print("[Sandline] level %d '%s', player turn 1 begins" % [
@@ -1997,6 +2030,17 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		_update_hover(board.global_to_cell(get_global_mouse_position()))
 		return
+	# While the party is still walking around asking after him there is no
+	# tactical layer to drive: no turn to end, no fire mode to pick, nothing to
+	# click a tile for. Speaking is the only order, and it is the one this
+	# swallows everything else to protect - WASD is the walk here, and three of
+	# those four letters are fire-mode keys the rest of the time.
+	if roaming:
+		if parley_dialog != null and parley_dialog.visible:
+			return
+		if event.is_action_pressed("parley"):
+			_talk_to_whoever_is_there()
+		return
 	if event.is_action_pressed("end_turn"):
 		end_player_turn()
 		return
@@ -2338,6 +2382,11 @@ func _update_unit_panel() -> void:
 	# conversation's pair with them, since reach changes on the same events.
 	_refresh_ability_buttons()
 	_refresh_parley_buttons()
+	# Re-applied here rather than once on entry, because the two refreshes above
+	# hand orders back out on every panel update and would quietly relight the
+	# bar behind the manhunt.
+	if roaming:
+		_lock_tactical_orders(true)
 	if state == State.PLAYER_TURN:
 		var ready := _soldiers_still_ready()
 		end_turn_button.text = "End (E)" if ready == 0 				else "End (E) - %d ready" % ready
@@ -4904,6 +4953,226 @@ func _try_question() -> void:
 	await _reveal_bounty_target("%s told them" % str(who.identity.get("name", "somebody")))
 
 
+## Walk the party around in real time, the way the camp does.
+##
+## Only the leader is driven - the two riflemen are lent to him, and steering
+## three bodies with one stick is worse than either. They trail him instead, far
+## enough back to stay out of the way and close enough that the board is not a
+## man alone when the talking stops.
+func _roam(delta: float) -> void:
+	if not roaming or state != State.PLAYER_TURN or briefing_panel.visible:
+		return
+	if parley_dialog != null and parley_dialog.visible:
+		return
+	if selected == null or not is_instance_valid(selected):
+		return
+	var dir := Input.get_vector("walk_left", "walk_right", "walk_up", "walk_down")
+	if dir != Vector2.ZERO:
+		var velocity := Vector2(dir.x, dir.y * ROAM_SQUASH).normalized() 				* ROAM_SPEED * Vector2(1.0, ROAM_SQUASH)
+		# One axis at a time, so a wall blocks only the axis that hits it.
+		_roam_step(selected, Vector2(velocity.x * delta, 0.0))
+		_roam_step(selected, Vector2(0.0, velocity.y * delta))
+		selected.set_facing(velocity)
+		# start_walking() resets the animation clock, so calling it every frame
+		# would hold the cycle on frame 0.
+		if selected.anim != Unit.Anim.WALK:
+			selected.start_walking()
+	else:
+		selected.stop_walking()
+	_follow_the_leader(delta)
+	_update_unit_panel()
+
+
+## One axis of one step, refused if it would leave the board, leave the
+## walkable ground, or walk through somebody. The cell is kept in step with the
+## position because every reach test in the bounty - who can be asked, who can
+## be spoken to - is still asked in cells.
+func _roam_step(who: Unit, delta_pos: Vector2) -> void:
+	if delta_pos == Vector2.ZERO:
+		return
+	var candidate := who.position + delta_pos
+	var cell := board.global_to_cell(candidate)
+	if not board.in_bounds(cell) or not board.is_walkable(cell):
+		return
+	var sitting := unit_at(cell)
+	if sitting != null and sitting != who:
+		return
+	who.position = candidate
+	who.cell = cell
+
+
+func _follow_the_leader(delta: float) -> void:
+	for scout in living_soldiers(Unit.TEAM_SCOUT):
+		if scout == selected:
+			continue
+		var gap: Vector2 = selected.position - scout.position
+		# Measured with the vertical doubled so the stand-off is a circle on the
+		# ground rather than on the screen - the tiles are half as tall as wide.
+		var flat := Vector2(gap.x, gap.y / ROAM_SQUASH)
+		if flat.length() <= ESCORT_STANDOFF:
+			scout.stop_walking()
+			continue
+		var step := gap.normalized() * ROAM_SPEED * 0.82 * delta
+		_roam_step(scout, Vector2(step.x, 0.0))
+		_roam_step(scout, Vector2(0.0, step.y))
+		scout.set_facing(gap)
+		if scout.anim != Unit.Anim.WALK:
+			scout.start_walking()
+
+
+## The manhunt is over; the board becomes a battle.
+##
+## Everything the fight needs has been standing there the whole time - this puts
+## the party back on the grid it was always on, so the first tactical turn opens
+## with people in the cells the walking left them in.
+func _end_roaming() -> void:
+	if not roaming:
+		return
+	roaming = false
+	_lock_tactical_orders(false)
+	for scout in living_soldiers(Unit.TEAM_SCOUT):
+		scout.stop_walking()
+		scout.position = board.cell_to_global(scout.cell)
+	_refresh_cover()
+	_refresh_watch_cells()
+	_refresh_highlights()
+	_update_unit_panel()
+
+
+## The moment he is found, put to the player as the three-way choice it is.
+##
+## Built in code rather than in Battle.tscn for the reason the HUD is: it is one
+## panel that says one thing, and a scene file would make it a dozen node paths
+## for Battle to hold in step. Hidden until there is a man to put in it.
+func _build_parley_dialog() -> void:
+	parley_dialog = ColorRect.new()
+	parley_dialog.color = Color(0.03, 0.025, 0.02, 0.72)
+	parley_dialog.set_anchors_preset(Control.PRESET_FULL_RECT)
+	parley_dialog.visible = false
+	parley_dialog.mouse_filter = Control.MOUSE_FILTER_STOP
+	var centre := CenterContainer.new()
+	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
+	parley_dialog.add_child(centre)
+	var box := PanelContainer.new()
+	box.add_theme_stylebox_override("panel", UiTheme.panel_style(true, UiTheme.EDGE_HOT, 22))
+	box.custom_minimum_size = Vector2(560, 0)
+	centre.add_child(box)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 10)
+	box.add_child(col)
+	var head := Label.new()
+	head.text = "FOUND HIM"
+	head.add_theme_font_size_override("font_size", UiTheme.FONT_HEAD)
+	head.add_theme_color_override("font_color", UiTheme.HEADER)
+	col.add_child(head)
+	parley_who_label = Label.new()
+	parley_who_label.add_theme_font_size_override("font_size", UiTheme.FONT_TITLE)
+	parley_who_label.add_theme_color_override("font_color", UiTheme.TEXT_BRIGHT)
+	col.add_child(parley_who_label)
+	parley_file_label = Label.new()
+	parley_file_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	parley_file_label.add_theme_font_size_override("font_size", UiTheme.FONT_BODY)
+	parley_file_label.add_theme_color_override("font_color", UiTheme.TEXT)
+	col.add_child(parley_file_label)
+	parley_odds_label = Label.new()
+	parley_odds_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	parley_odds_label.add_theme_font_size_override("font_size", UiTheme.FONT_SMALL)
+	parley_odds_label.add_theme_color_override("font_color", UiTheme.TEXT_DIM)
+	col.add_child(parley_odds_label)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	col.add_child(row)
+	var make := func(text: String) -> Button:
+		var b := Button.new()
+		b.text = text
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(b)
+		return b
+	var demand := make.call("Demand Surrender") as Button
+	var turn_him := make.call("Offer Terms") as Button
+	var shoot := make.call("Open Fire") as Button
+	demand.pressed.connect(_on_dialog_choice.bind("surrender"))
+	turn_him.pressed.connect(_on_dialog_choice.bind("informant"))
+	shoot.pressed.connect(_on_dialog_choice.bind("fight"))
+	$UI.add_child(parley_dialog)
+
+
+## He has been found. Everything the campaign knows about him, and the three
+## ways this ends - which is the whole of a bounty.
+func _open_parley_dialog() -> void:
+	if bounty_target == null or parley_dialog == null:
+		return
+	var offer: Dictionary = level.get("bounty", {}).get("offer", {})
+	parley_who_label.text = "%s of %s" % [
+			str(offer.get("name", "somebody")),
+			str(offer.get("settlement", "somewhere"))]
+	var bits: PackedStringArray = []
+	var age := int(offer.get("age", 0))
+	if age > 0:
+		bits.append("%d years old" % age)
+	var got_away := int(offer.get("survivals", 0))
+	if got_away > 0:
+		bits.append("has walked away from this squad %s" % (
+				"once" if got_away == 1 else "%d times" % got_away))
+	var grievance := str(offer.get("grievance", ""))
+	if not grievance.is_empty():
+		bits.append(grievance)
+	parley_file_label.text = ". ".join(bits) + "."
+	# The numbers, because the panel elsewhere never lies about a chance and
+	# this is the only decision in the mission that cannot be taken back.
+	var presence := _hunter_stat("presence")
+	var guile := _hunter_stat("guile")
+	var band_up := _warband_leader_alive(bounty_target.warband) 			and _band_still_standing(bounty_target)
+	var wounded := bounty_target.hp * 2 <= bounty_target.max_hp
+	parley_odds_label.text = "SURRENDER %d%%    TERMS %d%%    a refusal leaves the rifle" % [
+			Bounty.surrender_chance(presence, bounty_target.survivals, band_up,
+					wounded, _standing_for(bounty_target)),
+			Bounty.informant_chance(guile, presence, bounty_target.survivals,
+					band_up, not grievance.is_empty())]
+	parley_dialog.visible = true
+	Sfx.play("select", 0.0, 0.0)
+
+
+## Surrender and terms are put to him and may be refused. Opening fire is the
+## one that cannot fail, and is the one the game charges for elsewhere.
+func _on_dialog_choice(what: String) -> void:
+	parley_dialog.visible = false
+	if what == "fight":
+		show_banner("NO TERMS")
+		_end_roaming()
+		return
+	var before := bounty_outcome
+	_try_parley(what, bounty_target)
+	# Refused. He knows what they came for, and the board is a battle now.
+	if bounty_outcome == before:
+		_end_roaming()
+
+
+## Z, while the party is still walking. Only one thing can be on the other end
+## of it out here: somebody who lives here and has not been asked yet.
+## The order bar has nothing to offer a party still walking a settlement asking
+## after somebody, and leaving it live would let the mouse do exactly what the
+## keyboard is being stopped from doing: end a turn that is not running, or open
+## fire on a man nobody has spoken to. Ask stays lit - out here it is the only
+## order there is.
+func _lock_tactical_orders(locked: bool) -> void:
+	for b: Button in [end_turn_button, overwatch_button, burst_button,
+			auto_button, suppress_button, reload_button, face_button,
+			danger_button, demolish_button, frag_button, smoke_button,
+			ability_1_button, ability_2_button]:
+		if b != null:
+			b.disabled = locked
+	if not locked:
+		_sync_throw_buttons()
+
+
+func _talk_to_whoever_is_there() -> void:
+	if _resident_in_reach() == null:
+		Sfx.play("miss", -8.0, 0.0)
+		return
+	_try_question()
+
+
 func _residents_left() -> int:
 	var n := 0
 	for who in residents:
@@ -4977,6 +5246,11 @@ func _reveal_bounty_target(because: String) -> void:
 	_refresh_objectives()
 	_update_unit_panel()
 	await get_tree().create_timer(0.9).timeout
+	# Found is the whole of the manhunt, so the conversation opens itself. The
+	# board is still in real time behind the panel: whether it becomes a battle
+	# at all is what the next three buttons decide.
+	if roaming:
+		_open_parley_dialog()
 
 
 func _free_cell_near(cell: Vector2i) -> Vector2i:
@@ -4994,8 +5268,12 @@ func _free_cell_near(cell: Vector2i) -> Vector2i:
 ## `want` is "surrender" or "informant". Both are one attempt: a player who
 ## could ask twice would always ask twice, and the choice between them is the
 ## whole decision the mission is built around.
-func _try_parley(want: String) -> void:
-	var target := _target_in_reach()
+## `who` is the man being spoken to. It defaults to whoever is within arm's
+## reach, which is what the Z key and the action-bar button mean by it; the
+## found-him dialog passes him explicitly, because being found IS the reach -
+## the party has walked the settlement and he has come out to answer for it.
+func _try_parley(want: String, who: Unit = null) -> void:
+	var target := who if who != null else _target_in_reach()
 	if target == null or state != State.PLAYER_TURN or bounty_outcome != "":
 		return
 	var offer: Dictionary = level.get("bounty", {}).get("offer", {})
@@ -5844,6 +6122,7 @@ const SHAKE_OFFSETS: Array[Vector2] = [
 ## fighting each other over the same property.
 func _process(delta: float) -> void:
 	camera.offset = _cam_lean + _cam_shake
+	_roam(delta)
 	_watch_for_occlusion(delta)
 	_sway_plants()
 	_animate_structures()

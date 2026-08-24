@@ -71,6 +71,7 @@ func _run() -> void:
 	_test_negotiation_odds()
 	_test_outcomes_are_ordered()
 	await _test_the_whole_mission()
+	await _test_the_manhunt()
 	_restore()
 	print("\nRESULT: ", "FAIL" if _failed else "PASS")
 	quit(1 if _failed else 0)
@@ -512,3 +513,94 @@ func _test_the_whole_mission() -> void:
 			"...but never more than there are people to give away")
 	await _drop(mission)
 	game.informants = []
+
+
+# --- 7. the manhunt runs in real time until he is found -----------------------
+
+## A bounty does not open as a battle. The party walks into somewhere people
+## live and asks after a man; whether it becomes a firefight at all is decided
+## by how that goes. This checks the mode itself: that the tactical layer is
+## genuinely not running, that nothing else is scheduled to walk on, and that
+## finding him is what hands the board over to it.
+func _test_the_manhunt() -> void:
+	print("
+[7] the manhunt runs in real time until he is found")
+	_keep_save()
+	var game: Node = root.get_node_or_null("/root/Game")
+	if game == null:
+		_check(false, "the Game autoload is up (it is not - section 7 cannot run)")
+		return
+	_stage(game)
+	var battle: Node = await _battle()
+
+	_check(battle.roaming, "the board opens in real time, not on a turn")
+	_check(battle.bounty_target == null, "...with nobody found yet")
+	# The man's own warband is the only arrival a manhunt gets. Campaign
+	# returners walking onto it would put strangers next to the people the
+	# party is trying to talk to.
+	_check(battle._returners_due.is_empty(),
+			"nobody else who survived is scheduled to walk on")
+	_check(battle.end_turn_button.disabled,
+			"there is no turn to end while the party is still walking")
+	_check(battle.suppress_button.disabled, "...and no gun to open up with")
+
+	# --- walking -------------------------------------------------------------
+	# Deliberately untyped: naming Unit here would compile Unit.gd before the
+	# autoloads exist and it would fail to resolve Game, taking this whole file
+	# down with a type error twenty frames away from the cause.
+	var leader = battle.bounty_hunter
+	_check(leader != null and battle.selected == leader,
+			"the man the player chose is the one being walked")
+	if leader == null:
+		await _drop(battle)
+		return
+	var was_cell: Vector2i = leader.cell
+	var was_pos: Vector2 = leader.position
+	# Step him east until the cell changes, the way a held key would.
+	for i in 90:
+		battle._roam_step(leader, Vector2(4.0, 0.0))
+		if leader.cell != was_cell:
+			break
+	_check(leader.position != was_pos, "he moves in real time")
+	_check(leader.cell != was_cell,
+			"...and his cell follows him, because every reach test is in cells")
+	_check(battle.board.is_walkable(leader.cell), "...and never off walkable ground")
+
+	# A step into somebody is refused rather than walked through. Stood one
+	# cell west of a resident and pushed east hard enough to cross the boundary.
+	var blocked := false
+	for who in battle.residents:
+		if not is_instance_valid(who):
+			continue
+		var west: Vector2i = who.cell + Vector2i(-1, 0)
+		if not battle.board.in_bounds(west) or not battle.board.is_walkable(west):
+			continue
+		if battle.unit_at(west) != null:
+			continue
+		leader.position = battle.board.cell_to_global(west)
+		leader.cell = west
+		for i in 60:
+			battle._roam_step(leader, Vector2(6.0, 0.0))
+		blocked = leader.cell != who.cell
+		break
+	_check(blocked, "and does not walk through the people who live here")
+
+	# --- finding him ---------------------------------------------------------
+	await battle._reveal_bounty_target("the harness went and looked")
+	_check(battle.bounty_target != null, "he can be found")
+	_check(battle.parley_dialog != null and battle.parley_dialog.visible,
+			"...and being found opens the conversation by itself")
+	_check(battle.roaming,
+			"...with the board still out of turns while it is up")
+
+	# --- and the three ways it ends ------------------------------------------
+	battle._on_dialog_choice("fight")
+	_check(not battle.parley_dialog.visible, "choosing the rifle closes it")
+	_check(not battle.roaming, "...and hands the board to the tactical layer")
+	_check(not battle.end_turn_button.disabled,
+			"...which has its orders back")
+	for scout in battle.living_soldiers(TEAM_SCOUT):
+		_check(scout.position == battle.board.cell_to_global(scout.cell),
+				"everybody is back on the grid they will fight on")
+		break
+	await _drop(battle)
