@@ -492,6 +492,246 @@
         "unknown": "Garrison_sentry_box.png"
       },
       "animations": {}
+    },
+    {
+      "id": "0a45d159-c029-4936-9814-ab07224aa332",
+      "name": "bunk",
+      "prompt": "a steel-framed barracks bunk bed with a thin striped mattress and an olive wool blanket folded at the foot",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_bunk.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "bd5d001d-93c3-4f6e-a447-2d4da42471f1",
+      "name": "bunk_stripped",
+      "prompt": "a steel-framed barracks bunk bed stripped to its bare wire frame, mattress rolled and blanket gone",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_bunk_stripped.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "dfa63d4f-5a75-4caf-851c-c003a7a8492f",
+      "name": "footlocker",
+      "prompt": "a dented olive-drab metal footlocker with a stencilled serial number and a hasp padlock",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_footlocker.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "d5d37a75-d221-4d8d-bfd1-aa5c008fffed",
+      "name": "cot",
+      "prompt": "a canvas and steel-frame folding camp cot with a thin grey blanket draped over one end",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_cot.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "995f42c7-7c8d-4bd9-9a4a-c4593ef4f118",
+      "name": "folding_screen",
+      "prompt": "a folding canvas privacy screen on a wooden frame, patched and sun-faded",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_folding_screen.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "b878059c-6ad2-4486-afa6-5e165e8b39b8",
+      "name": "bar_counter",
+      "prompt": "a length of rough-sawn timber bar counter with a scarred top and a brass foot rail",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_bar_counter.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "fd98e3b8-0c07-4e2c-8b45-a8ccc6859321",
+      "name": "bar_counter_end",
+      "prompt": "the end cap of a rough-sawn timber bar counter, its run terminating in a square post",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_bar_counter_end.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "06094d44-8c3f-4cc1-ae59-92ff43aadd59",
+      "name": "bottle_shelf",
+      "prompt": "a wall-mounted wooden shelf of liquor bottles behind the wet canteen's bar",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_bottle_shelf.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "07af82ee-5099-4a4e-8b16-dd7e5a53a56d",
+      "name": "files_cabinet",
+      "prompt": "a battered grey steel filing cabinet with dented drawers and a paper label slot",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_files_cabinet.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "d4b0015f-1b86-4159-a163-3a3357a01d03",
+      "name": "radio_desk",
+      "prompt": "a plain field desk holding a manpack radio set with its handset and a logbook",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_radio_desk.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "a7c361cd-3042-49df-9bdc-1bdec2da2b0a",
+      "name": "command_desk",
+      "prompt": "a sturdy olive command desk with a map case, a field telephone, and a desk lamp",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_command_desk.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "8f2bf21f-7f28-445b-83f6-8e555dae6c51",
+      "name": "map_board",
+      "prompt": "a hinged plywood map board on trestle legs, a border map pinned under acetate with grease-pencil marks",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_map_board.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "6c8d2930-2c12-4bf1-9331-8a7928105523",
+      "name": "strong_safe",
+      "prompt": "a squat riveted steel strongbox safe with a combination dial and a reinforced hasp",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_strong_safe.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "cd74d6b2-0c30-4573-b6b3-97af946750ec",
+      "name": "cell_cot",
+      "prompt": "a bare steel cot bolted to the floor of a detention cell, no mattress, just a thin grey blanket",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_cell_cot.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "c3fe87f7-c286-438f-afdf-88c9cdf34a54",
+      "name": "guard_stool",
+      "prompt": "a plain wooden three-legged guard stool worn smooth at the seat",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_guard_stool.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "c172fb8b-6aa5-44d6-854f-92cd3c4624e2",
+      "name": "wash_stand",
+      "prompt": "a galvanised steel wash stand with a tin basin, a jug, and a scrap of towel",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_wash_stand.png"
+      },
+      "animations": {}
     }
   ],
   "export_version": "1.0",

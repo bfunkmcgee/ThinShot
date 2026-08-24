@@ -260,7 +260,7 @@ const INTERIORS := {
 		],
 		"props": {
 			Vector2i(1, 1): "bar_counter", Vector2i(2, 1): "bar_counter",
-			Vector2i(3, 1): "bar_counter", Vector2i(6, 1): "bottle_shelf",
+			Vector2i(3, 1): "bar_counter_end", Vector2i(6, 1): "bottle_shelf",
 			Vector2i(8, 1): "field_stove",
 			Vector2i(3, 3): "canteen_table", Vector2i(6, 3): "canteen_table",
 			Vector2i(2, 5): "canteen_table", Vector2i(7, 5): "canteen_table",

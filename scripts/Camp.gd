@@ -79,29 +79,33 @@ const FIXTURE_TEXTURES := {
 	# The range flag is the extraction marker's banner doing a second job:
 	# same cloth, same wind, and it means the same thing - live ground.
 	"range_flag": preload("res://assets/sprites/Environment/Desert/desert_signal_markers/Signal_banner.png"),
-	# The interiors (INTERIORS.md), stage one: every name is what the cell
-	# WILL be, textured with what already ships. The furniture batch swaps
-	# textures under these names without touching a map.
+	# The interiors (INTERIORS.md): the furniture batch has landed - each name
+	# below now carries its own art instead of another fixture's stand-in.
+	# Untouched by that batch, and staying that way on purpose (deliberate
+	# reuse, not a stand-in still owed art): "rifle_rack", "map_table",
+	# "map_crates", "qm_shelving", "canteen_table".
 	"qm_shelving": preload(FIXTURE_ROOT + "Garrison_qm_shelving.png"),
 	"canteen_table": preload(FIXTURE_ROOT + "Garrison_canteen_table.png"),
-	"files_cabinet": preload(FIXTURE_ROOT + "Garrison_qm_shelving.png"),
-	"radio_desk": preload(FIXTURE_ROOT + "Garrison_field_radio.png"),
-	"map_board": preload(FIXTURE_ROOT + "Garrison_notice_board.png"),
-	"command_desk": preload(FIXTURE_ROOT + "Garrison_paymaster_desk.png"),
+	"files_cabinet": preload(FIXTURE_ROOT + "Garrison_files_cabinet.png"),
+	"radio_desk": preload(FIXTURE_ROOT + "Garrison_radio_desk.png"),
+	"map_board": preload(FIXTURE_ROOT + "Garrison_map_board.png"),
+	"command_desk": preload(FIXTURE_ROOT + "Garrison_command_desk.png"),
 	"map_table": preload("res://assets/sprites/Environment/Desert/Props/Briefing_table/Briefing_table_garrison/rotations/unknown.png"),
 	"map_crates": preload("res://assets/sprites/Environment/Desert/Props/Pile_of_desert_ammo_crates/Pile_of_desert_ammo_crates/rotations/unknown.png"),
-	"strong_safe": preload(FIXTURE_ROOT + "Garrison_ammo_box.png"),
-	"bar_counter": preload(FIXTURE_ROOT + "Garrison_qm_counter.png"),
-	"bottle_shelf": preload(FIXTURE_ROOT + "Garrison_qm_shelving.png"),
+	"strong_safe": preload(FIXTURE_ROOT + "Garrison_strong_safe.png"),
+	"bar_counter": preload(FIXTURE_ROOT + "Garrison_bar_counter.png"),
+	"bar_counter_end": preload(FIXTURE_ROOT + "Garrison_bar_counter_end.png"),
+	"bottle_shelf": preload(FIXTURE_ROOT + "Garrison_bottle_shelf.png"),
 	"rifle_rack": preload(FIXTURE_ROOT + "Garrison_kit_frame.png"),
-	"cell_cot": preload(FIXTURE_ROOT + "Garrison_firing_point.png"),
-	"guard_stool": preload("res://assets/sprites/Environment/Desert/desert_ammo_crates/Desert_ammo_crate.png"),
-	"cot": preload(FIXTURE_ROOT + "Garrison_firing_point.png"),
+	"cell_cot": preload(FIXTURE_ROOT + "Garrison_cell_cot.png"),
+	"guard_stool": preload(FIXTURE_ROOT + "Garrison_guard_stool.png"),
+	"cot": preload(FIXTURE_ROOT + "Garrison_cot.png"),
 	"medical_chest": preload(FIXTURE_ROOT + "Garrison_ammo_box.png"),
-	"wash_stand": preload(FIXTURE_ROOT + "Garrison_jerry_cans.png"),
-	"folding_screen": preload(FIXTURE_ROOT + "Garrison_washing_line.png"),
-	"bunk": preload(FIXTURE_ROOT + "Garrison_firing_point.png"),
-	"footlocker": preload(FIXTURE_ROOT + "Garrison_ammo_box.png"),
+	"wash_stand": preload(FIXTURE_ROOT + "Garrison_wash_stand.png"),
+	"folding_screen": preload(FIXTURE_ROOT + "Garrison_folding_screen.png"),
+	"bunk": preload(FIXTURE_ROOT + "Garrison_bunk.png"),
+	"bunk_stripped": preload(FIXTURE_ROOT + "Garrison_bunk_stripped.png"),
+	"footlocker": preload(FIXTURE_ROOT + "Garrison_footlocker.png"),
 	"watchtower": preload(FIXTURE_ROOT + "Garrison_watchtower.png"),
 	"water_bowser": preload(FIXTURE_ROOT + "Garrison_water_bowser.png"),
 	"water_tank": preload(FIXTURE_ROOT + "Garrison_water_tank.png"),
@@ -129,24 +133,26 @@ const FIXTURE_OFFSETS := {
 	"range_flag": Vector2(0, -17),
 	"qm_shelving": Vector2(0, -72),
 	"canteen_table": Vector2(0, -20),
-	"files_cabinet": Vector2(0, -72),
+	"files_cabinet": Vector2(0, -21),
 	"radio_desk": Vector2(0, -21),
-	"map_board": Vector2(0, -20),
-	"command_desk": Vector2(0, -20),
+	"map_board": Vector2(0, -11),
+	"command_desk": Vector2(0, -21),
 	"map_table": Vector2(0, -23),
 	"map_crates": Vector2(0, -18),
 	"strong_safe": Vector2(0, -21),
-	"bar_counter": Vector2(0, -20),
-	"bottle_shelf": Vector2(0, -72),
+	"bar_counter": Vector2(0, -19),
+	"bar_counter_end": Vector2(0, -19),
+	"bottle_shelf": Vector2(0, -19),
 	"rifle_rack": Vector2(0, -21),
-	"cell_cot": Vector2(0, -20),
-	"guard_stool": Vector2(0, -12),
-	"cot": Vector2(0, -20),
+	"cell_cot": Vector2(0, -5),
+	"guard_stool": Vector2(0, -20),
+	"cot": Vector2(0, -17),
 	"medical_chest": Vector2(0, -21),
-	"wash_stand": Vector2(0, -22),
-	"folding_screen": Vector2(0, -18),
-	"bunk": Vector2(0, -20),
-	"footlocker": Vector2(0, -21),
+	"wash_stand": Vector2(0, -20),
+	"folding_screen": Vector2(0, -21),
+	"bunk": Vector2(0, -14),
+	"bunk_stripped": Vector2(0, -20),
+	"footlocker": Vector2(0, -15),
 	"watchtower": Vector2(0, -73),
 	"water_bowser": Vector2(0, -22),
 	"water_tank": Vector2(0, -63),
@@ -230,7 +236,19 @@ const WIRE_TEXTURES := {
 }
 const WIRE_OFFSETS := {
 	"x_run": Vector2(0, -15), "y_run": Vector2(0, -13),
-	"junction": Vector2(0, -15), "cap": Vector2(0, -10),
+	"junction": Vector2(0, -15), "cap": Vector2(0, -10),}
+# Indoors the same '=' char is jail bars, not concertina: vertical steel on a
+# welded frame, seen through, stood on the wall class's ground line (INTERIORS.md).
+const BAR_ROOT := "res://assets/sprites/Environment/Desert/Walls/desert_jail_bars/rotations/"
+const BAR_TEXTURES := {
+	"x_run": preload(BAR_ROOT + "south-west.png"),
+	"y_run": preload(BAR_ROOT + "south-east.png"),
+	"junction": preload(BAR_ROOT + "north.png"),
+	"cap": preload(BAR_ROOT + "east.png"),
+}
+const BAR_OFFSETS := {
+	"x_run": Vector2(0, -17), "y_run": Vector2(0, -17),
+	"junction": Vector2(0, -17), "cap": Vector2(0, -17),
 }
 const PROP_DUST := preload("res://assets/shaders/prop_dust.gdshader")
 const ROCK_OFFSET := Vector2(0, -18)
@@ -756,8 +774,13 @@ func _spawn_props() -> void:
 						_animate(hung, cell, _load_frame_run(
 								GATE_ROOT + "animations/" + leaf))
 				"=":
+					# Concertina in the yard, steel bars in a room - one char,
+					# because the RULE (stops movement, seen through) is one rule.
 					var run := _wire_kind(cell)
-					_spawn_prop(WIRE_TEXTURES[run], WIRE_OFFSETS[run], cell)
+					if interior != "":
+						_spawn_prop(BAR_TEXTURES[run], BAR_OFFSETS[run], cell)
+					else:
+						_spawn_prop(WIRE_TEXTURES[run], WIRE_OFFSETS[run], cell)
 	for cell: Vector2i in spots.dressing:
 		_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, cell)
 	for s: Dictionary in camp.structures:

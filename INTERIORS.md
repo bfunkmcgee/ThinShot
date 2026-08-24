@@ -197,15 +197,24 @@ surfaces before accepting.
 1. ~~**Shells**~~ — **shipped 2026-08-25**: doors, transitions, all six
    rooms furnished from reused props, `--interior <name>` for screenshot
    runs, `tools/test_interiors.gd` proving the scene (22 checks), and the
-   desert's detritus stopped at the door. Known stage-one reads: the
-   lockup's `=` draws the outdoor concertina until the bar art lands, and
-   the canteen's counter wears the QM's art.
-2. **Furniture batch** — the bill above lands; rooms are dressed.
+   desert's detritus stopped at the door. Both known stage-one reads
+   (concertina indoors, the counter in QM's art) are gone as of stage two.
+2. ~~**Furniture batch**~~ — **shipped 2026-08-24**: sixteen 48px pieces
+   (two review packs, 45 generations with the bars) under the names stage
+   one reserved, so no map changed; the canteen's counter run gained its
+   `bar_counter_end`. Deliberate reuse stands: `rifle_rack` wears the kit
+   frame, `map_table`/`map_crates` the briefing set, `qm_shelving` and
+   `canteen_table` their banked spares, `medical_chest` the ammo box.
+   The jail bars landed in the same pass — vertical steel on the 68px
+   wall class (`desert_jail_bars/`, offset -17 uniform), drawn by the
+   `=` char whenever `interior != ""`; the yard keeps its concertina.
+   Banked in `spares/`: a barred door, west pier, window insert, steel
+   bench, key board and guard table, for the operation-two prison.
 3. **Memory dressing** — stripped bunks, cots for the wounded, the man in
    the cell, stock on the counter, cards on the board. Each is a small
    read of saved state at `_spawn_props` time, and each is independently
    shippable.
-4. **Interior floor + jail bar art** — the last coat of paint.
+4. **Interior floor sheet** — the last coat of paint (the bars are done).
 
 Validation: `interiors_design.py` alongside the garrison's design script —
 ring, naming, reachability and cell-seal checks all green on the maps
