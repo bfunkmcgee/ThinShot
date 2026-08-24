@@ -256,3 +256,53 @@ the work is the canonical folder layout (§4), the `SPRITE_SPECS` flip (step
 4), the repair pass (step 5), re-measured muzzle offsets off the new folder
 (step 6), the two load checks (step 9), and the validator + the
 `make_char_viewer.py --compare <old>` page as the judge gate before the swap.
+
+---
+
+## 6. Getting the base + aimed stance out of PixelLab  [proven 2026-08-23]
+
+The process that produced the goblin machine-gunner's approved pair in six
+generations flat, distilled from the brute loop before it. It generalises to
+any unit whose ready stance raises a long weapon.
+
+**Base figure — the canvas is the scale dial, not the prompt.**
+`create_character` (pro mode, `style_character_id` = the family's shipped base)
+fills ~60–65 % of whatever canvas it gets, and scale adjectives lose to that
+geometry every time. To land a 29–31 px goblin-family figure, generate on a
+**48 px canvas** and pad to the family's 64×64 offline afterwards (pure
+translation: centre horizontally, drop the feet row onto the family feet line,
+assert the opaque-pixel count unchanged). Judge the base against the whole
+faction lineup, not just its own compass — "visually distinct" means a
+silhouette (headwear, pack, weapon shape) no sibling unit owns.
+
+**Aimed stance — no single pass gets all eight; plan the composite.**
+An aimed stance must point the muzzle wherever the unit faces, which means the
+weapon foreshortens to nearly nothing at south and shows full profile at
+east/west. The generator cannot do both from one instruction:
+
+1. `create_character_state`, **mechanical hold language** ("stock pressed into
+   the shoulder, one hand under the barrel, muzzle in the facing direction")
+   → the seven side/diagonal/rear frames come out right; **south aims
+   sideways** instead of at the camera.
+2. `create_character_state`, **rendered-result language** ("barrel points
+   directly at the camera, heavily foreshortened, only the dark muzzle end
+   visible as a small circle at the chest, head tucked sighting at the
+   viewer") → **south is right**; every other frame now also points at the
+   camera.
+3. **Composite**: pass 2's south + pass 1's other seven. Same character, same
+   canvas, feet within a pixel — the splice is invisible. Then level all
+   frames to the family feet line as above.
+
+**Do not reach for the v3-rotate here.** Rotating from the approved south
+loses the weapon entirely (a foreshortened frame carries no barrel geometry
+for the engine to swing round), and rotating from a full-profile east drifts
+(stubby sides, sideways south). The rotate trick is for **carried** weapons,
+where one frame shows the whole weapon and the grip must stay in one hand —
+see the brute. Corollary: an aimed stance's weapon *correctly* switches
+sides as the facing swings; only carried stances get the hand-switch check.
+
+**Gates before any human judging** (`artgen/staging/brute-tests/judge.py`):
+row 0 must hold <6 opaque px (else the weapon is amputated), feet per
+direction within the family band, figure height against the shipped anchor,
+and a 5× nearest-neighbour compass sheet — measured numbers catch clipping
+and scale, only the eye catches pose lies.
