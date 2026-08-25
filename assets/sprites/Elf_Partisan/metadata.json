@@ -1,0 +1,819 @@
+{
+  "group_id": "108de737-a3c7-40d3-bcc4-9502b6ab2cf3",
+  "states": [
+    {
+      "character": {
+        "id": "e2ca7d93-a801-4346-bdb4-772b5bec7869",
+        "name": "Thirst Elf Partisan base v2",
+        "prompt": "A tall slender desert elf partisan with long dark hair swept back behind long pointed ears, sun-weathered tan skin, a pale sand-colored scarf worn loosely around the neck, flowing light desert robes cinched with a dark sash, a thin bandolier of cartridges, holding a long battered jezail rifle low across the body, low top-down perspective, single color black outline.",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-08-25T00:00:00+00:00"
+      },
+      "folder": "Elf_Partisan",
+      "note": "v2 of the base - v1's rifle vanished at south and the head-wrap read bald; both fixed with mechanically explicit language (section 6). Generated at 48x48 (pro mode, Scout style anchor f7aac71a so the skin does not pull goblin-green), padded to 64x64 with feet on y=47. The raise is endpoint-PINNED per direction (interpolation to the aim rotations - the first unit whose canvas fit the transport limit). Animations carry ~109 repaired flash pixels (section 7 law).",
+      "frames": {
+        "rotations": {
+          "south": "Elf_Partisan/rotations/south.png",
+          "south-east": "Elf_Partisan/rotations/south-east.png",
+          "east": "Elf_Partisan/rotations/east.png",
+          "north-east": "Elf_Partisan/rotations/north-east.png",
+          "north": "Elf_Partisan/rotations/north.png",
+          "north-west": "Elf_Partisan/rotations/north-west.png",
+          "west": "Elf_Partisan/rotations/west.png",
+          "south-west": "Elf_Partisan/rotations/south-west.png"
+        },
+        "animations": {
+          "standing_idle": {
+            "south": [
+              "Elf_Partisan/animations/standing_idle/south/frame_000.png",
+              "Elf_Partisan/animations/standing_idle/south/frame_001.png",
+              "Elf_Partisan/animations/standing_idle/south/frame_002.png",
+              "Elf_Partisan/animations/standing_idle/south/frame_003.png",
+              "Elf_Partisan/animations/standing_idle/south/frame_004.png",
+              "Elf_Partisan/animations/standing_idle/south/frame_005.png",
+              "Elf_Partisan/animations/standing_idle/south/frame_006.png",
+              "Elf_Partisan/animations/standing_idle/south/frame_007.png",
+              "Elf_Partisan/animations/standing_idle/south/frame_008.png"
+            ],
+            "south-east": [
+              "Elf_Partisan/animations/standing_idle/south-east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle/south-east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle/south-east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle/south-east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle/south-east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle/south-east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle/south-east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle/south-east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle/south-east/frame_008.png"
+            ],
+            "east": [
+              "Elf_Partisan/animations/standing_idle/east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle/east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle/east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle/east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle/east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle/east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle/east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle/east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle/east/frame_008.png"
+            ],
+            "north-east": [
+              "Elf_Partisan/animations/standing_idle/north-east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle/north-east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle/north-east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle/north-east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle/north-east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle/north-east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle/north-east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle/north-east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle/north-east/frame_008.png"
+            ],
+            "north": [
+              "Elf_Partisan/animations/standing_idle/north/frame_000.png",
+              "Elf_Partisan/animations/standing_idle/north/frame_001.png",
+              "Elf_Partisan/animations/standing_idle/north/frame_002.png",
+              "Elf_Partisan/animations/standing_idle/north/frame_003.png",
+              "Elf_Partisan/animations/standing_idle/north/frame_004.png",
+              "Elf_Partisan/animations/standing_idle/north/frame_005.png",
+              "Elf_Partisan/animations/standing_idle/north/frame_006.png",
+              "Elf_Partisan/animations/standing_idle/north/frame_007.png",
+              "Elf_Partisan/animations/standing_idle/north/frame_008.png"
+            ],
+            "north-west": [
+              "Elf_Partisan/animations/standing_idle/north-west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle/north-west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle/north-west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle/north-west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle/north-west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle/north-west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle/north-west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle/north-west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle/north-west/frame_008.png"
+            ],
+            "west": [
+              "Elf_Partisan/animations/standing_idle/west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle/west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle/west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle/west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle/west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle/west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle/west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle/west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle/west/frame_008.png"
+            ],
+            "south-west": [
+              "Elf_Partisan/animations/standing_idle/south-west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle/south-west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle/south-west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle/south-west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle/south-west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle/south-west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle/south-west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle/south-west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_alt": {
+            "south": [
+              "Elf_Partisan/animations/standing_idle_alt/south/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_alt/south/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_alt/south/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_alt/south/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_alt/south/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_alt/south/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_alt/south/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_alt/south/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_alt/south/frame_008.png"
+            ],
+            "south-east": [
+              "Elf_Partisan/animations/standing_idle_alt/south-east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-east/frame_008.png"
+            ],
+            "east": [
+              "Elf_Partisan/animations/standing_idle_alt/east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_alt/east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_alt/east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_alt/east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_alt/east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_alt/east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_alt/east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_alt/east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_alt/east/frame_008.png"
+            ],
+            "north-east": [
+              "Elf_Partisan/animations/standing_idle_alt/north-east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-east/frame_008.png"
+            ],
+            "north": [
+              "Elf_Partisan/animations/standing_idle_alt/north/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_alt/north/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_alt/north/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_alt/north/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_alt/north/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_alt/north/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_alt/north/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_alt/north/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_alt/north/frame_008.png"
+            ],
+            "north-west": [
+              "Elf_Partisan/animations/standing_idle_alt/north-west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_alt/north-west/frame_008.png"
+            ],
+            "west": [
+              "Elf_Partisan/animations/standing_idle_alt/west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_alt/west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_alt/west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_alt/west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_alt/west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_alt/west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_alt/west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_alt/west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_alt/west/frame_008.png"
+            ],
+            "south-west": [
+              "Elf_Partisan/animations/standing_idle_alt/south-west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_alt/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_walk": {
+            "south": [
+              "Elf_Partisan/animations/standing_idle_walk/south/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_walk/south/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_walk/south/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_walk/south/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_walk/south/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_walk/south/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_walk/south/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_walk/south/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_walk/south/frame_008.png"
+            ],
+            "south-east": [
+              "Elf_Partisan/animations/standing_idle_walk/south-east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-east/frame_008.png"
+            ],
+            "east": [
+              "Elf_Partisan/animations/standing_idle_walk/east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_walk/east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_walk/east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_walk/east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_walk/east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_walk/east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_walk/east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_walk/east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_walk/east/frame_008.png"
+            ],
+            "north-east": [
+              "Elf_Partisan/animations/standing_idle_walk/north-east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-east/frame_008.png"
+            ],
+            "north": [
+              "Elf_Partisan/animations/standing_idle_walk/north/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_walk/north/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_walk/north/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_walk/north/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_walk/north/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_walk/north/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_walk/north/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_walk/north/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_walk/north/frame_008.png"
+            ],
+            "north-west": [
+              "Elf_Partisan/animations/standing_idle_walk/north-west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_walk/north-west/frame_008.png"
+            ],
+            "west": [
+              "Elf_Partisan/animations/standing_idle_walk/west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_walk/west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_walk/west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_walk/west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_walk/west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_walk/west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_walk/west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_walk/west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_walk/west/frame_008.png"
+            ],
+            "south-west": [
+              "Elf_Partisan/animations/standing_idle_walk/south-west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_walk/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_to_readyToFire": {
+            "south": [
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south/frame_008.png"
+            ],
+            "south-east": [
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-east/frame_008.png"
+            ],
+            "east": [
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/east/frame_008.png"
+            ],
+            "north-east": [
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-east/frame_008.png"
+            ],
+            "north": [
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north/frame_008.png"
+            ],
+            "north-west": [
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/north-west/frame_008.png"
+            ],
+            "west": [
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/west/frame_008.png"
+            ],
+            "south-west": [
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_readyToFire/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_damage": {
+            "south": [
+              "Elf_Partisan/animations/standing_idle_damage/south/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_damage/south/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_damage/south/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_damage/south/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_damage/south/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_damage/south/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_damage/south/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_damage/south/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_damage/south/frame_008.png"
+            ],
+            "south-east": [
+              "Elf_Partisan/animations/standing_idle_damage/south-east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-east/frame_008.png"
+            ],
+            "east": [
+              "Elf_Partisan/animations/standing_idle_damage/east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_damage/east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_damage/east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_damage/east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_damage/east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_damage/east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_damage/east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_damage/east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_damage/east/frame_008.png"
+            ],
+            "north-east": [
+              "Elf_Partisan/animations/standing_idle_damage/north-east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-east/frame_008.png"
+            ],
+            "north": [
+              "Elf_Partisan/animations/standing_idle_damage/north/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_damage/north/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_damage/north/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_damage/north/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_damage/north/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_damage/north/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_damage/north/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_damage/north/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_damage/north/frame_008.png"
+            ],
+            "north-west": [
+              "Elf_Partisan/animations/standing_idle_damage/north-west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_damage/north-west/frame_008.png"
+            ],
+            "west": [
+              "Elf_Partisan/animations/standing_idle_damage/west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_damage/west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_damage/west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_damage/west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_damage/west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_damage/west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_damage/west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_damage/west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_damage/west/frame_008.png"
+            ],
+            "south-west": [
+              "Elf_Partisan/animations/standing_idle_damage/south-west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_damage/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_reload": {
+            "south": [
+              "Elf_Partisan/animations/standing_idle_reload/south/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_reload/south/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_reload/south/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_reload/south/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_reload/south/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_reload/south/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_reload/south/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_reload/south/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_reload/south/frame_008.png"
+            ],
+            "south-east": [
+              "Elf_Partisan/animations/standing_idle_reload/south-east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-east/frame_008.png"
+            ],
+            "east": [
+              "Elf_Partisan/animations/standing_idle_reload/east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_reload/east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_reload/east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_reload/east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_reload/east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_reload/east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_reload/east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_reload/east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_reload/east/frame_008.png"
+            ],
+            "north-east": [
+              "Elf_Partisan/animations/standing_idle_reload/north-east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-east/frame_008.png"
+            ],
+            "north": [
+              "Elf_Partisan/animations/standing_idle_reload/north/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_reload/north/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_reload/north/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_reload/north/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_reload/north/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_reload/north/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_reload/north/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_reload/north/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_reload/north/frame_008.png"
+            ],
+            "north-west": [
+              "Elf_Partisan/animations/standing_idle_reload/north-west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_reload/north-west/frame_008.png"
+            ],
+            "west": [
+              "Elf_Partisan/animations/standing_idle_reload/west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_reload/west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_reload/west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_reload/west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_reload/west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_reload/west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_reload/west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_reload/west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_reload/west/frame_008.png"
+            ],
+            "south-west": [
+              "Elf_Partisan/animations/standing_idle_reload/south-west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_reload/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_to_dead": {
+            "south": [
+              "Elf_Partisan/animations/standing_idle_to_dead/south/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south/frame_008.png"
+            ],
+            "south-east": [
+              "Elf_Partisan/animations/standing_idle_to_dead/south-east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-east/frame_008.png"
+            ],
+            "east": [
+              "Elf_Partisan/animations/standing_idle_to_dead/east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/east/frame_008.png"
+            ],
+            "north-east": [
+              "Elf_Partisan/animations/standing_idle_to_dead/north-east/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-east/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-east/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-east/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-east/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-east/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-east/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-east/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-east/frame_008.png"
+            ],
+            "north": [
+              "Elf_Partisan/animations/standing_idle_to_dead/north/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north/frame_008.png"
+            ],
+            "north-west": [
+              "Elf_Partisan/animations/standing_idle_to_dead/north-west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/north-west/frame_008.png"
+            ],
+            "west": [
+              "Elf_Partisan/animations/standing_idle_to_dead/west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/west/frame_008.png"
+            ],
+            "south-west": [
+              "Elf_Partisan/animations/standing_idle_to_dead/south-west/frame_000.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-west/frame_001.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-west/frame_002.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-west/frame_003.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-west/frame_004.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-west/frame_005.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-west/frame_006.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-west/frame_007.png",
+              "Elf_Partisan/animations/standing_idle_to_dead/south-west/frame_008.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "f5e346c1-5198-4af1-96e5-fa41dca5df5c",
+        "name": "ReadyToFire (three-source composite)",
+        "prompt": "A tall slender desert elf partisan with long dark hair swept back behind long pointed ears, sun-weathered tan skin, a pale sand-colored scarf worn loosely around the neck, flowing light desert robes cinched with a dark sash, a thin bandolier of cartridges, holding a long battered jezail rifle low across the body, low top-down perspective, single color black outline.",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-08-25T00:00:00+00:00"
+      },
+      "folder": "ReadyToFire_Stance",
+      "note": "Composite per section 6: south from 74dae7e0 (toward-camera pass), north from 1f770a17 (away pass, muzzle tip over the far shoulder), the other six from this mechanical pass (west carries a 2px glint repair). The aim-idle animates each direction on the owning character; the raise lands on these rotations by interpolation and by seal.",
+      "frames": {
+        "rotations": {
+          "south": "ReadyToFire_Stance/rotations/south.png",
+          "south-east": "ReadyToFire_Stance/rotations/south-east.png",
+          "east": "ReadyToFire_Stance/rotations/east.png",
+          "north-east": "ReadyToFire_Stance/rotations/north-east.png",
+          "north": "ReadyToFire_Stance/rotations/north.png",
+          "north-west": "ReadyToFire_Stance/rotations/north-west.png",
+          "west": "ReadyToFire_Stance/rotations/west.png",
+          "south-west": "ReadyToFire_Stance/rotations/south-west.png"
+        },
+        "animations": {
+          "standing-readyToFire_idle": {
+            "south": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south/frame_008.png"
+            ],
+            "south-east": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-east/frame_008.png"
+            ],
+            "east": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/east/frame_008.png"
+            ],
+            "north-east": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-east/frame_008.png"
+            ],
+            "north": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north/frame_008.png"
+            ],
+            "north-west": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/north-west/frame_008.png"
+            ],
+            "west": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/west/frame_008.png"
+            ],
+            "south-west": [
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_000.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_001.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_002.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_003.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_004.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_005.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_006.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_007.png",
+              "ReadyToFire_Stance/animations/standing-readyToFire_idle/south-west/frame_008.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "de664177-40fe-4214-be90-48b438f72a3d",
+        "name": "Dead_blood",
+        "prompt": "A tall slender desert elf partisan with long dark hair swept back behind long pointed ears, sun-weathered tan skin, a pale sand-colored scarf worn loosely around the neck, flowing light desert robes cinched with a dark sash, a thin bandolier of cartridges, holding a long battered jezail rifle low across the body, low top-down perspective, single color black outline.",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-08-25T00:00:00+00:00"
+      },
+      "folder": "Dead_stance",
+      "note": "Corpse via the two-step the content filter forces on human-like figures: direct dead+blood was policy-blocked, so 16538c1a generated the pose as 'sleeping deeply' and this state adds the pool on top (the elder/MG precedents). Shipped rotations are the death animation's last frames, hand-off exact by construction.",
+      "frames": {
+        "rotations": {
+          "south": "Dead_stance/rotations/south.png",
+          "south-east": "Dead_stance/rotations/south-east.png",
+          "east": "Dead_stance/rotations/east.png",
+          "north-east": "Dead_stance/rotations/north-east.png",
+          "north": "Dead_stance/rotations/north.png",
+          "north-west": "Dead_stance/rotations/north-west.png",
+          "west": "Dead_stance/rotations/west.png",
+          "south-west": "Dead_stance/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-08-25"
+}

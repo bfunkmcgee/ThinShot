@@ -383,6 +383,9 @@ const LEVELS: Array[Dictionary] = [
 		# The second operation is where the Thirst starts bringing crew
 		# weapons: a belt-fed gun walking escort in the middle of the column.
 		"heavy_spawns": [Vector2i(13, 3)],
+		# And a hired gun the column's water is paying for - the first hint
+		# of what the debrief will say out loud: they are supplying something.
+		"partisan_spawns": [Vector2i(15, 6)],
 		"structures": [],
 		"objectives": [
 			{
@@ -615,6 +618,9 @@ const LEVELS: Array[Dictionary] = [
 		# The brute stands mid-bowl in front of the base of fire: the one
 		# defender who walks TOWARD the squad while everyone else holds.
 		"brute_spawns": [Vector2i(10, 4)],
+		# The keeper's hired gun works the southern rocks. fighters_hold
+		# covers him too - here even a contractor stays bought.
+		"partisan_spawns": [Vector2i(12, 7)],
 		"structures": [
 			{"kind": "tent", "anchor": Vector2i(10, 8), "size": Vector2i(2, 2)},
 		],
@@ -731,6 +737,9 @@ const LEVELS: Array[Dictionary] = [
 		# And the brute just inside the wire, south of the gate: the man he
 		# keeps closest at the end, guarding the one way in on foot.
 		"brute_spawns": [Vector2i(9, 6)],
+		# The last contractor still being paid, on the high north corner
+		# behind the wire where a long rifle covers the whole approach.
+		"partisan_spawns": [Vector2i(14, 0)],
 		"prisoner_spawns": [Vector2i(13, 4)],
 		"structures": [],
 		"objectives": [
@@ -973,6 +982,7 @@ static func _validate(index: int) -> bool:
 			+ data.get("smg_spawns", []) + data.get("smg_alt_spawns", []) \
 			+ data.get("novice_spawns", []) + data.get("bolt_spawns", []) \
 			+ data.get("heavy_spawns", []) + data.get("brute_spawns", []) \
+			+ data.get("partisan_spawns", []) \
 			+ data.get("prisoner_spawns", []) + data.get("bystander_spawns", [])
 	var seen_spawn := {}
 	for spawn: Vector2i in spawns:

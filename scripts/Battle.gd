@@ -695,6 +695,10 @@ func _spawn_enemy_lists(skip: Dictionary) -> void:
 	for spawn: Vector2i in level.get("brute_spawns", []):
 		if not skip.has(spawn):
 			_spawn_unit(Unit.Kind.GOBLIN_BRUTE, spawn)
+	# The hired elf gun, wherever the water that pays him is moving.
+	for spawn: Vector2i in level.get("partisan_spawns", []):
+		if not skip.has(spawn):
+			_spawn_unit(Unit.Kind.ELF_PARTISAN, spawn)
 	for spawn: Vector2i in level.get("prisoner_spawns", []):
 		_spawn_unit(Unit.Kind.CIVILIAN, spawn)
 	for spawn: Vector2i in level.get("bystander_spawns", []):
@@ -1005,6 +1009,7 @@ func _spawn_cells() -> Array:
 			+ level.get("smg_spawns", []) + level.get("smg_alt_spawns", []) \
 			+ level.get("novice_spawns", []) + level.get("bolt_spawns", []) \
 			+ level.get("heavy_spawns", []) + level.get("brute_spawns", []) \
+			+ level.get("partisan_spawns", []) \
 			+ level.get("prisoner_spawns", []) + level.get("bystander_spawns", [])
 
 

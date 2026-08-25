@@ -63,6 +63,12 @@ enum Kind {
 	GOBLIN_ELDER,
 	GOBLIN_KEEPER,
 	GOBLIN_CARRIER,
+	# The desert elf partisan: not Thirst and never asked to be. His people
+	# were squeezed off a margin the Charter never mapped, and water buys his
+	# rifle the same way it buys the column's silence - part of what THE LONG
+	# HAUL's debrief means by "supplying something". A contractor, so unlike
+	# the Marksman he CAN break: nobody dies for someone else's water rights.
+	ELF_PARTISAN,
 }
 
 ## The kinds that can fill one of a mission's three rifle slots. Rodar owns the
@@ -105,6 +111,7 @@ const GMG_ROOT := "res://assets/sprites/Goblin_MG"
 const BRUTE_ROOT := "res://assets/sprites/Goblin_Brute"
 # The three goblin civilians: townfolk and bounty residents.
 const ELDER_ROOT := "res://assets/sprites/Goblin_Elder"
+const ELFP_ROOT := "res://assets/sprites/Elf_Partisan"
 const KEEPER_ROOT := "res://assets/sprites/Goblin_Keeper"
 const CARRIER_ROOT := "res://assets/sprites/Goblin_Carrier"
 
@@ -550,6 +557,23 @@ const GMG_MUZZLE_OFFSETS: Array[Vector2] = [
 # figure rows of each 80x72 aim sheet (the hammer mass), mapped through his
 # own SPRITE_SPECS: (px - (40, 36) + (0, -27)) * 2. measure_muzzle.gd is not
 # used here - it assumes a square canvas and would sit 4px low.
+# The partisan's long jezail, measured by tools/measure_muzzle.gd off the
+# shipped aim sheets. The barrel rides high at the shoulder, which is why the
+# side facings sit at -46 where every goblin's sits near -36. South is
+# hand-set at the visible muzzle ring - aimed at the camera, the scan lands
+# on boots. The northern diagonals scan nearer centre than a straight rifle
+# would because the long barrel angles steeply up in the art; the offset
+# follows the art, the flash has to leave the barrel the player can see.
+const ELFP_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(34, -46),   # east
+	Vector2(34, -22),   # south-east
+	Vector2(-4, -24),   # south (hand-set: foreshortened at camera)
+	Vector2(-34, -22),  # south-west
+	Vector2(-32, -46),  # west
+	Vector2(-10, -46),  # north-west
+	Vector2(-2, -62),   # north (foreshortened away)
+	Vector2(14, -46),   # north-east
+]
 const BRUTE_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(0, -98),    # east
 	Vector2(0, -92),    # south-east
@@ -1301,6 +1325,30 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			raise_frames = idle_frames
 			aim_idle_frames = idle_frames
 			reload_frames = idle_frames
+		Kind.ELF_PARTISAN:
+			# A hired long gun that will not stand still: one tile short of
+			# the Marksman's reach, two rounds before the reload roots him,
+			# and the legs to be somewhere else when the answer comes back.
+			# Morale stays the default MAX - confident - but he is NOT in
+			# never_breaks(): a contractor routs when the contract stops
+			# being worth it.
+			max_hp = 4
+			move_range = 5
+			attack_range = 4
+			damage = 4
+			accuracy = 72
+			mag_size = 2
+			frames = ELFP_FRAMES
+			aim_frames = ELFP_AIM_FRAMES
+			walk_frames = ELFP_WALK_FRAMES
+			idle_frames = ELFP_IDLE_FRAMES
+			raise_frames = ELFP_RAISE_FRAMES
+			aim_idle_frames = ELFP_AIM_IDLE_FRAMES
+			death_frames = ELFP_DEATH_FRAMES
+			dead_frames = ELFP_DEAD_FRAMES
+			idle_alt_frames = ELFP_IDLE_ALT_FRAMES
+			hurt_frames = ELFP_HURT_FRAMES
+			reload_frames = ELFP_RELOAD_FRAMES
 		Kind.CIVILIAN:
 			# Carries nothing and shoots nothing. Starts huddled where the
 			# Thirst left them; release() puts them on their feet.
@@ -1671,6 +1719,30 @@ static var CARRIER_HURT_FRAMES: Array = _load_dir_frames(
 static var CARRIER_DEATH_FRAMES: Array = _load_dir_frames(
 		CARRIER_ROOT + "/Goblin_Carrier/animations/standing_idle_to_dead")
 
+# The elf partisan: full eleven-set unit on the canonical layout.
+static var ELFP_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		ELFP_ROOT + "/Elf_Partisan/rotations")
+static var ELFP_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		ELFP_ROOT + "/ReadyToFire_Stance/rotations")
+static var ELFP_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		ELFP_ROOT + "/Dead_stance/rotations")
+static var ELFP_IDLE_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/Elf_Partisan/animations/standing_idle")
+static var ELFP_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/Elf_Partisan/animations/standing_idle_alt")
+static var ELFP_WALK_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/Elf_Partisan/animations/standing_idle_walk")
+static var ELFP_RAISE_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/Elf_Partisan/animations/standing_idle_to_readyToFire")
+static var ELFP_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/ReadyToFire_Stance/animations/standing-readyToFire_idle")
+static var ELFP_DEATH_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/Elf_Partisan/animations/standing_idle_to_dead")
+static var ELFP_HURT_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/Elf_Partisan/animations/standing_idle_damage")
+static var ELFP_RELOAD_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/Elf_Partisan/animations/standing_idle_reload")
+
 
 static func _load_dir_frames(base: String) -> Array:
 	var result: Array = []
@@ -1815,6 +1887,8 @@ func muzzle_point() -> Vector2:
 			offsets = GMG_MUZZLE_OFFSETS
 		Kind.GOBLIN_BRUTE:
 			offsets = BRUTE_MUZZLE_OFFSETS
+		Kind.ELF_PARTISAN:
+			offsets = ELFP_MUZZLE_OFFSETS
 	return to_global(offsets[facing_sector])
 
 
@@ -1991,6 +2065,10 @@ static func kind_role_name(p_kind: Kind) -> String:
 			return "Stallkeeper"
 		Kind.GOBLIN_CARRIER:
 			return "Water-carrier"
+		Kind.ELF_PARTISAN:
+			# No "Thirst" prefix on purpose, the way "Pressed Conscript"
+			# breaks the pattern: he fights beside them, not as one of them.
+			return "Desert Partisan"
 		Kind.GOBLIN_REVOLVER:
 			return "Pressed Conscript"
 		Kind.GRENADIER:

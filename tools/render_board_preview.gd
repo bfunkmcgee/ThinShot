@@ -110,6 +110,7 @@ const ENEMY_MARKS := {
 	"bolt_spawns": {"color": Color(1.0, 0.25, 0.5), "letter": "b"},
 	"heavy_spawns": {"color": Color(0.85, 0.2, 0.2), "letter": "h"},
 	"brute_spawns": {"color": Color(0.7, 0.1, 0.35), "letter": "B"},
+	"partisan_spawns": {"color": Color(0.95, 0.8, 0.45), "letter": "e"},
 }
 const SQUAD_MARKS := {
 	"scout_spawns": "S", "lead_spawns": "L", "gunner_spawns": "G",
@@ -117,7 +118,8 @@ const SQUAD_MARKS := {
 
 const SPAWN_KEYS := ["scout_spawns", "lead_spawns", "gunner_spawns",
 		"goblin_spawns", "smg_spawns", "smg_alt_spawns", "novice_spawns",
-		"bolt_spawns", "heavy_spawns", "brute_spawns", "prisoner_spawns"]
+		"bolt_spawns", "heavy_spawns", "brute_spawns", "partisan_spawns",
+		"prisoner_spawns"]
 
 var _prop_seed := 0
 var _dust_materials: Dictionary = {}
