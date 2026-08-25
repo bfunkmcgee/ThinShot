@@ -210,6 +210,34 @@ const ZONE_ACCENTS: Array[int] = [6, 7, 4]
 const ACCENT_CHANCE := 0.07
 const ACCENT_MIN_SPACING := 2  # Chebyshev cells between any two accents
 
+## The world past the boundary. The arena used to float on the window's clear
+## colour, which reads as a slab over darkness; the apron continues the level's
+## own ground outward, each ring dimmed and washed harder toward that colour
+## until it dissolves into it - the fight happens SOMEWHERE, and the somewhere
+## fades out instead of ending on a line.
+##
+## Thirteen rings covers the worst shipped exposure: a 9x6 field camp at the
+## pinned 1.0 zoom leaves ~350px of window past the top edge, and a ring only
+## buys TILE_H/2 = 30px of that. Bigger boards waste a few offscreen rings,
+## which a repaint-on-level-load layer can afford.
+const APRON_RINGS := 13
+## Tiles outside the arena render at most this bright. The board's own shade
+## noise runs 0.94..1.0, so the step down is what marks the boundary - the
+## playable diamond stays the lit part of the world without needing an edge.
+const APRON_SHADE := 0.82
+## How much of the ground has already dissolved into the clear colour right at
+## the boundary, easing to everything by APRON_RINGS cells out. The dissolve is
+## per PIXEL, not per tile: the apron's tiles draw opaque into a CanvasGroup
+## and its shader (apron_fade.gdshader, fed these numbers) fades the composited
+## result by distance past the arena. Composite-then-fade is load-bearing -
+## fading the tiles individually double-blends their shared 1px art edges into
+## a bright seam lattice. The window's clear colour shows through whatever the
+## shader removes, so the fade target can never drift from the background. The
+## exponent holds the near ground readable while the far rings do most of the
+## dissolving.
+const APRON_FADE_START := 0.20
+const APRON_FADE_EXP := 1.35
+
 # Ground contact shadows for props, matching Unit's sun direction. Positive
 # values are ellipse radii; DIAMOND_SHADOW means "shrunk tile diamond", so
 # adjacent walls and structure footprints union into one cast shadow.
@@ -320,6 +348,26 @@ var _structure_cells: Dictionary = {}     # Vector2i -> true
 
 # Per-cell render info ({region, flip, shade}) built by set_level.
 var tile_cache: Array = []
+# Out-of-bounds ground, Vector2i -> {sheet, region, flip, shade}, built
+# alongside the tile cache. The tiles are opaque; the dissolve toward the
+# window's clear colour is the apron CanvasGroup's shader, not per-cell state.
+# Purely cosmetic: nothing walks, shoots or spawns here, so no gameplay code
+# may ever read it. FloorLayer.ApronLayer paints it under everything.
+var apron_cache: Dictionary = {}
+# Road cells OUTSIDE the arena (Vector2i -> true): the level's authored
+# "apron_roads" plus the automatic continuation of every in-board road that
+# reaches the boundary. As cosmetic as the rest of the apron - but roads are
+# the one thing out there gameplay code may see, because _road_tile reads
+# these to keep a border road cell from capping at the world's edge.
+var apron_roads: Dictionary = {}
+# A level may opt out of the whole apron with "apron": false - an interior
+# room is INSIDE somewhere, and desert dissolving around its walls would say
+# otherwise.
+var _apron_enabled := true
+# Contact shadows for apron scenery, [{pos: local px, radius}] - filled by
+# ApronScenery, drawn by the ApronLayer INSIDE the group so they fade with
+# the ground they fall on.
+var apron_shadows: Array = []
 
 # Which ground this level is fought on, resolved by set_level(). A level may
 # also name an inset - the ground inside a compound wall, say - which is drawn
@@ -396,6 +444,12 @@ var show_grid := false
 # Board never enter the tree and simply run without one.
 var floor_layer: FloorLayer = null
 
+# The out-of-bounds ground, composited as ONE layer so its fade shader works
+# on the finished picture (see APRON_FADE_START). The group sits at z -3:
+# under the FloorLayer, which is under everything else.
+var apron_group: CanvasGroup = null
+var apron_layer: Node2D = null
+
 # Flat ground clutter - bones, scorch, tyre-flattened scrap, the extraction
 # zone's signal panels. Shares the floor's z index and is added straight after
 # it, so it paints ON the ground: above the tiles and their contact shadows,
@@ -435,6 +489,21 @@ var intel_cells: Dictionary = {}
 
 
 func _ready() -> void:
+	apron_group = CanvasGroup.new()
+	apron_group.name = "Apron"
+	apron_group.z_index = -3
+	var apron_mat := ShaderMaterial.new()
+	apron_mat.shader = preload("res://assets/shaders/apron_fade.gdshader")
+	apron_mat.set_shader_parameter("half_tile", Vector2(TILE_W / 2.0, TILE_H / 2.0))
+	apron_mat.set_shader_parameter("rings", float(APRON_RINGS))
+	apron_mat.set_shader_parameter("fade_start", APRON_FADE_START)
+	apron_mat.set_shader_parameter("fade_exp", APRON_FADE_EXP)
+	apron_mat.set_shader_parameter("board_size", Vector2(size))
+	apron_group.material = apron_mat
+	add_child(apron_group)
+	apron_layer = FloorLayer.ApronLayer.new()
+	apron_layer.board = self
+	apron_group.add_child(apron_layer)
 	floor_layer = FloorLayer.new()
 	floor_layer.board = self
 	floor_layer.z_index = -2
@@ -588,18 +657,33 @@ func set_level(data: Dictionary) -> void:
 	_zone_map = data.get("zone_map", [])
 	_road_map = data.get("roads", [])
 	_road_catalog = {}
-	if not _road_map.is_empty():
+	if not _road_map.is_empty() or data.has("apron_roads"):
 		if ROAD_SHEETS.has(floor_name):
 			_road_catalog = TileCatalog.load_road_for(
 					(ROAD_SHEETS[floor_name] as Texture2D).resource_path)
 		if _road_catalog.is_empty():
 			push_warning("[Board] level paints roads but floor '%s' has no road set"
 					% floor_name)
+	_apron_enabled = bool(data.get("apron", true))
+	_build_apron_roads(data)
 	var thresholds: Array = data.get("zone_thresholds", [-0.12, 0.22])
 	_build_tile_cache(data.get("zone_seed", 7), data.get("shade_seed", 13), thresholds)
 	queue_redraw()
 	if floor_layer != null:
 		floor_layer.queue_redraw()
+	if apron_group != null:
+		(apron_group.material as ShaderMaterial).set_shader_parameter(
+				"board_size", Vector2(size))
+		apron_layer.queue_redraw()
+
+
+## Contact shadows for the apron's scenery, from ApronScenery. A setter for
+## the same reason set_prop_shadows is one: the ApronLayer paints them and
+## only repaints when told.
+func set_apron_shadows(shadows: Array) -> void:
+	apron_shadows = shadows
+	if apron_layer != null:
+		apron_layer.queue_redraw()
 
 
 ## Contact shadows for props spawned from objective lists rather than map
@@ -629,6 +713,49 @@ func shadow_tone(alpha: float) -> Color:
 	var tone: Color = _mood.get("shadow", SHADOW_COLOR)
 	tone.a = clampf(alpha * float(_mood.get("shadow_gain", 1.0)), 0.0, 1.0)
 	return tone
+
+
+## The road cells past the boundary. Two sources: the level's authored
+## "apron_roads" list (a lane that only exists out there, like the one out of
+## the garrison gate), and the automatic continuation of any painted road
+## that reaches the board edge - a lane a level says comes in FROM somewhere
+## now visibly does, straight out to where the apron dissolves.
+func _build_apron_roads(data: Dictionary) -> void:
+	apron_roads = {}
+	if not _apron_enabled or _road_catalog.is_empty():
+		return
+	for cell: Vector2i in data.get("apron_roads", []):
+		if not in_bounds(cell):
+			apron_roads[cell] = true
+	for y in size.y:
+		for x in size.x:
+			if not _is_road(Vector2i(x, y)):
+				continue
+			var outward: Array[Vector2i] = []
+			if x == 0:
+				outward.append(Vector2i(-1, 0))
+			if x == size.x - 1:
+				outward.append(Vector2i(1, 0))
+			if y == 0:
+				outward.append(Vector2i(0, -1))
+			if y == size.y - 1:
+				outward.append(Vector2i(0, 1))
+			for dir: Vector2i in outward:
+				for i in range(1, APRON_RINGS + 1):
+					apron_roads[Vector2i(x, y) + dir * i] = true
+
+
+## The apron dissolve at a cell: 0 solid ground, 1 fully the background. The
+## GDScript twin of apron_fade.gdshader's falloff - scenery standing on the
+## apron reads it so a tower fades exactly as fast as the ground it stands on.
+func apron_fade_at(cell: Vector2i) -> float:
+	var dx := maxf(maxf(-0.5 - float(cell.x),
+			float(cell.x) - (float(size.x) - 0.5)), 0.0)
+	var dy := maxf(maxf(-0.5 - float(cell.y),
+			float(cell.y) - (float(size.y) - 0.5)), 0.0)
+	var d := maxf(dx, dy)
+	return lerpf(APRON_FADE_START, 1.0,
+			pow(clampf(d / float(APRON_RINGS), 0.0, 1.0), APRON_FADE_EXP))
 
 
 ## A floor name, or the desert fallback if the level asks for one we lack.
@@ -1054,6 +1181,55 @@ func _build_tile_cache(zone_seed: int, shade_seed: int, thresholds: Array) -> vo
 			row.append(entry)
 		tile_cache.append(row)
 
+	# 7. The apron: the same ground continued past every edge of the arena.
+	# Base family tiles only - no accents, roads, insets or transitions, because
+	# detail out where nobody can walk competes with the board for the eye. The
+	# zone and shade noise fields are continuous across the boundary, so terrain
+	# patches and lighting drift flow over the edge instead of restarting on it.
+	# Zones come straight off the noise here: _cell_zone would consult the
+	# level's zone_map, whose rows would wrap under a negative index.
+	apron_cache = {}
+	if not _apron_enabled:
+		return
+	for y in range(-APRON_RINGS, size.y + APRON_RINGS):
+		for x in range(-APRON_RINGS, size.x + APRON_RINGS):
+			var cell := Vector2i(x, y)
+			if in_bounds(cell):
+				continue
+			var n := zone_noise.get_noise_2d(x, y)
+			var zone := 0 if n < thresholds[0] else (1 if n < thresholds[1] else 2)
+			var entry := {}
+			# Same picks and salts as the uniform-cell branch above, so a tile
+			# at the boundary continues its in-board neighbourhood's character.
+			if _floor_catalog.is_empty():
+				var family: Array = ZONE_FAMILIES[zone]
+				var variant: int = family[int(_hash01(cell, 1) * family.size()) \
+						% family.size()]
+				entry = {
+					"sheet": _floor_sheet,
+					"region": _floor_regions[variant],
+					"flip": _hash01(cell, 3) < 0.5,
+				}
+			else:
+				var family: Array = _floor_catalog.families[zone]
+				var slot: Dictionary = family[int(_hash01(cell, 1) * family.size()) \
+						% family.size()]
+				entry = {
+					"sheet": _floor_sheet,
+					"region": slot.rect,
+					"flip": bool(slot.symmetric) and _hash01(cell, 3) < 0.5,
+				}
+			# A road cell paves over its base tile exactly as in-board roads
+			# do, so a lane runs unbroken from the arena to where it dissolves.
+			if apron_roads.has(cell) and not _road_catalog.is_empty():
+				var road := _road_tile(cell)
+				if not road.is_empty():
+					entry = road
+			var dim := APRON_SHADE \
+					* (0.94 + 0.06 * (shade_noise.get_noise_2d(x, y) * 0.5 + 0.5))
+			entry["shade"] = Color(dim, dim, dim)
+			apron_cache[cell] = entry
+
 
 ## True where the level's optional "roads" overlay paints an 'r'. Rows shorter
 ## than the map read as no road, same as zone_map's forgiveness.
@@ -1064,19 +1240,27 @@ func _is_road(cell: Vector2i) -> bool:
 	return cell.x < row.length() and row[cell.x] == "r"
 
 
+## True where a road runs, on the board or on the apron past it. The apron
+## side matters to both worlds: an apron road cell reads its neighbours with
+## this, and a border road cell that used to end in a cap now opens toward
+## its continuation outside.
+func _road_at(cell: Vector2i) -> bool:
+	return _is_road(cell) or apron_roads.has(cell)
+
+
 ## The road tile whose open edges match this cell's road neighbours, or {}
 ## when the set lacks that mask. Bit order is TileCatalog.EDGE_BITS: bit0
-## north (y-1), bit1 east (x+1), bit2 south (y+1), bit3 west (x-1); off-board
-## never continues a road, so a track ends in a cap at the board edge.
+## north (y-1), bit1 east (x+1), bit2 south (y+1), bit3 west (x-1). Works for
+## apron cells as well as board cells - it only ever looks at neighbours.
 func _road_tile(cell: Vector2i) -> Dictionary:
 	var mask := 0
-	if _is_road(cell + Vector2i(0, -1)):
+	if _road_at(cell + Vector2i(0, -1)):
 		mask |= 1
-	if _is_road(cell + Vector2i(1, 0)):
+	if _road_at(cell + Vector2i(1, 0)):
 		mask |= 2
-	if _is_road(cell + Vector2i(0, 1)):
+	if _road_at(cell + Vector2i(0, 1)):
 		mask |= 4
-	if _is_road(cell + Vector2i(-1, 0)):
+	if _road_at(cell + Vector2i(-1, 0)):
 		mask |= 8
 	var rect: Rect2 = _road_catalog.tiles[mask]
 	if rect.size.x <= 0.0:

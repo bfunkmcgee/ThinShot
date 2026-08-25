@@ -5,7 +5,9 @@ extends Node2D
 ## contact shadow. Split out of Board so the 160-blit floor repaints only when
 ## the level or the prop set changes, while Board._draw stays free to redraw
 ## its highlights every frame - and so ground-level effects can slot between
-## the two (FloorLayer at z -2, fx_ground at -1, Board's overlays at 0).
+## the two (FloorLayer at z -2, fx_ground at -1, Board's overlays at 0). The
+## ApronLayer class at the bottom is the world outside the arena, at z -3
+## under all of this.
 ##
 ## Board creates one in _ready, hands it a back-reference, and forwards
 ## redraws from set_level() / set_prop_shadows(). Everything here is read
@@ -78,3 +80,38 @@ func _draw() -> void:
 		draw_circle(Vector2.ZERO, float(board.prop_shadows[cell]),
 				board.shadow_tone(Board.SHADOW_COLOR.a))
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+## The ground past the arena: the Board's apron_cache blitted OPAQUE, inside
+## the CanvasGroup Board stands this layer in. The group's shader fades the
+## composited picture toward the window's clear colour by distance past the
+## boundary - the tiles themselves never carry alpha, because fading them
+## individually double-blends their shared 1px art edges into a seam lattice.
+class ApronLayer:
+	extends Node2D
+
+	var board: Board = null
+
+	func _draw() -> void:
+		if board == null:
+			return
+		for cell: Vector2i in board.apron_cache:
+			var info: Dictionary = board.apron_cache[cell]
+			var region: Rect2 = info.region
+			var c := board.cell_to_local(cell)
+			var dest := Rect2(
+					c.x - Board.TILE_W / 2.0,
+					c.y - Board.TILE_H / 2.0 - (region.size.y - Board.TILE_H),
+					region.size.x, region.size.y)
+			if info.flip:
+				draw_set_transform(Vector2(2.0 * c.x, 0.0), 0.0, Vector2(-1, 1))
+			draw_texture_rect_region(info.sheet, dest, region, info.shade)
+			if info.flip:
+				draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		# Contact shadows under the apron's scenery, on the ground inside the
+		# group so the fade takes shadow and stone together.
+		for s: Dictionary in board.apron_shadows:
+			draw_set_transform(s.pos, 0.0, Vector2(1.0, Board.SHADOW_SQUASH))
+			draw_circle(Vector2.ZERO, float(s.radius),
+					board.shadow_tone(Board.SHADOW_COLOR.a))
+			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
