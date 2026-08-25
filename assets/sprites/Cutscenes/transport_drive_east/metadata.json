@@ -1,0 +1,24 @@
+{
+  "group_id": "e75ac9ba-19dc-4044-8950-6fa8bd931830",
+  "objects": [
+    {
+      "id": "0871f0dd-7d56-4723-9b47-8b1dfb480499",
+      "name": "transport_drive_east",
+      "prompt": null,
+      "size": {
+        "width": 256,
+        "height": 256
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "source_animation_id": "c200fe4d-50b5-4ed6-8b63-9e88aa3d360e",
+      "transform": "each frame flipped horizontally (PIL FLIP_LEFT_RIGHT) from the source driving animation so the vehicle travels right/east on screen; 256x256 canvas preserved",
+      "frames": {
+        "unknown": "frame_%%03d.png",
+        "count": 9
+      }
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-08-24T00:00:00.000000"
+}

@@ -1958,7 +1958,13 @@ func _on_choice(slot: int) -> void:
 			Game.set_deployment(_chosen_ids())
 			print("[Sandline] deploying: %s mission %d/%d" % [
 					Game.operation().name, Game.mission_number(), Game.mission_count()])
-			Game.go_to_battle()
+			# The drive-out cutscene is the operation's own cold open - shown
+			# once, ahead of its first mission, and never again on the missions
+			# that follow it out of the same field camp.
+			if Game.mission_number() == 1:
+				Game.go_to_operation_intro()
+			else:
+				Game.go_to_battle()
 
 
 # -------------------------------------------------------------------- debug --

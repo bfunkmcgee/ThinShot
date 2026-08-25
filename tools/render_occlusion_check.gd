@@ -42,6 +42,11 @@ func _run() -> void:
 	game.in_the_field = true
 
 	var battle: Node = (load("res://scenes/Battle.tscn") as PackedScene).instantiate()
+	# --level 1, 4 or 8 lands on a mission-1 board with a parked transport;
+	# without this the squad stays hidden below (disembark_pending never gets
+	# consumed, since nothing here calls _dismiss_briefing()) and there is
+	# nobody left to stand in the occlusion band this tool exists to photograph.
+	battle.skip_disembark = true
 	root.add_child(battle)
 	await process_frame
 	await process_frame

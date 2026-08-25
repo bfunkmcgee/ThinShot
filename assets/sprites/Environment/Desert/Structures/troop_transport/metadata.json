@@ -1,0 +1,29 @@
+{
+  "group_id": "e75ac9ba-19dc-4044-8950-6fa8bd931830",
+  "objects": [
+    {
+      "id": "294d1f9c-8651-4d4e-b055-fd1869f6142d",
+      "name": "troop_transport",
+      "prompt": null,
+      "size": {
+        "width": 256,
+        "height": 256
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {
+        "door_drop": {
+          "id": "fbd2c65f-0825-44d8-a7f4-587dd581a46b",
+          "description": "rear ramp lowers from closed hull to fully deployed troop ramp, revealing the interior bench seats (frame 0 = door closed, frame 8 = door open, matching the base still)",
+          "unknown": "animations/door_drop/unknown/frame_%%03d.png",
+          "frames": 9
+        }
+      }
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-08-24T00:00:00.000000"
+}

@@ -52,11 +52,13 @@ const STRUCTURE_DIRS := {
 	"fortress": ENV + "/Structures/Desert_military_building",
 	"hauler_wreck": ENV + "/Structures/desert_vehicle_wreck/Desert_hauler_wreck",
 	"tanker_wreck": ENV + "/Structures/desert_vehicle_wreck/Desert_tanker_wreck",
+	"troop_transport": ENV + "/Structures/troop_transport",
 }
 const STRUCTURE_OFFSETS := {
 	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33),
 	"tent": Vector2(0, -33), "fortress": Vector2(0, -55),
 	"hauler_wreck": Vector2(0, -19), "tanker_wreck": Vector2(0, -23),
+	"troop_transport": Vector2(0, -50),
 }
 const CLAIM_ROOT := ENV + "/thirst_claim_markers"
 const CLAIM_FILES := ["Thirst_tally_board.png", "Thirst_stake_bundle.png",

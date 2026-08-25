@@ -85,14 +85,17 @@ const LEVELS: Array[Dictionary] = [
 			"..........j.....",
 			".......jj....j..",
 			".......jj....j..",
-			"...p......j.....",
+			"..........j.....",
 			"......j.......p.",
 			"....##.....##...",
 			"....##..p..##...",
 		],
-		"scout_spawns": [Vector2i(1, 2), Vector2i(1, 7), Vector2i(2, 4)],
-		"lead_spawns": [Vector2i(0, 5)],
-		"gunner_spawns": [Vector2i(2, 5)],
+		# The transport parked on the west edge (see "structures" below) sat
+		# under and on top of the old start line, so the formation moved one
+		# lane east to clear its footprint - same spread, same start line.
+		"scout_spawns": [Vector2i(3, 4), Vector2i(5, 7), Vector2i(3, 8)],
+		"lead_spawns": [Vector2i(4, 6)],
+		"gunner_spawns": [Vector2i(4, 5)],
 		"goblin_spawns": [
 			Vector2i(13, 1), Vector2i(14, 4), Vector2i(14, 8),
 		],
@@ -107,7 +110,12 @@ const LEVELS: Array[Dictionary] = [
 		# island, so he only starts mattering once the squad is most of the
 		# way across - the backstop rather than the opening problem.
 		"bolt_spawns": [Vector2i(15, 4)],
-		"structures": [],
+		"structures": [
+			# A troop transport idles on the west edge, first mission of the
+			# campaign: the squad walks its ramp before the turn begins rather
+			# than starting already deployed (Battle._run_disembark).
+			{"kind": "troop_transport", "anchor": Vector2i(1, 6), "size": Vector2i(3, 2)},
+		],
 		# Stated rather than left to default, so the banner on screen reads the
 		# same words as the orders in the briefing.
 		"objectives": [
@@ -362,15 +370,25 @@ const LEVELS: Array[Dictionary] = [
 			"...........j....",
 			"..j.............",
 			"......dd........",
-			".#..........j...",
+			# Was a lone rock; it sat in the transport's new footprint and a
+			# single outcrop was never the point on a map about bare ground, so
+			# it gave way rather than the transport shifting off the west edge.
+			"............j...",
 			".........dd.....",
 			"....j...........",
 			"..........j.....",
 			"...p.......j....",
 		],
-		"scout_spawns": [Vector2i(1, 2), Vector2i(1, 7), Vector2i(2, 4)],
-		"lead_spawns": [Vector2i(0, 5)],
-		"gunner_spawns": [Vector2i(2, 5)],
+		# The transport parked on the west edge (see "structures" below) sat
+		# under and on top of the old start line, so the formation moved one
+		# lane east to clear its footprint - same spread, same start line.
+		# Both trailing scouts differ from their DRY WASH twins: (4,7) is
+		# junk on this map, and row 3 is one long bare lane clear to the
+		# east edge - (3,2) keeps the same shape without opening a 13-tile
+		# firing lane through the start line.
+		"scout_spawns": [Vector2i(3, 4), Vector2i(5, 7), Vector2i(3, 8)],
+		"lead_spawns": [Vector2i(4, 6)],
+		"gunner_spawns": [Vector2i(4, 5)],
 		# The column is strung out rather than dug in - they were walking, not
 		# waiting - so they arrive at the fight in ones and twos.
 		"goblin_spawns": [
@@ -386,7 +404,12 @@ const LEVELS: Array[Dictionary] = [
 		# And a hired gun the column's water is paying for - the first hint
 		# of what the debrief will say out loud: they are supplying something.
 		"partisan_spawns": [Vector2i(15, 6)],
-		"structures": [],
+		"structures": [
+			# A troop transport idles on the west edge, first mission of the
+			# operation: the squad walks its ramp before the turn begins
+			# rather than starting already deployed (Battle._run_disembark).
+			{"kind": "troop_transport", "anchor": Vector2i(1, 6), "size": Vector2i(3, 2)},
+		],
 		"objectives": [
 			{
 				"kind": "destroy",
@@ -657,13 +680,16 @@ const LEVELS: Array[Dictionary] = [
 			".......s..W....j",
 			"...j...W......d.",
 			"......jW...W....",
-			".j.....W..sW.j..",
+			".......W..sW.j..",
 			"....j...W....j..",
 			".p....#.....j...",
 		],
-		"scout_spawns": [Vector2i(1, 2), Vector2i(2, 7), Vector2i(2, 4)],
-		"lead_spawns": [Vector2i(0, 4)],
-		"gunner_spawns": [Vector2i(1, 5)],
+		# The transport parked on the west edge (see "structures" below) sat
+		# under and on top of the old start line, so the formation moved one
+		# lane east to clear its footprint - same spread, same start line.
+		"scout_spawns": [Vector2i(3, 4), Vector2i(5, 8), Vector2i(3, 8)],
+		"lead_spawns": [Vector2i(4, 6)],
+		"gunner_spawns": [Vector2i(4, 5)],
 		"goblin_spawns": [Vector2i(10, 3), Vector2i(9, 6), Vector2i(12, 7)],
 		"smg_spawns": [Vector2i(13, 4), Vector2i(12, 5)],
 		"novice_spawns": [Vector2i(14, 2), Vector2i(12, 2), Vector2i(12, 8)],
@@ -671,7 +697,12 @@ const LEVELS: Array[Dictionary] = [
 		# The rearguard's gun holds the middle ground between the drops - the
 		# reason the road cannot just be walked.
 		"heavy_spawns": [Vector2i(11, 5)],
-		"structures": [],
+		"structures": [
+			# A troop transport idles on the west edge, first mission of the
+			# operation: the squad walks its ramp before the turn begins
+			# rather than starting already deployed (Battle._run_disembark).
+			{"kind": "troop_transport", "anchor": Vector2i(1, 6), "size": Vector2i(3, 2)},
+		],
 		"objectives": [
 			{
 				"kind": "destroy",

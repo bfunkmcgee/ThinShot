@@ -138,6 +138,12 @@ const STRUCTURE_DIRS := {
 	# desert had a war in it before this squad turned up.
 	"hauler_wreck": STRUCTURE_ROOT + "/desert_vehicle_wreck/Desert_hauler_wreck",
 	"tanker_wreck": STRUCTURE_ROOT + "/desert_vehicle_wreck/Desert_tanker_wreck",
+	# The 3x2 troop transport levels park on the first mission of an operation.
+	# Its animation folder holds the door-drop run (frame_000 shut .. frame_008
+	# open) rather than a breeze loop; _spawn_structure special-cases it into
+	# _transport_strips/_transport_frames instead of _animated_props so it never
+	# joins the 7fps idle cycle every other multi-frame structure gets.
+	"troop_transport": STRUCTURE_ROOT + "/troop_transport",
 }
 const STRUCTURE_FPS := 7.0  # gentle breeze loops
 
@@ -184,6 +190,19 @@ const STRUCTURE_OFFSETS := {
 	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33),
 	"tent": Vector2(0, -33), "fortress": Vector2(0, -55),
 	"hauler_wreck": Vector2(0, -19), "tanker_wreck": Vector2(0, -23),
+	# Every shipped 2x2 structure on a 168 canvas measures out to
+	# offset_y = -(bbox_bottom - 115): hut_1 137->-22, hut_2/tent 148->-33,
+	# hauler_wreck 134->-19, tanker_wreck 138->-23 - all five, exactly, no
+	# rounding. 115 is itself canvas/2 (84) plus 15px per footprint row plus a
+	# 1px remainder (84 + 15*2 + 1 = 115); the fortress (4x4, 256 canvas, bbox
+	# 244->-55) confirms the per-row term: 256/2 + 15*4 + 1 = 189, and
+	# 244-189 = 55. The transport is a 3x2 footprint (2 rows, same as the hut
+	# group) on its own 256 canvas, so the same formula gives
+	# 256/2 + 15*2 + 1 = 159, and its bbox_bottom is 222: offset_y =
+	# -(222 - 159) = -63. Column count (2 vs 3) never enters the arithmetic -
+	# _spawn_structure anchors every strip on the front ROW alone, so only
+	# depth (rows) and canvas move the number. Visual check still pending.
+	"troop_transport": Vector2(0, -50),
 }
 const ROCK_SCALE := Vector2(2, 2)
 
@@ -431,6 +450,23 @@ var _prop_seed := 0
 var _swaying: Array = []
 var _animated_props: Array = []
 var structure_frames: Dictionary = {}
+# The transport's door-drop is a one-shot, not a loop: its strips are built by
+# _spawn_structure exactly like any other structure's, but held here instead of
+# in _animated_props so _animate_structures's 7fps breeze loop never touches
+# them. _run_disembark steps frame 0 (door shut) through the last frame (open,
+# identical to the standing rotations/unknown.png still) once, swapping every
+# strip's texture in lockstep as it goes.
+var _transport_strips: Array = []
+var _transport_frames: Array = []
+## Set the moment the campaign squad spawns on a first mission with a parked
+## transport (see the setup path below); _dismiss_briefing checks it and runs
+## the disembark sequence instead of going straight to the turn banner.
+var disembark_pending := false
+## Test/preview escape hatch: a harness sets this true between instantiate()
+## and add_child() and the gate above never arms - mission-1 data plays out as
+## an ordinary, already-deployed squad instead of running the ramp animation
+## the harness never asked for and has no briefing button to dismiss.
+var skip_disembark := false
 var fx_ground: Fx = null
 var fx_air: Fx = null
 var fx_glow: Fx = null
@@ -576,6 +612,22 @@ func _ready() -> void:
 		_spawn_enemy_lists({})
 	else:
 		_spawn_campaign_squad()
+		# First mission of the operation, and a transport is parked on this
+		# board: the squad disembarks off its ramp before play begins instead
+		# of starting already deployed. Hide them now - _dismiss_briefing runs
+		# the sequence that brings them back - so the briefing shows an empty
+		# field and a sealed transport rather than a squad that already made it
+		# to their marks on its own.
+		if Game.mission_number() == 1 and not skip_disembark:
+			var parked_transport := false
+			for s: Dictionary in level.structures:
+				if s.kind == "troop_transport":
+					parked_transport = true
+					break
+			if parked_transport:
+				disembark_pending = true
+				for soldier in living_soldiers(Unit.TEAM_SCOUT):
+					soldier.visible = false
 	_finish_setup()
 
 
@@ -1537,7 +1589,14 @@ func _spawn_structure(s: Dictionary) -> void:
 		root.add_child(spr)
 		entities_node.add_child(root)
 		sprites.append(spr)
-	if frames.size() > 1:
+	if s.kind == "troop_transport":
+		# One-shot, not a loop: frame 0 (door shut) is already on every strip
+		# above, and the full run is kept aside for _run_disembark to step
+		# through exactly once, on its own cue, rather than joining the 7fps
+		# breeze cycle every other multi-frame structure animates on.
+		_transport_strips = sprites
+		_transport_frames = frames
+	elif frames.size() > 1:
 		# Phase from the anchor cell so no two structures breathe in step.
 		# One entry drives every strip - the building still animates as one.
 		_animated_props.append({
@@ -6090,10 +6149,123 @@ func _notebook_warnings() -> Array[String]:
 
 func _dismiss_briefing() -> void:
 	briefing_panel.visible = false
+	if disembark_pending:
+		disembark_pending = false
+		_run_disembark()
+		return
 	# The turn banner has been sitting behind the briefing this whole time.
 	if state == State.PLAYER_TURN:
 		show_banner("KESTREL SQUAD'S TURN")
 		player_turn_ready_msec = Time.get_ticks_msec()
+
+
+## The transport's rear ramp drops and the squad pours out of it before the
+## first turn plays - once, on the first mission of an operation, when Levels
+## parked one on this board (see disembark_pending, set in the setup path
+## right after _spawn_campaign_squad, and STRUCTURE_OFFSETS/_spawn_structure
+## for how the transport itself is registered and kept out of the ordinary
+## breeze-loop animation).
+func _run_disembark() -> void:
+	state = State.ANIMATING
+	# Frame 0 (door shut) is already on every strip from spawn; step 1..last
+	# once and hold there - the last frame is pixel-identical to the standing
+	# rotations/unknown.png still, so there is nothing to swap back afterwards.
+	for frame_idx in range(1, _transport_frames.size()):
+		await get_tree().create_timer(1.0 / STRUCTURE_FPS).timeout
+		for strip: Sprite2D in _transport_strips:
+			strip.texture = _transport_frames[frame_idx]
+	await get_tree().create_timer(1.0 / STRUCTURE_FPS).timeout  # a beat before anyone moves
+
+	# Lead first, then the gunner, then the rest - the same order
+	# _spawn_campaign_squad deploys in. Read off who actually stands at each
+	# cell rather than the level's raw spawn lists: the ratline's muster or a
+	# soldier resting off a bounty can leave a spawn cell empty, and a short
+	# squad should just be fewer people walking out, not a null reference.
+	var order: Array[Unit] = []
+	for cell: Vector2i in level.get("lead_spawns", []):
+		var u := unit_at(cell)
+		if u != null:
+			order.append(u)
+	for cell: Vector2i in level.get("gunner_spawns", []):
+		var u := unit_at(cell)
+		if u != null:
+			order.append(u)
+	for cell: Vector2i in level.scout_spawns:
+		var u := unit_at(cell)
+		if u != null:
+			order.append(u)
+
+	var exit_cell := _transport_exit_cell()
+	# Staggered rather than queued: each walk runs concurrently (fired without
+	# awaiting it directly) and `remaining` is what the loop below waits on, so
+	# the squad pours out of the ramp instead of filing through it one at a
+	# time. The stagger itself is short enough that the next one is moving
+	# before the last has cleared more than a step or two.
+	var remaining := [order.size()]
+	for i in order.size():
+		_disembark_one(order[i], exit_cell, order[i].cell, remaining)
+		if i < order.size() - 1:
+			await get_tree().create_timer(MOVE_STEP_TIME * 1.5).timeout
+	while remaining[0] > 0:
+		await get_tree().process_frame
+
+	state = State.PLAYER_TURN
+	show_banner("KESTREL SQUAD'S TURN")
+	player_turn_ready_msec = Time.get_ticks_msec()
+
+
+## One soldier's walk off the ramp: teleported to the exit cell (and made
+## visible - _spawn_campaign_squad's hand-off left it hidden at its spawn
+## cell), then walked there with do_move's own per-step tween/facing/footstep
+## pattern (~2916) but none of its turn or AP bookkeeping - this runs before
+## turn 1 even opens, so there is no move to undo and no watch to refresh.
+## `remaining` is the shared countdown _run_disembark blocks on; the caller
+## does not await this directly; that is what lets soldiers overlap.
+func _disembark_one(unit: Unit, exit_cell: Vector2i, dest: Vector2i,
+		remaining: Array) -> void:
+	unit.cell = exit_cell
+	unit.position = board.cell_to_global(exit_cell)
+	unit.visible = true
+	var came_from := board.flood_fill(exit_cell, board.size.x * board.size.y,
+			_blocked_for_team.bind(unit.team))
+	var path := board.reconstruct_path(came_from, dest)
+	unit.start_walking()
+	var from_pos := unit.position
+	for step_index in path.size():
+		var step: Vector2i = path[step_index]
+		var step_pos := board.cell_to_global(step)
+		unit.set_facing(step_pos - from_pos)
+		var tween := create_tween()
+		tween.tween_property(unit, "position", step_pos, MOVE_STEP_TIME)
+		await tween.finished
+		Sfx.play("footstep_1" if step_index % 2 == 0 else "footstep_2")
+		fx_ground.footstep(step_pos)
+		unit.cell = step
+		from_pos = step_pos
+	unit.stop_walking()
+	unit.cell = dest  # exact, even if the path above was empty (already there)
+	remaining[0] -= 1
+
+
+## The cell the ramp actually lets a soldier stand on: due east of the
+## transport footprint's south-east corner, walking the corner up a row if
+## something is in the way (THE CINDER ROAD has junk where DRY WASH and THE
+## LONG HAUL have open sand). The vehicle faces west with its ramp down at
+## its own south-east, so east of the footprint is always the right side of
+## it to look on.
+func _transport_exit_cell() -> Vector2i:
+	for s: Dictionary in level.structures:
+		if s.kind != "troop_transport":
+			continue
+		var anchor: Vector2i = s.anchor
+		var size: Vector2i = s.size
+		var south_east: Vector2i = anchor + size - Vector2i.ONE
+		for dy in size.y:
+			var candidate := Vector2i(south_east.x + 1, south_east.y - dy)
+			if board.in_bounds(candidate) and board.is_walkable(candidate):
+				return candidate
+	push_error("[Sandline] troop_transport has no walkable exit cell")
+	return Board.NO_CELL
 
 
 ## Leave the battlefield. Promotions earned here are spent back at camp, face
