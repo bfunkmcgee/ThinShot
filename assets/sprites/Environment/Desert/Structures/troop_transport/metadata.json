@@ -2,28 +2,30 @@
   "group_id": "e75ac9ba-19dc-4044-8950-6fa8bd931830",
   "objects": [
     {
-      "id": "294d1f9c-8651-4d4e-b055-fd1869f6142d",
+      "id": "c258bf23-ec3f-4f47-a90f-a38f61ccaefd",
       "name": "troop_transport",
       "prompt": null,
       "size": {
-        "width": 256,
-        "height": 256
+        "width": 168,
+        "height": 168
       },
       "directions": 1,
       "view": "low top-down",
       "rotations": {
         "unknown": "rotations/unknown.png"
       },
+      "still_source_id": "829f19b0-9211-411d-9662-beb21bf4a2d0",
+      "still_source_note": "rotations/unknown.png is that object's own rotations/unknown.png (the ramp-open still), pixel-identical to door_drop frame 16 below",
       "animations": {
         "door_drop": {
-          "id": "fbd2c65f-0825-44d8-a7f4-587dd581a46b",
-          "description": "rear ramp lowers from closed hull to fully deployed troop ramp, revealing the interior bench seats (frame 0 = door closed, frame 8 = door open, matching the base still)",
+          "id": "34f1fddb-2368-4e8b-a8e5-f40b0df14eab",
+          "description": "rear ramp lowers from closed hull to fully deployed troop ramp, revealing the interior bench seats (frame 0 = door closed, frame 16 = door open, matching the base still)",
           "unknown": "animations/door_drop/unknown/frame_%%03d.png",
-          "frames": 9
+          "frames": 17
         }
       }
     }
   ],
   "export_version": "1.0",
-  "export_date": "2026-08-24T00:00:00.000000"
+  "export_date": "2026-08-25T00:00:00.000000"
 }

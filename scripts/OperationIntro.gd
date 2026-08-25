@@ -16,18 +16,22 @@ extends Control
 const BACKDROP_TEX := preload(
 		"res://assets/sprites/Cutscenes/operation_intro_backdrop.png")
 const VEHICLE_ROOT := "res://assets/sprites/Cutscenes/transport_drive_east/"
-const VEHICLE_FRAME_COUNT := 9
 
 # The backdrop is authored at 384x216 and the viewport is always 1920x1080
 # (canvas_items stretch, aspect keep) - 5x lands it exactly, corner to corner.
 const BACKDROP_SCALE := 5.0
-# The transport's frames are 256x256; 2x reads at the same texel density as
-# everything else on screen without the wheels floating off the tile grid.
-const VEHICLE_SCALE := 2.0
-const VEHICLE_FPS := 9.0
+# Troop Transport A's frames are 168x168 - the same canvas class as the
+# shipped 2x2 structures, smaller than the old 256x256 art. 3x gives it a
+# crisper presence on screen (its ~145x92 content lands at ~435x276) without
+# the wheels floating off the tile grid.
+const VEHICLE_SCALE := 3.0
+# 17 wheels-rolling frames read better a touch faster than the old 9-frame
+# loop did.
+const VEHICLE_FPS := 12.0
 
-# Off-screen left to off-screen right, at 2x the vehicle is 512px wide, so
-# +-300 clears the frame before the drive starts and after it ends.
+# Off-screen left to off-screen right; at 3x the vehicle's 168px canvas is
+# 504px wide, so +-300 clears the frame before the drive starts and after
+# it ends.
 const DRIVE_START_X := -300.0
 const DRIVE_END_X := 2300.0
 const DRIVE_TIME := 5.5  # linear - a steady drive, not an ease
@@ -42,12 +46,12 @@ const SECONDARY_COLOR := Color(0.78, 0.72, 0.55)
 
 # The backdrop's stony foreground band sits at rows ~150-216 of the 384x216
 # art, which is screen y ~750-1080 at 5x. The transport's own content-bottom
-# (its wheels) sits at row 212 of its 256-tall frame, 84px below the frame's
+# (its wheels) sits at row 131 of its 168-tall frame, 47px below the frame's
 # vertical centre - so a centred Sprite2D's position.y is the wheel line
-# minus that offset at 2x, landing the wheels on the band rather than the sky.
-const WHEEL_LINE_Y := 940.0
-const VEHICLE_CONTENT_BOTTOM := 212.0
-const VEHICLE_FRAME_CENTER := 128.0
+# minus that offset at 3x, landing the wheels on the band rather than the sky.
+const WHEEL_LINE_Y := 1005.0
+const VEHICLE_CONTENT_BOTTOM := 131.0
+const VEHICLE_FRAME_CENTER := 84.0
 
 var _done := false
 var _vehicle_frames: Array[Texture2D] = []
@@ -154,14 +158,18 @@ func _process(delta: float) -> void:
 
 
 ## Walks frame_000.png, frame_001.png ... until one is missing, the same rule
-## Camp._load_frame_run uses for its own animated fixtures.
+## Camp._load_frame_run uses for its own animated fixtures - count-agnostic,
+## so the frame count living in the art (17, up from the old 9) never has to
+## be kept in sync with a constant here.
 func _load_vehicle_frames() -> Array[Texture2D]:
 	var frames: Array[Texture2D] = []
-	for i in VEHICLE_FRAME_COUNT:
+	var i := 0
+	while true:
 		var path := "%sframe_%03d.png" % [VEHICLE_ROOT, i]
 		if not ResourceLoader.exists(path):
 			break
 		frames.append(load(path))
+		i += 1
 	return frames
 
 

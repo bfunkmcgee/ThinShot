@@ -58,7 +58,7 @@ const STRUCTURE_OFFSETS := {
 	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33),
 	"tent": Vector2(0, -33), "fortress": Vector2(0, -55),
 	"hauler_wreck": Vector2(0, -19), "tanker_wreck": Vector2(0, -23),
-	"troop_transport": Vector2(0, -50),
+	"troop_transport": Vector2(0, -16),
 }
 const CLAIM_ROOT := ENV + "/thirst_claim_markers"
 const CLAIM_FILES := ["Thirst_tally_board.png", "Thirst_stake_bundle.png",

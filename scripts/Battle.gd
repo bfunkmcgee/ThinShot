@@ -138,11 +138,12 @@ const STRUCTURE_DIRS := {
 	# desert had a war in it before this squad turned up.
 	"hauler_wreck": STRUCTURE_ROOT + "/desert_vehicle_wreck/Desert_hauler_wreck",
 	"tanker_wreck": STRUCTURE_ROOT + "/desert_vehicle_wreck/Desert_tanker_wreck",
-	# The 3x2 troop transport levels park on the first mission of an operation.
-	# Its animation folder holds the door-drop run (frame_000 shut .. frame_008
+	# The 2x2 troop transport levels park on the first mission of an operation.
+	# Its animation folder holds the door-drop run (frame_000 shut .. frame_016
 	# open) rather than a breeze loop; _spawn_structure special-cases it into
 	# _transport_strips/_transport_frames instead of _animated_props so it never
-	# joins the 7fps idle cycle every other multi-frame structure gets.
+	# joins the 7fps idle cycle every other multi-frame structure gets - it
+	# steps at its own DOOR_FPS instead, once, in _run_disembark.
 	"troop_transport": STRUCTURE_ROOT + "/troop_transport",
 }
 const STRUCTURE_FPS := 7.0  # gentle breeze loops
@@ -192,17 +193,17 @@ const STRUCTURE_OFFSETS := {
 	"hauler_wreck": Vector2(0, -19), "tanker_wreck": Vector2(0, -23),
 	# Every shipped 2x2 structure on a 168 canvas measures out to
 	# offset_y = -(bbox_bottom - 115): hut_1 137->-22, hut_2/tent 148->-33,
-	# hauler_wreck 134->-19, tanker_wreck 138->-23 - all five, exactly, no
-	# rounding. 115 is itself canvas/2 (84) plus 15px per footprint row plus a
-	# 1px remainder (84 + 15*2 + 1 = 115); the fortress (4x4, 256 canvas, bbox
-	# 244->-55) confirms the per-row term: 256/2 + 15*4 + 1 = 189, and
-	# 244-189 = 55. The transport is a 3x2 footprint (2 rows, same as the hut
-	# group) on its own 256 canvas, so the same formula gives
-	# 256/2 + 15*2 + 1 = 159, and its bbox_bottom is 222: offset_y =
-	# -(222 - 159) = -63. Column count (2 vs 3) never enters the arithmetic -
-	# _spawn_structure anchors every strip on the front ROW alone, so only
-	# depth (rows) and canvas move the number. Visual check still pending.
-	"troop_transport": Vector2(0, -50),
+	# hauler_wreck 134->-19, tanker_wreck 138->-23, troop_transport (closed
+	# hull) 131->-16 - all six, exactly, no rounding. 115 is itself canvas/2
+	# (84) plus 15px per footprint row plus a 1px remainder
+	# (84 + 15*2 + 1 = 115); the fortress (4x4, 256 canvas, bbox 244->-55)
+	# confirms the per-row term: 256/2 + 15*4 + 1 = 189, and 244-189 = 55.
+	# Troop Transport A's first art shipped as a 3x2 footprint on its own
+	# 256 canvas with a hand-tuned -50 that never quite matched the formula
+	# (-63, for a bbox_bottom of 222); the smaller replacement is a 2x2/168
+	# structure like the huts and wrecks, so it now takes the same rule as
+	# the rest of them instead of needing its own case.
+	"troop_transport": Vector2(0, -16),
 }
 const ROCK_SCALE := Vector2(2, 2)
 
@@ -458,6 +459,10 @@ var structure_frames: Dictionary = {}
 # strip's texture in lockstep as it goes.
 var _transport_strips: Array = []
 var _transport_frames: Array = []
+# The door-drop plays faster than the breeze loops it is deliberately kept out
+# of - 17 frames at 10fps is ~1.7s, brisk enough that the ramp reads as a
+# mechanism dropping rather than a building breathing.
+const DOOR_FPS := 10.0
 ## Set the moment the campaign squad spawns on a first mission with a parked
 ## transport (see the setup path below); _dismiss_briefing checks it and runs
 ## the disembark sequence instead of going straight to the turn banner.
@@ -6171,10 +6176,10 @@ func _run_disembark() -> void:
 	# once and hold there - the last frame is pixel-identical to the standing
 	# rotations/unknown.png still, so there is nothing to swap back afterwards.
 	for frame_idx in range(1, _transport_frames.size()):
-		await get_tree().create_timer(1.0 / STRUCTURE_FPS).timeout
+		await get_tree().create_timer(1.0 / DOOR_FPS).timeout
 		for strip: Sprite2D in _transport_strips:
 			strip.texture = _transport_frames[frame_idx]
-	await get_tree().create_timer(1.0 / STRUCTURE_FPS).timeout  # a beat before anyone moves
+	await get_tree().create_timer(1.0 / DOOR_FPS).timeout  # a beat before anyone moves
 
 	# Lead first, then the gunner, then the rest - the same order
 	# _spawn_campaign_squad deploys in. Read off who actually stands at each
@@ -6247,18 +6252,26 @@ func _disembark_one(unit: Unit, exit_cell: Vector2i, dest: Vector2i,
 	remaining[0] -= 1
 
 
-## The cell the ramp actually lets a soldier stand on: due east of the
-## transport footprint's south-east corner, walking the corner up a row if
-## something is in the way (THE CINDER ROAD has junk where DRY WASH and THE
-## LONG HAUL have open sand). The vehicle faces west with its ramp down at
-## its own south-east, so east of the footprint is always the right side of
-## it to look on.
+## The cell the ramp actually lets a soldier stand on. Troop Transport A faces
+## east with its ramp dropping off its own SOUTH face, so the exit is the row
+## just south of the footprint (y = anchor.y + size.y), scanned from the
+## footprint's east column toward its west - the ramp sits slightly west of
+## the south-east corner, not dead centre, so the east column is tried first
+## and is the one that hits for every shipped anchor. Falls back to the old
+## east-edge scan (walking the south-east corner up a row at a time) if the
+## south row turns out to be blocked entirely, so a level that ever crowds
+## that ground still resolves to somewhere walkable instead of NO_CELL.
 func _transport_exit_cell() -> Vector2i:
 	for s: Dictionary in level.structures:
 		if s.kind != "troop_transport":
 			continue
 		var anchor: Vector2i = s.anchor
 		var size: Vector2i = s.size
+		var south_row := anchor.y + size.y
+		for dx in range(size.x - 1, -1, -1):
+			var candidate := Vector2i(anchor.x + dx, south_row)
+			if board.in_bounds(candidate) and board.is_walkable(candidate):
+				return candidate
 		var south_east: Vector2i = anchor + size - Vector2i.ONE
 		for dy in size.y:
 			var candidate := Vector2i(south_east.x + 1, south_east.y - dy)

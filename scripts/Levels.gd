@@ -85,7 +85,7 @@ const LEVELS: Array[Dictionary] = [
 			"..........j.....",
 			".......jj....j..",
 			".......jj....j..",
-			"..........j.....",
+			"...p......j.....",
 			"......j.......p.",
 			"....##.....##...",
 			"....##..p..##...",
@@ -114,7 +114,7 @@ const LEVELS: Array[Dictionary] = [
 			# A troop transport idles on the west edge, first mission of the
 			# campaign: the squad walks its ramp before the turn begins rather
 			# than starting already deployed (Battle._run_disembark).
-			{"kind": "troop_transport", "anchor": Vector2i(1, 6), "size": Vector2i(3, 2)},
+			{"kind": "troop_transport", "anchor": Vector2i(1, 6), "size": Vector2i(2, 2)},
 		],
 		# Stated rather than left to default, so the banner on screen reads the
 		# same words as the orders in the briefing.
@@ -408,7 +408,7 @@ const LEVELS: Array[Dictionary] = [
 			# A troop transport idles on the west edge, first mission of the
 			# operation: the squad walks its ramp before the turn begins
 			# rather than starting already deployed (Battle._run_disembark).
-			{"kind": "troop_transport", "anchor": Vector2i(1, 6), "size": Vector2i(3, 2)},
+			{"kind": "troop_transport", "anchor": Vector2i(1, 6), "size": Vector2i(2, 2)},
 		],
 		"objectives": [
 			{
@@ -701,7 +701,7 @@ const LEVELS: Array[Dictionary] = [
 			# A troop transport idles on the west edge, first mission of the
 			# operation: the squad walks its ramp before the turn begins
 			# rather than starting already deployed (Battle._run_disembark).
-			{"kind": "troop_transport", "anchor": Vector2i(1, 6), "size": Vector2i(3, 2)},
+			{"kind": "troop_transport", "anchor": Vector2i(1, 6), "size": Vector2i(2, 2)},
 		],
 		"objectives": [
 			{
