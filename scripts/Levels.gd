@@ -177,6 +177,19 @@ const LEVELS: Array[Dictionary] = [
 			"................",
 			"................",
 		],
+		# The line the level is named for cannot end at the map edge: a
+		# barricade that stops where the camera does reads as one anybody
+		# could stroll around, and the whole level is that they can't. Both
+		# lines march on across the apron until the fade takes them - purely
+		# scenery out there, but the gates stay the only way through that the
+		# GROUND admits to. Columns match the map's own: outer x=6, inner
+		# x=11, both ends of each.
+		"apron_props": [
+			{"kind": "junk", "from": Vector2i(6, -9), "to": Vector2i(6, -1)},
+			{"kind": "junk", "from": Vector2i(6, 10), "to": Vector2i(6, 18)},
+			{"kind": "junk", "from": Vector2i(11, -9), "to": Vector2i(11, -1)},
+			{"kind": "junk", "from": Vector2i(11, 10), "to": Vector2i(11, 18)},
+		],
 		"scout_spawns": [Vector2i(1, 1), Vector2i(1, 8), Vector2i(2, 5)],
 		"lead_spawns": [Vector2i(0, 4)],
 		"gunner_spawns": [Vector2i(2, 4)],

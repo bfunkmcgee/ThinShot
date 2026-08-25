@@ -360,6 +360,9 @@ func _ready() -> void:
 	_prop_seed = int(camp.get("prop_seed",
 			int(camp.get("zone_seed", 91)) * 977 + 101))
 	_spawn_props()
+	# The desert the camp sits in: the gate road, the perimeter towers and
+	# the drift outside the walls. Interiors no-op here - their apron is off.
+	ApronScenery.spawn(board, entities, camp, _prop_seed)
 	# The roster forms here on a fresh campaign, before the first mission ever
 	# runs, so the squad the player meets in camp is the squad that deploys.
 	Game.ensure_roster(Game.data())

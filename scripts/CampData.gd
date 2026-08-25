@@ -136,6 +136,22 @@ const GARRISON := {
 		Vector2i(8, 13): "open_west",
 		Vector2i(11, 13): "open_east",
 	},
+	# The way out. A track from the gate mouth south into the desert, kinking
+	# west as it goes so it reads as ground somebody drives rather than a
+	# ruler line, dissolving with the apron before it can claim a horizon.
+	"apron_roads": [
+		Vector2i(10, 14), Vector2i(10, 15), Vector2i(10, 16), Vector2i(10, 17),
+		Vector2i(9, 17), Vector2i(9, 18), Vector2i(9, 19), Vector2i(9, 20),
+		Vector2i(8, 20), Vector2i(8, 21), Vector2i(8, 22), Vector2i(8, 23),
+	],
+	# The perimeter the wall implies: watchposts past the corners with clear
+	# lines on the approaches, and one south of the gate watching the road in.
+	# All ring 3 - close enough to read, far enough to be OUTSIDE.
+	"apron_props": [
+		{"kind": "watchtower", "cell": Vector2i(26, 2)},
+		{"kind": "watchtower", "cell": Vector2i(-3, 9)},
+		{"kind": "watchtower", "cell": Vector2i(15, 16)},
+	],
 	"structures": [
 		# The billet row holds the west wall; the five buildings of the
 		# construction pass (GARRISON.md) hold their quarters. The gate is
@@ -381,6 +397,8 @@ static func interior_for(name: String) -> Dictionary:
 	base["shade_seed"] = 17
 	base["zone_thresholds"] = [-0.30, 0.10]
 	base["prop_seed"] = 91 * 977 + 101
+	# A room is INSIDE somewhere: no desert dissolving around its walls.
+	base["apron"] = false
 	return base
 
 

@@ -228,6 +228,7 @@ func _render(data: Dictionary, source: String, out_dir: String, views: Array,
 	entities.y_sort_enabled = true
 	stage.add_child(entities)
 	_spawn_props(board, entities, data)
+	ApronScenery.spawn(board, entities, data, _prop_seed)
 	var markers := Markers.new()
 	markers.board = board
 	markers.marks = _build_marks(data)
