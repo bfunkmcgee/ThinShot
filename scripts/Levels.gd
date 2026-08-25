@@ -338,6 +338,16 @@ const LEVELS: Array[Dictionary] = [
 				],
 			},
 		],
+		# The ride the whole operation has been walking toward. The moment the
+		# second store goes and the west zone opens, the operation's transport
+		# - the one that dropped them on DRY WASH - drives in across the apron
+		# from the western horizon, parks its 2x2 just behind the zone, and
+		# drops its ramp. The zone's signal panels and banners come down when
+		# it arrives; the green light and the open door are the marker now.
+		# Anchored behind the zone's NORTH half: the west corner's south half
+		# is where the mission HUD panels live, and the one vehicle in the
+		# campaign that comes to the rescue should not park behind a menu.
+		"extract_pickup": {"anchor": Vector2i(-3, 2)},
 		# The withdrawal is chased. Two blasts big enough to open the west
 		# zone are big enough to be heard by every patrol the garrison has
 		# out, and they come home through the desert on the east rim - so the
@@ -663,6 +673,11 @@ const LEVELS: Array[Dictionary] = [
 		"objectives": [
 			{"kind": "eliminate", "label": "END THE READING"},
 		],
+		# "Bring the squad home", says the debrief - and the ride that brings
+		# them is seen doing it. No extraction zone here, so the transport is
+		# dispatched by the WIN itself: the last shot of the operation's
+		# climax, then the hull coming out of the western haze for them.
+		"extract_pickup": {"anchor": Vector2i(-3, 2)},
 		# The end of every track, and the one map that is not desert or pan:
 		# burnt ground, because the Thirst has been gathering and burning here
 		# long enough to leave the bowl black.
@@ -798,6 +813,10 @@ const LEVELS: Array[Dictionary] = [
 				],
 			},
 		],
+		# The campaign's last walk ends at a door, not at a line on the
+		# ground: same west-edge zone as OUTPOST 7, same parking spot behind
+		# its north half, and the surveyor boards with the squad.
+		"extract_pickup": {"anchor": Vector2i(-3, 2)},
 		"floor": "ash",
 		"zone_seed": 58,
 		"shade_seed": 21,

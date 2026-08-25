@@ -463,6 +463,25 @@ var _transport_frames: Array = []
 # of - 17 frames at 10fps is ~1.7s, brisk enough that the ramp reads as a
 # mechanism dropping rather than a building breathing.
 const DOOR_FPS := 10.0
+## How long the extraction pickup's drive-in takes, horizon to parking spot.
+const PICKUP_DRIVE_TIME := 2.6
+## Set the moment the pickup is dispatched, so the ride only ever comes once.
+var _pickup_dispatched := false
+## The parked ride, kept for the departure: the sprite to board, its door
+## frames to run backwards, and the flag the finale waits on if the squad
+## somehow finishes before the wheels stop.
+var _pickup_sprite: Sprite2D = null
+var _pickup_frames: Array[Texture2D] = []
+var _pickup_parked := false
+## Latched by the first winning check_game_over on a pickup level, so the
+## departure plays exactly once and every later check just reports "over".
+var _departure_running := false
+## Every marker standing on or beside the extraction zone - the flat signal
+## panels and the staked banner stands - kept so the pickup's arrival can
+## strike them: once the ride is parked there with its ramp down, IT is the
+## marker, and the zone keeps only its green light. cell is NO_CELL for the
+## panels, which cast no shadow to clear.
+var _extract_markers: Array = []
 ## Set the moment the campaign squad spawns on a first mission with a parked
 ## transport (see the setup path below); _dismiss_briefing checks it and runs
 ## the disembark sequence instead of going straight to the turn banner.
@@ -595,6 +614,9 @@ func _ready() -> void:
 	# structures and the caches did not claim, and it reads _prop_shadows to
 	# find out which cells those were.
 	_spawn_decals()
+	# The country past the boundary: towers, rock heaps and drift on the
+	# apron, after every board pass because it may never claim board ground.
+	ApronScenery.spawn(board, entities_node, level, _prop_seed)
 	board.set_prop_shadows(_prop_shadows)
 	# The muster locks the moment the operation's first story mission begins:
 	# computed through Ratline - which Game may not import - and handed over
@@ -1192,7 +1214,10 @@ func _spawn_decals() -> void:
 	# the squad can stand on the ground they mark without the mark vanishing
 	# behind them - which a staked banner on the same cell would do.
 	for cell: Vector2i in extract:
-		_spawn_decal(SIGNAL_PANEL, cell, false)
+		_extract_markers.append({
+			"sprite": _spawn_decal(SIGNAL_PANEL, cell, false),
+			"cell": Board.NO_CELL,
+		})
 	_spawn_signal_stands(extract)
 	var placed: Array[Vector2i] = []
 	for y in board.size.y:
@@ -1291,6 +1316,7 @@ func _spawn_signal_stands(extract: Dictionary) -> void:
 			var stand := _spawn_prop(SIGNAL_STAND_TEXTURES[pick],
 					SIGNAL_STAND_OFFSETS[pick], side)
 			_prop_shadows[side] = SIGNAL_STAND_SHADOW
+			_extract_markers.append({"sprite": stand, "cell": side})
 			# Cloth on stakes, so it moves with the plants and the claim stakes.
 			_swaying.append({
 				"sprite": stand,
@@ -1386,6 +1412,12 @@ func _collect_occluders() -> void:
 	_occluders.clear()
 	for child in entities_node.get_children():
 		if child is Unit:
+			continue
+		# Apron scenery fades by the apron's own dissolve, baked into its
+		# modulate - the occlusion fader adopting that alpha and walking it
+		# to 1.0 would undo the entire falloff. Nothing gameplay-visible can
+		# stand behind the apron anyway; skip it wholesale.
+		if child.has_meta("apron_scenery"):
 			continue
 		if child is Sprite2D:
 			_occluders.append({"sprite": child, "sorts_by": child})
@@ -3697,6 +3729,13 @@ func _refresh_objectives() -> void:
 		# The zone only lights up once it is the live objective.
 		armed = active == i
 	board.set_objectives(_cache_highlight(), extract_zone, armed)
+	# The ride home. The first refresh that sees the zone open dispatches the
+	# transport on levels that park one in their apron ("extract_pickup") -
+	# fire-and-forget, because it plays out on ground nobody can walk on while
+	# the turn carries on.
+	if armed and not _pickup_dispatched and level.has("extract_pickup"):
+		_pickup_dispatched = true
+		_run_extract_pickup()
 	# Beacons only over what still needs doing: intact caches, or the
 	# extraction zone once it is actually open.
 	var beacons: Array[Vector2] = []
@@ -5808,6 +5847,16 @@ func check_game_over() -> bool:
 				fallen_hero.death_landing_time())
 		return true
 	if _all_objectives_complete():
+		# An operation finale rides out instead of cutting to the card: the
+		# squad boards the transport that came for them and it drives off
+		# west before the after-action gets a word in. _run_extract_departure
+		# ends by calling _show_game_over itself; meanwhile every caller is
+		# told the truth, which is that the fight is over.
+		if level.has("extract_pickup"):
+			if not _departure_running:
+				_departure_running = true
+				_run_extract_departure()
+			return true
 		# Not "WIN": the victory line should not read as a scoreline. The
 		# objective is met, the contact is over, and what that cost is the
 		# after-action's business rather than this banner's.
@@ -6162,6 +6211,265 @@ func _dismiss_briefing() -> void:
 	if state == State.PLAYER_TURN:
 		show_banner("KESTREL SQUAD'S TURN")
 		player_turn_ready_msec = Time.get_ticks_msec()
+
+
+## The ride home. Dispatched by _refresh_objectives the moment the extraction
+## zone opens, on a level whose "extract_pickup" parks the operation's troop
+## transport in the apron: it drives in from the horizon along `drive`, stops
+## on `anchor` (a 2x2 apron footprint, positioned exactly as a parked
+## structure would be), and drops its ramp with the same one-shot door art
+## the mission-1 disembark plays - the operation ends the way it began. From
+## then on the vehicle IS the extraction marker: _strike_extract_markers
+## takes the panels and banners down and the zone keeps only its green light.
+##
+## Scenery in the strict sense, like everything on the apron - the squad
+## still extracts by standing on the zone's board cells. It exists because a
+## squad told to walk to six green squares deserves to see the thing that is
+## supposedly meeting them there.
+func _run_extract_pickup() -> void:
+	var spec: Dictionary = level.extract_pickup
+	var anchor: Vector2i = spec.anchor
+	var drive: Vector2i = spec.get("drive", Vector2i(-8, 0))
+	var dir: String = STRUCTURE_DIRS.troop_transport
+	var frames := _load_frame_run(dir + "/animations/door_drop/unknown")
+	var still := _load_still(dir + "/rotations/unknown.png")
+	if frames.is_empty() and still == null:
+		# No art, no ride - but the departure may be waiting on this flag,
+		# and it must not wait for a vehicle that can never arrive.
+		_pickup_parked = true
+		return
+	# Parked exactly as _spawn_structure parks the real one: sprite centred
+	# between the anchor and front corners of the footprint, at the closed
+	# hull's measured offset. One sprite, no strips - nothing out there can
+	# walk behind it, so there is nothing to interleave.
+	var front := anchor + Vector2i.ONE
+	var stop := (board.cell_to_global(anchor) + board.cell_to_global(front)) / 2.0
+	var start := stop + Vector2(
+			(drive.x - drive.y) * Board.TILE_W / 2.0,
+			(drive.x + drive.y) * Board.TILE_H / 2.0)
+	var sprite := Sprite2D.new()
+	sprite.texture = frames[0] if not frames.is_empty() else still
+	sprite.offset = STRUCTURE_OFFSETS.troop_transport
+	sprite.scale = Vector2(2, 2)
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.position = start
+	# The apron's own dissolve, driven through: it surfaces at the horizon's
+	# fade and firms up to its parking spot's as it comes.
+	var dim := Board.APRON_SHADE
+	sprite.modulate = Color(dim, dim, dim,
+			1.0 - board.apron_fade_at(front + drive))
+	# Spawned after _collect_occluders ran, but tagged anyway: if collection
+	# ever re-runs mid-mission, the fader must not adopt the ride's fade.
+	sprite.set_meta("apron_scenery", true)
+	entities_node.add_child(sprite)
+	_pickup_sprite = sprite
+	_pickup_frames = frames
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(sprite, "position", stop, PICKUP_DRIVE_TIME) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(sprite, "modulate:a",
+			1.0 - board.apron_fade_at(front), PICKUP_DRIVE_TIME)
+	# Wheel dust off the rear of the hull while it rolls - the footstep puff
+	# is already "ground disturbed" at exactly this scale. The loop outlasts
+	# the tween by a step, so the finished signal may already have fired:
+	# await it only while it still runs, or this coroutine parks forever.
+	var rolled := 0.0
+	while rolled < PICKUP_DRIVE_TIME:
+		await get_tree().create_timer(0.14).timeout
+		rolled += 0.14
+		if is_instance_valid(sprite):
+			fx_ground.footstep(sprite.position + Vector2(-92, 12))
+	if tween.is_running():
+		await tween.finished
+	await get_tree().create_timer(0.3).timeout
+	for i in range(1, frames.size()):
+		await get_tree().create_timer(1.0 / DOOR_FPS).timeout
+		sprite.texture = frames[i]
+	Sfx.play("overwatch_set")
+	_pickup_parked = true
+	_strike_extract_markers()
+
+
+## The panels and banner stands come down once the ride is parked: the cloth
+## stops swaying at once (a struck marker is a struck marker), the art fades
+## over a beat, and the stands' contact shadows leave the floor with them.
+## The zone's green light is the Board's own drawing and stays.
+func _strike_extract_markers() -> void:
+	if _extract_markers.is_empty():
+		return
+	var striking := {}
+	for rec: Dictionary in _extract_markers:
+		striking[rec.sprite] = true
+	_swaying = _swaying.filter(func(entry: Dictionary) -> bool:
+			return not striking.has(entry.sprite))
+	# And out of the occlusion list, which would otherwise keep reading -
+	# and writing - the freed stands' alpha every settle.
+	_occluders = _occluders.filter(func(entry: Dictionary) -> bool:
+			return not striking.has(entry.sprite))
+	for rec: Dictionary in _extract_markers:
+		var sprite: Sprite2D = rec.sprite
+		if rec.cell != Board.NO_CELL:
+			_prop_shadows.erase(rec.cell)
+		if is_instance_valid(sprite):
+			var tween := create_tween()
+			tween.tween_property(sprite, "modulate:a", 0.0, 0.7)
+			tween.tween_callback(sprite.queue_free)
+	_extract_markers.clear()
+	# Repaint the floor once the fade is done, so the shadows leave with the
+	# stands rather than a beat before them.
+	await get_tree().create_timer(0.75).timeout
+	board.set_prop_shadows(_prop_shadows)
+
+
+## The operation rides home. The mirror of _run_disembark, played over the
+## end of a finale instead of the start of an opener: the squad walks to the
+## parked transport and up its ramp, the ramp closes on the same frames it
+## dropped with, the hull turns for home - the art faces east, so west is its
+## mirror - and it drives off into the haze it arrived out of. Only then does
+## the after-action card get the screen.
+##
+## Reached from check_game_over's winning branch on any level carrying
+## "extract_pickup". A finale that never ARMED an extraction (the survey camp
+## ends on a kill) dispatches the ride here and waits for it; a finale the
+## squad finished while the wheels were still turning waits the same way.
+func _run_extract_departure() -> void:
+	state = State.ANIMATING
+	board.clear_highlights()
+	print("[Sandline] departure: the squad rides out")
+	if not _pickup_dispatched:
+		_pickup_dispatched = true
+		_run_extract_pickup()
+	while not _pickup_parked:
+		await get_tree().process_frame
+	print("[Sandline] departure: ride parked")
+	await get_tree().create_timer(0.4).timeout
+
+	var spec: Dictionary = level.extract_pickup
+	var anchor: Vector2i = spec.anchor
+	# The ramp drops off the hull's south face at its east column, exactly
+	# where _transport_exit_cell reads it on the parked opener.
+	var mouth := anchor + Vector2i(1, 2)
+	var approach := Vector2i(mouth.x + 1, mouth.y)
+	var assembly := _boarding_assembly(mouth)
+	# Lead first, gunner, then the rest - the disembark's order, reversed
+	# back through the same door. Everyone alive goes aboard, including a
+	# walked-out prisoner; bystanders live here and stay.
+	var order: Array[Unit] = []
+	for unit in living_units(Unit.TEAM_SCOUT):
+		if not unit.bystander:
+			order.append(unit)
+	var remaining := [order.size()]
+	for i in order.size():
+		_board_one(order[i], assembly, approach, mouth, remaining)
+		if i < order.size() - 1:
+			await get_tree().create_timer(MOVE_STEP_TIME * 1.8).timeout
+	while remaining[0] > 0:
+		await get_tree().process_frame
+	print("[Sandline] departure: %d aboard" % order.size())
+
+	# Button up: the door frames backwards, open to shut.
+	await get_tree().create_timer(0.35).timeout
+	if is_instance_valid(_pickup_sprite):
+		for i in range(_pickup_frames.size() - 2, -1, -1):
+			await get_tree().create_timer(1.0 / DOOR_FPS).timeout
+			if is_instance_valid(_pickup_sprite):
+				_pickup_sprite.texture = _pickup_frames[i]
+		Sfx.play("overwatch_set")
+		await get_tree().create_timer(0.4).timeout
+		# Turn for home and go, sinking back into the apron's haze. EASE_IN:
+		# a vehicle pulling away gathers speed, where the arrival bled it off.
+		_pickup_sprite.flip_h = true
+		var drive: Vector2i = spec.get("drive", Vector2i(-8, 0))
+		var away: Vector2 = _pickup_sprite.position + Vector2(
+				(drive.x - drive.y) * Board.TILE_W / 2.0,
+				(drive.x + drive.y) * Board.TILE_H / 2.0)
+		var horizon := board.apron_fade_at(anchor + Vector2i.ONE + drive)
+		var tween := create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(_pickup_sprite, "position", away, PICKUP_DRIVE_TIME) \
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		tween.tween_property(_pickup_sprite, "modulate:a", 1.0 - horizon,
+				PICKUP_DRIVE_TIME)
+		# Dust now trails off the east side: the hull is mirrored, the world
+		# is not, and it is driving the other way.
+		var rolled := 0.0
+		while rolled < PICKUP_DRIVE_TIME:
+			await get_tree().create_timer(0.14).timeout
+			rolled += 0.14
+			if is_instance_valid(_pickup_sprite):
+				fx_ground.footstep(_pickup_sprite.position + Vector2(92, 12))
+		if tween.is_running():
+			await tween.finished
+	print("[Sandline] departure: gone")
+	await get_tree().create_timer(0.5).timeout
+	_show_game_over("CONTACT RESOLVED", true)
+
+
+## The walkable board cell nearest the ramp mouth: where the pathfinder hands
+## each soldier over to the scripted walk across the apron. Scanned rather
+## than derived from the zone, so a finale with no extraction zone at all
+## still funnels everyone to the same edge of the world.
+func _boarding_assembly(mouth: Vector2i) -> Vector2i:
+	var best := Board.NO_CELL
+	var best_d := 1 << 30
+	for y in board.size.y:
+		for x in board.size.x:
+			var cell := Vector2i(x, y)
+			if not board.is_walkable(cell):
+				continue
+			var d := Board.manhattan(cell, mouth)
+			if d < best_d:
+				best_d = d
+				best = cell
+	return best
+
+
+## One soldier's walk aboard: the real pathfinder as far as the assembly cell
+## - around walls and wire, exactly as a played move would go - then scripted
+## steps across ground the game has no rules for, down the approach column to
+## the ramp mouth, and a fade up the ramp. Deliberately never writes
+## unit.cell: the mission is already won, and a unit whose cell is off the
+## board is a lie to every system that ever reads one.
+func _board_one(unit: Unit, assembly: Vector2i, approach: Vector2i,
+		mouth: Vector2i, remaining: Array) -> void:
+	unit.start_walking()
+	var came_from := board.flood_fill(unit.cell, board.size.x * board.size.y,
+			_blocked_for_team.bind(unit.team))
+	var path := board.reconstruct_path(came_from, assembly)
+	path.append_array(_steps_between(assembly, approach))
+	path.append_array(_steps_between(approach, mouth))
+	var from_pos := unit.position
+	for i in path.size():
+		var step_pos := board.cell_to_global(path[i])
+		unit.set_facing(step_pos - from_pos)
+		var tween := create_tween()
+		tween.tween_property(unit, "position", step_pos, MOVE_STEP_TIME)
+		await tween.finished
+		Sfx.play("footstep_1" if i % 2 == 0 else "footstep_2")
+		fx_ground.footstep(step_pos)
+		from_pos = step_pos
+	unit.stop_walking()
+	var fade := create_tween()
+	fade.tween_property(unit, "modulate:a", 0.0, 0.22)
+	await fade.finished
+	unit.visible = false
+	remaining[0] -= 1
+
+
+## The cells from `from` toward `to`, exclusive of the start: the x leg then
+## the y leg, one cell at a time - scripted movement for apron ground the
+## pathfinder has no cells for.
+func _steps_between(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
+	var steps: Array[Vector2i] = []
+	var cell := from
+	while cell.x != to.x:
+		cell.x += signi(to.x - cell.x)
+		steps.append(cell)
+	while cell.y != to.y:
+		cell.y += signi(to.y - cell.y)
+		steps.append(cell)
+	return steps
 
 
 ## The transport's rear ramp drops and the squad pours out of it before the
