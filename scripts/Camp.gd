@@ -201,6 +201,7 @@ const STRUCTURE_DIRS := {
 	"lockup": STRUCTURE_ROOT + "/garrison_buildings/Lockup",
 	"surgeon_tent": STRUCTURE_ROOT + "/garrison_buildings/Surgeon_tent",
 	"water_truck": STRUCTURE_ROOT + "/garrison_buildings/Water_truck",
+	"troop_transport": STRUCTURE_ROOT + "/troop_transport",
 }
 const STRUCTURE_OFFSETS := {
 	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33), "tent": Vector2(0, -33),
@@ -208,6 +209,7 @@ const STRUCTURE_OFFSETS := {
 	"hq": Vector2(0, -36), "canteen": Vector2(0, -37),
 	"armory": Vector2(0, -35), "lockup": Vector2(0, -34),
 	"surgeon_tent": Vector2(0, -26), "water_truck": Vector2(0, -29),
+	"troop_transport": Vector2(0, -16),
 }
 const STRUCTURE_FPS := 7.0  # gentle breeze loops, matching Battle's clock
 # The occlusion fade, ported from Battle with its constants intact: the
@@ -860,6 +862,10 @@ func _spawn_structure(s: Dictionary) -> void:
 	if frames.is_empty():
 		push_error("[Camp] no art for structure '%s'" % s.kind)
 		return
+	# The carrier's frame run is Battle's ramp-drop one-shot, not a breeze.
+	# Parked in the yard the door stays shut: first frame only.
+	if s.kind == "troop_transport":
+		frames = [frames[0]]
 	var root := Node2D.new()
 	root.position = board.cell_to_global(front)
 	var spr := Sprite2D.new()

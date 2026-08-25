@@ -152,6 +152,9 @@ const GARRISON := {
 		# Parked clear of every wall: a 168px structure's art overhangs its
 		# footprint, so anything it parks against it parks through.
 		{"kind": "water_truck", "anchor": Vector2i(19, 10), "size": Vector2i(2, 2)},
+		# The carrier that hauls the squad out on every operation, parked in
+		# the motor row beside the bowser between runs - seen, not crossed.
+		{"kind": "troop_transport", "anchor": Vector2i(21, 10), "size": Vector2i(2, 2)},
 		{"kind": "lockup", "anchor": Vector2i(17, 7), "size": Vector2i(2, 2)},
 	],
 	"zone_seed": 91,
