@@ -12,6 +12,7 @@ extends Node
 const MENU_SCENE := "res://scenes/MainMenu.tscn"
 const CAMP_SCENE := "res://scenes/Camp.tscn"
 const BATTLE_SCENE := "res://scenes/Battle.tscn"
+const INTRO_SCENE := "res://scenes/OperationIntro.tscn"
 
 # Where the campaign is. An operation is a run of missions the squad stays out
 # on; current_level is the flat index of the mission being fought, kept because
@@ -22,6 +23,11 @@ var current_level := 0
 # rather than back at the garrison. Decides which camp the player walks around
 # and whether replacements are available.
 var in_the_field := false
+# Which garrison room the camp scene shows; "" is the yard. Runtime only -
+# deliberately not saved: a reloaded campaign opens on the yard, the same
+# way it opens on the garrison rather than mid-conversation.
+var camp_interior := ""
+var camp_return := Vector2i(-1, -1)
 
 # This campaign's own number, minted once and then never touched again. It is
 # what makes a battle reproducible: the dice a mission rolls are derived from
@@ -75,6 +81,15 @@ var notebook: Array = []
 var returned: Array = []
 ## The living, keyed by person rather than by appearance. See the section below.
 var adversaries: Array = []
+## The closed files: everybody the campaign has finished with, and how.
+##
+## The other half of `adversaries`, and it did not exist. Nothing removed a man
+## from the roster when the squad settled him on a campaign map - `last_level`
+## is only written when he SURVIVES, so a returner who was killed still passed
+## the return gate on every later mission and the notice board went on posting
+## a bounty on a corpse. A record leaves `adversaries` for exactly two reasons
+## now: a bounty finished him, or the roll says the squad did.
+var adversary_endings: Array = []
 
 # --- bounties ----------------------------------------------------------------
 #
@@ -623,6 +638,32 @@ func finish_bounty(outcome: String, hunter_id: int, target: Dictionary) -> void:
 	save()
 
 
+## Close a file. The campaign is done with this man, and says how.
+##
+## Deliberately not called from the death hook. A lost mission is rolled back
+## wholesale, so a man killed on a mission the squad then lost has to still be
+## out there - which is the same rule, and the same reason, that keeps
+## _remember_the_survivors() on the won branch. Battle calls this from that
+## branch and from nowhere else.
+func settle_adversary(id: int, fate: String, level: int) -> void:
+	if id <= 0:
+		return
+	for i in range(adversaries.size() - 1, -1, -1):
+		var rec: Dictionary = adversaries[i]
+		if int(rec.get("id", 0)) != id:
+			continue
+		adversary_endings.append({
+			"id": id,
+			"name": str(rec.get("name", "")),
+			"settlement": str(rec.get("settlement", "")),
+			"survivals": int(rec.get("survivals", 0)),
+			"fate": fate,
+			"level": level,
+		})
+		adversaries.remove_at(i)
+		return
+
+
 ## Is the detachment out on an interdiction rather than a campaign mission?
 func on_interdiction() -> bool:
 	return not interdiction.is_empty() and not interdiction_level.is_empty()
@@ -813,6 +854,14 @@ func go_to_camp() -> void:
 func go_to_battle() -> void:
 	Engine.time_scale = 1.0
 	get_tree().change_scene_to_file(BATTLE_SCENE)
+
+
+## The drive-out cutscene ahead of an operation's first mission. Camp is the
+## only caller, and only when mission_number() == 1 - every later mission in
+## the operation goes straight to go_to_battle() instead.
+func go_to_operation_intro() -> void:
+	Engine.time_scale = 1.0
+	get_tree().change_scene_to_file(INTRO_SCENE)
 
 
 # ------------------------------------------------------------------ roster --
@@ -1125,6 +1174,7 @@ func new_campaign() -> bool:
 	notebook.clear()
 	returned.clear()
 	adversaries.clear()
+	adversary_endings.clear()
 	bounties_done.clear()
 	informants.clear()
 	bounty_outcomes.clear()
@@ -1989,7 +2039,7 @@ const SAVE_PATH := "user://campaign.json"
 # Raise this in the same commit that adds the migration step reaching it, and
 # never one without the other - _migrate_step() is what turns a number into a
 # shape the rest of this file can read.
-const SAVE_VERSION := 10
+const SAVE_VERSION := 11
 
 # Raised, and never lowered again, when load_save() finds a campaign written by
 # a build newer than this one. Refusing to READ such a file is only half the
@@ -2030,6 +2080,7 @@ func save() -> void:
 		"notebook": notebook,
 		"returned": returned,
 		"adversaries": adversaries,
+		"adversary_endings": adversary_endings,
 		"next_adversary_id": _next_adversary_id,
 		# v7: bounties. The generated board is NOT here - it is derivable from
 		# the campaign seed and the target, so only what happened is kept.
@@ -2122,6 +2173,8 @@ func _migrate_step(payload: Dictionary, from: int) -> Dictionary:
 			return _migrate_8_to_9(payload)
 		9:
 			return _migrate_9_to_10(payload)
+		10:
+			return _migrate_10_to_11(payload)
 	return {}
 
 
@@ -2330,6 +2383,18 @@ func _migrate_7_to_8(payload: Dictionary) -> Dictionary:
 ## reshape, documented here: a migrated veteran keeps every perk already taken
 ## and every queued pick, even where his recomputed level sits below the gate
 ## that would have offered it - what was earned stays earned.
+## v11 adds the closed files. An old save has closed none - not because it
+## behaved differently, but because the build that wrote it had no way to close
+## one - so the honest reshape is an empty list. Inventing endings for men the
+## campaign never settled would be the lie _migrate_2_to_3 and _migrate_4_to_5
+## both refuse to tell; the men themselves are still in `adversaries` where
+## that save left them, and the first won mission that accounts for one will
+## write the first ending.
+func _migrate_10_to_11(payload: Dictionary) -> Dictionary:
+	payload["adversary_endings"] = payload.get("adversary_endings", [])
+	return payload
+
+
 func _migrate_9_to_10(payload: Dictionary) -> Dictionary:
 	payload["roster"] = payload.get("roster", [])
 	if typeof(payload.roster) == TYPE_ARRAY:
@@ -2462,6 +2527,7 @@ func load_save() -> bool:
 	# (_read_roster, _read_promotions, _read_standing); this was the exception.
 	notebook = _read_notebook(payload.get("notebook", []))
 	adversaries = _read_adversaries(payload.get("adversaries", []))
+	adversary_endings = _read_dict_list(payload.get("adversary_endings", []))
 	bounties_done = _read_int_list(payload.get("bounties_done", []))
 	informants = _read_dict_list(payload.get("informants", []))
 	bounty_outcomes = _read_dict_list(payload.get("bounty_outcomes", []))

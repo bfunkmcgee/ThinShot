@@ -100,6 +100,17 @@ const AIM_STANCES := [
 	{"label": "RODAR", "canvas": 60, "scale": 2.0, "offset": Vector2(0, -15),
 		"path": "res://assets/sprites/Rodar_Akai/ReadyToFire_Stance/rotations/%s.png",
 		"unit_const": "RODAR_MUZZLE_OFFSETS"},
+	# South and north are drawn genuinely foreshortened at/away from the
+	# camera (validate_unit_sprites.py check [3] confirms), so the scan lands
+	# on boots/helmet there and Unit.gd hand-sets those two at the muzzle ring.
+	{"label": "GOBLIN_MG", "canvas": 64, "scale": 2.0, "offset": Vector2(0, -15),
+		"path": "res://assets/sprites/Goblin_MG/ReadyToFire_Stance/rotations/%s.png",
+		"unit_const": "GMG_MUZZLE_OFFSETS"},
+	# South/north are foreshortened at/away from the camera (section 6
+	# composite), so the scan lands on boots/hair there - hand-set those two.
+	{"label": "ELF_PARTISAN", "canvas": 64, "scale": 2.0, "offset": Vector2(0, -15),
+		"path": "res://assets/sprites/Elf_Partisan/ReadyToFire_Stance/rotations/%s.png",
+		"unit_const": "ELFP_MUZZLE_OFFSETS"},
 	# The five specialist Kestrels. Same 60-canvas legacy density as the
 	# rifleman they were generated against, so they ride SPRITE_SPECS DEFAULT.
 	#

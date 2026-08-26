@@ -46,6 +46,32 @@ enum Kind {
 	BREACHER,
 	MEDIC,
 	TECHNICIAN,
+	# The Thirst's belt-fed gunner. First fielded in the second operation -
+	# OPERATION LONG SURVEY is where the enemy stops being a militia with
+	# scavenged rifles and starts bringing crew weapons.
+	GOBLIN_MG,
+	# The brute. Deliberately breaks the goblin scale rules - ~1.65x a
+	# rifleman with a scrap-iron maul - and the only unit on an 80x72 canvas
+	# (UNIT_ASSET_SPEC.md section 6's inversion). Appears where the campaign
+	# is at its most desperate: the survey camp and the cold well.
+	GOBLIN_BRUTE,
+	# The people who live where the fighting happens. Unarmed by kind - zero
+	# range, zero damage - and their non-combatant standing rides the same
+	# `resident` flag it always did; these kinds exist so a settlement stops
+	# being drawn out of the rifle rack. Art reuses idle for every weapon
+	# field, the Kind.CIVILIAN pattern.
+	GOBLIN_ELDER,
+	GOBLIN_KEEPER,
+	GOBLIN_CARRIER,
+	# The Cupbearer: a desert elf, not Thirst and never asked to be. The old
+	# oath sealed every new well - digger and landholder drinking first from
+	# the same cup - and he is what three centuries of the Charter breaking
+	# that oath produces: an elven rifle crossed over to fight beside the
+	# people who dug. Watered by sympathisers along the columns, which is
+	# part of what THE LONG HAUL's debrief means by "supplying something".
+	# Unlike the Marksman he CAN break: he has a side of the wire that will
+	# still take him back.
+	ELF_PARTISAN,
 }
 
 ## The kinds that can fill one of a mission's three rifle slots. Rodar owns the
@@ -83,6 +109,14 @@ const MARKSMAN_ROOT := "res://assets/sprites/Kestrel_Marksman"
 const BREACHER_ROOT := "res://assets/sprites/Kestrel_Breacher"
 const MEDIC_ROOT := "res://assets/sprites/Kestrel_Medic"
 const TECHNICIAN_ROOT := "res://assets/sprites/Kestrel_Technician"
+# The Thirst's belt-fed gunner, on the canonical layout like the Kestrels.
+const GMG_ROOT := "res://assets/sprites/Goblin_MG"
+const BRUTE_ROOT := "res://assets/sprites/Goblin_Brute"
+# The three goblin civilians: townfolk and bounty residents.
+const ELDER_ROOT := "res://assets/sprites/Goblin_Elder"
+const ELFP_ROOT := "res://assets/sprites/Elf_Partisan"
+const KEEPER_ROOT := "res://assets/sprites/Goblin_Keeper"
+const CARRIER_ROOT := "res://assets/sprites/Goblin_Carrier"
 
 # Directional pixel-art frames, indexed by 45-degree compass sector of the
 # screen-space facing vector: 0=E, 1=SE, 2=S, 3=SW, 4=W, 5=NW, 6=N, 7=NE.
@@ -373,6 +407,14 @@ const ARC_HALF_SECTORS := 1
 const OVERWATCH_RANGE_BONUS := 2
 const OVERWATCH_VOLLEY := 2
 
+# What suppressive fire adds over the gun's aimed reach. Suppression is area
+# denial that does no damage at all, so the thing it must never require is
+# walking into the beaten zone to deliver it - a machinegun that has to close
+# to rifle distance before it can pin anybody is being used as a bad rifle.
+# Matches OVERWATCH_RANGE_BONUS on purpose: the gun covers the same ground
+# whether it is watching it or firing into it.
+const SUPPRESS_RANGE_BONUS := 2
+
 # Manhattan radius of suppressive fire's beaten zone. Wide on purpose: it
 # deals no damage, so its whole value is how much ground it shuts down at
 # once. Queried through suppress_radius(), which Wide Sweep grows.
@@ -500,6 +542,51 @@ const GOBLIN_MUZZLE_OFFSETS: Array[Vector2] = [
 	Vector2(-6, -60),   # north
 	Vector2(32, -40),   # north-east
 ]
+# The belt-fed gun at the shoulder. South and north are drawn genuinely
+# foreshortened at/away from the camera (the muzzle is the dark ring at his
+# chest), so those two are hand-set at the ring rather than scanned.
+const GMG_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(34, -34),   # east
+	Vector2(36, -36),   # south-east (band scan)
+	Vector2(-4, -24),   # south (hand-set: the muzzle ring at the chest - the scan lands on boots)
+	Vector2(-34, -36),  # south-west (band scan)
+	Vector2(-32, -34),  # west
+	Vector2(-26, -42),  # north-west (band scan)
+	Vector2(-4, -58),   # north (the flash leaves over his shoulder - the gun is hidden behind the body)
+	Vector2(30, -28),   # north-east (band scan)
+]
+# The brute's "muzzle" is the maul head raised overhead - the impact flash
+# leaves the hammer, not a barrel. Measured as the centroid of the top ten
+# figure rows of each 80x72 aim sheet (the hammer mass), mapped through his
+# own SPRITE_SPECS: (px - (40, 36) + (0, -27)) * 2. measure_muzzle.gd is not
+# used here - it assumes a square canvas and would sit 4px low.
+# The partisan's long jezail, measured by tools/measure_muzzle.gd off the
+# shipped aim sheets. The barrel rides high at the shoulder, which is why the
+# side facings sit at -46 where every goblin's sits near -36. South is
+# hand-set at the visible muzzle ring - aimed at the camera, the scan lands
+# on boots. The northern diagonals scan nearer centre than a straight rifle
+# would because the long barrel angles steeply up in the art; the offset
+# follows the art, the flash has to leave the barrel the player can see.
+const ELFP_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(34, -46),   # east
+	Vector2(34, -22),   # south-east
+	Vector2(-4, -24),   # south (hand-set: foreshortened at camera)
+	Vector2(-34, -22),  # south-west
+	Vector2(-32, -46),  # west
+	Vector2(-10, -46),  # north-west
+	Vector2(-2, -62),   # north (foreshortened away)
+	Vector2(14, -46),   # north-east
+]
+const BRUTE_MUZZLE_OFFSETS: Array[Vector2] = [
+	Vector2(0, -98),    # east
+	Vector2(0, -92),    # south-east
+	Vector2(-10, -92),  # south
+	Vector2(-28, -102), # south-west
+	Vector2(6, -102),   # west
+	Vector2(28, -98),   # north-west
+	Vector2(8, -90),    # north
+	Vector2(2, -90),    # north-east
+]
 
 # The five specialist Kestrels. Measured by tools/measure_muzzle.gd, which for
 # these units leans on its band scan far more than the shipped set did, for two
@@ -587,6 +674,9 @@ const TECHNICIAN_MUZZLE_OFFSETS: Array[Vector2] = [
 const SPRITE_SPECS: Dictionary = {
 	"DEFAULT": {"scale": Vector2(2, 2), "offset": Vector2(0, -15)},
 	Kind.GOBLIN_SMG_ALT: {"scale": Vector2(2, 2), "offset": Vector2(0, -14)},
+	# 80x72 sheets with feet on y=63: 27px below the canvas centre, so the
+	# offset is -27 where the family's is -15. Same screen anchor rule.
+	Kind.GOBLIN_BRUTE: {"scale": Vector2(2, 2), "offset": Vector2(0, -27)},
 }
 
 const PIP_SIZE := Vector2(7, 5)
@@ -1046,7 +1136,7 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			# the volume of fire to pin a target. Slow to reposition.
 			max_hp = 8
 			move_range = 3
-			attack_range = 4
+			attack_range = 5
 			damage = 2
 			accuracy = 78  # sprays rather than aims
 			mag_size = 6
@@ -1154,6 +1244,114 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			idle_alt_frames = REV_IDLE_ALT_FRAMES
 			hurt_frames = REV_HURT_FRAMES
 			reload_frames = REV_RELOAD_FRAMES
+		Kind.GOBLIN_MG:
+			# The Thirst's crew weapon: a belt-fed gun on a goblin who can
+			# barely carry it. Long reach and a deep belt, but he sprays
+			# rather than aims and repositions slower than anything else the
+			# Thirst fields. Kill him before he settles, or stay out of his
+			# lane. Morale is the default MAX on purpose - the gun goes to
+			# somebody trusted, and he knows what he is holding.
+			max_hp = 5
+			move_range = 3
+			attack_range = 5
+			damage = 2
+			accuracy = 55  # volume of fire, not marksmanship
+			mag_size = 6
+			frames = GMG_FRAMES
+			aim_frames = GMG_AIM_FRAMES
+			walk_frames = GMG_WALK_FRAMES
+			idle_frames = GMG_IDLE_FRAMES
+			raise_frames = GMG_RAISE_FRAMES
+			aim_idle_frames = GMG_AIM_IDLE_FRAMES
+			death_frames = GMG_DEATH_FRAMES
+			dead_frames = GMG_DEAD_FRAMES
+			idle_alt_frames = GMG_IDLE_ALT_FRAMES
+			hurt_frames = GMG_HURT_FRAMES
+			reload_frames = GMG_RELOAD_FRAMES
+		Kind.GOBLIN_BRUTE:
+			# A wall that walks. Reach of an arm's length and a lunge, damage
+			# that ends what it touches, and enough body to absorb a squad's
+			# whole turn. He does not aim, he arrives - kill him on the way
+			# or give him the cell he wants. Default MAX morale: a brute has
+			# never once considered leaving.
+			max_hp = 10
+			move_range = 4
+			attack_range = 2
+			damage = 6  # even, like every base damage: junk cover halves to 3
+			accuracy = 75
+			frames = BRUTE_FRAMES
+			aim_frames = BRUTE_AIM_FRAMES
+			walk_frames = BRUTE_WALK_FRAMES
+			idle_frames = BRUTE_IDLE_FRAMES
+			raise_frames = BRUTE_RAISE_FRAMES
+			aim_idle_frames = BRUTE_AIM_IDLE_FRAMES
+			death_frames = BRUTE_DEATH_FRAMES
+			dead_frames = BRUTE_DEAD_FRAMES
+			idle_alt_frames = BRUTE_IDLE_ALT_FRAMES
+			hurt_frames = BRUTE_HURT_FRAMES
+			reload_frames = BRUTE_RELOAD_FRAMES
+		Kind.GOBLIN_ELDER, Kind.GOBLIN_KEEPER, Kind.GOBLIN_CARRIER:
+			# Townfolk. Zero reach and zero damage BY KIND, so even a bug
+			# that hands one a turn cannot make him fight. The weapon fields
+			# all reuse idle - there is no weapon to raise.
+			max_hp = 3
+			move_range = 4
+			attack_range = 0
+			damage = 0
+			accuracy = 0
+			match kind:
+				Kind.GOBLIN_ELDER:
+					frames = ELDER_FRAMES
+					idle_frames = ELDER_IDLE_FRAMES
+					idle_alt_frames = ELDER_IDLE_ALT_FRAMES
+					walk_frames = ELDER_WALK_FRAMES
+					hurt_frames = ELDER_HURT_FRAMES
+					death_frames = ELDER_DEATH_FRAMES
+					dead_frames = ELDER_DEAD_FRAMES
+				Kind.GOBLIN_KEEPER:
+					frames = KEEPER_FRAMES
+					idle_frames = KEEPER_IDLE_FRAMES
+					idle_alt_frames = KEEPER_IDLE_ALT_FRAMES
+					walk_frames = KEEPER_WALK_FRAMES
+					hurt_frames = KEEPER_HURT_FRAMES
+					death_frames = KEEPER_DEATH_FRAMES
+					dead_frames = KEEPER_DEAD_FRAMES
+				Kind.GOBLIN_CARRIER:
+					frames = CARRIER_FRAMES
+					idle_frames = CARRIER_IDLE_FRAMES
+					idle_alt_frames = CARRIER_IDLE_ALT_FRAMES
+					walk_frames = CARRIER_WALK_FRAMES
+					hurt_frames = CARRIER_HURT_FRAMES
+					death_frames = CARRIER_DEATH_FRAMES
+					dead_frames = CARRIER_DEAD_FRAMES
+			aim_frames = frames
+			raise_frames = idle_frames
+			aim_idle_frames = idle_frames
+			reload_frames = idle_frames
+		Kind.ELF_PARTISAN:
+			# A long gun that will not stand still: one tile short of
+			# the Marksman's reach, two rounds before the reload roots him,
+			# and the legs to be somewhere else when the answer comes back.
+			# Morale stays the default MAX - confident - but he is NOT in
+			# never_breaks(): a Cupbearer routs because he has somewhere to
+			# rout TO - a home on the far side of the wire will take him in.
+			max_hp = 4
+			move_range = 5
+			attack_range = 4
+			damage = 4
+			accuracy = 72
+			mag_size = 2
+			frames = ELFP_FRAMES
+			aim_frames = ELFP_AIM_FRAMES
+			walk_frames = ELFP_WALK_FRAMES
+			idle_frames = ELFP_IDLE_FRAMES
+			raise_frames = ELFP_RAISE_FRAMES
+			aim_idle_frames = ELFP_AIM_IDLE_FRAMES
+			death_frames = ELFP_DEATH_FRAMES
+			dead_frames = ELFP_DEAD_FRAMES
+			idle_alt_frames = ELFP_IDLE_ALT_FRAMES
+			hurt_frames = ELFP_HURT_FRAMES
+			reload_frames = ELFP_RELOAD_FRAMES
 		Kind.CIVILIAN:
 			# Carries nothing and shoots nothing. Starts huddled where the
 			# Thirst left them; release() puts them on their feet.
@@ -1428,6 +1626,126 @@ static var TECHNICIAN_RELOAD_FRAMES: Array = _load_dir_frames(
 static var TECHNICIAN_IDLE_ALT_FRAMES: Array = _load_dir_frames(
 		TECHNICIAN_ROOT + "/Kestrel_Technician/animations/standing_idle_alt")
 
+# The goblin machine-gunner. Steel pot helmet, ammunition backpack, and the
+# belt arcing between them - the silhouette no other goblin owns.
+static var GMG_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		GMG_ROOT + "/Goblin_MG/rotations")
+static var GMG_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		GMG_ROOT + "/ReadyToFire_Stance/rotations")
+static var GMG_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		GMG_ROOT + "/Dead_stance/rotations")
+static var GMG_IDLE_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/Goblin_MG/animations/standing_idle")
+static var GMG_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/Goblin_MG/animations/standing_idle_alt")
+static var GMG_WALK_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/Goblin_MG/animations/standing_idle_walk")
+static var GMG_RAISE_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/Goblin_MG/animations/standing_idle_to_readyToFire")
+static var GMG_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/ReadyToFire_Stance/animations/standing-readyToFire_idle")
+static var GMG_DEATH_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/Goblin_MG/animations/standing_idle_to_dead")
+static var GMG_HURT_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/Goblin_MG/animations/standing_idle_damage")
+static var GMG_RELOAD_FRAMES: Array = _load_dir_frames(
+		GMG_ROOT + "/Goblin_MG/animations/standing_idle_reload")
+
+# The brute. 80x72 sheets, feet 27px below canvas centre - his SPRITE_SPECS
+# entry is what keeps him on his diamond.
+static var BRUTE_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		BRUTE_ROOT + "/Goblin_Brute/rotations")
+static var BRUTE_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		BRUTE_ROOT + "/ReadyToFire_Stance/rotations")
+static var BRUTE_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		BRUTE_ROOT + "/Dead_stance/rotations")
+static var BRUTE_IDLE_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/Goblin_Brute/animations/standing_idle")
+static var BRUTE_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/Goblin_Brute/animations/standing_idle_alt")
+static var BRUTE_WALK_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/Goblin_Brute/animations/standing_idle_walk")
+static var BRUTE_RAISE_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/Goblin_Brute/animations/standing_idle_to_readyToFire")
+static var BRUTE_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/ReadyToFire_Stance/animations/standing-readyToFire_idle")
+static var BRUTE_DEATH_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/Goblin_Brute/animations/standing_idle_to_dead")
+static var BRUTE_HURT_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/Goblin_Brute/animations/standing_idle_damage")
+static var BRUTE_RELOAD_FRAMES: Array = _load_dir_frames(
+		BRUTE_ROOT + "/Goblin_Brute/animations/standing_idle_reload")
+
+# The goblin civilians: five sets each; the weapon fields reuse idle in
+# setup(), so nothing else loads. Names double as the pattern for any future
+# townfolk kind.
+static var ELDER_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		ELDER_ROOT + "/Goblin_Elder/rotations")
+static var ELDER_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		ELDER_ROOT + "/Dead_stance/rotations")
+static var ELDER_IDLE_FRAMES: Array = _load_dir_frames(
+		ELDER_ROOT + "/Goblin_Elder/animations/standing_idle")
+static var ELDER_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		ELDER_ROOT + "/Goblin_Elder/animations/standing_idle_alt")
+static var ELDER_WALK_FRAMES: Array = _load_dir_frames(
+		ELDER_ROOT + "/Goblin_Elder/animations/standing_idle_walk")
+static var ELDER_HURT_FRAMES: Array = _load_dir_frames(
+		ELDER_ROOT + "/Goblin_Elder/animations/standing_idle_damage")
+static var ELDER_DEATH_FRAMES: Array = _load_dir_frames(
+		ELDER_ROOT + "/Goblin_Elder/animations/standing_idle_to_dead")
+static var KEEPER_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		KEEPER_ROOT + "/Goblin_Keeper/rotations")
+static var KEEPER_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		KEEPER_ROOT + "/Dead_stance/rotations")
+static var KEEPER_IDLE_FRAMES: Array = _load_dir_frames(
+		KEEPER_ROOT + "/Goblin_Keeper/animations/standing_idle")
+static var KEEPER_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		KEEPER_ROOT + "/Goblin_Keeper/animations/standing_idle_alt")
+static var KEEPER_WALK_FRAMES: Array = _load_dir_frames(
+		KEEPER_ROOT + "/Goblin_Keeper/animations/standing_idle_walk")
+static var KEEPER_HURT_FRAMES: Array = _load_dir_frames(
+		KEEPER_ROOT + "/Goblin_Keeper/animations/standing_idle_damage")
+static var KEEPER_DEATH_FRAMES: Array = _load_dir_frames(
+		KEEPER_ROOT + "/Goblin_Keeper/animations/standing_idle_to_dead")
+static var CARRIER_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		CARRIER_ROOT + "/Goblin_Carrier/rotations")
+static var CARRIER_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		CARRIER_ROOT + "/Dead_stance/rotations")
+static var CARRIER_IDLE_FRAMES: Array = _load_dir_frames(
+		CARRIER_ROOT + "/Goblin_Carrier/animations/standing_idle")
+static var CARRIER_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		CARRIER_ROOT + "/Goblin_Carrier/animations/standing_idle_alt")
+static var CARRIER_WALK_FRAMES: Array = _load_dir_frames(
+		CARRIER_ROOT + "/Goblin_Carrier/animations/standing_idle_walk")
+static var CARRIER_HURT_FRAMES: Array = _load_dir_frames(
+		CARRIER_ROOT + "/Goblin_Carrier/animations/standing_idle_damage")
+static var CARRIER_DEATH_FRAMES: Array = _load_dir_frames(
+		CARRIER_ROOT + "/Goblin_Carrier/animations/standing_idle_to_dead")
+
+# The elf partisan: full eleven-set unit on the canonical layout.
+static var ELFP_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		ELFP_ROOT + "/Elf_Partisan/rotations")
+static var ELFP_AIM_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		ELFP_ROOT + "/ReadyToFire_Stance/rotations")
+static var ELFP_DEAD_FRAMES: Array[Texture2D] = _load_rotation_frames(
+		ELFP_ROOT + "/Dead_stance/rotations")
+static var ELFP_IDLE_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/Elf_Partisan/animations/standing_idle")
+static var ELFP_IDLE_ALT_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/Elf_Partisan/animations/standing_idle_alt")
+static var ELFP_WALK_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/Elf_Partisan/animations/standing_idle_walk")
+static var ELFP_RAISE_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/Elf_Partisan/animations/standing_idle_to_readyToFire")
+static var ELFP_AIM_IDLE_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/ReadyToFire_Stance/animations/standing-readyToFire_idle")
+static var ELFP_DEATH_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/Elf_Partisan/animations/standing_idle_to_dead")
+static var ELFP_HURT_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/Elf_Partisan/animations/standing_idle_damage")
+static var ELFP_RELOAD_FRAMES: Array = _load_dir_frames(
+		ELFP_ROOT + "/Elf_Partisan/animations/standing_idle_reload")
+
 
 static func _load_dir_frames(base: String) -> Array:
 	var result: Array = []
@@ -1568,6 +1886,12 @@ func muzzle_point() -> Vector2:
 			offsets = MEDIC_MUZZLE_OFFSETS
 		Kind.TECHNICIAN:
 			offsets = TECHNICIAN_MUZZLE_OFFSETS
+		Kind.GOBLIN_MG:
+			offsets = GMG_MUZZLE_OFFSETS
+		Kind.GOBLIN_BRUTE:
+			offsets = BRUTE_MUZZLE_OFFSETS
+		Kind.ELF_PARTISAN:
+			offsets = ELFP_MUZZLE_OFFSETS
 	return to_global(offsets[facing_sector])
 
 
@@ -1580,7 +1904,8 @@ func can_single_shot() -> bool:
 ## The lead's battle rifle is semi-automatic; everything automatic bursts.
 func can_burst() -> bool:
 	return kind == Kind.SCOUT or kind == Kind.MACHINEGUNNER \
-			or kind == Kind.GOBLIN_SMG or kind == Kind.GOBLIN_SMG_ALT
+			or kind == Kind.GOBLIN_SMG or kind == Kind.GOBLIN_SMG_ALT \
+			or kind == Kind.GOBLIN_MG
 
 
 ## Bracing is what buys the rifleman his burst. The gunner's weapon does it
@@ -1619,6 +1944,14 @@ func overwatch_rounds() -> int:
 ## third ring out.
 func suppress_radius() -> int:
 	return SUPPRESS_RADIUS + (1 if has_perk("wide_sweep") else 0)
+
+
+## How far this unit can PUT a beaten zone, as opposed to how wide that zone is
+## once it lands. Only a suppressor reaches past its aimed range; for everyone
+## else this is the ordinary weapon envelope, so callers can ask without
+## checking who they are asking about.
+func suppress_range() -> int:
+	return attack_range + (SUPPRESS_RANGE_BONUS if can_suppress() else 0)
 
 
 ## Someone who fights. A prisoner is on your side and walks out with you, but
@@ -1725,6 +2058,23 @@ static func kind_role_name(p_kind: Kind) -> String:
 			return "Thirst Light Runner"
 		Kind.GOBLIN_BOLT:
 			return "Thirst Marksman"
+		Kind.GOBLIN_MG:
+			return "Thirst Gunner"
+		Kind.GOBLIN_BRUTE:
+			return "Thirst Breaker"
+		Kind.GOBLIN_ELDER:
+			return "Settlement Elder"
+		Kind.GOBLIN_KEEPER:
+			return "Stallkeeper"
+		Kind.GOBLIN_CARRIER:
+			return "Water-carrier"
+		Kind.ELF_PARTISAN:
+			# No "Thirst" prefix on purpose, the way "Pressed Conscript"
+			# breaks the pattern: he fights beside them, not as one of them.
+			# "Cupbearer" is the Codex's name for exactly this figure (ruling
+			# KC2): an elven militant who took the old well-oath's name and
+			# crossed the line with a rifle. See docs/CANON.md.
+			return "Cupbearer"
 		Kind.GOBLIN_REVOLVER:
 			return "Pressed Conscript"
 		Kind.GRENADIER:

@@ -90,9 +90,12 @@ const LEVELS: Array[Dictionary] = [
 			"....##.....##...",
 			"....##..p..##...",
 		],
-		"scout_spawns": [Vector2i(1, 2), Vector2i(1, 7), Vector2i(2, 4)],
-		"lead_spawns": [Vector2i(0, 5)],
-		"gunner_spawns": [Vector2i(2, 5)],
+		# The transport parked on the west edge (see "structures" below) sat
+		# under and on top of the old start line, so the formation moved one
+		# lane east to clear its footprint - same spread, same start line.
+		"scout_spawns": [Vector2i(3, 4), Vector2i(5, 7), Vector2i(3, 8)],
+		"lead_spawns": [Vector2i(4, 6)],
+		"gunner_spawns": [Vector2i(4, 5)],
 		"goblin_spawns": [
 			Vector2i(13, 1), Vector2i(14, 4), Vector2i(14, 8),
 		],
@@ -107,7 +110,12 @@ const LEVELS: Array[Dictionary] = [
 		# island, so he only starts mattering once the squad is most of the
 		# way across - the backstop rather than the opening problem.
 		"bolt_spawns": [Vector2i(15, 4)],
-		"structures": [],
+		"structures": [
+			# A troop transport idles on the west edge, first mission of the
+			# campaign: the squad walks its ramp before the turn begins rather
+			# than starting already deployed (Battle._run_disembark).
+			{"kind": "troop_transport", "anchor": Vector2i(1, 6), "size": Vector2i(2, 2)},
+		],
 		# Stated rather than left to default, so the banner on screen reads the
 		# same words as the orders in the briefing.
 		"objectives": [
@@ -168,6 +176,19 @@ const LEVELS: Array[Dictionary] = [
 			"................",
 			"................",
 			"................",
+		],
+		# The line the level is named for cannot end at the map edge: a
+		# barricade that stops where the camera does reads as one anybody
+		# could stroll around, and the whole level is that they can't. Both
+		# lines march on across the apron until the fade takes them - purely
+		# scenery out there, but the gates stay the only way through that the
+		# GROUND admits to. Columns match the map's own: outer x=6, inner
+		# x=11, both ends of each.
+		"apron_props": [
+			{"kind": "junk", "from": Vector2i(6, -9), "to": Vector2i(6, -1)},
+			{"kind": "junk", "from": Vector2i(6, 10), "to": Vector2i(6, 18)},
+			{"kind": "junk", "from": Vector2i(11, -9), "to": Vector2i(11, -1)},
+			{"kind": "junk", "from": Vector2i(11, 10), "to": Vector2i(11, 18)},
 		],
 		"scout_spawns": [Vector2i(1, 1), Vector2i(1, 8), Vector2i(2, 5)],
 		"lead_spawns": [Vector2i(0, 4)],
@@ -317,6 +338,16 @@ const LEVELS: Array[Dictionary] = [
 				],
 			},
 		],
+		# The ride the whole operation has been walking toward. The moment the
+		# second store goes and the west zone opens, the operation's transport
+		# - the one that dropped them on DRY WASH - drives in across the apron
+		# from the western horizon, parks its 2x2 just behind the zone, and
+		# drops its ramp. The zone's signal panels and banners come down when
+		# it arrives; the green light and the open door are the marker now.
+		# Anchored behind the zone's NORTH half: the west corner's south half
+		# is where the mission HUD panels live, and the one vehicle in the
+		# campaign that comes to the rescue should not park behind a menu.
+		"extract_pickup": {"anchor": Vector2i(-3, 2)},
 		# The withdrawal is chased. Two blasts big enough to open the west
 		# zone are big enough to be heard by every patrol the garrison has
 		# out, and they come home through the desert on the east rim - so the
@@ -362,15 +393,25 @@ const LEVELS: Array[Dictionary] = [
 			"...........j....",
 			"..j.............",
 			"......dd........",
-			".#..........j...",
+			# Was a lone rock; it sat in the transport's new footprint and a
+			# single outcrop was never the point on a map about bare ground, so
+			# it gave way rather than the transport shifting off the west edge.
+			"............j...",
 			".........dd.....",
 			"....j...........",
 			"..........j.....",
 			"...p.......j....",
 		],
-		"scout_spawns": [Vector2i(1, 2), Vector2i(1, 7), Vector2i(2, 4)],
-		"lead_spawns": [Vector2i(0, 5)],
-		"gunner_spawns": [Vector2i(2, 5)],
+		# The transport parked on the west edge (see "structures" below) sat
+		# under and on top of the old start line, so the formation moved one
+		# lane east to clear its footprint - same spread, same start line.
+		# Both trailing scouts differ from their DRY WASH twins: (4,7) is
+		# junk on this map, and row 3 is one long bare lane clear to the
+		# east edge - (3,2) keeps the same shape without opening a 13-tile
+		# firing lane through the start line.
+		"scout_spawns": [Vector2i(3, 4), Vector2i(5, 7), Vector2i(3, 8)],
+		"lead_spawns": [Vector2i(4, 6)],
+		"gunner_spawns": [Vector2i(4, 5)],
 		# The column is strung out rather than dug in - they were walking, not
 		# waiting - so they arrive at the fight in ones and twos.
 		"goblin_spawns": [
@@ -380,7 +421,18 @@ const LEVELS: Array[Dictionary] = [
 		"smg_alt_spawns": [Vector2i(11, 3), Vector2i(13, 6)],
 		"novice_spawns": [Vector2i(15, 1), Vector2i(15, 5), Vector2i(15, 8)],
 		"bolt_spawns": [Vector2i(14, 7)],
-		"structures": [],
+		# The second operation is where the Thirst starts bringing crew
+		# weapons: a belt-fed gun walking escort in the middle of the column.
+		"heavy_spawns": [Vector2i(13, 3)],
+		# And a Cupbearer walking with the column's water - the first hint
+		# of what the debrief will say out loud: they are supplying something.
+		"partisan_spawns": [Vector2i(15, 6)],
+		"structures": [
+			# A troop transport idles on the west edge, first mission of the
+			# operation: the squad walks its ramp before the turn begins
+			# rather than starting already deployed (Battle._run_disembark).
+			{"kind": "troop_transport", "anchor": Vector2i(1, 6), "size": Vector2i(2, 2)},
+		],
 		"objectives": [
 			{
 				"kind": "destroy",
@@ -443,6 +495,9 @@ const LEVELS: Array[Dictionary] = [
 		"smg_alt_spawns": [Vector2i(10, 2), Vector2i(10, 6)],
 		"novice_spawns": [Vector2i(13, 3), Vector2i(13, 6), Vector2i(12, 9)],
 		"bolt_spawns": [Vector2i(14, 4)],
+		# The gun sits a step behind the gate holder, firing down the middle
+		# gap's lane - the breakthrough now has a reason to try the south.
+		"heavy_spawns": [Vector2i(9, 4)],
 		# The family the Charter says this water belongs to. No objective points
 		# at them, nothing in the game arranges for them to survive, and the
 		# squad's orders are to pass through rather than stop. They are placed
@@ -522,6 +577,9 @@ const LEVELS: Array[Dictionary] = [
 		"smg_alt_spawns": [Vector2i(8, 4), Vector2i(12, 5)],
 		"novice_spawns": [Vector2i(15, 1), Vector2i(15, 7), Vector2i(14, 4)],
 		"bolt_spawns": [Vector2i(12, 2)],
+		# Dug in directly behind the one hole in the wire. The walk back out
+		# with unarmed prisoners is the mission, and he is why.
+		"heavy_spawns": [Vector2i(11, 4)],
 		"structures": [
 			{"kind": "tent", "anchor": Vector2i(6, 1), "size": Vector2i(2, 2)},
 			# The hauler the water never rode on. Its being dead here is the
@@ -600,12 +658,26 @@ const LEVELS: Array[Dictionary] = [
 		"smg_alt_spawns": [Vector2i(10, 5), Vector2i(13, 4)],
 		"novice_spawns": [Vector2i(14, 2), Vector2i(14, 6), Vector2i(15, 4)],
 		"bolt_spawns": [Vector2i(14, 8)],
+		# The camp's standing gun, at the rear of the bowl where the largest
+		# force in the campaign keeps its base of fire.
+		"heavy_spawns": [Vector2i(13, 2)],
+		# The brute stands mid-bowl in front of the base of fire: the one
+		# defender who walks TOWARD the squad while everyone else holds.
+		"brute_spawns": [Vector2i(10, 4)],
+		# The keeper's Cupbearer works the southern rocks. fighters_hold
+		# covers him too - here even the crossed-over stay and hold.
+		"partisan_spawns": [Vector2i(12, 7)],
 		"structures": [
 			{"kind": "tent", "anchor": Vector2i(10, 8), "size": Vector2i(2, 2)},
 		],
 		"objectives": [
 			{"kind": "eliminate", "label": "END THE READING"},
 		],
+		# "Bring the squad home", says the debrief - and the ride that brings
+		# them is seen doing it. No extraction zone here, so the transport is
+		# dispatched by the WIN itself: the last shot of the operation's
+		# climax, then the hull coming out of the western haze for them.
+		"extract_pickup": {"anchor": Vector2i(-3, 2)},
 		# The end of every track, and the one map that is not desert or pan:
 		# burnt ground, because the Thirst has been gathering and burning here
 		# long enough to leave the bowl black.
@@ -636,18 +708,29 @@ const LEVELS: Array[Dictionary] = [
 			".......s..W....j",
 			"...j...W......d.",
 			"......jW...W....",
-			".j.....W..sW.j..",
+			".......W..sW.j..",
 			"....j...W....j..",
 			".p....#.....j...",
 		],
-		"scout_spawns": [Vector2i(1, 2), Vector2i(2, 7), Vector2i(2, 4)],
-		"lead_spawns": [Vector2i(0, 4)],
-		"gunner_spawns": [Vector2i(1, 5)],
+		# The transport parked on the west edge (see "structures" below) sat
+		# under and on top of the old start line, so the formation moved one
+		# lane east to clear its footprint - same spread, same start line.
+		"scout_spawns": [Vector2i(3, 4), Vector2i(5, 8), Vector2i(3, 8)],
+		"lead_spawns": [Vector2i(4, 6)],
+		"gunner_spawns": [Vector2i(4, 5)],
 		"goblin_spawns": [Vector2i(10, 3), Vector2i(9, 6), Vector2i(12, 7)],
 		"smg_spawns": [Vector2i(13, 4), Vector2i(12, 5)],
 		"novice_spawns": [Vector2i(14, 2), Vector2i(12, 2), Vector2i(12, 8)],
 		"bolt_spawns": [Vector2i(15, 5)],
-		"structures": [],
+		# The rearguard's gun holds the middle ground between the drops - the
+		# reason the road cannot just be walked.
+		"heavy_spawns": [Vector2i(11, 5)],
+		"structures": [
+			# A troop transport idles on the west edge, first mission of the
+			# operation: the squad walks its ramp before the turn begins
+			# rather than starting already deployed (Battle._run_disembark).
+			{"kind": "troop_transport", "anchor": Vector2i(1, 6), "size": Vector2i(2, 2)},
+		],
 		"objectives": [
 			{
 				"kind": "destroy",
@@ -707,6 +790,15 @@ const LEVELS: Array[Dictionary] = [
 		"smg_spawns": [Vector2i(13, 2), Vector2i(12, 7)],
 		"novice_spawns": [Vector2i(9, 5), Vector2i(10, 4), Vector2i(12, 8)],
 		"bolt_spawns": [Vector2i(12, 5)],
+		# The last gun he has, on the gate lane beside the marksman. Two
+		# weapons on one lane is the argument for not walking through it.
+		"heavy_spawns": [Vector2i(11, 5)],
+		# And the brute just inside the wire, south of the gate: the man he
+		# keeps closest at the end, guarding the one way in on foot.
+		"brute_spawns": [Vector2i(9, 6)],
+		# The last Cupbearer still keeping the oath, on the high north corner
+		# behind the wire where a long rifle covers the whole approach.
+		"partisan_spawns": [Vector2i(14, 0)],
 		"prisoner_spawns": [Vector2i(13, 4)],
 		"structures": [],
 		"objectives": [
@@ -721,6 +813,10 @@ const LEVELS: Array[Dictionary] = [
 				],
 			},
 		],
+		# The campaign's last walk ends at a door, not at a line on the
+		# ground: same west-edge zone as OUTPOST 7, same parking spot behind
+		# its north half, and the surveyor boards with the squad.
+		"extract_pickup": {"anchor": Vector2i(-3, 2)},
 		"floor": "ash",
 		"zone_seed": 58,
 		"shade_seed": 21,
@@ -948,6 +1044,8 @@ static func _validate(index: int) -> bool:
 			+ data.get("gunner_spawns", []) + data.goblin_spawns \
 			+ data.get("smg_spawns", []) + data.get("smg_alt_spawns", []) \
 			+ data.get("novice_spawns", []) + data.get("bolt_spawns", []) \
+			+ data.get("heavy_spawns", []) + data.get("brute_spawns", []) \
+			+ data.get("partisan_spawns", []) \
 			+ data.get("prisoner_spawns", []) + data.get("bystander_spawns", [])
 	var seen_spawn := {}
 	for spawn: Vector2i in spawns:

@@ -1,0 +1,130 @@
+{
+  "group_id": [
+    "105f8871-77b9-445a-b21c-a5d2c9bd3e9b",
+    "1b694fea-5c6e-4063-8406-5f48f499b680"
+  ],
+  "objects": [
+    {
+      "id": "63b03d8c-4d9b-44d8-8468-d829642ec0a6",
+      "name": "Hq_post",
+      "prompt": "a flat-roofed mud brick command post with a heavy steel door, a shaded porch along the front with a map board pinned under it, a short whip antenna stub on the roof and a stencilled unit plate beside the door",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {
+        "breeze": {
+          "description": "porch awning ripples, antenna sways",
+          "unknown": "animations/breeze/unknown/frame_%%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "1ccab40e-74fb-42a7-aa5a-f8294142a9b9",
+      "name": "Wet_canteen",
+      "prompt": "a mud brick canteen hall with a patched canvas roof, strings of small lanterns under the eaves, a wooden bench and table beside the open door, crates of bottles stacked against the wall",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {
+        "breeze": {
+          "description": "canvas roof breathes, lanterns swing",
+          "unknown": "animations/breeze/unknown/frame_%%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "eaed585c-5fd3-4104-bb8c-d3e9596324cc",
+      "name": "Armory_magazine",
+      "prompt": "a windowless mud brick armory magazine with buttressed corners, one heavy steel double door with a crossbar and padlock, stencilled ammunition markings and a lightning spike on the roof",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {
+        "breeze": {
+          "description": "dust wisps off the roof edge",
+          "unknown": "animations/breeze/unknown/frame_%%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "11bbbe2c-5f6a-4503-a14c-e1aa61299bbb",
+      "name": "Lockup",
+      "prompt": "a low mud brick detention blockhouse with narrow barred window slits, a single steel door with a sliding view hatch, and a lamp bracket over the door (bare roof state - the generator grew a scarecrow on the first take and the review missed it at thumbnail size)",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {
+        "breeze": {
+          "description": "the door lamp swings on its bracket",
+          "unknown": "animations/breeze/unknown/frame_%%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "f60e65c5-945e-45cb-8866-22d480534321",
+      "name": "Surgeon_tent",
+      "prompt": "an olive drab military medical tent on a welded steel frame with a red cross on a white plate over the entrance flap, a folding cot visible through the open front, sandbags stacked along one wall",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {
+        "breeze": {
+          "description": "canvas breathes, the flap stirs",
+          "unknown": "animations/breeze/unknown/frame_%%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "107e229c-3b02-4b0c-87ee-99872af81e35",
+      "name": "Water_truck",
+      "prompt": "a parked six-wheel military water tanker truck, olive drab cab dusted tan, riveted steel water tank with a rear tap manifold and a bucket hanging from it, intact and in service, not a wreck",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/unknown.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-08-24T00:00:00.000000"
+}

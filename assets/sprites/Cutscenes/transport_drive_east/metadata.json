@@ -1,0 +1,24 @@
+{
+  "group_id": "e75ac9ba-19dc-4044-8950-6fa8bd931830",
+  "objects": [
+    {
+      "id": "c258bf23-ec3f-4f47-a90f-a38f61ccaefd",
+      "name": "transport_drive_east",
+      "prompt": null,
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "source_animation_id": "df3b497f-47c7-4ce2-8d91-d0a777bdae2b",
+      "transform": "none - the source driving animation already faces east on screen, so unlike the previous 256px export nothing here is flipped; 168x168 canvas preserved",
+      "frames": {
+        "unknown": "frame_%%03d.png",
+        "count": 17
+      }
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-08-25T00:00:00.000000"
+}

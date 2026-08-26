@@ -1,0 +1,518 @@
+{
+  "group_id": "0a7c2768-3ce2-4f4b-864f-8f5e8dc75786",
+  "states": [
+    {
+      "character": {
+        "id": "588de2df-04e3-432f-bf01-c563371834ea",
+        "name": "Thirst Stallkeeper civilian",
+        "prompt": "A small goblin villager, no weapon, a market stallkeeper in a worn leather apron, cloth headwrap, carrying a bulging cloth bundle of wares against one hip, low top-down perspective, single color black outline.",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-08-24T00:00:00+00:00"
+      },
+      "folder": "Goblin_Keeper",
+      "note": "Unarmed goblin civilian (townfolk/bounty resident). No aim/raise/aim-idle/reload sets on purpose: those Unit.gd fields reuse the idle arrays, the Kind.CIVILIAN pattern, declared in check_unit_art.gd REUSES. Rotations and animations carry point repairs of near-white pixels (the section 7 glint law). Dead rotations are the death animation's last frames.",
+      "frames": {
+        "rotations": {
+          "south": "Goblin_Keeper/rotations/south.png",
+          "south-east": "Goblin_Keeper/rotations/south-east.png",
+          "east": "Goblin_Keeper/rotations/east.png",
+          "north-east": "Goblin_Keeper/rotations/north-east.png",
+          "north": "Goblin_Keeper/rotations/north.png",
+          "north-west": "Goblin_Keeper/rotations/north-west.png",
+          "west": "Goblin_Keeper/rotations/west.png",
+          "south-west": "Goblin_Keeper/rotations/south-west.png"
+        },
+        "animations": {
+          "standing_idle": {
+            "south": [
+              "Goblin_Keeper/animations/standing_idle/south/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle/south/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle/south/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle/south/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle/south/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle/south/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle/south/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle/south/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle/south/frame_008.png"
+            ],
+            "south-east": [
+              "Goblin_Keeper/animations/standing_idle/south-east/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle/south-east/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle/south-east/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle/south-east/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle/south-east/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle/south-east/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle/south-east/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle/south-east/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle/south-east/frame_008.png"
+            ],
+            "east": [
+              "Goblin_Keeper/animations/standing_idle/east/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle/east/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle/east/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle/east/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle/east/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle/east/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle/east/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle/east/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle/east/frame_008.png"
+            ],
+            "north-east": [
+              "Goblin_Keeper/animations/standing_idle/north-east/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle/north-east/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle/north-east/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle/north-east/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle/north-east/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle/north-east/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle/north-east/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle/north-east/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle/north-east/frame_008.png"
+            ],
+            "north": [
+              "Goblin_Keeper/animations/standing_idle/north/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle/north/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle/north/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle/north/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle/north/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle/north/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle/north/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle/north/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle/north/frame_008.png"
+            ],
+            "north-west": [
+              "Goblin_Keeper/animations/standing_idle/north-west/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle/north-west/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle/north-west/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle/north-west/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle/north-west/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle/north-west/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle/north-west/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle/north-west/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle/north-west/frame_008.png"
+            ],
+            "west": [
+              "Goblin_Keeper/animations/standing_idle/west/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle/west/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle/west/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle/west/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle/west/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle/west/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle/west/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle/west/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle/west/frame_008.png"
+            ],
+            "south-west": [
+              "Goblin_Keeper/animations/standing_idle/south-west/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle/south-west/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle/south-west/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle/south-west/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle/south-west/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle/south-west/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle/south-west/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle/south-west/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_alt": {
+            "south": [
+              "Goblin_Keeper/animations/standing_idle_alt/south/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south/frame_008.png"
+            ],
+            "south-east": [
+              "Goblin_Keeper/animations/standing_idle_alt/south-east/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-east/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-east/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-east/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-east/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-east/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-east/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-east/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-east/frame_008.png"
+            ],
+            "east": [
+              "Goblin_Keeper/animations/standing_idle_alt/east/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_alt/east/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_alt/east/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_alt/east/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_alt/east/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_alt/east/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_alt/east/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_alt/east/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_alt/east/frame_008.png"
+            ],
+            "north-east": [
+              "Goblin_Keeper/animations/standing_idle_alt/north-east/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-east/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-east/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-east/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-east/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-east/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-east/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-east/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-east/frame_008.png"
+            ],
+            "north": [
+              "Goblin_Keeper/animations/standing_idle_alt/north/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north/frame_008.png"
+            ],
+            "north-west": [
+              "Goblin_Keeper/animations/standing_idle_alt/north-west/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-west/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-west/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-west/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-west/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-west/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-west/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-west/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_alt/north-west/frame_008.png"
+            ],
+            "west": [
+              "Goblin_Keeper/animations/standing_idle_alt/west/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_alt/west/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_alt/west/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_alt/west/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_alt/west/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_alt/west/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_alt/west/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_alt/west/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_alt/west/frame_008.png"
+            ],
+            "south-west": [
+              "Goblin_Keeper/animations/standing_idle_alt/south-west/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-west/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-west/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-west/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-west/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-west/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-west/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-west/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_alt/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_walk": {
+            "south": [
+              "Goblin_Keeper/animations/standing_idle_walk/south/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south/frame_008.png"
+            ],
+            "south-east": [
+              "Goblin_Keeper/animations/standing_idle_walk/south-east/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-east/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-east/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-east/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-east/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-east/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-east/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-east/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-east/frame_008.png"
+            ],
+            "east": [
+              "Goblin_Keeper/animations/standing_idle_walk/east/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_walk/east/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_walk/east/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_walk/east/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_walk/east/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_walk/east/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_walk/east/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_walk/east/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_walk/east/frame_008.png"
+            ],
+            "north-east": [
+              "Goblin_Keeper/animations/standing_idle_walk/north-east/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-east/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-east/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-east/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-east/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-east/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-east/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-east/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-east/frame_008.png"
+            ],
+            "north": [
+              "Goblin_Keeper/animations/standing_idle_walk/north/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north/frame_008.png"
+            ],
+            "north-west": [
+              "Goblin_Keeper/animations/standing_idle_walk/north-west/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-west/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-west/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-west/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-west/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-west/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-west/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-west/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_walk/north-west/frame_008.png"
+            ],
+            "west": [
+              "Goblin_Keeper/animations/standing_idle_walk/west/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_walk/west/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_walk/west/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_walk/west/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_walk/west/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_walk/west/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_walk/west/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_walk/west/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_walk/west/frame_008.png"
+            ],
+            "south-west": [
+              "Goblin_Keeper/animations/standing_idle_walk/south-west/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-west/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-west/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-west/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-west/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-west/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-west/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-west/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_walk/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_damage": {
+            "south": [
+              "Goblin_Keeper/animations/standing_idle_damage/south/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south/frame_008.png"
+            ],
+            "south-east": [
+              "Goblin_Keeper/animations/standing_idle_damage/south-east/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-east/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-east/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-east/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-east/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-east/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-east/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-east/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-east/frame_008.png"
+            ],
+            "east": [
+              "Goblin_Keeper/animations/standing_idle_damage/east/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_damage/east/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_damage/east/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_damage/east/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_damage/east/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_damage/east/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_damage/east/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_damage/east/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_damage/east/frame_008.png"
+            ],
+            "north-east": [
+              "Goblin_Keeper/animations/standing_idle_damage/north-east/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-east/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-east/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-east/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-east/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-east/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-east/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-east/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-east/frame_008.png"
+            ],
+            "north": [
+              "Goblin_Keeper/animations/standing_idle_damage/north/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north/frame_008.png"
+            ],
+            "north-west": [
+              "Goblin_Keeper/animations/standing_idle_damage/north-west/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-west/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-west/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-west/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-west/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-west/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-west/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-west/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_damage/north-west/frame_008.png"
+            ],
+            "west": [
+              "Goblin_Keeper/animations/standing_idle_damage/west/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_damage/west/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_damage/west/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_damage/west/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_damage/west/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_damage/west/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_damage/west/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_damage/west/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_damage/west/frame_008.png"
+            ],
+            "south-west": [
+              "Goblin_Keeper/animations/standing_idle_damage/south-west/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-west/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-west/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-west/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-west/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-west/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-west/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-west/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_damage/south-west/frame_008.png"
+            ]
+          },
+          "standing_idle_to_dead": {
+            "south": [
+              "Goblin_Keeper/animations/standing_idle_to_dead/south/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south/frame_008.png"
+            ],
+            "south-east": [
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-east/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-east/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-east/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-east/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-east/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-east/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-east/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-east/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-east/frame_008.png"
+            ],
+            "east": [
+              "Goblin_Keeper/animations/standing_idle_to_dead/east/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/east/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/east/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/east/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/east/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/east/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/east/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/east/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/east/frame_008.png"
+            ],
+            "north-east": [
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-east/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-east/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-east/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-east/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-east/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-east/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-east/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-east/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-east/frame_008.png"
+            ],
+            "north": [
+              "Goblin_Keeper/animations/standing_idle_to_dead/north/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north/frame_008.png"
+            ],
+            "north-west": [
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-west/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-west/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-west/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-west/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-west/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-west/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-west/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-west/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/north-west/frame_008.png"
+            ],
+            "west": [
+              "Goblin_Keeper/animations/standing_idle_to_dead/west/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/west/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/west/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/west/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/west/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/west/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/west/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/west/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/west/frame_008.png"
+            ],
+            "south-west": [
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-west/frame_000.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-west/frame_001.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-west/frame_002.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-west/frame_003.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-west/frame_004.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-west/frame_005.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-west/frame_006.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-west/frame_007.png",
+              "Goblin_Keeper/animations/standing_idle_to_dead/south-west/frame_008.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "884f1e17-2a6f-492a-a4c5-02a7d1d63ba7",
+        "name": "Dead_blood",
+        "prompt": "A small goblin villager, no weapon, a market stallkeeper in a worn leather apron, cloth headwrap, carrying a bulging cloth bundle of wares against one hip, low top-down perspective, single color black outline.",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-08-24T00:00:00+00:00"
+      },
+      "folder": "Dead_stance",
+      "note": "Corpse with blood pool, generated on the source canvas.",
+      "frames": {
+        "rotations": {
+          "south": "Dead_stance/rotations/south.png",
+          "south-east": "Dead_stance/rotations/south-east.png",
+          "east": "Dead_stance/rotations/east.png",
+          "north-east": "Dead_stance/rotations/north-east.png",
+          "north": "Dead_stance/rotations/north.png",
+          "north-west": "Dead_stance/rotations/north-west.png",
+          "west": "Dead_stance/rotations/west.png",
+          "south-west": "Dead_stance/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-08-24"
+}

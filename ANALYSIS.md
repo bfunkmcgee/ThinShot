@@ -1,4 +1,4 @@
-# ThinShot — full analysis
+# SANDLINE — full analysis (written as ThinShot)
 
 > ## Status — verified against the code on 2026-08-21
 >
@@ -6,6 +6,11 @@
 > findings have been substantially IMPLEMENTED. It is kept as written — the
 > reasoning and the recipes are the valuable part — but read it with this
 > scorecard, so its remaining open items stop hiding among the fixed ones.
+>
+> It also predates the canon conversion: every mention below of the Rust
+> Choir, a Cantor, or a Choirmaster is dead canon. The setting's source of
+> truth is the Veil Codex (see CLAUDE.md and docs/CANON.md); the shipped
+> names are the Thirst and, at the end of the tracks, the Cartographer.
 >
 > **All 11 critical/high bugs are now fixed**, the last two on 2026-08-21:
 >

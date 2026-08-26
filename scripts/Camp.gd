@@ -66,6 +66,46 @@ const FIXTURE_TEXTURES := {
 	"memorial_cross": preload(FIXTURE_ROOT + "Garrison_memorial_cross.png"),
 	"notice_board": preload(FIXTURE_ROOT + "Garrison_notice_board.png"),
 	"washing_line": preload(FIXTURE_ROOT + "Garrison_washing_line.png"),
+	"signals_mast": preload(FIXTURE_ROOT + "Garrison_signals_mast.png"),
+	"bounty_board": preload(FIXTURE_ROOT + "Garrison_bounty_board.png"),
+	"paymaster_desk": preload(FIXTURE_ROOT + "Garrison_paymaster_desk.png"),
+	"qm_counter": preload(FIXTURE_ROOT + "Garrison_qm_counter.png"),
+	"berm": preload(FIXTURE_ROOT + "Garrison_berm.png"),
+	"berm_1": preload(FIXTURE_ROOT + "Garrison_berm_1.png"),
+	"berm_2": preload(FIXTURE_ROOT + "Garrison_berm_2.png"),
+	"target": preload(FIXTURE_ROOT + "Garrison_target.png"),
+	"target_1": preload(FIXTURE_ROOT + "Garrison_target_1.png"),
+	"firing_point": preload(FIXTURE_ROOT + "Garrison_firing_point.png"),
+	# The range flag is the extraction marker's banner doing a second job:
+	# same cloth, same wind, and it means the same thing - live ground.
+	"range_flag": preload("res://assets/sprites/Environment/Desert/desert_signal_markers/Signal_banner.png"),
+	# The interiors (INTERIORS.md): the furniture batch has landed - each name
+	# below now carries its own art instead of another fixture's stand-in.
+	# Untouched by that batch, and staying that way on purpose (deliberate
+	# reuse, not a stand-in still owed art): "rifle_rack", "map_table",
+	# "map_crates", "qm_shelving", "canteen_table".
+	"qm_shelving": preload(FIXTURE_ROOT + "Garrison_qm_shelving.png"),
+	"canteen_table": preload(FIXTURE_ROOT + "Garrison_canteen_table.png"),
+	"files_cabinet": preload(FIXTURE_ROOT + "Garrison_files_cabinet.png"),
+	"radio_desk": preload(FIXTURE_ROOT + "Garrison_radio_desk.png"),
+	"map_board": preload(FIXTURE_ROOT + "Garrison_map_board.png"),
+	"command_desk": preload(FIXTURE_ROOT + "Garrison_command_desk.png"),
+	"map_table": preload("res://assets/sprites/Environment/Desert/Props/Briefing_table/Briefing_table_garrison/rotations/unknown.png"),
+	"map_crates": preload("res://assets/sprites/Environment/Desert/Props/Pile_of_desert_ammo_crates/Pile_of_desert_ammo_crates/rotations/unknown.png"),
+	"strong_safe": preload(FIXTURE_ROOT + "Garrison_strong_safe.png"),
+	"bar_counter": preload(FIXTURE_ROOT + "Garrison_bar_counter.png"),
+	"bar_counter_end": preload(FIXTURE_ROOT + "Garrison_bar_counter_end.png"),
+	"bottle_shelf": preload(FIXTURE_ROOT + "Garrison_bottle_shelf.png"),
+	"rifle_rack": preload(FIXTURE_ROOT + "Garrison_kit_frame.png"),
+	"cell_cot": preload(FIXTURE_ROOT + "Garrison_cell_cot.png"),
+	"guard_stool": preload(FIXTURE_ROOT + "Garrison_guard_stool.png"),
+	"cot": preload(FIXTURE_ROOT + "Garrison_cot.png"),
+	"medical_chest": preload(FIXTURE_ROOT + "Garrison_ammo_box.png"),
+	"wash_stand": preload(FIXTURE_ROOT + "Garrison_wash_stand.png"),
+	"folding_screen": preload(FIXTURE_ROOT + "Garrison_folding_screen.png"),
+	"bunk": preload(FIXTURE_ROOT + "Garrison_bunk.png"),
+	"bunk_stripped": preload(FIXTURE_ROOT + "Garrison_bunk_stripped.png"),
+	"footlocker": preload(FIXTURE_ROOT + "Garrison_footlocker.png"),
 	"watchtower": preload(FIXTURE_ROOT + "Garrison_watchtower.png"),
 	"water_bowser": preload(FIXTURE_ROOT + "Garrison_water_bowser.png"),
 	"water_tank": preload(FIXTURE_ROOT + "Garrison_water_tank.png"),
@@ -83,6 +123,36 @@ const FIXTURE_OFFSETS := {
 	"memorial_cross": Vector2(0, -20),
 	"notice_board": Vector2(0, -20),
 	"washing_line": Vector2(0, -18),
+	"signals_mast": Vector2(0, -76),
+	"bounty_board": Vector2(0, -14),
+	"paymaster_desk": Vector2(0, -20),
+	"qm_counter": Vector2(0, -20),
+	"berm": Vector2(0, -15), "berm_1": Vector2(0, -17), "berm_2": Vector2(0, -20),
+	"target": Vector2(0, -21), "target_1": Vector2(0, -21),
+	"firing_point": Vector2(0, -20),
+	"range_flag": Vector2(0, -17),
+	"qm_shelving": Vector2(0, -72),
+	"canteen_table": Vector2(0, -20),
+	"files_cabinet": Vector2(0, -21),
+	"radio_desk": Vector2(0, -21),
+	"map_board": Vector2(0, -11),
+	"command_desk": Vector2(0, -21),
+	"map_table": Vector2(0, -23),
+	"map_crates": Vector2(0, -18),
+	"strong_safe": Vector2(0, -21),
+	"bar_counter": Vector2(0, -19),
+	"bar_counter_end": Vector2(0, -19),
+	"bottle_shelf": Vector2(0, -19),
+	"rifle_rack": Vector2(0, -21),
+	"cell_cot": Vector2(0, -5),
+	"guard_stool": Vector2(0, -20),
+	"cot": Vector2(0, -17),
+	"medical_chest": Vector2(0, -21),
+	"wash_stand": Vector2(0, -20),
+	"folding_screen": Vector2(0, -21),
+	"bunk": Vector2(0, -14),
+	"bunk_stripped": Vector2(0, -20),
+	"footlocker": Vector2(0, -15),
 	"watchtower": Vector2(0, -73),
 	"water_bowser": Vector2(0, -22),
 	"water_tank": Vector2(0, -63),
@@ -123,16 +193,78 @@ const STRUCTURE_DIRS := {
 	"tent": STRUCTURE_ROOT + "/desert_hut/Desert_hut_2",
 	"stores_tent": STRUCTURE_ROOT + "/camp_tents/Stores_tent",
 	"field_tent": STRUCTURE_ROOT + "/camp_tents/Field_tent",
+	# The construction pass (GARRISON.md). Registered ahead of the map that
+	# places them - these tables are paths, so an unplaced kind costs nothing.
+	"hq": STRUCTURE_ROOT + "/garrison_buildings/Hq_post",
+	"canteen": STRUCTURE_ROOT + "/garrison_buildings/Wet_canteen",
+	"armory": STRUCTURE_ROOT + "/garrison_buildings/Armory_magazine",
+	"lockup": STRUCTURE_ROOT + "/garrison_buildings/Lockup",
+	"surgeon_tent": STRUCTURE_ROOT + "/garrison_buildings/Surgeon_tent",
+	"water_truck": STRUCTURE_ROOT + "/garrison_buildings/Water_truck",
+	"troop_transport": STRUCTURE_ROOT + "/troop_transport",
 }
 const STRUCTURE_OFFSETS := {
 	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33), "tent": Vector2(0, -33),
 	"stores_tent": Vector2(0, -17), "field_tent": Vector2(0, -23),
+	"hq": Vector2(0, -36), "canteen": Vector2(0, -37),
+	"armory": Vector2(0, -35), "lockup": Vector2(0, -34),
+	"surgeon_tent": Vector2(0, -26), "water_truck": Vector2(0, -29),
+	"troop_transport": Vector2(0, -16),
+}
+const STRUCTURE_FPS := 7.0  # gentle breeze loops, matching Battle's clock
+# The occlusion fade, ported from Battle with its constants intact: the
+# garrison finally has buildings, and a building that swallows the man
+# walking behind it is the exact bug the battlefield already solved. Same
+# numbers, same rule - the head-and-shoulders band, the real-coverage gate
+# that keeps a mostly-transparent rectangle from counting, the same speed.
+const OCCLUDED_ALPHA := 0.42
+const RECOGNISE_BAND := 0.62
+const OCCLUDED_FRACTION := 0.22
+const OCCLUSION_FADE := 4.0
+# The board's other face: bare cork, one faded outline where a sheet was
+# taken down. Which face stands is decided when the camp is built - the offer
+# list cannot change while the player is standing in it.
+const BOUNTY_BOARD_EMPTY := preload(FIXTURE_ROOT + "Garrison_bounty_board_empty.png")
+# The detention pen's wire. Duplicated from Battle rather than shared, on the
+# grounds the header already gives for every prop table here. Board parses '='
+# as WIRE the moment the map lands - movement was right before this existed;
+# this is only the drawing.
+const WIRE_ROOT := "res://assets/sprites/Environment/Desert/Walls/desert_barbed_wire/rotations/"
+const WIRE_TEXTURES := {
+	"x_run": preload(WIRE_ROOT + "south-west.png"),
+	"y_run": preload(WIRE_ROOT + "south-east.png"),
+	"junction": preload(WIRE_ROOT + "north.png"),
+	"cap": preload(WIRE_ROOT + "east.png"),
+}
+const WIRE_OFFSETS := {
+	"x_run": Vector2(0, -15), "y_run": Vector2(0, -13),
+	"junction": Vector2(0, -15), "cap": Vector2(0, -10),}
+# Indoors the same '=' char is jail bars, not concertina: vertical steel on a
+# welded frame, seen through, stood on the wall class's ground line (INTERIORS.md).
+const BAR_ROOT := "res://assets/sprites/Environment/Desert/Walls/desert_jail_bars/rotations/"
+const BAR_TEXTURES := {
+	"x_run": preload(BAR_ROOT + "south-west.png"),
+	"y_run": preload(BAR_ROOT + "south-east.png"),
+	"junction": preload(BAR_ROOT + "north.png"),
+	"cap": preload(BAR_ROOT + "east.png"),
+}
+const BAR_OFFSETS := {
+	"x_run": Vector2(0, -17), "y_run": Vector2(0, -17),
+	"junction": Vector2(0, -17), "cap": Vector2(0, -17),
 }
 const PROP_DUST := preload("res://assets/shaders/prop_dust.gdshader")
 const ROCK_OFFSET := Vector2(0, -18)
 const JUNK_OFFSET := Vector2(0, -20)
 const PLANT_OFFSET := Vector2(0, -17)
 const WALL_OFFSET := Vector2(0, -15)
+# The gateway's two flanking piers, leaves standing open against the wall.
+# Same 68px class as the wall pieces, one texel shallower at the base.
+const GATE_ROOT := "res://assets/sprites/Environment/Desert/Walls/desert_gate/"
+const GATE_TEXTURES := {
+	"open_west": preload(GATE_ROOT + "open_west.png"),
+	"open_east": preload(GATE_ROOT + "open_east.png"),
+}
+const GATE_OFFSET := Vector2(0, -14)
 # The pile, the loose crates and both tables are all nearest-downsampled into
 # the 48px class now, so everything standing in camp draws at PROP_SCALE and
 # the offsets are halved to match - the painted bases stay on their cells.
@@ -191,6 +323,14 @@ var fixtures: Array = []
 var _focus: Dictionary = {}
 var _dust_materials: Dictionary = {}
 var _swaying: Array = []
+# The scenery that can stand in front of somebody. Collected once after every
+# spawner has run; pairs of (sprite, sorts_by) because a structure's draw order
+# belongs to its root while its pixels belong to the child.
+var _occluders: Array = []
+# Which room the camp is showing; "" is the yard. Mirrors Game.camp_interior
+# at _ready so the whole file can ask one local.
+var interior := ""
+var _animated: Array = []
 # What the two modal buttons currently mean, set when a panel is opened.
 var _choice_action := ""
 var _choice_args: Array = []
@@ -202,22 +342,41 @@ func _ready() -> void:
 	# `godot --path . -- --field` drops straight into the field camp, which is
 	# otherwise only reachable by finishing a mission. Mirrors Battle's --level.
 	in_field = Game.in_the_field or OS.get_cmdline_user_args().has("--field")
-	camp = CampData.map_for(in_field, Game.biome())
-	spots = CampData.spots_for(in_field)
+	# `--interior hq` drops straight into a room, mirroring --field: the only
+	# other way in is walking to its door, which a screenshot run cannot do.
+	var args := OS.get_cmdline_user_args()
+	for i in args.size():
+		if args[i] == "--interior" and i + 1 < args.size():
+			Game.camp_interior = args[i + 1]
+	interior = "" if in_field else Game.camp_interior
+	if interior != "" and CampData.INTERIORS.has(interior):
+		camp = CampData.interior_for(interior)
+		spots = CampData.interior_spots(interior)
+	else:
+		interior = ""
+		camp = CampData.map_for(in_field, Game.biome())
+		spots = CampData.spots_for(in_field)
 	board.set_level(camp)
 	_prop_seed = int(camp.get("prop_seed",
 			int(camp.get("zone_seed", 91)) * 977 + 101))
 	_spawn_props()
+	# The desert the camp sits in: the gate road, the perimeter towers and
+	# the drift outside the walls. Interiors no-op here - their apron is off.
+	ApronScenery.spawn(board, entities, camp, _prop_seed)
 	# The roster forms here on a fresh campaign, before the first mission ever
 	# runs, so the squad the player meets in camp is the squad that deploys.
 	Game.ensure_roster(Game.data())
 	_spawn_squad()
 	_build_fixtures()
+	_collect_occluders()
 	close_button.pressed.connect(_close_modal)
 	choice_a.pressed.connect(_on_choice.bind(0))
 	choice_b.pressed.connect(_on_choice.bind(1))
 	modal.visible = false
-	title_label.text = "FIELD CAMP" if in_field else "GARRISON"
+	if interior != "":
+		title_label.text = str(CampData.INTERIORS[interior].label).to_upper()
+	else:
+		title_label.text = "FIELD CAMP" if in_field else "GARRISON"
 	_refresh_subtitle()
 	# Same texel density as the battle: _clamped_camera divides the viewport
 	# by zoom, so the clamping adapts on its own.
@@ -304,11 +463,39 @@ func _spawn_prop(texture: Texture2D, offset: Vector2, cell: Vector2i,
 # so the steel half of the yard is deliberately still and the canvas half moves.
 const SWAY_SPEED := 1.6      # radians/sec, matching Battle's cycle
 const SWAY_TEXELS := 1.0     # sprite texels a thing leans at full sway
+## The cheap wind, for cloth too small to be worth drawing frames for. Anything
+## in FIXTURE_ANIM_DIRS must NOT be here: a fixture that both leans and flaps is
+## being moved by two systems at once, and reads as a wobble rather than wind.
 const SWAYING_FIXTURES := {
-	"awning": true,          # the camo net is the largest cloth in the yard
-	"flagpole": true,        # the colours, and the one thing wind is *for*
-	"washing_line": true,
 	"kit_frame": true,       # webbing and canteens hang loose off the rack
+	"range_flag": true,      # the same cloth it is everywhere else
+}
+
+## Fixtures with a generated frame run, at
+## garrison_fixtures/animations/<key>/frame_%03d.png. These are the three cloth
+## pieces large enough on screen that a one-texel lean was not saying much: the
+## camo net, the colours, and the laundry.
+const FIXTURE_ANIM_ROOT := FIXTURE_ROOT + "animations/"
+const FIXTURE_ANIM_DIRS := {
+	"awning": true,
+	"flagpole": true,
+	"washing_line": true,
+	# The stations and the range, each moving by what it is: sheets, pages,
+	# a clipboard on its chain, targets rocking on their frames, a mat's
+	# loose corner, the border map under its celluloid. The berms are absent
+	# deliberately - packed earth that wiggles is a defect, not a breeze.
+	"signals_mast": true,
+	"bounty_board": true,
+	"paymaster_desk": true,
+	"qm_counter": true,
+	"target": true,
+	"target_1": true,
+	"firing_point": true,
+	# The interior pair: a powered set's lamp breathing on its own hum, and
+	# canvas riding the air moving through the tent. The rest of the
+	# furniture batch holds still on purpose - steel and timber don't idle.
+	"radio_desk": true,
+	"folding_screen": true,
 }
 
 
@@ -322,6 +509,68 @@ func _sway(sprite: Sprite2D, cell: Vector2i) -> void:
 	})
 
 
+## Walks a frame_000.png, frame_001.png ... run until one is missing.
+##
+## Duplicated from Battle rather than shared, on the same grounds the prop
+## tables are: the two scenes are deliberately independent, and pulling one
+## static helper across is not worth the coupling.
+static func _load_frame_run(base: String) -> Array[Texture2D]:
+	var frames: Array[Texture2D] = []
+	var i := 0
+	while true:
+		var path := "%s/frame_%03d.png" % [base, i]
+		if not ResourceLoader.exists(path):
+			break
+		frames.append(load(path))
+		i += 1
+	return frames
+
+
+## A structure's breeze loop if its art has one, otherwise a one-frame run of
+## the still. The single frame is what keeps the caller honest: a structure with
+## no animation needs no special case, it simply never changes frame.
+static func _load_structure_frames(dir: String) -> Array[Texture2D]:
+	var frames: Array[Texture2D] = []
+	var anim_root := dir + "/animations"
+	var da := DirAccess.open(anim_root)
+	if da != null:
+		for sub in da.get_directories():
+			frames = _load_frame_run("%s/%s/unknown" % [anim_root, sub])
+			if not frames.is_empty():
+				break
+	if frames.is_empty():
+		var still := dir + "/rotations/unknown.png"
+		if ResourceLoader.exists(still):
+			frames.append(load(still))
+	return frames
+
+
+## Registers a sprite on the frame clock. Phase comes from the cell, spread
+## across one whole loop, so no two things in the yard breathe in step.
+func _animate(sprite: Sprite2D, cell: Vector2i, frames: Array[Texture2D]) -> void:
+	if frames.size() < 2:
+		return
+	_animated.append({
+		"sprite": sprite,
+		"frames": frames,
+		"phase": Board._hash01(cell, _prop_seed + SALT_STRUCT_PHASE) 				* float(frames.size()) / STRUCTURE_FPS,
+		"frame": -1,
+	})
+
+
+## Only touches the texture when the index actually changes - at 7fps that is a
+## handful of assignments a second rather than one per sprite per frame.
+func _animate_props() -> void:
+	var t := Time.get_ticks_msec() / 1000.0
+	for entry: Dictionary in _animated:
+		var frames: Array = entry.frames
+		var idx: int = int((t + entry.phase) * STRUCTURE_FPS) % frames.size()
+		if idx == entry.frame:
+			continue
+		entry.frame = idx
+		entry.sprite.texture = frames[idx]
+
+
 func _sway_props() -> void:
 	var t := Time.get_ticks_msec() / 1000.0
 	for entry: Dictionary in _swaying:
@@ -329,6 +578,106 @@ func _sway_props() -> void:
 		var step: float = SWAY_TEXELS * PROP_SCALE.x * signf(wave) \
 				* (1.0 if absf(wave) > 0.45 else 0.0)
 		entry.sprite.position.x = entry.base_x + step
+
+
+## Which way a wire cell runs, read off its neighbours - Battle's rule.
+## One departure from Battle's port, and it is load-bearing: Battle's
+## structures are sliced into region strips, so their rects are honest.
+## Camp's are whole 168x168 canvases - at 2x that is a 336px rectangle that
+## is mostly transparency, and judged by canvas the whole yard fades the
+## moment anybody walks it. So each occluder is measured ONCE by its opaque
+## bounds, and the fade judges what the art actually covers.
+func _collect_occluders() -> void:
+	_occluders.clear()
+	var bounds_cache := {}
+	for child in entities.get_children():
+		if child is Unit:
+			continue
+		if child is Sprite2D:
+			_add_occluder(child, child, bounds_cache)
+			continue
+		for grandchild in child.get_children():
+			if grandchild is Sprite2D:
+				_add_occluder(grandchild, child, bounds_cache)
+
+
+func _add_occluder(spr: Sprite2D, sorts_by: Node2D, cache: Dictionary) -> void:
+	if spr.texture == null:
+		return
+	var key := spr.texture.get_rid()
+	if not cache.has(key):
+		var img := spr.texture.get_image()
+		cache[key] = Rect2(img.get_used_rect()) if img != null 				else Rect2(Vector2.ZERO, Vector2(spr.texture.get_size()))
+	var used: Rect2 = cache[key]
+	var canvas := Vector2(spr.texture.get_size())
+	_occluders.append({
+		"sprite": spr, "sorts_by": sorts_by,
+		# From the sprite's drawn centre to the opaque region's centre, in
+		# texels - scaled at query time so this survives any future rescale.
+		"off": used.get_center() - canvas * 0.5,
+		"size": used.size,
+	})
+
+
+func _occluder_rect(entry: Dictionary) -> Rect2:
+	var spr: Sprite2D = entry.sprite
+	var centre: Vector2 = spr.global_position 			+ (spr.offset + entry.off) * spr.scale
+	var size: Vector2 = entry.size * spr.scale
+	return Rect2(centre - size * 0.5, size)
+
+
+func _sprite_rect(spr: Sprite2D) -> Rect2:
+	var size: Vector2 = spr.region_rect.size if spr.region_enabled 			else Vector2(spr.texture.get_size())
+	size *= spr.scale
+	var centre := spr.global_position + spr.offset * spr.scale
+	return Rect2(centre - size * 0.5, size)
+
+
+## Battle's rule, applied to the ONE person it helps here: the player.
+##
+## Battle fades for every unit because every unit matters tactically and all
+## of them move. The camp's idlers are placed deliberately BESIDE the
+## buildings and never move at all - fading for them ghosted half the yard
+## permanently, which is not a fade, it is broken transparency. The walker is
+## the only body the scenery needs to step aside for.
+func _refresh_occlusion(delta: float) -> void:
+	var hiding := {}
+	var bodies: Array[Unit] = []
+	if player != null and is_instance_valid(player):
+		bodies.append(player)
+	for unit in bodies:
+		if unit.sprite == null or unit.sprite.texture == null:
+			continue
+		var body := _sprite_rect(unit.sprite)
+		body.size.y *= RECOGNISE_BAND
+		var need := body.size.x * body.size.y * OCCLUDED_FRACTION
+		for i in _occluders.size():
+			if hiding.has(i):
+				continue
+			var entry: Dictionary = _occluders[i]
+			if (entry.sorts_by as Node2D).global_position.y <= unit.global_position.y:
+				continue
+			var over := body.intersection(_occluder_rect(entry))
+			if over.size.x * over.size.y >= need:
+				hiding[i] = true
+	for i in _occluders.size():
+		var spr: Sprite2D = _occluders[i].sprite
+		var want := OCCLUDED_ALPHA if hiding.has(i) else 1.0
+		if is_equal_approx(spr.modulate.a, want):
+			continue
+		spr.modulate.a = move_toward(spr.modulate.a, want, OCCLUSION_FADE * delta)
+
+
+func _wire_kind(cell: Vector2i) -> String:
+	var has_x := board.map_char(cell + Vector2i(1, 0)) == "=" 			or board.map_char(cell + Vector2i(-1, 0)) == "="
+	var has_y := board.map_char(cell + Vector2i(0, 1)) == "=" 			or board.map_char(cell + Vector2i(0, -1)) == "="
+	if has_x and has_y:
+		return "junction"
+	if has_x:
+		return "x_run"
+	if has_y:
+		return "y_run"
+	return "cap"
 
 
 func _wall_texture(cell: Vector2i) -> Texture2D:
@@ -347,6 +696,7 @@ const SALT_JUNK := 5
 const SALT_PLANT := 6
 const SALT_CRATE := 8
 const SALT_SWAY := 9
+const SALT_STRUCT_PHASE := 10
 const SALT_DETRITUS := 12
 const SALT_DETRITUS_PICK := 13
 const SALT_DETRITUS_JITTER := 14
@@ -365,6 +715,7 @@ const DETRITUS_TEXTURES: Array[Texture2D] = [
 	preload(DETRITUS_ROOT + "Desert_detritus_5.png"),
 	preload(DETRITUS_ROOT + "Desert_detritus_6.png"),
 	preload(DETRITUS_ROOT + "Desert_detritus_7.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_8.png"),
 ]
 const DETRITUS_RATE := 0.17
 const DETRITUS_GAP := 1
@@ -390,9 +741,23 @@ func _spawn_props() -> void:
 					# of its, which is why there is no junk left in it.
 					var fixture := str(camp.get("props", {}).get(cell, ""))
 					if FIXTURE_TEXTURES.has(fixture):
-						var fix := _spawn_prop(FIXTURE_TEXTURES[fixture],
+						var tex: Texture2D = FIXTURE_TEXTURES[fixture]
+						# The Accord's board shows its empty face when there
+						# is nobody to post - the prompt does the teaching,
+						# the bare cork does the telling.
+						if fixture == "bounty_board" and Bounty.offers(
+								Game.campaign_seed, Game.adversaries,
+								Game.bounties_done).is_empty():
+							tex = BOUNTY_BOARD_EMPTY
+						var fix := _spawn_prop(tex,
 								FIXTURE_OFFSETS[fixture], cell)
-						if SWAYING_FIXTURES.has(fixture):
+						# The empty board stays a still: its frames are the
+						# POSTED face, and animating them onto the bare cork
+						# would undo the state pick a line above.
+						if FIXTURE_ANIM_DIRS.has(fixture) 								and tex == FIXTURE_TEXTURES[fixture]:
+							_animate(fix, cell, _load_frame_run(
+									FIXTURE_ANIM_ROOT + fixture))
+						elif SWAYING_FIXTURES.has(fixture):
 							_sway(fix, cell)
 					else:
 						if not fixture.is_empty():
@@ -405,7 +770,27 @@ func _spawn_props() -> void:
 					_sway(_spawn_prop(PLANT_TEXTURES[_prop_pick(cell, SALT_PLANT,
 							PLANT_TEXTURES.size())], PLANT_OFFSET, cell), cell)
 				"W":
+					# The wall ALWAYS draws - the first hanging of the gate
+					# replaced these two wall segments with thin pier art, and
+					# a chunky run that suddenly becomes a post reads as a
+					# four-cell hole. The leaf overlays the wall end instead,
+					# pulled toward the gap so it hangs over the opening.
 					_spawn_prop(_wall_texture(cell), WALL_OFFSET, cell)
+					var leaf := str(camp.get("gate", {}).get(cell, ""))
+					if GATE_TEXTURES.has(leaf):
+						var toward := 1.0 if leaf.ends_with("_west") else -1.0
+						var hung := _spawn_prop(GATE_TEXTURES[leaf],
+								GATE_OFFSET + Vector2(toward * 40.0, 22.0), cell)
+						_animate(hung, cell, _load_frame_run(
+								GATE_ROOT + "animations/" + leaf))
+				"=":
+					# Concertina in the yard, steel bars in a room - one char,
+					# because the RULE (stops movement, seen through) is one rule.
+					var run := _wire_kind(cell)
+					if interior != "":
+						_spawn_prop(BAR_TEXTURES[run], BAR_OFFSETS[run], cell)
+					else:
+						_spawn_prop(WIRE_TEXTURES[run], WIRE_OFFSETS[run], cell)
 	for cell: Vector2i in spots.dressing:
 		_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, cell)
 	for s: Dictionary in camp.structures:
@@ -418,6 +803,11 @@ func _spawn_props() -> void:
 ## the walkable spots the player actually interacts with are left clear, since
 ## a bone under the briefing table would read as something to click on.
 func _spawn_detritus() -> void:
+	# The desert stops at the door. Bones and driftwood on a swept interior
+	# floor would say nobody lives here, and the whole point of the rooms is
+	# that somebody does.
+	if interior != "":
+		return
 	var claimed := {}
 	for cell: Vector2i in spots.dressing:
 		claimed[cell] = true
@@ -444,13 +834,18 @@ func _spawn_detritus() -> void:
 				continue
 			placed.append(cell)
 			var decal := Sprite2D.new()
-			decal.texture = DETRITUS_TEXTURES[_prop_pick(cell, SALT_DETRITUS_PICK,
+			# Same trap Battle's scatter had: the cell was chosen by a hash, so a
+			# second salt off the same cell sits a fixed offset away and lands in
+			# a narrow band of the range. See Board.decorrelate.
+			decal.texture = DETRITUS_TEXTURES[_prop_pick(
+				Board.decorrelate(cell, 3, 5), SALT_DETRITUS_PICK,
 					DETRITUS_TEXTURES.size())]
 			decal.material = _dust_material(cell)
 			decal.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 			decal.position = board.cell_to_local(cell)
-			var hx := Board._hash01(cell, _prop_seed + SALT_DETRITUS_JITTER)
-			var hy := Board._hash01(cell + Vector2i(97, 61),
+			var hx := Board._hash01(Board.decorrelate(cell, 7, 11),
+					_prop_seed + SALT_DETRITUS_JITTER)
+			var hy := Board._hash01(Board.decorrelate(cell, 13, 17),
 					_prop_seed + SALT_DETRITUS_JITTER)
 			decal.position += Vector2(
 					roundf((hx - 0.5) * 2.0 * DETRITUS_JITTER),
@@ -463,14 +858,21 @@ func _spawn_structure(s: Dictionary) -> void:
 	var anchor: Vector2i = s.anchor
 	var size: Vector2i = s.size
 	var front: Vector2i = anchor + size - Vector2i.ONE
-	var still: String = STRUCTURE_DIRS[s.kind] + "/rotations/unknown.png"
-	if not ResourceLoader.exists(still):
+	# The huts and the rustic tent have shipped with a breeze loop all along;
+	# camp drew the still and never played it. A structure whose art has no
+	# animation comes back as a one-frame run and simply never changes.
+	var frames := _load_structure_frames(STRUCTURE_DIRS[s.kind])
+	if frames.is_empty():
 		push_error("[Camp] no art for structure '%s'" % s.kind)
 		return
+	# The carrier's frame run is Battle's ramp-drop one-shot, not a breeze.
+	# Parked in the yard the door stays shut: first frame only.
+	if s.kind == "troop_transport":
+		frames = [frames[0]]
 	var root := Node2D.new()
 	root.position = board.cell_to_global(front)
 	var spr := Sprite2D.new()
-	spr.texture = load(still)
+	spr.texture = frames[0]
 	spr.scale = PROP_SCALE
 	spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	spr.material = _dust_material(front)
@@ -479,6 +881,7 @@ func _spawn_structure(s: Dictionary) -> void:
 			- root.position
 	root.add_child(spr)
 	entities.add_child(root)
+	_animate(spr, anchor, frames)
 
 
 # -------------------------------------------------------------------- squad --
@@ -531,7 +934,12 @@ func _spawn_squad() -> void:
 	if avatar.is_empty():
 		push_error("[Camp] no living soldier to play as")
 		return
-	player = _make_unit(avatar, spots.player)
+	var at: Vector2i = spots.player
+	# Walking out of a room resumes at its yard door, not mid-parade.
+	if interior == "" and Game.camp_return.x >= 0:
+		at = Game.camp_return
+		Game.camp_return = Vector2i(-1, -1)
+	player = _make_unit(avatar, at)
 	player.set_facing(Vector2(0, 1))  # face the camera at rest
 	var slot := 0
 	var squad: Array = spots.squad
@@ -554,23 +962,44 @@ func _spawn_squad() -> void:
 
 
 func _build_fixtures() -> void:
-	fixtures.append({
-		"kind": "briefing", "cell": spots.briefing,
-		"pos": board.cell_to_global(spots.briefing),
-		"label": "the briefing table", "id": 0,
-	})
-	fixtures.append({
-		"kind": "stores", "cell": spots.stores,
-		"pos": board.cell_to_global(spots.stores),
-		"label": "the stores tent", "id": 0,
-	})
+	# The rooms first: a door out, and a door into each building this camp
+	# has. An interior is a camp whose only stations are its exits.
+	if interior != "":
+		for door: Vector2i in camp.get("doors", []):
+			fixtures.append({
+				"kind": "exit", "cell": door,
+				"pos": board.cell_to_global(door),
+				"label": "the yard", "id": 0,
+			})
+	elif not in_field:
+		for door_cell: Vector2i in CampData.GARRISON_DOORS:
+			var room: String = CampData.GARRISON_DOORS[door_cell]
+			fixtures.append({
+				"kind": "enter", "cell": door_cell,
+				"pos": board.cell_to_global(door_cell),
+				"label": str(CampData.INTERIORS[room].label), "id": 0,
+				"interior": room,
+			})
+	if Vector2i(spots.briefing).x >= 0:
+		fixtures.append({
+			"kind": "briefing", "cell": spots.briefing,
+			"pos": board.cell_to_global(spots.briefing),
+			"label": "the briefing table", "id": 0,
+		})
+	if Vector2i(spots.stores).x >= 0:
+		fixtures.append({
+			"kind": "stores", "cell": spots.stores,
+			"pos": board.cell_to_global(spots.stores),
+			"label": "the stores tent", "id": 0,
+		})
 	# The stores had nothing on the ground at all - you walked up to an empty
 	# patch of sand and a prompt appeared. Variant keyed off the cell so the
 	# two camps do not put out the same crate.
-	_spawn_prop(
-			STORES_TEXTURES[_prop_pick(spots.stores, SALT_CRATE,
-					STORES_TEXTURES.size())],
-			STORES_OFFSET, spots.stores)
+	if Vector2i(spots.stores).x >= 0:
+		_spawn_prop(
+				STORES_TEXTURES[_prop_pick(spots.stores, SALT_CRATE,
+						STORES_TEXTURES.size())],
+				STORES_OFFSET, spots.stores)
 	# The duty roster board doubles as the bounty board. Garrison only - and
 	# ALWAYS there, empty or not. It used to exist only once somebody had
 	# escaped, which read as "a board with nothing on it wastes a walk" and
@@ -587,7 +1016,7 @@ func _build_fixtures() -> void:
 	if not in_field:
 		_bounties_posted = Bounty.offers(Game.campaign_seed, Game.adversaries,
 				Game.bounties_done).size()
-		var board_cell: Vector2i = _fixture_cell("notice_board")
+		var board_cell: Vector2i = _fixture_cell("bounty_board")
 		if board_cell.x >= 0:
 			fixtures.append({
 				"kind": "bounties", "cell": board_cell,
@@ -602,16 +1031,17 @@ func _build_fixtures() -> void:
 	if not in_field:
 		_ratline_offers = Ratline.offers(Game.campaign_seed,
 				Game.current_operation, Game.ratline_done)
-		var radio: Vector2i = _fixture_cell("field_radio")
+		var radio: Vector2i = _fixture_cell("signals_mast")
 		if radio.x >= 0:
 			fixtures.append({
 				"kind": "ratline", "cell": radio,
 				"pos": board.cell_to_global(radio),
-				"label": "the field radio", "id": 0,
+				"label": "the signals station", "id": 0,
 			})
 	# The ledger is read at the memorial, which is where a campaign keeps
 	# what it cannot get back. Garrison only, because the cross is.
-	var cross: Vector2i = _fixture_cell("memorial_cross")
+	var cross: Vector2i = _fixture_cell("memorial_cross") \
+			if interior == "" else Vector2i(-1, -1)
 	if cross.x >= 0:
 		fixtures.append({
 			"kind": "ledger", "cell": cross,
@@ -624,12 +1054,13 @@ func _build_fixtures() -> void:
 	# the squad is home. Selling mid-operation would also mean selling
 	# mid-transaction: a lost mission rolls the roster back, and the book
 	# must never be part of what a rollback has to untangle.
-	var rack: Vector2i = _fixture_cell("kit_frame")
+	var rack: Vector2i = _fixture_cell("qm_counter") \
+			if interior == "" else Vector2i(-1, -1)
 	if rack.x >= 0:
 		fixtures.append({
 			"kind": "qm", "cell": rack,
 			"pos": board.cell_to_global(rack),
-			"label": "the quartermaster's rack", "id": 0,
+			"label": "the quartermaster's counter", "id": 0,
 		})
 	# Replacements are a garrison thing. Out on operation the squad fights
 	# with whoever walked away from the last mission.
@@ -643,10 +1074,11 @@ func _build_fixtures() -> void:
 		_spawn_prop(CRATE_TEXTURE, CRATE_OFFSET, post)
 	# The table itself, so the fixture is the thing it is named after rather than
 	# a crate standing in for one.
-	_spawn_prop(
-			BRIEFING_TEX_FIELD if in_field else BRIEFING_TEX_GARRISON,
-			BRIEFING_OFFSET_FIELD if in_field else BRIEFING_OFFSET_GARRISON,
-			spots.briefing)
+	if Vector2i(spots.briefing).x >= 0:
+		_spawn_prop(
+				BRIEFING_TEX_FIELD if in_field else BRIEFING_TEX_GARRISON,
+				BRIEFING_OFFSET_FIELD if in_field else BRIEFING_OFFSET_GARRISON,
+				spots.briefing)
 
 
 # ----------------------------------------------------------------- movement --
@@ -673,6 +1105,8 @@ func _process(delta: float) -> void:
 	# Above the player guard on purpose: the wind is the scene's, not his, so it
 	# keeps blowing through the frames where there is nobody to walk around as.
 	_sway_props()
+	_animate_props()
+	_refresh_occlusion(delta)
 	if player == null:
 		return
 	var dir := Vector2.ZERO if modal.visible else _walk_input()
@@ -789,6 +1223,10 @@ func _prompt_for(fixture: Dictionary) -> String:
 			return "E  -  the campaign's ledger"
 		"qm":
 			return "E  -  quartermaster: %d scrip in the book" % Game.scrip
+		"enter":
+			return "E  -  inside %s" % fixture.label
+		"exit":
+			return "E  -  back to the yard"
 		"ratline":
 			if Game.ratline_strength != 0:
 				return "E  -  field radio: the operation is on - the net is closed"
@@ -840,6 +1278,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			_open_quartermaster(0)
 		"ratline":
 			_open_ratline()
+		"enter":
+			Game.camp_interior = str(_focus.interior)
+			Game.camp_return = _focus.cell
+			get_tree().reload_current_scene()
+		"exit":
+			Game.camp_interior = ""
+			get_tree().reload_current_scene()
 
 
 # ------------------------------------------------------------------ bounties --
@@ -903,7 +1348,7 @@ func _open_bounties() -> void:
 
 
 ## Who to send. Every living named soldier, with what they would actually roll.
-func _open_bounty_hunters(offer: Dictionary) -> void:
+func _open_bounty_hunters(offer: Dictionary, at := 0) -> void:
 	_bounty_offer = offer
 	var candidates: Array = []
 	for soldier: Dictionary in Game.roster:
@@ -912,6 +1357,10 @@ func _open_bounty_hunters(offer: Dictionary) -> void:
 	if candidates.is_empty():
 		_open_modal("NOBODY TO SEND", "There is no one on their feet.")
 		return
+	# Pages, like the quartermaster's rack. The modal has two buttons and the
+	# roster is eight deep - listing only the first two did not mean the squad
+	# was two men, it meant six of them could never be sent.
+	at = posmod(at, candidates.size())
 	var survivals := int(offer.get("survivals", 0))
 	var has_band := Rules.can_lead_warband(survivals)
 	var lines: Array[String] = [
@@ -922,24 +1371,30 @@ func _open_bounty_hunters(offer: Dictionary) -> void:
 		"Two riflemen go with whoever you send.",
 		"",
 	]
-	for i in mini(candidates.size(), 2):
-		var s: Dictionary = candidates[i]
-		var presence := int(s.get("presence", 0))
-		var guile := int(s.get("guile", 0))
-		lines.append("%s  -  %s" % [Game.soldier_label(s),
-				Unit.kind_role_name(int(s.kind))])
-		lines.append("   presence %d, guile %d" % [presence, guile])
-		lines.append("   talk him down %d%%   turn him %d%%" % [
-				Bounty.surrender_chance(presence, survivals, has_band, false),
-				Bounty.informant_chance(guile, presence, survivals, has_band,
-						not str(offer.get("grievance", "")).is_empty())])
-		lines.append("")
+	for i in candidates.size():
+		var s2: Dictionary = candidates[i]
+		lines.append("%s %s  -  %s%s" % [
+				">" if i == at else " ", Game.soldier_label(s2),
+				Unit.kind_role_name(int(s2.kind)),
+				"  (resting)" if Game.is_resting(int(s2.get("id", 0))) else ""])
+	# The odds for the one under the cursor. All eight sets at once would be
+	# forty lines of arithmetic to read a name out of.
+	var pick: Dictionary = candidates[at]
+	var presence := int(pick.get("presence", 0))
+	var guile := int(pick.get("guile", 0))
+	lines.append("")
+	lines.append("%s  -  presence %d, guile %d" % [
+			Game.soldier_label(pick), presence, guile])
+	lines.append("talk him down %d%%   turn him %d%%" % [
+			Bounty.surrender_chance(presence, survivals, has_band, false),
+			Bounty.informant_chance(guile, presence, survivals, has_band,
+					not str(offer.get("grievance", "")).is_empty())])
 	_choice_action = "bounty_send"
-	_choice_args = [offer, candidates]
+	_choice_args = [offer, candidates, at]
 	_open_modal("WHO GOES", "
 ".join(lines),
-			Game.soldier_label(candidates[0]),
-			Game.soldier_label(candidates[1]) if candidates.size() > 1 else "")
+			"SEND %s" % Game.soldier_label(pick),
+			"NEXT ON THE ROSTER" if candidates.size() > 1 else "")
 
 
 ## The net. Three crossings against the coming operation, what running them
@@ -989,7 +1444,7 @@ func _open_ratline() -> void:
 
 ## Who leads the run. No negotiation odds - an interdiction is a gunfight -
 ## so the panel shows who they are rather than what they would roll.
-func _open_ratline_leaders(offer: Dictionary) -> void:
+func _open_ratline_leaders(offer: Dictionary, at := 0) -> void:
 	var candidates: Array = []
 	for soldier: Dictionary in Game.roster:
 		if bool(soldier.get("alive", false)):
@@ -997,6 +1452,7 @@ func _open_ratline_leaders(offer: Dictionary) -> void:
 	if candidates.is_empty():
 		_open_modal("NOBODY TO SEND", "There is no one on their feet.")
 		return
+	at = posmod(at, candidates.size())
 	var lines: Array[String] = [
 		"%s at %s - %s." % [str(offer.title).capitalize(), str(offer.place),
 				str(offer.where)],
@@ -1005,17 +1461,20 @@ func _open_ratline_leaders(offer: Dictionary) -> void:
 		"the next mission.",
 		"",
 	]
-	for i in mini(candidates.size(), 2):
-		var s: Dictionary = candidates[i]
-		lines.append("%s  -  %s, %s" % [Game.soldier_label(s),
-				Unit.kind_role_name(int(s.kind)),
-				Career.level_label(int(s.get("level", 1)))])
-		lines.append("")
+	for i in candidates.size():
+		var s2: Dictionary = candidates[i]
+		lines.append("%s %s  -  %s, %s%s" % [
+				">" if i == at else " ", Game.soldier_label(s2),
+				Unit.kind_role_name(int(s2.kind)),
+				Career.level_label(int(s2.get("level", 1))),
+				"  (resting)" if Game.is_resting(int(s2.get("id", 0))) else ""])
+	var pick: Dictionary = candidates[at]
 	_choice_action = "ratline_send"
-	_choice_args = [offer, candidates]
-	_open_modal("WHO LEADS", "\n".join(lines),
-			Game.soldier_label(candidates[0]),
-			Game.soldier_label(candidates[1]) if candidates.size() > 1 else "")
+	_choice_args = [offer, candidates, at]
+	_open_modal("WHO LEADS", "
+".join(lines),
+			"SEND %s" % Game.soldier_label(pick),
+			"NEXT ON THE ROSTER" if candidates.size() > 1 else "")
 
 
 # ------------------------------------------------------------------- modal --
@@ -1454,9 +1913,13 @@ func _on_choice(slot: int) -> void:
 		"bounty_send":
 			var offer: Dictionary = _choice_args[0]
 			var people: Array = _choice_args[1]
-			if slot >= people.size():
+			var at: int = int(_choice_args[2])
+			if slot != 0:
+				_open_bounty_hunters(offer, at + 1)
 				return
-			var hunter: Dictionary = people[slot]
+			if at >= people.size():
+				return
+			var hunter: Dictionary = people[at]
 			# Built here rather than in Game, which may not name Bounty - see
 			# the layering note in Bounty.gd. If the generator cannot produce a
 			# sound board the bounty is simply refused: an unfinishable map is
@@ -1478,9 +1941,13 @@ func _on_choice(slot: int) -> void:
 		"ratline_send":
 			var offer: Dictionary = _choice_args[0]
 			var people: Array = _choice_args[1]
-			if slot >= people.size():
+			var at: int = int(_choice_args[2])
+			if slot != 0:
+				_open_ratline_leaders(offer, at + 1)
 				return
-			var leader: Dictionary = people[slot]
+			if at >= people.size():
+				return
+			var leader: Dictionary = people[at]
 			# Built here rather than in Game, which may not name Ratline - the
 			# same layering note as the bounty arm above. A generator that
 			# cannot produce a sound board refuses the run; the crossing
@@ -1500,7 +1967,13 @@ func _on_choice(slot: int) -> void:
 			Game.set_deployment(_chosen_ids())
 			print("[Sandline] deploying: %s mission %d/%d" % [
 					Game.operation().name, Game.mission_number(), Game.mission_count()])
-			Game.go_to_battle()
+			# The drive-out cutscene is the operation's own cold open - shown
+			# once, ahead of its first mission, and never again on the missions
+			# that follow it out of the same field camp.
+			if Game.mission_number() == 1:
+				Game.go_to_operation_intro()
+			else:
+				Game.go_to_battle()
 
 
 # -------------------------------------------------------------------- debug --

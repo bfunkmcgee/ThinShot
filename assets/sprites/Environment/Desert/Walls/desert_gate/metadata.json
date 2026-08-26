@@ -1,0 +1,175 @@
+{
+  "group_id": [
+    "67163631-6f5f-46b1-b20a-15d2b2056fc1"
+  ],
+  "objects": [
+    {
+      "id": "0149ff5e-6f6b-4f81-beae-5006a393d63b",
+      "name": "open_west",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "open_west.png"
+      },
+      "animations": {
+        "breeze": {
+          "description": "the leaf sways on its hinges",
+          "unknown": "animations/open_west/frame_%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "54249552-9699-44b1-a0d8-671de0d9f248",
+      "name": "open_east",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "open_east.png"
+      },
+      "animations": {
+        "breeze": {
+          "description": "the leaf sways on its hinges",
+          "unknown": "animations/open_east/frame_%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "bd3276e3-528a-4a02-b640-bef2c41725d8",
+      "name": "closed_west",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "closed_west.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "8347d209-2d4d-4922-a3e2-86f16c9f6ba1",
+      "name": "closed_east",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "closed_east.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "1d734dbe-deec-4ac4-852c-860fa42ea468",
+      "name": "blown_west",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "blown_west.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "c65ecbdf-6e44-4f6b-b700-fc4cbaf107b1",
+      "name": "blown_east",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "blown_east.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "f3e75dbe-610f-42b3-99da-a6b149b07afe",
+      "name": "blown_pier",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "blown_pier.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "5a698fd4-6f8d-4228-8469-51c1f4f5cb72",
+      "name": "pier_lantern",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "pier_lantern.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "312dc152-1f32-48c4-8486-c965a39b6d93",
+      "name": "boom_down",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "boom_down.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "a33810f9-7514-425c-9800-37978637fddd",
+      "name": "boom_up",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "boom_up.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "66e0c96f-32cf-441b-b8d2-63d3a7fb01bd",
+      "name": "checkpoint",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "checkpoint.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-08-25T00:00:00.000000"
+}

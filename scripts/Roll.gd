@@ -72,6 +72,13 @@ const AGE_BANDS := {
 	5: [18, 31],  # GOBLIN_SMG_ALT - light runner, chosen for being quick
 	6: [16, 23],  # GOBLIN_REVOLVER - pressed conscript, and this is the point
 	7: [24, 41],  # GOBLIN_BOLT    - marksman
+	15: [28, 46],  # GOBLIN_MG     - the gun goes to somebody trusted
+	16: [22, 39],  # GOBLIN_BRUTE  - strength is a young man's trade
+	17: [55, 78],  # GOBLIN_ELDER  - old enough to remember the wells open
+	18: [30, 55],  # GOBLIN_KEEPER - a stall is a working life's middle years
+	19: [16, 30],  # GOBLIN_CARRIER - hauling water is where working life starts
+	20: [30, 52],  # ELF_PARTISAN  - the Cupbearer: young as elves count age,
+				   # which is the point of the crossed-over generation
 }
 const AGE_DEFAULT: Array[int] = [20, 45]
 

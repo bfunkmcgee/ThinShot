@@ -73,6 +73,11 @@ func _run() -> void:
 	game.current_operation = 0
 
 	var battle: Node = (load("res://scenes/Battle.tscn") as PackedScene).instantiate()
+	# Level 0 is a mission-1 board with a parked transport: without this, the
+	# _dismiss_briefing() call below would kick off the async disembark walk
+	# instead of handing back a squad standing ready on PLAYER_TURN, and the
+	# very next lines select a unit and screenshot before it ever arrives.
+	battle.skip_disembark = true
 	root.add_child(battle)
 	await process_frame
 	await process_frame

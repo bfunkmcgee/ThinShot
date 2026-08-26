@@ -23,6 +23,10 @@ extends SceneTree
 ##   7. a man who has got away twice gathers three who have got away once, the
 ##      band only forms when it can be filled, and which band forms is the same
 ##      hash-driven decision the individual return is
+##   8. the ones only left for dead come back hurt, and are counted apart from
+##      the dead on the after-action
+##   9. a man the squad ACCOUNTED for leaves the standing roster - and only on a
+##      won mission, because a loss is rolled back wholesale
 ##
 ## Any real save is backed up and restored, so this is safe to run on a machine
 ## someone is actually playing on.
@@ -588,7 +592,14 @@ func _test_arrival() -> void:
 	battle.state = battle.State.PLAYER_TURN
 	_check(battle.check_game_over(),
 			"an empty eliminate map ends the mission on the spot")
-	_check(battle.state == battle.State.GAME_OVER, "...and the state says so")
+	# Since the ride home, a winning board with a pickup does not jump straight
+	# to GAME_OVER: check_game_over hands the screen to the departure, and the
+	# after-action card waits at the ramp. Over is over either way - play has
+	# ended, and the only question is which teardown holds the state.
+	var over: bool = battle.state == battle.State.GAME_OVER \
+			or (battle._departure_running
+					and battle.state == battle.State.ANIMATING)
+	_check(over, "...and the state says so (the ride home has the screen)")
 	var count_at_end: int = battle.living_units(1).size()
 	battle.player_turn_ready_msec = 0
 	await battle.end_player_turn(true)
@@ -596,6 +607,7 @@ func _test_arrival() -> void:
 			"nobody walks onto a finished board (%d)" % battle.living_units(1).size())
 
 	_test_left_for_dead(battle, whole_hp)
+	_test_settling(battle)
 	battle.free()
 	_finish()
 
@@ -730,3 +742,87 @@ func _test_left_for_dead(battle: Node, whole_hp: int) -> void:
 			"the man who was shot down is counted apart from the dead")
 	_check(not after_action.contains("KILLED"),
 			"...and nobody in this roll is counted killed at all")
+
+
+# --- 9. the files the campaign closes -----------------------------------------
+
+## The other half of the standing roster, and the half that was missing.
+##
+## Nothing struck a man off when the squad settled him on a campaign map:
+## last_level is only written when he SURVIVES, so a returner who was killed
+## went on passing the return gate for the rest of the campaign and the notice
+## board went on posting a bounty on a dead man.
+func _test_settling(battle: Node) -> void:
+	print("
+[9] a man the squad accounted for leaves the standing roster")
+	var game: Node = root.get_node("/root/Game")
+	game.campaign_seed = 20260823
+	game.adversaries = [
+		_adv(51, 0, "escaped", KIND_GOBLIN, "north", "Accounted For", 2),
+		_adv(52, 0, "escaped", KIND_GOBLIN, "north", "Still Out There", 1),
+	]
+	game.adversary_endings = []
+	var entry := func(id: int, fate: String, name: String) -> Dictionary:
+		return {
+			"identity": {"name": name, "age": 30, "settlement": "Kessit",
+					"grievance": "the well"},
+			"kind": KIND_GOBLIN, "fate": fate, "conduct": 0,
+			"ordinal": 60 + id, "edge": "north", "adversary_id": id,
+		}
+
+	# A lost mission is rolled back wholesale, so a man killed on a mission the
+	# squad then lost has to still be out there. This is the case that must NOT
+	# fire, and it is checked first so a settle that ignores the branch cannot
+	# pass by accident on the win below.
+	battle.state = battle.State.PLAYER_TURN
+	battle.roll.assign([entry.call(51, "killed", "Accounted For")])
+	battle._show_game_over("TEST", false)
+	_check(game.adversaries.size() == 2,
+			"a lost mission settles nobody (%d still on the books)"
+			% game.adversaries.size())
+	_check(game.adversary_endings.is_empty(),
+			"...and closes no files")
+
+	# The won branch: one man accounted for, one who got away again, and a
+	# stranger who was never on the books to leave them.
+	battle.state = battle.State.PLAYER_TURN
+	battle.roll.assign([
+		entry.call(51, "killed", "Accounted For"),
+		entry.call(52, "escaped", "Still Out There"),
+		entry.call(0, "killed", "Nobody Knew Him"),
+	])
+	battle._show_game_over("TEST", true)
+
+	var ids: Array = []
+	for rec: Dictionary in game.adversaries:
+		ids.append(int(rec.get("id", 0)))
+	_check(not ids.has(51), "the man who was killed is off the roster")
+	_check(ids.has(52), "...and the one who ran is still on it")
+	_check(game.adversary_endings.size() == 1,
+			"exactly one file is closed - a stranger was never on the books (%d)"
+			% game.adversary_endings.size())
+	if game.adversary_endings.size() == 1:
+		var ending: Dictionary = game.adversary_endings[0]
+		_check(int(ending.get("id", 0)) == 51
+				and str(ending.get("fate", "")) == "killed",
+				"...and it says who and how (%s, %s)" % [
+					str(ending.get("name", "")), str(ending.get("fate", ""))])
+		_check(int(ending.get("survivals", 0)) == 2,
+				"...and how many times he had got away first")
+
+	# The two symptoms the bug produced, stated as the checks they are.
+	var comes_back := false
+	for rec: Dictionary in game.adversaries_for(4):
+		if int(rec.get("id", 0)) == 51:
+			comes_back = true
+	_check(not comes_back, "a settled man does not walk back onto a later board")
+	# load() rather than naming Bounty: this file is compiled before the
+	# autoloads exist, and Bounty -> Unit -> Game would fail to resolve the
+	# singleton and take Rules and this harness down with it.
+	var bounty_script: GDScript = load("res://scripts/Bounty.gd") as GDScript
+	var posted := false
+	for offer: Dictionary in bounty_script.offers(game.campaign_seed,
+			game.adversaries, game.bounties_done):
+		if int(offer.get("id", 0)) == 51:
+			posted = true
+	_check(not posted, "...and the board stops posting a bounty on him")

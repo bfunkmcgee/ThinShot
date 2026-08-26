@@ -38,8 +38,8 @@ const WALL_OFFSETS := {
 	"junction": Vector2(0, -9), "cap": Vector2(0, -11),
 }
 const WIRE_OFFSETS := {
-	"x_run": Vector2(0, -10), "y_run": Vector2(0, -10),
-	"junction": Vector2(0, -4), "cap": Vector2(0, -17),
+	"x_run": Vector2(0, -15), "y_run": Vector2(0, -13),
+	"junction": Vector2(0, -15), "cap": Vector2(0, -10),
 }
 const ROT_FILES := {
 	"x_run": "south-west.png", "y_run": "south-east.png",
@@ -52,11 +52,13 @@ const STRUCTURE_DIRS := {
 	"fortress": ENV + "/Structures/Desert_military_building",
 	"hauler_wreck": ENV + "/Structures/desert_vehicle_wreck/Desert_hauler_wreck",
 	"tanker_wreck": ENV + "/Structures/desert_vehicle_wreck/Desert_tanker_wreck",
+	"troop_transport": ENV + "/Structures/troop_transport",
 }
 const STRUCTURE_OFFSETS := {
 	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33),
 	"tent": Vector2(0, -33), "fortress": Vector2(0, -55),
 	"hauler_wreck": Vector2(0, -19), "tanker_wreck": Vector2(0, -23),
+	"troop_transport": Vector2(0, -16),
 }
 const CLAIM_ROOT := ENV + "/thirst_claim_markers"
 const CLAIM_FILES := ["Thirst_tally_board.png", "Thirst_stake_bundle.png",
@@ -108,6 +110,9 @@ const ENEMY_MARKS := {
 	"smg_alt_spawns": {"color": Color(1.0, 0.6, 0.2), "letter": "a"},
 	"novice_spawns": {"color": Color(1.0, 0.75, 0.3), "letter": "n"},
 	"bolt_spawns": {"color": Color(1.0, 0.25, 0.5), "letter": "b"},
+	"heavy_spawns": {"color": Color(0.85, 0.2, 0.2), "letter": "h"},
+	"brute_spawns": {"color": Color(0.7, 0.1, 0.35), "letter": "B"},
+	"partisan_spawns": {"color": Color(0.95, 0.8, 0.45), "letter": "e"},
 }
 const SQUAD_MARKS := {
 	"scout_spawns": "S", "lead_spawns": "L", "gunner_spawns": "G",
@@ -115,7 +120,8 @@ const SQUAD_MARKS := {
 
 const SPAWN_KEYS := ["scout_spawns", "lead_spawns", "gunner_spawns",
 		"goblin_spawns", "smg_spawns", "smg_alt_spawns", "novice_spawns",
-		"bolt_spawns", "prisoner_spawns"]
+		"bolt_spawns", "heavy_spawns", "brute_spawns", "partisan_spawns",
+		"prisoner_spawns"]
 
 var _prop_seed := 0
 var _dust_materials: Dictionary = {}
@@ -222,6 +228,7 @@ func _render(data: Dictionary, source: String, out_dir: String, views: Array,
 	entities.y_sort_enabled = true
 	stage.add_child(entities)
 	_spawn_props(board, entities, data)
+	ApronScenery.spawn(board, entities, data, _prop_seed)
 	var markers := Markers.new()
 	markers.board = board
 	markers.marks = _build_marks(data)

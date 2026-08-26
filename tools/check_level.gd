@@ -50,7 +50,8 @@ const DRUM_NEAR_SPAWN := 3
 
 const SQUAD_KEYS := ["scout_spawns", "lead_spawns", "gunner_spawns"]
 const ENEMY_KEYS := ["goblin_spawns", "smg_spawns", "smg_alt_spawns",
-		"novice_spawns", "bolt_spawns"]
+		"novice_spawns", "bolt_spawns", "heavy_spawns", "brute_spawns",
+		"partisan_spawns"]
 const SPAWN_KEYS := SQUAD_KEYS + ENEMY_KEYS + ["prisoner_spawns",
 		"bystander_spawns"]
 
@@ -213,6 +214,9 @@ const ENEMY_KIND_OF := {
 	"smg_alt_spawns": 5,
 	"novice_spawns": 6,
 	"bolt_spawns": 7,
+	"heavy_spawns": 15,
+	"brute_spawns": 16,
+	"partisan_spawns": 20,
 }
 
 

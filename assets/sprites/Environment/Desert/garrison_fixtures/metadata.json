@@ -47,7 +47,13 @@
       "rotations": {
         "unknown": "Garrison_washing_line.png"
       },
-      "animations": {}
+      "animations": {
+        "wind": {
+          "description": "the hanging uniforms and towels swinging and fluttering on the line in the wind, the steel posts and the wire completely still",
+          "unknown": "animations/washing_line/frame_%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "11b240f3-62e3-4f9a-a227-28093107afff",
@@ -167,7 +173,13 @@
       "rotations": {
         "unknown": "Garrison_flagpole.png"
       },
-      "animations": {}
+      "animations": {
+        "wind": {
+          "description": "the flag flapping and rippling in a steady desert wind, the steel mast and concrete base completely still",
+          "unknown": "animations/flagpole/frame_%03d.png",
+          "frames": 9
+        }
+      }
     },
     {
       "id": "b3bbd077-25fb-4819-b877-12dbd66b9f56",
@@ -211,6 +223,525 @@
       "view": "low top-down",
       "rotations": {
         "unknown": "Garrison_awning.png"
+      },
+      "animations": {
+        "wind": {
+          "description": "the camouflage netting canopy rippling and billowing gently in the wind, the steel poles and the workbench underneath completely still",
+          "unknown": "animations/awning/frame_%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "eb670819-6ebb-4cb7-99ab-b22fb2c1c00a",
+      "name": "berm",
+      "prompt": "a pushed-up earth berm bank of packed sand and gravel with timber shoring stakes, a rifle range backstop",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_berm.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "0212c9d1-c8cc-407b-8f45-8bc49a6cbb6c",
+      "name": "berm_1",
+      "prompt": "a pushed-up earth berm bank of packed sand with scattered stones and one half-buried rusted target frame",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_berm_1.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "7dadd8f8-420a-432a-b8d6-1e94a48e86f3",
+      "name": "berm_2",
+      "prompt": "a corner section of pushed-up earth berm bank, packed sand and gravel with timber shoring",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_berm_2.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "84d8b0b8-7d0c-43f5-bd12-4089c51d2ba5",
+      "name": "target",
+      "prompt": "a man-shaped steel silhouette target on a timber frame, olive painted with patched bullet holes",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_target.png"
+      },
+      "animations": {
+        "breeze": {
+          "description": "the silhouette rocks on its frame",
+          "unknown": "animations/target/frame_%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "330b8fb1-e2a5-44cc-9834-c7be7a9bc537",
+      "name": "target_1",
+      "prompt": "a leaning steel silhouette target on a timber frame, heavily pocked with patched hits and rust streaks",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_target_1.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "d89a9d3f-8093-4b30-9d57-1854cd1adb2e",
+      "name": "firing_point",
+      "prompt": "a rifle firing point: a canvas ground mat with a sand sock rest and spent brass scattered beside it",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_firing_point.png"
+      },
+      "animations": {
+        "breeze": {
+          "description": "the mat's loose corner lifts",
+          "unknown": "animations/firing_point/frame_%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "e39a1d5b-254d-4226-b085-bdce1976a462",
+      "name": "bounty_board",
+      "prompt": "a steel-framed notice board stencilled ACCORD NOTICES, pinned full of reward sheets with red wax seals",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_bounty_board.png"
+      },
+      "animations": {
+        "breeze": {
+          "description": "the reward sheets flutter (posted face only)",
+          "unknown": "animations/bounty_board/frame_%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "dabb0a16-1006-45b4-9206-c138a13e78a1",
+      "name": "bounty_board_empty",
+      "prompt": "a steel-framed notice board stencilled ACCORD NOTICES, bare cork with one faded rectangular outline where a sheet was taken down",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_bounty_board_empty.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "9c8a51b4-ea0b-4d9a-ae5f-8ccd1705a69a",
+      "name": "paymaster_desk",
+      "prompt": "a folding steel paymaster's field desk with an open ledger book, an ink stamp, a small strongbox of scrip chits and a folding stool",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_paymaster_desk.png"
+      },
+      "animations": {
+        "breeze": {
+          "description": "the ledger's pages lift and settle",
+          "unknown": "animations/paymaster_desk/frame_%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "8975e272-04c9-4439-a4ce-e971112f07f6",
+      "name": "qm_counter",
+      "prompt": "a quartermaster's issue counter: a steel counter with a rifle rack behind it, folded armour vests, webbing sets and a clipboard on a chain",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_qm_counter.png"
+      },
+      "animations": {
+        "breeze": {
+          "description": "the clipboard swings on its chain",
+          "unknown": "animations/qm_counter/frame_%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "eee9679f-8e18-45dc-81c0-7ba0ce90754a",
+      "name": "canteen_table",
+      "prompt": "a canteen barrel table with two crate stools and bottles standing on it",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_canteen_table.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "a61b5d79-87cf-4804-a91e-948ab36bcc0e",
+      "name": "spotting_scope",
+      "prompt": "a spotting scope on a low tripod beside a red range scoring flag",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_spotting_scope.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "d61e6f85-4b8f-4cb7-bff2-c66e1fe99af4",
+      "name": "signals_mast",
+      "prompt": "a tall steel lattice radio antenna mast on guy wires, standing over an olive field desk with a radio set, a headset on a hook and a border map pinned under celluloid",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_signals_mast.png"
+      },
+      "animations": {
+        "breeze": {
+          "description": "the border map flutters under celluloid",
+          "unknown": "animations/signals_mast/frame_%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "ca2c3081-8688-47a0-99a8-7c35d372321b",
+      "name": "qm_shelving",
+      "prompt": "a tall steel shelving rack of quartermaster stores: folded uniforms, helmets, boots, webbing and ammunition boxes, with a short ladder leaning against it",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_qm_shelving.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "56d9a1f7-ae62-4287-8c8a-1acf6644817d",
+      "name": "sentry_box",
+      "prompt": "a narrow one-man sentry box of corrugated steel and timber with a slit window and a lamp, sandbagged at its base",
+      "size": {
+        "width": 168,
+        "height": 168
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_sentry_box.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "0a45d159-c029-4936-9814-ab07224aa332",
+      "name": "bunk",
+      "prompt": "a steel-framed barracks bunk bed with a thin striped mattress and an olive wool blanket folded at the foot",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_bunk.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "bd5d001d-93c3-4f6e-a447-2d4da42471f1",
+      "name": "bunk_stripped",
+      "prompt": "a steel-framed barracks bunk bed stripped to its bare wire frame, mattress rolled and blanket gone",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_bunk_stripped.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "dfa63d4f-5a75-4caf-851c-c003a7a8492f",
+      "name": "footlocker",
+      "prompt": "a dented olive-drab metal footlocker with a stencilled serial number and a hasp padlock",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_footlocker.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "d5d37a75-d221-4d8d-bfd1-aa5c008fffed",
+      "name": "cot",
+      "prompt": "a canvas and steel-frame folding camp cot with a thin grey blanket draped over one end",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_cot.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "995f42c7-7c8d-4bd9-9a4a-c4593ef4f118",
+      "name": "folding_screen",
+      "prompt": "a folding canvas privacy screen on a wooden frame, patched and sun-faded",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_folding_screen.png"
+      },
+      "animations": {
+        "canvas_breathe": {
+          "description": "the canvas panel breathes in the moving air, the wooden frame completely still",
+          "unknown": "animations/folding_screen/frame_%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "b878059c-6ad2-4486-afa6-5e165e8b39b8",
+      "name": "bar_counter",
+      "prompt": "a length of rough-sawn timber bar counter with a scarred top and a brass foot rail",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_bar_counter.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "fd98e3b8-0c07-4e2c-8b45-a8ccc6859321",
+      "name": "bar_counter_end",
+      "prompt": "the end cap of a rough-sawn timber bar counter, its run terminating in a square post",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_bar_counter_end.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "06094d44-8c3f-4cc1-ae59-92ff43aadd59",
+      "name": "bottle_shelf",
+      "prompt": "a wall-mounted wooden shelf of liquor bottles behind the wet canteen's bar",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_bottle_shelf.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "07af82ee-5099-4a4e-8b16-dd7e5a53a56d",
+      "name": "files_cabinet",
+      "prompt": "a battered grey steel filing cabinet with dented drawers and a paper label slot",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_files_cabinet.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "d4b0015f-1b86-4159-a163-3a3357a01d03",
+      "name": "radio_desk",
+      "prompt": "a plain field desk holding a manpack radio set with its handset and a logbook",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_radio_desk.png"
+      },
+      "animations": {
+        "set_hum": {
+          "description": "the indicator lamp pulses with the set's hum, the desk and logbook completely still",
+          "unknown": "animations/radio_desk/frame_%03d.png",
+          "frames": 9
+        }
+      }
+    },
+    {
+      "id": "a7c361cd-3042-49df-9bdc-1bdec2da2b0a",
+      "name": "command_desk",
+      "prompt": "a sturdy olive command desk with a map case, a field telephone, and a desk lamp",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_command_desk.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "8f2bf21f-7f28-445b-83f6-8e555dae6c51",
+      "name": "map_board",
+      "prompt": "a hinged plywood map board on trestle legs, a border map pinned under acetate with grease-pencil marks",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_map_board.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "6c8d2930-2c12-4bf1-9331-8a7928105523",
+      "name": "strong_safe",
+      "prompt": "a squat riveted steel strongbox safe with a combination dial and a reinforced hasp",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_strong_safe.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "cd74d6b2-0c30-4573-b6b3-97af946750ec",
+      "name": "cell_cot",
+      "prompt": "a bare steel cot bolted to the floor of a detention cell, no mattress, just a thin grey blanket",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_cell_cot.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "c3fe87f7-c286-438f-afdf-88c9cdf34a54",
+      "name": "guard_stool",
+      "prompt": "a plain wooden three-legged guard stool worn smooth at the seat",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_guard_stool.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "c172fb8b-6aa5-44d6-854f-92cd3c4624e2",
+      "name": "wash_stand",
+      "prompt": "a galvanised steel wash stand with a tin basin, a jug, and a scrap of towel",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Garrison_wash_stand.png"
       },
       "animations": {}
     }

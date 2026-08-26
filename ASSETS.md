@@ -1,4 +1,4 @@
-# ThinShot — asset wishlist
+# SANDLINE — asset wishlist
 
 What to generate next in Pixel Lab, ordered by **gameplay unlocked per hour of
 your time**. Each entry says what it buys, the format to match, and whether it
@@ -33,7 +33,7 @@ worth more than a fourth goblin.
 | # | Asset | Buys | Code |
 |---|---|---|---|
 | ~~1~~ | ~~**Supply cache / ammo crate**~~ — **done** | Tithe caches were a *tinted scrap pile* on maps covered in scrap piles, which is why they were hard to find. Now a real crate pile that plays its own 13-frame detonation and leaves wreckage behind. | shipped |
-| 2 | **Gate** — 68×68, matching the wall set: **closed / open / blown** | The Scrapline's "gates" and Outpost 7's entrances are just *gaps in the wall*. A real gate makes them read as entrances, and unlocks **breaching**: a closed gate blocks movement until someone demolishes it, so the map has doors you have to open under fire. | small |
+| 2 | **Gate** — 68×68, matching the wall set: **closed / open / blown** — **art complete 2026-08-25** (`Walls/desert_gate/`: all three states in west/east halves, plus piers, a boom barrier and a checkpoint); the garrison hangs the open leaves already. What remains is the CODE half only: | The Scrapline's "gates" and Outpost 7's entrances are just *gaps in the wall*. A real gate makes them read as entrances, and unlocks **breaching**: a closed gate blocks movement until someone demolishes it, so the map has doors you have to open under fire. | small |
 | 3 | **Sandbags — battered / destroyed states** (the intact prop is **done**, see 5c) | The prop shipped and the Thirst's prepared positions now read as prepared. What is still missing is the *states*: two more 56×56 poses would unlock **destructible cover**, letting suppressing fire and frags degrade a position over a mission instead of leaving it identical to the end. Cover is adjacency-based, so this is a per-cell tier downgrade rather than new geometry. | medium |
 | ~~4~~ | ~~**Compound floor tilesheet**~~ — **done** | Outpost 7's interior was the same sand as the open desert, so the fortress did not read as *built*. Now weathered concrete hardstanding, drawn only inside the wall via the level's `floor_inset`, so the staging ground outside stays sand and breaching a gate puts you on concrete. | shipped |
 
@@ -209,12 +209,12 @@ function, plus three new `'j'` cells in `CampData.GARRISON` to stand them on.
 
 | # | Asset | Canvas | What it buys | Code |
 |---|---|---|---|---|
-| 23 | **Bounty board** — steel-framed notice board, stencilled ACCORD NOTICES, **two states**: `_posted` (pinned reward sheets, red wax seals) and `_empty` (bare cork, one faded outline) | 48×48 ×2 | The bounty system becomes discoverable. Ship the code rider with it: the fixture stands ALWAYS, showing the empty state with an "E - nothing posted yet" prompt, instead of not existing until the first escapee — an invisible conditional fixture is why nobody finds the feature. Takes the `bounties` hook; the duty roster goes back to being one. | small |
-| 24 | **Signals station** — steel lattice antenna mast on guy wires over an olive field desk: radio set, headset on a hook, border map pinned under celluloid | **168×168 tall single-cell** (mast rule: offset `−(bbox.bottom − 85)`) | Border interdiction gets a LANDMARK. This is a mission-giver that feeds the next operation's enemy strength, and it is currently the smallest prop in the yard. Takes the `ratline` hook in place at (10,1) — the comms corner beside the watchtower; the manpack radio stays as set dressing elsewhere. | small |
-| 25 | **Paymaster's desk** — folding steel field desk, open ledger book, ink stamp, strongbox with scrip chits, folding stool | 48×48 | The chronicle/scrip/careers ledger stops being read at a grave. The memorial cross keeps its one job. (If the read-the-ledger-at-the-memorial pairing was a deliberate tonal choice, keep the CAREERS page there and move only the money here — the hook split is one line.) | small |
-| 26 | **Quartermaster's issue counter** — steel counter, rifle rack behind it, folded armour vests, webbing sets, clipboard on a chain | 48×48 (or 168 tall shelving if it should read at distance) | The gear shop looks like a shop. The three gear slots are weapon / armour / kit, so the art should show all three. Takes the `qm` hook; the drying frame goes back to drying kit. | small |
+| ~~23~~ | ~~**Bounty board**~~ — **done 2026-08-24**: both states shipped, the `bounties` hook rides it at (8,9), and the empty face stands when nobody is posted — steel-framed notice board, stencilled ACCORD NOTICES, **two states**: `_posted` (pinned reward sheets, red wax seals) and `_empty` (bare cork, one faded outline) | 48×48 ×2 | The bounty system becomes discoverable. Ship the code rider with it: the fixture stands ALWAYS, showing the empty state with an "E - nothing posted yet" prompt, instead of not existing until the first escapee — an invisible conditional fixture is why nobody finds the feature. Takes the `bounties` hook; the duty roster goes back to being one. | small |
+| ~~24~~ | ~~**Signals station**~~ — **done 2026-08-24**: the guyed mast over the border desk stands at (12,1) and the `ratline` hook rides it; the manpack radio retired from the yard — steel lattice antenna mast on guy wires over an olive field desk: radio set, headset on a hook, border map pinned under celluloid | **168×168 tall single-cell** (mast rule: offset `−(bbox.bottom − 85)`) | Border interdiction gets a LANDMARK. This is a mission-giver that feeds the next operation's enemy strength, and it is currently the smallest prop in the yard. Takes the `ratline` hook in place at (10,1) — the comms corner beside the watchtower; the manpack radio stays as set dressing elsewhere. | small |
+| ~~25~~ | ~~**Paymaster's desk**~~ — **art shipped 2026-08-24**, standing at (6,1) as scenery: the ledger stays at the memorial, per the deliberate-pairing note — folding steel field desk, open ledger book, ink stamp, strongbox with scrip chits, folding stool | 48×48 | The chronicle/scrip/careers ledger stops being read at a grave. The memorial cross keeps its one job. (If the read-the-ledger-at-the-memorial pairing was a deliberate tonal choice, keep the CAREERS page there and move only the money here — the hook split is one line.) | small |
+| ~~26~~ | ~~**Quartermaster's issue counter**~~ — **done 2026-08-24**: stands at (11,4) beside the stores tent, the `qm` hook rides it, the kit frame dries kit again — steel counter, rifle rack behind it, folded armour vests, webbing sets, clipboard on a chain | 48×48 (or 168 tall shelving if it should read at distance) | The gear shop looks like a shop. The three gear slots are weapon / armour / kit, so the art should show all three. Takes the `qm` hook; the drying frame goes back to drying kit. | small |
 | 27 | **Surgeon's tent** — olive medical tent, red-on-white plate, cot visible through the flap | 2×2 structure (168) | The wounds rule ("coming home clears the wound - walls, stores, and a surgeon with time") gets its walls and surgeon. Decorative first; optionally a fixture that lists the walking wounded. | drop-in / small |
-| 28 | **Smugglers' cargo** — roped pack bundles, pack saddles, tarped crate stacks, 3–4 variants | 48×48 ×4 | Set dressing for the generated ratline boards: a waystation dressed in the yard's ammo crates reads as a yard. The columns' cargo is the mission's whole object; it should have its own shape. | drop-in |
+| ~~28~~ | ~~**Smugglers' cargo**~~ — **art shipped 2026-08-24** (4 variants incl. water drums in rope nets, `desert_smugglers_cargo/`); dressing the generated ratline boards with it is the open half — roped pack bundles, pack saddles, tarped crate stacks, 3–4 variants | 48×48 ×4 | Set dressing for the generated ratline boards: a waystation dressed in the yard's ammo crates reads as a yard. The columns' cargo is the mission's whole object; it should have its own shape. | drop-in |
 
 **Generation notes** (hard-won, see the prop-recipe memory): name the modern
 material in EVERY item prompt — sheet steel, angle iron, olive drab,
@@ -235,6 +235,12 @@ in place at (12,1), and the second tent holding the surgeon's ground at
 `GARRISON_PROPS` line, and point the fixture hook at the new name. The
 no-art rider shipped with the layout: the bounty board fixture now stands
 from day one with an "E - nothing posted yet" prompt.
+
+**The construction pass** — the buildings these stations move into (an HQ,
+a wet canteen, an armory, a lockup and a live-fire range, on a 22x12 yard
+with a real gate) are designed and validated in **GARRISON.md**. Tier 6's
+station props all survive into that layout; build the stations first, the
+buildings behind them second.
 
 ## If you only do three
 
@@ -319,7 +325,9 @@ borrows the rule instead of inventing a second one: `Camp._sway_props` is
 never shimmers between subpixel positions, phased off the cell so no two things
 sway in step.
 
-Two things about it are deliberate:
+Since then three of them graduated to real frames (see below), so the sway
+is now the *cheap* tier rather than the only one. Two things about it are
+deliberate:
 
 - **Only cloth is on the list** — the camo net, the colours, the laundry, the
   kit rack's hanging webbing, plus the camp's cacti. A jerrican or an ammunition
@@ -329,6 +337,83 @@ Two things about it are deliberate:
 - **The tick sits above `_process`'s player guard.** The wind belongs to the
   scene, not to the avatar, so it keeps blowing through the frames where there
   is nobody to walk around as.
+
+## Generated frames, for cloth big enough to be worth them
+
+A one-texel lean says very little on a canopy that is 256px wide, so the three
+largest cloth pieces have real animation now: the camo net, the colours and the
+laundry. `Camp.FIXTURE_ANIM_DIRS` names them, and their frames live at
+`garrison_fixtures/animations/<key>/frame_%03d.png`.
+
+**A fixture must be in exactly one of the two systems.** Anything in
+`FIXTURE_ANIM_DIRS` is deliberately *not* in `SWAYING_FIXTURES`: something both
+leaning and flapping is being moved by two clocks at once, and reads as a wobble
+rather than as wind.
+
+The plumbing is `Battle._load_frame_run` and its frame-swap tick, duplicated
+into Camp on the same grounds the prop tables already were - the two scenes are
+deliberately independent. `_load_structure_frames` falls back to a one-frame run
+of the still, which is what keeps the caller free of special cases: a structure
+with no animation simply never changes frame.
+
+That fallback turned up something worth knowing. **The huts and the rustic tent
+have shipped with a 9-frame breeze loop all along, and camp drew the still and
+never played it** - Battle animated them, Camp did not. Porting the tick got the
+buildings moving for free; only the fixtures needed new art at all.
+
+On generating the frames: PixelLab's v3 `animate_object` costs about **4
+generations** for a 9-frame run and takes ~8 minutes, not the 30-60s the tool
+advertises. Name what must hold still in the prompt ("the steel mast and
+concrete base completely still") and it honours it - the concrete plinth is
+pixel-identical across all nine frames, with only a few pixels of flicker on the
+halyard cleat. Check the **bottom** of the alpha bbox across the run before
+trusting an existing offset: all three held theirs exactly, so no anchor needed
+re-measuring, but a run that drifts there would sink or float the prop. The
+other edges move - that is the cloth, and is the point.
+
+## The particle layer, and how to look at it
+
+`Fx.gd` is a pooled, code-drawn particle system - no scene per burst, one
+`_draw()` per layer. Battle owns three instances: ground (z -1, under the
+highlights), air (z 0), and an additive glow at z 15.
+
+Particles are transient, so **the only honest way to judge a change is
+`tools/render_fx_bench.gd`**, which fires every effect onto one backdrop using
+those same three layers and saves a frame at `--at <seconds>`. Judge on the
+board's real floor tone (about `#8e7860`), not on bright sand - additive glow
+over a light background saturates to featureless white and will send you tuning
+the wrong thing. The bench's backdrop sits at z -5 for a related reason: at z 0
+it hides the ground layer, and blood spray, footsteps and scorch all silently
+read as missing.
+
+What each particle carries, beyond position and velocity:
+
+- **`rot` / `spin`** - `Shape.PIXEL` is a rotated quad, not an axis-aligned
+  rect. A field of perfectly square, perfectly aligned dots is the loudest tell
+  that a particle system was written rather than drawn, and one angle per
+  particle removes it for four cos/sin. `Shape.SHARD` is the same quad stretched
+  along its travel, for grit and splinters.
+- **`col_end`** - colour over life, not just alpha over life. A spark that cools
+  white → amber → dead ember reads as burning; the same spark holding one colour
+  and dropping alpha reads as a dot going out. **Ramp the hue, not the opacity**:
+  an end colour with alpha 0 fights the fade curve and the particle disappears
+  around a third of the way through its stated life.
+- **`turb`** - a per-particle sideways wander with a baked phase, so a plume
+  curls instead of every mote in it rising on the same straight line.
+
+Two things were tried and backed out, recorded so they are not retried blind:
+
+- **An alpha fade-in** (`smoothstep(0, bloom, k)`) to stop puffs popping in at
+  full strength. It depended on frame timing in a way that could leave dust and
+  smoke at zero alpha for their whole life - the bench showed death puff and
+  standing smoke vanishing completely. Size growth already reads as a bloom;
+  that is what does the job now.
+- **A linear `1 - k` tail** in place of `1 - k*k`, on the theory it was gentler.
+  It is *lower at every point in between*, so it dimmed everything it touched.
+
+The pool holds 512 and overflow drops the particle **closest to death**, not the
+oldest entry: `pop_front()` culled by insertion order, which during a volley
+threw away the long-lived smoke column to make room for brass.
 
 ## Kestrel canvas is modern; Thirst canvas is not
 

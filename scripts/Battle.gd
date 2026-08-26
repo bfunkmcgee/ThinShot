@@ -83,6 +83,7 @@ const DETRITUS_TEXTURES: Array[Texture2D] = [
 	preload(DETRITUS_ROOT + "Desert_detritus_5.png"),
 	preload(DETRITUS_ROOT + "Desert_detritus_6.png"),
 	preload(DETRITUS_ROOT + "Desert_detritus_7.png"),
+	preload(DETRITUS_ROOT + "Desert_detritus_8.png"),
 ]
 # What the squad leaves to mark a landing zone. The panel lies flat and is a
 # decal; the other two stand up and are props, so they are anchored on a base
@@ -137,6 +138,13 @@ const STRUCTURE_DIRS := {
 	# desert had a war in it before this squad turned up.
 	"hauler_wreck": STRUCTURE_ROOT + "/desert_vehicle_wreck/Desert_hauler_wreck",
 	"tanker_wreck": STRUCTURE_ROOT + "/desert_vehicle_wreck/Desert_tanker_wreck",
+	# The 2x2 troop transport levels park on the first mission of an operation.
+	# Its animation folder holds the door-drop run (frame_000 shut .. frame_016
+	# open) rather than a breeze loop; _spawn_structure special-cases it into
+	# _transport_strips/_transport_frames instead of _animated_props so it never
+	# joins the 7fps idle cycle every other multi-frame structure gets - it
+	# steps at its own DOOR_FPS instead, once, in _run_disembark.
+	"troop_transport": STRUCTURE_ROOT + "/troop_transport",
 }
 const STRUCTURE_FPS := 7.0  # gentle breeze loops
 
@@ -154,8 +162,8 @@ const WALL_OFFSETS := {
 # its canvas is 97px where the wall's is 68, so the numbers differ but the
 # base lands on the same front vertex.
 const WIRE_OFFSETS := {
-	"x_run": Vector2(0, -10), "y_run": Vector2(0, -10),
-	"junction": Vector2(0, -4), "cap": Vector2(0, -17),
+	"x_run": Vector2(0, -15), "y_run": Vector2(0, -13),
+	"junction": Vector2(0, -15), "cap": Vector2(0, -10),
 }
 const SANDBAG_OFFSET := Vector2(0, -22)
 # A rifle lying where its owner fell, in the direction they were last facing.
@@ -183,6 +191,19 @@ const STRUCTURE_OFFSETS := {
 	"hut_1": Vector2(0, -22), "hut_2": Vector2(0, -33),
 	"tent": Vector2(0, -33), "fortress": Vector2(0, -55),
 	"hauler_wreck": Vector2(0, -19), "tanker_wreck": Vector2(0, -23),
+	# Every shipped 2x2 structure on a 168 canvas measures out to
+	# offset_y = -(bbox_bottom - 115): hut_1 137->-22, hut_2/tent 148->-33,
+	# hauler_wreck 134->-19, tanker_wreck 138->-23, troop_transport (closed
+	# hull) 131->-16 - all six, exactly, no rounding. 115 is itself canvas/2
+	# (84) plus 15px per footprint row plus a 1px remainder
+	# (84 + 15*2 + 1 = 115); the fortress (4x4, 256 canvas, bbox 244->-55)
+	# confirms the per-row term: 256/2 + 15*4 + 1 = 189, and 244-189 = 55.
+	# Troop Transport A's first art shipped as a 3x2 footprint on its own
+	# 256 canvas with a hand-tuned -50 that never quite matched the formula
+	# (-63, for a bbox_bottom of 222); the smaller replacement is a 2x2/168
+	# structure like the huts and wrecks, so it now takes the same rule as
+	# the rest of them instead of needing its own case.
+	"troop_transport": Vector2(0, -16),
 }
 const ROCK_SCALE := Vector2(2, 2)
 
@@ -391,6 +412,21 @@ var residents: Array[Unit] = []
 var bounty_refusals := 0
 ## The posted man, once somebody has said where he is. Null until then.
 var bounty_target: Unit = null
+## The manhunt before the fight.
+##
+## A bounty does not open as a battle. The party walks into somewhere people
+## live, asks after a man, and only becomes a firefight if the asking fails -
+## so until he is found the board runs in real time and the tactical layer is
+## not merely hidden, it is not running at all. Turns do not advance, nothing
+## is scheduled, and the only order the player can give is to speak.
+var roaming := false
+const ROAM_SPEED := 168.0        # matching the camp's walk
+const ROAM_SQUASH := 0.469       # Board.TILE_H / Board.TILE_W
+const ESCORT_STANDOFF := 46.0    # how far back the two riflemen hang
+var parley_dialog: ColorRect = null
+var parley_who_label: Label = null
+var parley_file_label: Label = null
+var parley_odds_label: Label = null
 ## What became of him: "" while it is still open, then killed / surrendered /
 ## informant. This is what ends the mission rather than a body count.
 var bounty_outcome := ""
@@ -415,6 +451,46 @@ var _prop_seed := 0
 var _swaying: Array = []
 var _animated_props: Array = []
 var structure_frames: Dictionary = {}
+# The transport's door-drop is a one-shot, not a loop: its strips are built by
+# _spawn_structure exactly like any other structure's, but held here instead of
+# in _animated_props so _animate_structures's 7fps breeze loop never touches
+# them. _run_disembark steps frame 0 (door shut) through the last frame (open,
+# identical to the standing rotations/unknown.png still) once, swapping every
+# strip's texture in lockstep as it goes.
+var _transport_strips: Array = []
+var _transport_frames: Array = []
+# The door-drop plays faster than the breeze loops it is deliberately kept out
+# of - 17 frames at 10fps is ~1.7s, brisk enough that the ramp reads as a
+# mechanism dropping rather than a building breathing.
+const DOOR_FPS := 10.0
+## How long the extraction pickup's drive-in takes, horizon to parking spot.
+const PICKUP_DRIVE_TIME := 2.6
+## Set the moment the pickup is dispatched, so the ride only ever comes once.
+var _pickup_dispatched := false
+## The parked ride, kept for the departure: the sprite to board, its door
+## frames to run backwards, and the flag the finale waits on if the squad
+## somehow finishes before the wheels stop.
+var _pickup_sprite: Sprite2D = null
+var _pickup_frames: Array[Texture2D] = []
+var _pickup_parked := false
+## Latched by the first winning check_game_over on a pickup level, so the
+## departure plays exactly once and every later check just reports "over".
+var _departure_running := false
+## Every marker standing on or beside the extraction zone - the flat signal
+## panels and the staked banner stands - kept so the pickup's arrival can
+## strike them: once the ride is parked there with its ramp down, IT is the
+## marker, and the zone keeps only its green light. cell is NO_CELL for the
+## panels, which cast no shadow to clear.
+var _extract_markers: Array = []
+## Set the moment the campaign squad spawns on a first mission with a parked
+## transport (see the setup path below); _dismiss_briefing checks it and runs
+## the disembark sequence instead of going straight to the turn banner.
+var disembark_pending := false
+## Test/preview escape hatch: a harness sets this true between instantiate()
+## and add_child() and the gate above never arms - mission-1 data plays out as
+## an ordinary, already-deployed squad instead of running the ramp animation
+## the harness never asked for and has no briefing button to dismiss.
+var skip_disembark := false
 var fx_ground: Fx = null
 var fx_air: Fx = null
 var fx_glow: Fx = null
@@ -538,6 +614,9 @@ func _ready() -> void:
 	# structures and the caches did not claim, and it reads _prop_shadows to
 	# find out which cells those were.
 	_spawn_decals()
+	# The country past the boundary: towers, rock heaps and drift on the
+	# apron, after every board pass because it may never claim board ground.
+	ApronScenery.spawn(board, entities_node, level, _prop_seed)
 	board.set_prop_shadows(_prop_shadows)
 	# The muster locks the moment the operation's first story mission begins:
 	# computed through Ratline - which Game may not import - and handed over
@@ -551,11 +630,31 @@ func _ready() -> void:
 	if Game.on_bounty():
 		_spawn_detachment(int(Game.bounty.get("hunter_id", 0)))
 		_spawn_bounty_residents()
+		# Real time until he is found. _finish_setup still lays the tactical
+		# layer out underneath, so the switch is one flag rather than a second
+		# scene: everything the fight needs is already standing there.
+		roaming = true
 	elif Game.on_interdiction():
 		_spawn_detachment(int(Game.interdiction.get("leader_id", 0)))
 		_spawn_enemy_lists({})
 	else:
 		_spawn_campaign_squad()
+		# First mission of the operation, and a transport is parked on this
+		# board: the squad disembarks off its ramp before play begins instead
+		# of starting already deployed. Hide them now - _dismiss_briefing runs
+		# the sequence that brings them back - so the briefing shows an empty
+		# field and a sealed transport rather than a squad that already made it
+		# to their marks on its own.
+		if Game.mission_number() == 1 and not skip_disembark:
+			var parked_transport := false
+			for s: Dictionary in level.structures:
+				if s.kind == "troop_transport":
+					parked_transport = true
+					break
+			if parked_transport:
+				disembark_pending = true
+				for soldier in living_soldiers(Unit.TEAM_SCOUT):
+					soldier.visible = false
 	_finish_setup()
 
 
@@ -589,17 +688,26 @@ func _spawn_detachment(leader_id: int) -> void:
 ## one is scored as killing a civilian. Every one of them can be asked once.
 func _spawn_bounty_residents() -> void:
 	var spec: Dictionary = level.get("bounty", {})
+	# The people asked used to be drawn out of the rifle rack (Kind.GOBLIN
+	# with the resident flag doing all the work). Now the settlement looks
+	# like one: elders, stallkeepers and water-carriers, drawn by hash so the
+	# same campaign meets the same faces on a reload.
+	var civilian_kinds: Array = [Unit.Kind.GOBLIN_ELDER,
+			Unit.Kind.GOBLIN_KEEPER, Unit.Kind.GOBLIN_CARRIER]
 	var ordinal := 0
 	for cell: Vector2i in spec.get("residents", []):
 		if not board.in_bounds(cell) or unit_at(cell) != null:
 			continue
-		_spawn_unit(Unit.Kind.GOBLIN, cell)
+		var civ_kind: Unit.Kind = civilian_kinds[Roll.pick(Game.campaign_seed,
+				Game.current_level + 900, "resident_kind_%d" % ordinal,
+				civilian_kinds.size())]
+		_spawn_unit(civ_kind, cell)
 		var who := unit_at(cell)
 		if who == null:
 			continue
 		who.resident = true
 		who.identity = Roll.identity(Game.campaign_seed,
-				Game.current_level + 900, ordinal, Unit.Kind.GOBLIN)
+				Game.current_level + 900, ordinal, civ_kind)
 		who.set_facing_sector(Board.sector_from_to(cell, board.size / 2))
 		residents.append(who)
 		ordinal += 1
@@ -657,6 +765,19 @@ func _spawn_enemy_lists(skip: Dictionary) -> void:
 			_spawn_unit(Unit.Kind.GOBLIN_REVOLVER, spawn)
 	for spawn: Vector2i in level.get("bolt_spawns", []):
 		_spawn_unit(Unit.Kind.GOBLIN_BOLT, spawn)
+	# The belt-fed gunner arrives with the second operation, which is why no
+	# mission before index 3 lists a heavy_spawns key.
+	for spawn: Vector2i in level.get("heavy_spawns", []):
+		if not skip.has(spawn):
+			_spawn_unit(Unit.Kind.GOBLIN_MG, spawn)
+	# The brute stands where the Thirst has nowhere left to fall back to.
+	for spawn: Vector2i in level.get("brute_spawns", []):
+		if not skip.has(spawn):
+			_spawn_unit(Unit.Kind.GOBLIN_BRUTE, spawn)
+	# The Cupbearer's rifle, wherever the water that draws him is moving.
+	for spawn: Vector2i in level.get("partisan_spawns", []):
+		if not skip.has(spawn):
+			_spawn_unit(Unit.Kind.ELF_PARTISAN, spawn)
 	for spawn: Vector2i in level.get("prisoner_spawns", []):
 		_spawn_unit(Unit.Kind.CIVILIAN, spawn)
 	for spawn: Vector2i in level.get("bystander_spawns", []):
@@ -708,12 +829,26 @@ func _finish_setup() -> void:
 			level_buttons[i].pressed.connect(_go_to_level.bind(i))
 		else:
 			level_buttons[i].visible = false
+	_build_parley_dialog()
+	if roaming:
+		# Somebody has to be the man being walked, and the tactical layer would
+		# not have selected anyone until the first click. The order bar is locked
+		# here too: nothing else runs before the first turn to lock it.
+		if bounty_hunter != null and is_instance_valid(bounty_hunter):
+			select(bounty_hunter)
+		_lock_tactical_orders(true)
 	_refresh_objectives()
 	_refresh_watch_cells()  # also settles everyone into whatever cover they spawned in
 	_show_briefing()
 	# After every spawner has run, so the scenery list is the whole board.
 	_collect_occluders()
-	_schedule_returners()
+	# Not on a bounty. The man's own warband is the reinforcement a manhunt
+	# has; campaign returners walking onto it as well is the stream of
+	# arrivals _schedule_returners already refuses to make out of a warband,
+	# and on a board where the fight may never start at all it would land
+	# strangers next to people the party is trying to talk to.
+	if not Game.on_bounty():
+		_schedule_returners()
 	show_banner("%s  -  %s" % [Game.operation().name, level.name])
 	player_turn_ready_msec = Time.get_ticks_msec()
 	print("[Sandline] level %d '%s', player turn 1 begins" % [
@@ -952,6 +1087,8 @@ func _spawn_cells() -> Array:
 			+ level.get("gunner_spawns", []) + level.goblin_spawns \
 			+ level.get("smg_spawns", []) + level.get("smg_alt_spawns", []) \
 			+ level.get("novice_spawns", []) + level.get("bolt_spawns", []) \
+			+ level.get("heavy_spawns", []) + level.get("brute_spawns", []) \
+			+ level.get("partisan_spawns", []) \
 			+ level.get("prisoner_spawns", []) + level.get("bystander_spawns", [])
 
 
@@ -1077,7 +1214,10 @@ func _spawn_decals() -> void:
 	# the squad can stand on the ground they mark without the mark vanishing
 	# behind them - which a staked banner on the same cell would do.
 	for cell: Vector2i in extract:
-		_spawn_decal(SIGNAL_PANEL, cell, false)
+		_extract_markers.append({
+			"sprite": _spawn_decal(SIGNAL_PANEL, cell, false),
+			"cell": Board.NO_CELL,
+		})
 	_spawn_signal_stands(extract)
 	var placed: Array[Vector2i] = []
 	for y in board.size.y:
@@ -1099,7 +1239,10 @@ func _spawn_decals() -> void:
 			if not clear:
 				continue
 			placed.append(cell)
-			_spawn_decal(DETRITUS_TEXTURES[_prop_pick(cell, SALT_DETRITUS_PICK,
+			# decorrelate: the cell was chosen by a hash, so picking with a second
+			# salt off the SAME cell lands in a narrow band (see Board.decorrelate).
+			_spawn_decal(DETRITUS_TEXTURES[_prop_pick(
+				Board.decorrelate(cell, 3, 5), SALT_DETRITUS_PICK,
 					DETRITUS_TEXTURES.size())], cell, true)
 
 
@@ -1118,10 +1261,14 @@ func _spawn_decal(texture: Texture2D, cell: Vector2i, jitter: bool) -> Sprite2D:
 	decal.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	decal.position = board.cell_to_local(cell)
 	if jitter:
-		# Two independent hashes off one salt, so drift in x and y are not
-		# the same number and the scatter never falls on a diagonal.
-		var hx := Board._hash01(cell, _prop_seed + SALT_DETRITUS_JITTER)
-		var hy := Board._hash01(cell + Vector2i(97, 61), _prop_seed + SALT_DETRITUS_JITTER)
+		# Two INDEPENDENT hashes off one salt. This used to offset the cell by
+		# (97, 61), which does not decorrelate anything - a translation is just
+		# another constant, so hx tracked the gate exactly and flip_h was false
+		# on every decal in the game. Scaled cells are what breaks the link.
+		var hx := Board._hash01(Board.decorrelate(cell, 7, 11),
+				_prop_seed + SALT_DETRITUS_JITTER)
+		var hy := Board._hash01(Board.decorrelate(cell, 13, 17),
+				_prop_seed + SALT_DETRITUS_JITTER)
 		decal.position += Vector2(
 				roundf((hx - 0.5) * 2.0 * DETRITUS_JITTER),
 				roundf((hy - 0.5) * DETRITUS_JITTER))  # tiles are half as tall
@@ -1169,6 +1316,7 @@ func _spawn_signal_stands(extract: Dictionary) -> void:
 			var stand := _spawn_prop(SIGNAL_STAND_TEXTURES[pick],
 					SIGNAL_STAND_OFFSETS[pick], side)
 			_prop_shadows[side] = SIGNAL_STAND_SHADOW
+			_extract_markers.append({"sprite": stand, "cell": side})
 			# Cloth on stakes, so it moves with the plants and the claim stakes.
 			_swaying.append({
 				"sprite": stand,
@@ -1264,6 +1412,12 @@ func _collect_occluders() -> void:
 	_occluders.clear()
 	for child in entities_node.get_children():
 		if child is Unit:
+			continue
+		# Apron scenery fades by the apron's own dissolve, baked into its
+		# modulate - the occlusion fader adopting that alpha and walking it
+		# to 1.0 would undo the entire falloff. Nothing gameplay-visible can
+		# stand behind the apron anyway; skip it wholesale.
+		if child.has_meta("apron_scenery"):
 			continue
 		if child is Sprite2D:
 			_occluders.append({"sprite": child, "sorts_by": child})
@@ -1472,7 +1626,14 @@ func _spawn_structure(s: Dictionary) -> void:
 		root.add_child(spr)
 		entities_node.add_child(root)
 		sprites.append(spr)
-	if frames.size() > 1:
+	if s.kind == "troop_transport":
+		# One-shot, not a loop: frame 0 (door shut) is already on every strip
+		# above, and the full run is kept aside for _run_disembark to step
+		# through exactly once, on its own cue, rather than joining the 7fps
+		# breeze cycle every other multi-frame structure animates on.
+		_transport_strips = sprites
+		_transport_frames = frames
+	elif frames.size() > 1:
 		# Phase from the anchor cell so no two structures breathe in step.
 		# One entry drives every strip - the building still animates as one.
 		_animated_props.append({
@@ -1989,6 +2150,17 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		_update_hover(board.global_to_cell(get_global_mouse_position()))
 		return
+	# While the party is still walking around asking after him there is no
+	# tactical layer to drive: no turn to end, no fire mode to pick, nothing to
+	# click a tile for. Speaking is the only order, and it is the one this
+	# swallows everything else to protect - WASD is the walk here, and three of
+	# those four letters are fire-mode keys the rest of the time.
+	if roaming:
+		if parley_dialog != null and parley_dialog.visible:
+			return
+		if event.is_action_pressed("parley"):
+			_talk_to_whoever_is_there()
+		return
 	if event.is_action_pressed("end_turn"):
 		end_player_turn()
 		return
@@ -2282,6 +2454,9 @@ func _set_fire_mode(mode: FireMode) -> void:
 	fire_mode = mode
 	board.set_fire_mode(mode)
 	_sync_fire_buttons()
+	# The reach depends on the mode now, so the highlights must be rebuilt when
+	# it changes rather than only when the selection does.
+	_refresh_highlights()
 	_update_unit_panel()
 
 
@@ -2327,6 +2502,11 @@ func _update_unit_panel() -> void:
 	# conversation's pair with them, since reach changes on the same events.
 	_refresh_ability_buttons()
 	_refresh_parley_buttons()
+	# Re-applied here rather than once on entry, because the two refreshes above
+	# hand orders back out on every panel update and would quietly relight the
+	# bar behind the manhunt.
+	if roaming:
+		_lock_tactical_orders(true)
 	if state == State.PLAYER_TURN:
 		var ready := _soldiers_still_ready()
 		end_turn_button.text = "End (E)" if ready == 0 				else "End (E) - %d ready" % ready
@@ -2719,12 +2899,19 @@ func _refresh_highlights() -> void:
 		moves = board.flood_fill(selected.cell, selected.move_range,
 				_blocked_for_team.bind(selected.team))
 	var attacks: Array[Vector2i] = []
+	# Suppression reaches further than the aimed shot, so the red tiles have to
+	# grow with the mode - otherwise the gunner's own beaten zone is unclickable
+	# at exactly the distance it exists to cover. Everything downstream gates on
+	# attack_cells, so widening the set here is the whole of the feature.
+	var reach: int = selected.attack_range
+	if fire_mode == FireMode.SUPPRESS and selected.can_suppress():
+		reach = selected.suppress_range()
 	# min_rounds, not 1: the gunner's last belt round cannot be aimed at a man
 	# (his lightest trigger is a burst), and painting the tile red used to
 	# promise a shot that then failed without a sound.
 	if not selected.acted and selected.has_ammo(selected.min_rounds()):
 		for enemy in living_units(Unit.TEAM_GOBLIN):
-			if Board.manhattan(selected.cell, enemy.cell) <= selected.attack_range \
+			if Board.manhattan(selected.cell, enemy.cell) <= reach \
 					and board.can_engage(selected.cell, enemy.cell):
 				attacks.append(enemy.cell)
 	# Even with no moves or targets, the unit stays selected: overwatch (W)
@@ -3542,6 +3729,13 @@ func _refresh_objectives() -> void:
 		# The zone only lights up once it is the live objective.
 		armed = active == i
 	board.set_objectives(_cache_highlight(), extract_zone, armed)
+	# The ride home. The first refresh that sees the zone open dispatches the
+	# transport on levels that park one in their apron ("extract_pickup") -
+	# fire-and-forget, because it plays out on ground nobody can walk on while
+	# the turn carries on.
+	if armed and not _pickup_dispatched and level.has("extract_pickup"):
+		_pickup_dispatched = true
+		_run_extract_pickup()
 	# Beacons only over what still needs doing: intact caches, or the
 	# extraction zone once it is actually open.
 	var beacons: Array[Vector2] = []
@@ -4886,6 +5080,226 @@ func _try_question() -> void:
 	await _reveal_bounty_target("%s told them" % str(who.identity.get("name", "somebody")))
 
 
+## Walk the party around in real time, the way the camp does.
+##
+## Only the leader is driven - the two riflemen are lent to him, and steering
+## three bodies with one stick is worse than either. They trail him instead, far
+## enough back to stay out of the way and close enough that the board is not a
+## man alone when the talking stops.
+func _roam(delta: float) -> void:
+	if not roaming or state != State.PLAYER_TURN or briefing_panel.visible:
+		return
+	if parley_dialog != null and parley_dialog.visible:
+		return
+	if selected == null or not is_instance_valid(selected):
+		return
+	var dir := Input.get_vector("walk_left", "walk_right", "walk_up", "walk_down")
+	if dir != Vector2.ZERO:
+		var velocity := Vector2(dir.x, dir.y * ROAM_SQUASH).normalized() 				* ROAM_SPEED * Vector2(1.0, ROAM_SQUASH)
+		# One axis at a time, so a wall blocks only the axis that hits it.
+		_roam_step(selected, Vector2(velocity.x * delta, 0.0))
+		_roam_step(selected, Vector2(0.0, velocity.y * delta))
+		selected.set_facing(velocity)
+		# start_walking() resets the animation clock, so calling it every frame
+		# would hold the cycle on frame 0.
+		if selected.anim != Unit.Anim.WALK:
+			selected.start_walking()
+	else:
+		selected.stop_walking()
+	_follow_the_leader(delta)
+	_update_unit_panel()
+
+
+## One axis of one step, refused if it would leave the board, leave the
+## walkable ground, or walk through somebody. The cell is kept in step with the
+## position because every reach test in the bounty - who can be asked, who can
+## be spoken to - is still asked in cells.
+func _roam_step(who: Unit, delta_pos: Vector2) -> void:
+	if delta_pos == Vector2.ZERO:
+		return
+	var candidate := who.position + delta_pos
+	var cell := board.global_to_cell(candidate)
+	if not board.in_bounds(cell) or not board.is_walkable(cell):
+		return
+	var sitting := unit_at(cell)
+	if sitting != null and sitting != who:
+		return
+	who.position = candidate
+	who.cell = cell
+
+
+func _follow_the_leader(delta: float) -> void:
+	for scout in living_soldiers(Unit.TEAM_SCOUT):
+		if scout == selected:
+			continue
+		var gap: Vector2 = selected.position - scout.position
+		# Measured with the vertical doubled so the stand-off is a circle on the
+		# ground rather than on the screen - the tiles are half as tall as wide.
+		var flat := Vector2(gap.x, gap.y / ROAM_SQUASH)
+		if flat.length() <= ESCORT_STANDOFF:
+			scout.stop_walking()
+			continue
+		var step := gap.normalized() * ROAM_SPEED * 0.82 * delta
+		_roam_step(scout, Vector2(step.x, 0.0))
+		_roam_step(scout, Vector2(0.0, step.y))
+		scout.set_facing(gap)
+		if scout.anim != Unit.Anim.WALK:
+			scout.start_walking()
+
+
+## The manhunt is over; the board becomes a battle.
+##
+## Everything the fight needs has been standing there the whole time - this puts
+## the party back on the grid it was always on, so the first tactical turn opens
+## with people in the cells the walking left them in.
+func _end_roaming() -> void:
+	if not roaming:
+		return
+	roaming = false
+	_lock_tactical_orders(false)
+	for scout in living_soldiers(Unit.TEAM_SCOUT):
+		scout.stop_walking()
+		scout.position = board.cell_to_global(scout.cell)
+	_refresh_cover()
+	_refresh_watch_cells()
+	_refresh_highlights()
+	_update_unit_panel()
+
+
+## The moment he is found, put to the player as the three-way choice it is.
+##
+## Built in code rather than in Battle.tscn for the reason the HUD is: it is one
+## panel that says one thing, and a scene file would make it a dozen node paths
+## for Battle to hold in step. Hidden until there is a man to put in it.
+func _build_parley_dialog() -> void:
+	parley_dialog = ColorRect.new()
+	parley_dialog.color = Color(0.03, 0.025, 0.02, 0.72)
+	parley_dialog.set_anchors_preset(Control.PRESET_FULL_RECT)
+	parley_dialog.visible = false
+	parley_dialog.mouse_filter = Control.MOUSE_FILTER_STOP
+	var centre := CenterContainer.new()
+	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
+	parley_dialog.add_child(centre)
+	var box := PanelContainer.new()
+	box.add_theme_stylebox_override("panel", UiTheme.panel_style(true, UiTheme.EDGE_HOT, 22))
+	box.custom_minimum_size = Vector2(560, 0)
+	centre.add_child(box)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 10)
+	box.add_child(col)
+	var head := Label.new()
+	head.text = "FOUND HIM"
+	head.add_theme_font_size_override("font_size", UiTheme.FONT_HEAD)
+	head.add_theme_color_override("font_color", UiTheme.HEADER)
+	col.add_child(head)
+	parley_who_label = Label.new()
+	parley_who_label.add_theme_font_size_override("font_size", UiTheme.FONT_TITLE)
+	parley_who_label.add_theme_color_override("font_color", UiTheme.TEXT_BRIGHT)
+	col.add_child(parley_who_label)
+	parley_file_label = Label.new()
+	parley_file_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	parley_file_label.add_theme_font_size_override("font_size", UiTheme.FONT_BODY)
+	parley_file_label.add_theme_color_override("font_color", UiTheme.TEXT)
+	col.add_child(parley_file_label)
+	parley_odds_label = Label.new()
+	parley_odds_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	parley_odds_label.add_theme_font_size_override("font_size", UiTheme.FONT_SMALL)
+	parley_odds_label.add_theme_color_override("font_color", UiTheme.TEXT_DIM)
+	col.add_child(parley_odds_label)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	col.add_child(row)
+	var make := func(text: String) -> Button:
+		var b := Button.new()
+		b.text = text
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(b)
+		return b
+	var demand := make.call("Demand Surrender") as Button
+	var turn_him := make.call("Offer Terms") as Button
+	var shoot := make.call("Open Fire") as Button
+	demand.pressed.connect(_on_dialog_choice.bind("surrender"))
+	turn_him.pressed.connect(_on_dialog_choice.bind("informant"))
+	shoot.pressed.connect(_on_dialog_choice.bind("fight"))
+	$UI.add_child(parley_dialog)
+
+
+## He has been found. Everything the campaign knows about him, and the three
+## ways this ends - which is the whole of a bounty.
+func _open_parley_dialog() -> void:
+	if bounty_target == null or parley_dialog == null:
+		return
+	var offer: Dictionary = level.get("bounty", {}).get("offer", {})
+	parley_who_label.text = "%s of %s" % [
+			str(offer.get("name", "somebody")),
+			str(offer.get("settlement", "somewhere"))]
+	var bits: PackedStringArray = []
+	var age := int(offer.get("age", 0))
+	if age > 0:
+		bits.append("%d years old" % age)
+	var got_away := int(offer.get("survivals", 0))
+	if got_away > 0:
+		bits.append("has walked away from this squad %s" % (
+				"once" if got_away == 1 else "%d times" % got_away))
+	var grievance := str(offer.get("grievance", ""))
+	if not grievance.is_empty():
+		bits.append(grievance)
+	parley_file_label.text = ". ".join(bits) + "."
+	# The numbers, because the panel elsewhere never lies about a chance and
+	# this is the only decision in the mission that cannot be taken back.
+	var presence := _hunter_stat("presence")
+	var guile := _hunter_stat("guile")
+	var band_up := _warband_leader_alive(bounty_target.warband) 			and _band_still_standing(bounty_target)
+	var wounded := bounty_target.hp * 2 <= bounty_target.max_hp
+	parley_odds_label.text = "SURRENDER %d%%    TERMS %d%%    a refusal leaves the rifle" % [
+			Bounty.surrender_chance(presence, bounty_target.survivals, band_up,
+					wounded, _standing_for(bounty_target)),
+			Bounty.informant_chance(guile, presence, bounty_target.survivals,
+					band_up, not grievance.is_empty())]
+	parley_dialog.visible = true
+	Sfx.play("select", 0.0, 0.0)
+
+
+## Surrender and terms are put to him and may be refused. Opening fire is the
+## one that cannot fail, and is the one the game charges for elsewhere.
+func _on_dialog_choice(what: String) -> void:
+	parley_dialog.visible = false
+	if what == "fight":
+		show_banner("NO TERMS")
+		_end_roaming()
+		return
+	var before := bounty_outcome
+	_try_parley(what, bounty_target)
+	# Refused. He knows what they came for, and the board is a battle now.
+	if bounty_outcome == before:
+		_end_roaming()
+
+
+## Z, while the party is still walking. Only one thing can be on the other end
+## of it out here: somebody who lives here and has not been asked yet.
+## The order bar has nothing to offer a party still walking a settlement asking
+## after somebody, and leaving it live would let the mouse do exactly what the
+## keyboard is being stopped from doing: end a turn that is not running, or open
+## fire on a man nobody has spoken to. Ask stays lit - out here it is the only
+## order there is.
+func _lock_tactical_orders(locked: bool) -> void:
+	for b: Button in [end_turn_button, overwatch_button, burst_button,
+			auto_button, suppress_button, reload_button, face_button,
+			danger_button, demolish_button, frag_button, smoke_button,
+			ability_1_button, ability_2_button]:
+		if b != null:
+			b.disabled = locked
+	if not locked:
+		_sync_throw_buttons()
+
+
+func _talk_to_whoever_is_there() -> void:
+	if _resident_in_reach() == null:
+		Sfx.play("miss", -8.0, 0.0)
+		return
+	_try_question()
+
+
 func _residents_left() -> int:
 	var n := 0
 	for who in residents:
@@ -4959,6 +5373,11 @@ func _reveal_bounty_target(because: String) -> void:
 	_refresh_objectives()
 	_update_unit_panel()
 	await get_tree().create_timer(0.9).timeout
+	# Found is the whole of the manhunt, so the conversation opens itself. The
+	# board is still in real time behind the panel: whether it becomes a battle
+	# at all is what the next three buttons decide.
+	if roaming:
+		_open_parley_dialog()
 
 
 func _free_cell_near(cell: Vector2i) -> Vector2i:
@@ -4976,8 +5395,12 @@ func _free_cell_near(cell: Vector2i) -> Vector2i:
 ## `want` is "surrender" or "informant". Both are one attempt: a player who
 ## could ask twice would always ask twice, and the choice between them is the
 ## whole decision the mission is built around.
-func _try_parley(want: String) -> void:
-	var target := _target_in_reach()
+## `who` is the man being spoken to. It defaults to whoever is within arm's
+## reach, which is what the Z key and the action-bar button mean by it; the
+## found-him dialog passes him explicitly, because being found IS the reach -
+## the party has walked the settlement and he has come out to answer for it.
+func _try_parley(want: String, who: Unit = null) -> void:
+	var target := who if who != null else _target_in_reach()
 	if target == null or state != State.PLAYER_TURN or bounty_outcome != "":
 		return
 	var offer: Dictionary = level.get("bounty", {}).get("offer", {})
@@ -5155,6 +5578,27 @@ func _still_out_there() -> String:
 ## it happened. Somebody the squad already knew keeps his id and adds a line to
 ## his history; a stranger is minted one. Either way the next mission that meets
 ## him meets the same man.
+## Everybody the squad accounted for, struck off the standing record.
+##
+## The mirror of _remember_the_survivors(), and it runs on the same branch for
+## the same reason: a lost mission is rolled back wholesale, so a man killed on
+## a mission the squad then lost is still out there and must stay on the books.
+##
+## Only somebody the campaign already had a file on can be struck off - a
+## stranger shot on his first contact was never on the roster to leave it. That
+## is what adversary_id being 0 means, and why this reads it rather than the
+## name.
+func _settle_the_accounted_for() -> void:
+	for entry: Dictionary in roll:
+		var known := int(entry.get("adversary_id", 0))
+		if known == 0:
+			continue
+		var fate := str(entry.get("fate", ""))
+		if fate != "killed" and fate != "surrendered":
+			continue
+		Game.settle_adversary(known, fate, Game.current_level)
+
+
 func _remember_the_survivors() -> void:
 	for entry: Dictionary in roll:
 		var fate := str(entry.get("fate", ""))
@@ -5403,6 +5847,16 @@ func check_game_over() -> bool:
 				fallen_hero.death_landing_time())
 		return true
 	if _all_objectives_complete():
+		# An operation finale rides out instead of cutting to the card: the
+		# squad boards the transport that came for them and it drives off
+		# west before the after-action gets a word in. _run_extract_departure
+		# ends by calling _show_game_over itself; meanwhile every caller is
+		# told the truth, which is that the fight is over.
+		if level.has("extract_pickup"):
+			if not _departure_running:
+				_departure_running = true
+				_run_extract_departure()
+			return true
 		# Not "WIN": the victory line should not read as a scoreline. The
 		# objective is met, the contact is over, and what that cost is the
 		# after-action's business rather than this banner's.
@@ -5443,6 +5897,7 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 		_sweep_the_still_running()
 		_apply_conduct()
 		_remember_the_survivors()
+		_settle_the_accounted_for()
 		# The ledger's first half: whoever ends a won mission below half is
 		# walking wounded for the next one. Before commit_mission, so the
 		# flag is part of the state the win banks - and never on a loss,
@@ -5748,10 +6203,390 @@ func _notebook_warnings() -> Array[String]:
 
 func _dismiss_briefing() -> void:
 	briefing_panel.visible = false
+	if disembark_pending:
+		disembark_pending = false
+		_run_disembark()
+		return
 	# The turn banner has been sitting behind the briefing this whole time.
 	if state == State.PLAYER_TURN:
 		show_banner("KESTREL SQUAD'S TURN")
 		player_turn_ready_msec = Time.get_ticks_msec()
+
+
+## The ride home. Dispatched by _refresh_objectives the moment the extraction
+## zone opens, on a level whose "extract_pickup" parks the operation's troop
+## transport in the apron: it drives in from the horizon along `drive`, stops
+## on `anchor` (a 2x2 apron footprint, positioned exactly as a parked
+## structure would be), and drops its ramp with the same one-shot door art
+## the mission-1 disembark plays - the operation ends the way it began. From
+## then on the vehicle IS the extraction marker: _strike_extract_markers
+## takes the panels and banners down and the zone keeps only its green light.
+##
+## Scenery in the strict sense, like everything on the apron - the squad
+## still extracts by standing on the zone's board cells. It exists because a
+## squad told to walk to six green squares deserves to see the thing that is
+## supposedly meeting them there.
+func _run_extract_pickup() -> void:
+	var spec: Dictionary = level.extract_pickup
+	var anchor: Vector2i = spec.anchor
+	var drive: Vector2i = spec.get("drive", Vector2i(-8, 0))
+	var dir: String = STRUCTURE_DIRS.troop_transport
+	var frames := _load_frame_run(dir + "/animations/door_drop/unknown")
+	var still := _load_still(dir + "/rotations/unknown.png")
+	if frames.is_empty() and still == null:
+		# No art, no ride - but the departure may be waiting on this flag,
+		# and it must not wait for a vehicle that can never arrive.
+		_pickup_parked = true
+		return
+	# Parked exactly as _spawn_structure parks the real one: sprite centred
+	# between the anchor and front corners of the footprint, at the closed
+	# hull's measured offset. One sprite, no strips - nothing out there can
+	# walk behind it, so there is nothing to interleave.
+	var front := anchor + Vector2i.ONE
+	var stop := (board.cell_to_global(anchor) + board.cell_to_global(front)) / 2.0
+	var start := stop + Vector2(
+			(drive.x - drive.y) * Board.TILE_W / 2.0,
+			(drive.x + drive.y) * Board.TILE_H / 2.0)
+	var sprite := Sprite2D.new()
+	sprite.texture = frames[0] if not frames.is_empty() else still
+	sprite.offset = STRUCTURE_OFFSETS.troop_transport
+	sprite.scale = Vector2(2, 2)
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.position = start
+	# The apron's own dissolve, driven through: it surfaces at the horizon's
+	# fade and firms up to its parking spot's as it comes.
+	var dim := Board.APRON_SHADE
+	sprite.modulate = Color(dim, dim, dim,
+			1.0 - board.apron_fade_at(front + drive))
+	# Spawned after _collect_occluders ran, but tagged anyway: if collection
+	# ever re-runs mid-mission, the fader must not adopt the ride's fade.
+	sprite.set_meta("apron_scenery", true)
+	entities_node.add_child(sprite)
+	_pickup_sprite = sprite
+	_pickup_frames = frames
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(sprite, "position", stop, PICKUP_DRIVE_TIME) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(sprite, "modulate:a",
+			1.0 - board.apron_fade_at(front), PICKUP_DRIVE_TIME)
+	# Wheel dust off the rear of the hull while it rolls - the footstep puff
+	# is already "ground disturbed" at exactly this scale. The loop outlasts
+	# the tween by a step, so the finished signal may already have fired:
+	# await it only while it still runs, or this coroutine parks forever.
+	var rolled := 0.0
+	while rolled < PICKUP_DRIVE_TIME:
+		await get_tree().create_timer(0.14).timeout
+		rolled += 0.14
+		if is_instance_valid(sprite):
+			fx_ground.footstep(sprite.position + Vector2(-92, 12))
+	if tween.is_running():
+		await tween.finished
+	await get_tree().create_timer(0.3).timeout
+	for i in range(1, frames.size()):
+		await get_tree().create_timer(1.0 / DOOR_FPS).timeout
+		sprite.texture = frames[i]
+	Sfx.play("overwatch_set")
+	_pickup_parked = true
+	_strike_extract_markers()
+
+
+## The panels and banner stands come down once the ride is parked: the cloth
+## stops swaying at once (a struck marker is a struck marker), the art fades
+## over a beat, and the stands' contact shadows leave the floor with them.
+## The zone's green light is the Board's own drawing and stays.
+func _strike_extract_markers() -> void:
+	if _extract_markers.is_empty():
+		return
+	var striking := {}
+	for rec: Dictionary in _extract_markers:
+		striking[rec.sprite] = true
+	_swaying = _swaying.filter(func(entry: Dictionary) -> bool:
+			return not striking.has(entry.sprite))
+	# And out of the occlusion list, which would otherwise keep reading -
+	# and writing - the freed stands' alpha every settle.
+	_occluders = _occluders.filter(func(entry: Dictionary) -> bool:
+			return not striking.has(entry.sprite))
+	for rec: Dictionary in _extract_markers:
+		var sprite: Sprite2D = rec.sprite
+		if rec.cell != Board.NO_CELL:
+			_prop_shadows.erase(rec.cell)
+		if is_instance_valid(sprite):
+			var tween := create_tween()
+			tween.tween_property(sprite, "modulate:a", 0.0, 0.7)
+			tween.tween_callback(sprite.queue_free)
+	_extract_markers.clear()
+	# Repaint the floor once the fade is done, so the shadows leave with the
+	# stands rather than a beat before them.
+	await get_tree().create_timer(0.75).timeout
+	board.set_prop_shadows(_prop_shadows)
+
+
+## The operation rides home. The mirror of _run_disembark, played over the
+## end of a finale instead of the start of an opener: the squad walks to the
+## parked transport and up its ramp, the ramp closes on the same frames it
+## dropped with, the hull turns for home - the art faces east, so west is its
+## mirror - and it drives off into the haze it arrived out of. Only then does
+## the after-action card get the screen.
+##
+## Reached from check_game_over's winning branch on any level carrying
+## "extract_pickup". A finale that never ARMED an extraction (the survey camp
+## ends on a kill) dispatches the ride here and waits for it; a finale the
+## squad finished while the wheels were still turning waits the same way.
+func _run_extract_departure() -> void:
+	state = State.ANIMATING
+	board.clear_highlights()
+	print("[Sandline] departure: the squad rides out")
+	if not _pickup_dispatched:
+		_pickup_dispatched = true
+		_run_extract_pickup()
+	while not _pickup_parked:
+		await get_tree().process_frame
+	print("[Sandline] departure: ride parked")
+	await get_tree().create_timer(0.4).timeout
+
+	var spec: Dictionary = level.extract_pickup
+	var anchor: Vector2i = spec.anchor
+	# The ramp drops off the hull's south face at its east column, exactly
+	# where _transport_exit_cell reads it on the parked opener.
+	var mouth := anchor + Vector2i(1, 2)
+	var approach := Vector2i(mouth.x + 1, mouth.y)
+	var assembly := _boarding_assembly(mouth)
+	# Lead first, gunner, then the rest - the disembark's order, reversed
+	# back through the same door. Everyone alive goes aboard, including a
+	# walked-out prisoner; bystanders live here and stay.
+	var order: Array[Unit] = []
+	for unit in living_units(Unit.TEAM_SCOUT):
+		if not unit.bystander:
+			order.append(unit)
+	var remaining := [order.size()]
+	for i in order.size():
+		_board_one(order[i], assembly, approach, mouth, remaining)
+		if i < order.size() - 1:
+			await get_tree().create_timer(MOVE_STEP_TIME * 1.8).timeout
+	while remaining[0] > 0:
+		await get_tree().process_frame
+	print("[Sandline] departure: %d aboard" % order.size())
+
+	# Button up: the door frames backwards, open to shut.
+	await get_tree().create_timer(0.35).timeout
+	if is_instance_valid(_pickup_sprite):
+		for i in range(_pickup_frames.size() - 2, -1, -1):
+			await get_tree().create_timer(1.0 / DOOR_FPS).timeout
+			if is_instance_valid(_pickup_sprite):
+				_pickup_sprite.texture = _pickup_frames[i]
+		Sfx.play("overwatch_set")
+		await get_tree().create_timer(0.4).timeout
+		# Turn for home and go, sinking back into the apron's haze. EASE_IN:
+		# a vehicle pulling away gathers speed, where the arrival bled it off.
+		_pickup_sprite.flip_h = true
+		var drive: Vector2i = spec.get("drive", Vector2i(-8, 0))
+		var away: Vector2 = _pickup_sprite.position + Vector2(
+				(drive.x - drive.y) * Board.TILE_W / 2.0,
+				(drive.x + drive.y) * Board.TILE_H / 2.0)
+		var horizon := board.apron_fade_at(anchor + Vector2i.ONE + drive)
+		var tween := create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(_pickup_sprite, "position", away, PICKUP_DRIVE_TIME) \
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		tween.tween_property(_pickup_sprite, "modulate:a", 1.0 - horizon,
+				PICKUP_DRIVE_TIME)
+		# Dust now trails off the east side: the hull is mirrored, the world
+		# is not, and it is driving the other way.
+		var rolled := 0.0
+		while rolled < PICKUP_DRIVE_TIME:
+			await get_tree().create_timer(0.14).timeout
+			rolled += 0.14
+			if is_instance_valid(_pickup_sprite):
+				fx_ground.footstep(_pickup_sprite.position + Vector2(92, 12))
+		if tween.is_running():
+			await tween.finished
+	print("[Sandline] departure: gone")
+	await get_tree().create_timer(0.5).timeout
+	_show_game_over("CONTACT RESOLVED", true)
+
+
+## The walkable board cell nearest the ramp mouth: where the pathfinder hands
+## each soldier over to the scripted walk across the apron. Scanned rather
+## than derived from the zone, so a finale with no extraction zone at all
+## still funnels everyone to the same edge of the world.
+func _boarding_assembly(mouth: Vector2i) -> Vector2i:
+	var best := Board.NO_CELL
+	var best_d := 1 << 30
+	for y in board.size.y:
+		for x in board.size.x:
+			var cell := Vector2i(x, y)
+			if not board.is_walkable(cell):
+				continue
+			var d := Board.manhattan(cell, mouth)
+			if d < best_d:
+				best_d = d
+				best = cell
+	return best
+
+
+## One soldier's walk aboard: the real pathfinder as far as the assembly cell
+## - around walls and wire, exactly as a played move would go - then scripted
+## steps across ground the game has no rules for, down the approach column to
+## the ramp mouth, and a fade up the ramp. Deliberately never writes
+## unit.cell: the mission is already won, and a unit whose cell is off the
+## board is a lie to every system that ever reads one.
+func _board_one(unit: Unit, assembly: Vector2i, approach: Vector2i,
+		mouth: Vector2i, remaining: Array) -> void:
+	unit.start_walking()
+	var came_from := board.flood_fill(unit.cell, board.size.x * board.size.y,
+			_blocked_for_team.bind(unit.team))
+	var path := board.reconstruct_path(came_from, assembly)
+	path.append_array(_steps_between(assembly, approach))
+	path.append_array(_steps_between(approach, mouth))
+	var from_pos := unit.position
+	for i in path.size():
+		var step_pos := board.cell_to_global(path[i])
+		unit.set_facing(step_pos - from_pos)
+		var tween := create_tween()
+		tween.tween_property(unit, "position", step_pos, MOVE_STEP_TIME)
+		await tween.finished
+		Sfx.play("footstep_1" if i % 2 == 0 else "footstep_2")
+		fx_ground.footstep(step_pos)
+		from_pos = step_pos
+	unit.stop_walking()
+	var fade := create_tween()
+	fade.tween_property(unit, "modulate:a", 0.0, 0.22)
+	await fade.finished
+	unit.visible = false
+	remaining[0] -= 1
+
+
+## The cells from `from` toward `to`, exclusive of the start: the x leg then
+## the y leg, one cell at a time - scripted movement for apron ground the
+## pathfinder has no cells for.
+func _steps_between(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
+	var steps: Array[Vector2i] = []
+	var cell := from
+	while cell.x != to.x:
+		cell.x += signi(to.x - cell.x)
+		steps.append(cell)
+	while cell.y != to.y:
+		cell.y += signi(to.y - cell.y)
+		steps.append(cell)
+	return steps
+
+
+## The transport's rear ramp drops and the squad pours out of it before the
+## first turn plays - once, on the first mission of an operation, when Levels
+## parked one on this board (see disembark_pending, set in the setup path
+## right after _spawn_campaign_squad, and STRUCTURE_OFFSETS/_spawn_structure
+## for how the transport itself is registered and kept out of the ordinary
+## breeze-loop animation).
+func _run_disembark() -> void:
+	state = State.ANIMATING
+	# Frame 0 (door shut) is already on every strip from spawn; step 1..last
+	# once and hold there - the last frame is pixel-identical to the standing
+	# rotations/unknown.png still, so there is nothing to swap back afterwards.
+	for frame_idx in range(1, _transport_frames.size()):
+		await get_tree().create_timer(1.0 / DOOR_FPS).timeout
+		for strip: Sprite2D in _transport_strips:
+			strip.texture = _transport_frames[frame_idx]
+	await get_tree().create_timer(1.0 / DOOR_FPS).timeout  # a beat before anyone moves
+
+	# Lead first, then the gunner, then the rest - the same order
+	# _spawn_campaign_squad deploys in. Read off who actually stands at each
+	# cell rather than the level's raw spawn lists: the ratline's muster or a
+	# soldier resting off a bounty can leave a spawn cell empty, and a short
+	# squad should just be fewer people walking out, not a null reference.
+	var order: Array[Unit] = []
+	for cell: Vector2i in level.get("lead_spawns", []):
+		var u := unit_at(cell)
+		if u != null:
+			order.append(u)
+	for cell: Vector2i in level.get("gunner_spawns", []):
+		var u := unit_at(cell)
+		if u != null:
+			order.append(u)
+	for cell: Vector2i in level.scout_spawns:
+		var u := unit_at(cell)
+		if u != null:
+			order.append(u)
+
+	var exit_cell := _transport_exit_cell()
+	# Staggered rather than queued: each walk runs concurrently (fired without
+	# awaiting it directly) and `remaining` is what the loop below waits on, so
+	# the squad pours out of the ramp instead of filing through it one at a
+	# time. The stagger itself is short enough that the next one is moving
+	# before the last has cleared more than a step or two.
+	var remaining := [order.size()]
+	for i in order.size():
+		_disembark_one(order[i], exit_cell, order[i].cell, remaining)
+		if i < order.size() - 1:
+			await get_tree().create_timer(MOVE_STEP_TIME * 1.5).timeout
+	while remaining[0] > 0:
+		await get_tree().process_frame
+
+	state = State.PLAYER_TURN
+	show_banner("KESTREL SQUAD'S TURN")
+	player_turn_ready_msec = Time.get_ticks_msec()
+
+
+## One soldier's walk off the ramp: teleported to the exit cell (and made
+## visible - _spawn_campaign_squad's hand-off left it hidden at its spawn
+## cell), then walked there with do_move's own per-step tween/facing/footstep
+## pattern (~2916) but none of its turn or AP bookkeeping - this runs before
+## turn 1 even opens, so there is no move to undo and no watch to refresh.
+## `remaining` is the shared countdown _run_disembark blocks on; the caller
+## does not await this directly; that is what lets soldiers overlap.
+func _disembark_one(unit: Unit, exit_cell: Vector2i, dest: Vector2i,
+		remaining: Array) -> void:
+	unit.cell = exit_cell
+	unit.position = board.cell_to_global(exit_cell)
+	unit.visible = true
+	var came_from := board.flood_fill(exit_cell, board.size.x * board.size.y,
+			_blocked_for_team.bind(unit.team))
+	var path := board.reconstruct_path(came_from, dest)
+	unit.start_walking()
+	var from_pos := unit.position
+	for step_index in path.size():
+		var step: Vector2i = path[step_index]
+		var step_pos := board.cell_to_global(step)
+		unit.set_facing(step_pos - from_pos)
+		var tween := create_tween()
+		tween.tween_property(unit, "position", step_pos, MOVE_STEP_TIME)
+		await tween.finished
+		Sfx.play("footstep_1" if step_index % 2 == 0 else "footstep_2")
+		fx_ground.footstep(step_pos)
+		unit.cell = step
+		from_pos = step_pos
+	unit.stop_walking()
+	unit.cell = dest  # exact, even if the path above was empty (already there)
+	remaining[0] -= 1
+
+
+## The cell the ramp actually lets a soldier stand on. Troop Transport A faces
+## east with its ramp dropping off its own SOUTH face, so the exit is the row
+## just south of the footprint (y = anchor.y + size.y), scanned from the
+## footprint's east column toward its west - the ramp sits slightly west of
+## the south-east corner, not dead centre, so the east column is tried first
+## and is the one that hits for every shipped anchor. Falls back to the old
+## east-edge scan (walking the south-east corner up a row at a time) if the
+## south row turns out to be blocked entirely, so a level that ever crowds
+## that ground still resolves to somewhere walkable instead of NO_CELL.
+func _transport_exit_cell() -> Vector2i:
+	for s: Dictionary in level.structures:
+		if s.kind != "troop_transport":
+			continue
+		var anchor: Vector2i = s.anchor
+		var size: Vector2i = s.size
+		var south_row := anchor.y + size.y
+		for dx in range(size.x - 1, -1, -1):
+			var candidate := Vector2i(anchor.x + dx, south_row)
+			if board.in_bounds(candidate) and board.is_walkable(candidate):
+				return candidate
+		var south_east: Vector2i = anchor + size - Vector2i.ONE
+		for dy in size.y:
+			var candidate := Vector2i(south_east.x + 1, south_east.y - dy)
+			if board.in_bounds(candidate) and board.is_walkable(candidate):
+				return candidate
+	push_error("[Sandline] troop_transport has no walkable exit cell")
+	return Board.NO_CELL
 
 
 ## Leave the battlefield. Promotions earned here are spent back at camp, face
@@ -5804,6 +6639,7 @@ const SHAKE_OFFSETS: Array[Vector2] = [
 ## fighting each other over the same property.
 func _process(delta: float) -> void:
 	camera.offset = _cam_lean + _cam_shake
+	_roam(delta)
 	_watch_for_occlusion(delta)
 	_sway_plants()
 	_animate_structures()

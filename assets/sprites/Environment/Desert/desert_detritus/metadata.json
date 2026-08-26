@@ -17,9 +17,9 @@
       "animations": {}
     },
     {
-      "id": "10981b0a-1633-46c2-a139-6424e71f0ee7",
+      "id": "a0f92c70-be28-4fed-80ce-3cbb175accca",
       "name": null,
-      "prompt": "a black scorch burn mark with a soot ring seared into pale sand, flat stain",
+      "prompt": "a faded soot scorch stain burned flat into the sand, dark grey at the centre fading softly to nothing at the edges, completely flat with no rim and no depth",
       "size": {
         "width": 48,
         "height": 48
@@ -118,6 +118,21 @@
       "view": "low top-down",
       "rotations": {
         "unknown": "Desert_detritus_7.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "71f009bf-4bf4-4f70-9a35-c5d4ee7eab50",
+      "name": null,
+      "prompt": "a wide vehicle track of churned flat sand with a broad tread pattern",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "Desert_detritus_8.png"
       },
       "animations": {}
     }

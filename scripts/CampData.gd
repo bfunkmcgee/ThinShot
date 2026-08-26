@@ -12,7 +12,7 @@ class_name CampData
 ## Both are shaped so Board.set_level() can eat them directly: that function
 ## reads only `size`, `map` and `structures`, and everything else has a
 ## default. Same map legend as Levels:
-##   '.' open sand   '#' rock   'W' mud-brick wall   'j' scrap   'p' plant
+##   '.' open sand  '#' rock  'W' mud-brick wall  'j' scrap  'p' plant  '=' wire
 ##
 ## A 'j' cell named in a camp's optional `props` table is drawn as that fixture
 ## instead of a scrap pile. The char is doing real work either way - it is what
@@ -22,7 +22,7 @@ class_name CampData
 ## The base's furniture, keyed by the cell it stands on. Every one of these is
 ## a 'j' in the map below.
 ##
-## Twelve of them, and the garrison has no scrap piles left at all - which was
+## Seventeen of them, and the garrison has no scrap piles left at all - which was
 ## the point. Home used to be a walled yard with eight junk heaps in it, two of
 ## them wrecked car doors, and it read as a scrapheap the squad happened to
 ## sleep in rather than as anywhere the Accord posted them. Nothing here is
@@ -40,79 +40,138 @@ class_name CampData
 ## come from" needs the ground itself to answer, so like goes with like:
 ##
 ##   NW - COMMAND: the command billet, the colours, the briefing table with
-##        its map crates. Deployment happens here. One cell (6,1) is held
-##        open for the paymaster's desk (ASSETS.md #25).
-##   NE - SIGNALS: the field radio (the ratline net - interdiction missions)
-##        under the watchtower. The Tier 6 signals station (#24) replaces the
-##        radio on its own cell when its art lands.
+##        its map crates, and the paymaster's desk (#25) - scenery until the
+##        money moves off the memorial. Deployment happens here.
+##   NE - SIGNALS: the signals station (#24) under the watchtower - a guyed
+##        lattice mast over the border desk. The ratline hook rides it.
 ##   E  - LOGISTICS: the stores tent with the stores spot at its door, water
-##        tank, ammo, fuel. Cell (11,4) is held open for the quartermaster's
-##        issue counter (#26); until then the QM works off the kit frame.
+##        tank, ammo, fuel, and the quartermaster's issue counter (#26) at
+##        the tent's side - the QM hook rides it; the kit frame dries kit.
 ##   W  - THE MEMORIAL: the cross alone in a planted row. Nothing else stands
 ##        near it, which is the point.
 ##   SW - DOMESTIC: the squad billet, the awning's shade, washing, the stove,
 ##        the kit frame. Where the soldiers idle.
-##   S  - PARADE: the duty-roster/bounty board and the levy post, on the open
-##        ground the player walks first. Cell (8,9) is held open for the
-##        dedicated bounty board (#23).
+##   S  - PARADE: the duty roster, the Accord's own bounty board (#23)
+##        beside it - posted sheets or bare cork by the campaign's state -
+##        and the levy post, on the open ground the player walks first.
 ##   SE - the second tent stands where the surgeon's tent (#27) will: the
 ##        wounds rule already promises "a surgeon with time", and the ground
 ##        now says roughly where he works.
 ##
-## The held-open cells are '.' (not 'j') so nothing renders as a scrap pile in
-## the meantime - the garrison's no-junk rule holds. Flipping each to 'j' plus
-## one GARRISON_PROPS line is the whole map edit when the art arrives.
+## The Tier 6 stands landed 2026-08-24 exactly as reserved: each held-open
+## cell flipped to 'j', one props line each, and the hook pointed at the new
+## name - which is what reserving them was for.
 const GARRISON_PROPS := {
-	# NW - command
-	Vector2i(4, 1): "flagpole",
-	# NE - signals (the ratline's mission-giver rides the radio for now)
-	Vector2i(12, 1): "field_radio",
-	Vector2i(13, 1): "watchtower",
-	# W - the memorial, alone
-	Vector2i(2, 4): "memorial_cross",
-	# E - logistics
-	Vector2i(14, 4): "water_tank",
-	Vector2i(12, 6): "ammo_box",
-	Vector2i(13, 6): "jerry_cans",
-	# W edge of the domestic quarter - the Crown's own water
-	Vector2i(2, 6): "water_bowser",
+	# N wall, command: the colours, then the signals mast at the HQ's east
+	# gable - the two mission sources ten steps apart.
+	Vector2i(6, 1): "flagpole",
+	Vector2i(12, 1): "signals_mast",
+	# NE - the range's backstop: a berm bank against the north wall, so a
+	# round that misses leaves over empty desert. Targets in front of it,
+	# firing points three rows south, the flag flying at the entry because
+	# the range is live whenever the yard is.
+	Vector2i(13, 1): "berm", Vector2i(14, 1): "berm_1",
+	Vector2i(15, 1): "berm_2", Vector2i(16, 1): "berm",
+	Vector2i(17, 1): "berm_1", Vector2i(18, 1): "berm_2",
+	Vector2i(19, 1): "berm",
+	Vector2i(14, 2): "target", Vector2i(16, 2): "target_1",
+	Vector2i(18, 2): "target",
+	Vector2i(12, 5): "range_flag",
+	Vector2i(14, 5): "firing_point", Vector2i(16, 5): "firing_point",
+	Vector2i(18, 5): "firing_point",
+	# Command row: the paymaster beside the HQ. Scenery still - the ledger
+	# stays at the memorial, deliberately.
+	Vector2i(11, 2): "paymaster_desk",
+	# Parade north edge, facing the HQ porch: the duty roster and the
+	# Accord's board, with the levy post working the same row.
+	Vector2i(7, 5): "notice_board",
+	Vector2i(9, 5): "bounty_board",
+	# W - billets and the domestic quarter.
+	Vector2i(3, 2): "washing_line",
 	Vector2i(4, 6): "kit_frame",
-	# SW - domestic. The awning is 256px of canopy on a 128px cell - two
-	# tiles wide on a one-tile stand - so it keeps clear cells either side.
-	Vector2i(4, 8): "awning",
-	Vector2i(3, 10): "washing_line",
-	Vector2i(5, 10): "field_stove",
-	# S - parade
-	Vector2i(7, 9): "notice_board",
-	# SE
-	Vector2i(14, 9): "cleaning_bench",
+	Vector2i(7, 7): "water_bowser",
+	Vector2i(6, 9): "field_stove",
+	# E - the armory's yard: ammunition and cleaning at its east wall, the
+	# issue counter at its west window.
+	Vector2i(15, 6): "ammo_box",
+	Vector2i(16, 6): "cleaning_bench",
+	Vector2i(12, 7): "qm_counter",
+	# SE - motor pool inside the gate, the tank where the trucks fill.
+	Vector2i(19, 7): "water_tank",
+	Vector2i(12, 8): "awning",
+	# Beside the tank, at the fill point - and OFF the corridor: at (13,9)
+	# they sealed the armory's south door into a pocket the validator caught.
+	Vector2i(19, 8): "jerry_cans",
+	# The tower watches the one gate. It is a tall prop on the FRONT row -
+	# the known cost is that it can occlude a walker two rows behind it;
+	# Battle's occlusion fade is the fix if it bothers.
+	Vector2i(12, 12): "watchtower",
+	# SW - the memorial: alone, in a planted row, beside the way out.
+	Vector2i(3, 12): "memorial_cross",
 }
 
 const GARRISON := {
-	"size": Vector2i(16, 12),
+	"size": Vector2i(24, 14),
 	"map": [
-		"WWWWWWWWWWWWWWWW",
-		"W...j.......jj.W",
-		"W..............W",
-		"W..............W",
-		"W.j...........jW",
-		"Wp.p...........W",
-		"W.j.j.......jj.W",
-		"W..............W",
-		"W...j..........W",
-		"W......j......jW",
-		"W..j.j........pW",
-		"WWWWWWWWWWWWWWWW",
+		"WWWWWWWWWWWWWWWWWWWWWWWW",
+		"W.....j.....jjjjjjjj...W",
+		"W..j.......j..j.j.j....W",
+		"W......................W",
+		"W......................W",
+		"W......j.j..j.j.j.j....W",
+		"W...j..........jj......W",
+		"W......j....j......j...W",
+		"W...........j......j...W",
+		"W.....j................W",
+		"W......................W",
+		"W......................W",
+		"W.pjp.......j..........W",
+		"WWWWWWWWW..WWWWWWWWWWWWW",
 	],
 	"props": GARRISON_PROPS,
+	# The two wall cells flanking the gateway carry the gate art: piers with
+	# their steel leaves standing OPEN against the wall, so the gap reads as
+	# a way through that somebody could close, which is what a gate is.
+	"gate": {
+		Vector2i(8, 13): "open_west",
+		Vector2i(11, 13): "open_east",
+	},
+	# The way out. A track from the gate mouth south into the desert, kinking
+	# west as it goes so it reads as ground somebody drives rather than a
+	# ruler line, dissolving with the apron before it can claim a horizon.
+	"apron_roads": [
+		Vector2i(10, 14), Vector2i(10, 15), Vector2i(10, 16), Vector2i(10, 17),
+		Vector2i(9, 17), Vector2i(9, 18), Vector2i(9, 19), Vector2i(9, 20),
+		Vector2i(8, 20), Vector2i(8, 21), Vector2i(8, 22), Vector2i(8, 23),
+	],
+	# The perimeter the wall implies: watchposts past the corners with clear
+	# lines on the approaches, and one south of the gate watching the road in.
+	# All ring 3 - close enough to read, far enough to be OUTSIDE.
+	"apron_props": [
+		{"kind": "watchtower", "cell": Vector2i(26, 2)},
+		{"kind": "watchtower", "cell": Vector2i(-3, 9)},
+		{"kind": "watchtower", "cell": Vector2i(15, 16)},
+	],
 	"structures": [
-		# The command billet and the squad billet anchor their quarters; the
-		# stores tent fronts the logistics yard; the second tent holds the
-		# surgeon's ground until his own art lands.
+		# The billet row holds the west wall; the five buildings of the
+		# construction pass (GARRISON.md) hold their quarters. The gate is
+		# the two open cells in the south wall - somewhere to stand, not
+		# somewhere to leave; its art (#2) hangs on the flanking wall cells
+		# when it lands.
 		{"kind": "hut_1", "anchor": Vector2i(1, 1), "size": Vector2i(2, 2)},
-		{"kind": "hut_2", "anchor": Vector2i(1, 7), "size": Vector2i(2, 2)},
-		{"kind": "stores_tent", "anchor": Vector2i(12, 4), "size": Vector2i(2, 2)},
-		{"kind": "field_tent", "anchor": Vector2i(12, 8), "size": Vector2i(2, 2)},
+		{"kind": "hut_2", "anchor": Vector2i(1, 4), "size": Vector2i(2, 2)},
+		{"kind": "field_tent", "anchor": Vector2i(1, 7), "size": Vector2i(2, 2)},
+		{"kind": "hq", "anchor": Vector2i(8, 1), "size": Vector2i(2, 2)},
+		{"kind": "surgeon_tent", "anchor": Vector2i(4, 3), "size": Vector2i(2, 2)},
+		{"kind": "canteen", "anchor": Vector2i(4, 8), "size": Vector2i(2, 2)},
+		{"kind": "armory", "anchor": Vector2i(13, 6), "size": Vector2i(2, 2)},
+		# Parked clear of every wall: a 168px structure's art overhangs its
+		# footprint, so anything it parks against it parks through.
+		{"kind": "water_truck", "anchor": Vector2i(19, 10), "size": Vector2i(2, 2)},
+		# The carrier that hauls the squad out on every operation, parked in
+		# the motor row beside the bowser between runs - seen, not crossed.
+		{"kind": "troop_transport", "anchor": Vector2i(21, 10), "size": Vector2i(2, 2)},
+		{"kind": "lockup", "anchor": Vector2i(17, 7), "size": Vector2i(2, 2)},
 	],
 	"zone_seed": 91,
 	"shade_seed": 17,
@@ -141,22 +200,27 @@ const FIELD := {
 }
 
 const GARRISON_SPOTS := {
-	# The player wakes mid-yard, a short walk from every quarter.
-	"player": Vector2i(7, 6),
-	# The briefing table sits in the command quarter, flag behind it.
-	"briefing": Vector2i(5, 2),
-	# The stores spot is the stores tent's DOOR, not a lone crate in a field.
-	"stores": Vector2i(11, 5),
-	# The levy post works the parade ground. Only the garrison posts one.
-	"recruit": Vector2i(10, 9),
-	# The squad idles where people would: two by the billets, one on the
-	# parade, one by the stores, two loose in the yard.
+	# The player wakes mid-parade, the yard's crossroads.
+	"player": Vector2i(9, 6),
+	# The briefing happens standing up on the HQ porch - the map is pinned
+	# to the porch wall - with the map crates flanking.
+	"briefing": Vector2i(9, 3),
+	# The stores spot is the armory's south door; the tent it used to be is
+	# retired from the garrison.
+	"stores": Vector2i(14, 8),
+	# The levy works the boards' row on the parade edge: sign on where the
+	# duty roster and the Accord's notices already are.
+	"recruit": Vector2i(8, 5),
+	# Two by the canteen and billets, one on the parade, one at the firing
+	# line, one by the motor pool, one loose.
 	"squad": [
-		Vector2i(5, 4), Vector2i(8, 3), Vector2i(6, 7),
-		Vector2i(9, 7), Vector2i(10, 8), Vector2i(8, 10),
+		Vector2i(5, 5), Vector2i(10, 4), Vector2i(6, 8),
+		Vector2i(17, 5), Vector2i(10, 9), Vector2i(3, 5),
 	],
-	# Map crates flanking the briefing table.
-	"dressing": [Vector2i(4, 2), Vector2i(6, 2)],
+	# Two cells clear of the table on each side. Flanking it at one-cell
+	# spacing against the HQ facade mashed pile-table-pile-paymaster into
+	# one clipping jumble, with a crate pile standing in the HQ's doorway.
+	"dressing": [Vector2i(7, 3), Vector2i(12, 3)],
 }
 
 const FIELD_SPOTS := {
@@ -170,6 +234,185 @@ const FIELD_SPOTS := {
 	],
 	"dressing": [Vector2i(6, 4)],
 }
+
+
+## The rooms behind the garrison's doors (INTERIORS.md). Camp-shaped maps:
+## Board.set_level eats them, and the walk mode, prompts, fade and breeze
+## loops come along for free. Stage one furnishes them from shipped art
+## only - the stand-ins are named for what the cell WILL be, so the
+## furniture batch replaces textures without touching a map.
+##
+## Jail bars are '=': stops movement, seen through, which is what bars are.
+const INTERIORS := {
+	"hq": {
+		"size": Vector2i(10, 7),
+		"map": [
+			"WWWWWWWWWW",
+			"W.j..j..jW",
+			"W........W",
+			"Wj..jj..jW",
+			"W........W",
+			"W........W",
+			"WWWW..WWWW",
+		],
+		"props": {
+			Vector2i(2, 1): "files_cabinet", Vector2i(5, 1): "radio_desk",
+			Vector2i(8, 1): "map_board",
+			Vector2i(1, 3): "command_desk", Vector2i(4, 3): "map_table",
+			Vector2i(5, 3): "map_crates", Vector2i(8, 3): "strong_safe",
+		},
+		"spawn": Vector2i(4, 5),
+		"doors": [Vector2i(4, 6), Vector2i(5, 6)],
+		"floor": "compound",
+		"label": "the command post",
+	},
+	"canteen": {
+		"size": Vector2i(10, 7),
+		"map": [
+			"WWWWWWWWWW",
+			"Wjjj..j.jW",
+			"W........W",
+			"W..j..j..W",
+			"W........W",
+			"W.j....j.W",
+			"WWWW..WWWW",
+		],
+		"props": {
+			Vector2i(1, 1): "bar_counter", Vector2i(2, 1): "bar_counter",
+			Vector2i(3, 1): "bar_counter_end", Vector2i(6, 1): "bottle_shelf",
+			Vector2i(8, 1): "field_stove",
+			Vector2i(3, 3): "canteen_table", Vector2i(6, 3): "canteen_table",
+			Vector2i(2, 5): "canteen_table", Vector2i(7, 5): "canteen_table",
+		},
+		"spawn": Vector2i(4, 5),
+		"doors": [Vector2i(4, 6), Vector2i(5, 6)],
+		"floor": "desert",
+		"label": "the wet canteen",
+	},
+	"armory": {
+		"size": Vector2i(9, 6),
+		"map": [
+			"WWWWWWWWW",
+			"Wjj.j.jjW",
+			"W.......W",
+			"Wj.....jW",
+			"W.......W",
+			"WWW..WWWW",
+		],
+		"props": {
+			Vector2i(1, 1): "rifle_rack", Vector2i(2, 1): "rifle_rack",
+			Vector2i(4, 1): "qm_shelving",
+			Vector2i(6, 1): "ammo_box", Vector2i(7, 1): "ammo_box",
+			Vector2i(1, 3): "qm_counter", Vector2i(7, 3): "cleaning_bench",
+		},
+		"spawn": Vector2i(3, 4),
+		"doors": [Vector2i(3, 5), Vector2i(4, 5)],
+		"floor": "compound",
+		"label": "the armory",
+	},
+	"lockup": {
+		"size": Vector2i(9, 7),
+		"map": [
+			"WWWWWWWWW",
+			"Wj..W..jW",
+			"W...W...W",
+			"W===W===W",
+			"W.......W",
+			"Wj.....jW",
+			"WWW..WWWW",
+		],
+		"props": {
+			Vector2i(1, 1): "cell_cot", Vector2i(7, 1): "cell_cot",
+			Vector2i(1, 5): "guard_stool", Vector2i(7, 5): "notice_board",
+		},
+		"spawn": Vector2i(3, 5),
+		"doors": [Vector2i(3, 6), Vector2i(4, 6)],
+		"floor": "compound",
+		"label": "the lockup",
+	},
+	"surgeon": {
+		"size": Vector2i(9, 6),
+		"map": [
+			"WWWWWWWWW",
+			"Wj.j.j.jW",
+			"W.......W",
+			"Wj.....jW",
+			"W.......W",
+			"WWW..WWWW",
+		],
+		"props": {
+			Vector2i(1, 1): "cot", Vector2i(3, 1): "cot", Vector2i(5, 1): "cot",
+			Vector2i(7, 1): "medical_chest",
+			Vector2i(1, 3): "wash_stand", Vector2i(7, 3): "folding_screen",
+		},
+		"spawn": Vector2i(3, 4),
+		"doors": [Vector2i(3, 5), Vector2i(4, 5)],
+		"floor": "desert",
+		"label": "the surgeon's tent",
+	},
+	"billet": {
+		"size": Vector2i(9, 6),
+		"map": [
+			"WWWWWWWWW",
+			"Wj.j.j.jW",
+			"W.......W",
+			"Wjj....jW",
+			"W.......W",
+			"WWW..WWWW",
+		],
+		"props": {
+			Vector2i(1, 1): "bunk", Vector2i(3, 1): "bunk",
+			Vector2i(5, 1): "bunk", Vector2i(7, 1): "bunk",
+			Vector2i(1, 3): "footlocker", Vector2i(2, 3): "footlocker",
+			Vector2i(7, 3): "field_stove",
+		},
+		"spawn": Vector2i(3, 4),
+		"doors": [Vector2i(3, 5), Vector2i(4, 5)],
+		"floor": "desert",
+		"label": "the billet",
+	},
+}
+
+## Which yard cell opens which room. All three billets share one map: the
+## rooms are the same because the beds are; who sleeps in which bunk is the
+## roster business, not the map layout.
+const GARRISON_DOORS := {
+	Vector2i(8, 3): "hq",
+	Vector2i(4, 10): "canteen",
+	Vector2i(13, 8): "armory",
+	Vector2i(17, 9): "lockup",
+	Vector2i(4, 5): "surgeon",
+	Vector2i(1, 3): "billet",
+	Vector2i(1, 6): "billet",
+	Vector2i(1, 9): "billet",
+}
+
+
+## An interior, dressed as a camp map. Same shape map_for returns, so
+## Board.set_level and every Camp spawner take it without a special case.
+static func interior_for(name: String) -> Dictionary:
+	var base: Dictionary = INTERIORS[name].duplicate(true)
+	base["structures"] = []
+	base["zone_seed"] = 91
+	base["shade_seed"] = 17
+	base["zone_thresholds"] = [-0.30, 0.10]
+	base["prop_seed"] = 91 * 977 + 101
+	# A room is INSIDE somewhere: no desert dissolving around its walls.
+	base["apron"] = false
+	return base
+
+
+## Interior spots: a player and nothing else. The sentinel cells are what
+## _build_fixtures and the validator read as "this camp has no such station".
+static func interior_spots(name: String) -> Dictionary:
+	return {
+		"player": Vector2i(INTERIORS[name].spawn),
+		"briefing": Vector2i(-1, -1),
+		"stores": Vector2i(-1, -1),
+		"recruit": Vector2i(-1, -1),
+		"squad": [],
+		"dressing": [],
+	}
 
 
 ## The map for whichever camp the squad is in, with the biome's floor
@@ -239,7 +482,9 @@ static func _validate_one(camp: Dictionary, spots: Dictionary, label: String) ->
 		ok = _check(row.length() == grid.x,
 				"%s: row '%s' wrong length" % [label, row]) and ok
 		for ch in row:
-			ok = _check(".#Wjp".contains(ch),
+			# '=' joined the legend with the detention pen: wire, exactly the
+			# battle rule - stops movement, no cover, no LOS effect.
+			ok = _check(".#Wjp=".contains(ch),
 					"%s: illegal char '%s'" % [label, ch]) and ok
 	if not ok:
 		return false
@@ -247,10 +492,18 @@ static func _validate_one(camp: Dictionary, spots: Dictionary, label: String) ->
 	ok = _check(walkable(camp, start), "%s: player spawn %s not walkable" % [label, start]) and ok
 	var reach := _reachable(camp, start)
 	var seen := {start: true}
-	var fixtures: Array[Vector2i] = [spots.briefing, spots.stores]
+	# Sentinel (-1,-1) means "this camp has no such station" - the interiors
+	# carry a player and a door and nothing else.
+	var fixtures: Array[Vector2i] = []
+	for named: Vector2i in [Vector2i(spots.briefing), Vector2i(spots.stores)]:
+		if named.x >= 0:
+			fixtures.append(named)
 	if Vector2i(spots.recruit).x >= 0:
 		fixtures.append(spots.recruit)
 	fixtures.append_array(spots.squad)
+	# An interior's doors are stations too: standing in one must be possible.
+	for door: Vector2i in camp.get("doors", []):
+		fixtures.append(door)
 	for cell: Vector2i in fixtures:
 		ok = _check(walkable(camp, cell),
 				"%s: fixture %s not walkable" % [label, cell]) and ok
@@ -259,9 +512,12 @@ static func _validate_one(camp: Dictionary, spots: Dictionary, label: String) ->
 		ok = _check(not seen.has(cell),
 				"%s: two fixtures share %s" % [label, cell]) and ok
 		seen[cell] = true
-	# The squad has to have somewhere to stand for every slot a level can field.
-	ok = _check((spots.squad as Array).size() >= 5,
-			"%s: only %d squad spots" % [label, (spots.squad as Array).size()]) and ok
+	# The squad has to have somewhere to stand for every slot a level can
+	# field - in a camp that hosts the squad at all. Interiors host one
+	# walker and a door.
+	if not camp.has("doors"):
+		ok = _check((spots.squad as Array).size() >= 5,
+				"%s: only %d squad spots" % [label, (spots.squad as Array).size()]) and ok
 	return ok
 
 
@@ -270,4 +526,11 @@ static func _validate_one(camp: Dictionary, spots: Dictionary, label: String) ->
 static func validate() -> void:
 	var ok := _validate_one(GARRISON, GARRISON_SPOTS, "garrison")
 	ok = _validate_one(FIELD, FIELD_SPOTS, "field camp") and ok
+	for name: String in INTERIORS:
+		ok = _validate_one(interior_for(name), interior_spots(name),
+				"interior '%s'" % name) and ok
+	# Every yard door must stand on open garrison ground.
+	for cell: Vector2i in GARRISON_DOORS:
+		ok = _check(walkable(GARRISON, cell),
+				"door cell %s not walkable in the yard" % cell) and ok
 	assert(ok, "Camp data invalid - see errors above")

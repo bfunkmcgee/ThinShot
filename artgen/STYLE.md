@@ -10,6 +10,10 @@ deviation gets a dated line in the changelog at the bottom.
 This file migrates and supersedes ASSETS.md "How the last three were made";
 ASSETS.md keeps the wishlist and points here.
 
+This document governs how the art is *made*. What the art *depicts* — factions,
+kit, framing — answers to the Veil Codex; see [docs/CANON.md](../docs/CANON.md)
+for the bindings that matter when writing a generation prompt.
+
 ## 1. Identity & camera
 
 - **2:1 isometric flat diamonds, 128×60**, seen from above with the barest

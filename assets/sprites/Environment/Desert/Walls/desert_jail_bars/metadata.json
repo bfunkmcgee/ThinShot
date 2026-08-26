@@ -1,0 +1,147 @@
+{
+  "group_id": null,
+  "objects": [
+    {
+      "id": "b18aaf31-d296-4696-99e7-1b25bbfb584d",
+      "name": "south-west",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/south-west.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "b914ab14-020e-4807-8578-0a6fe83e0aba",
+      "name": "south-east",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/south-east.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "bb0b5317-91e0-4864-a2aa-d6a76296a77b",
+      "name": "north",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/north.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "7d86ca2e-8735-4aba-984b-5ef0e9434cc1",
+      "name": "east",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "rotations/east.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "703d868f-6ceb-42f0-a893-07101d65383b",
+      "name": "door_closed",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "spares/door_closed.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "ca85ddab-ccc0-437e-b0ae-2668f729bd09",
+      "name": "cap_west",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "spares/cap_west.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "32ab2c24-860d-4ade-8d11-220551d971cf",
+      "name": "window_insert",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "spares/window_insert.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "e39a1aa1-8007-49d8-8a5a-06c1ca87a19a",
+      "name": "steel_bench",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "spares/steel_bench.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "79681140-9ffd-49bd-9d24-3a8eb55b1a71",
+      "name": "key_board",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "spares/key_board.png"
+      },
+      "animations": {}
+    },
+    {
+      "id": "9dc7f63e-772a-43c5-89b3-0ce2e7ddc5b1",
+      "name": "guard_table",
+      "size": {
+        "width": 68,
+        "height": 68
+      },
+      "directions": 1,
+      "view": "low top-down",
+      "rotations": {
+        "unknown": "spares/guard_table.png"
+      },
+      "animations": {}
+    }
+  ],
+  "export_version": "1.0",
+  "export_date": "2026-08-24T23:19:02.000000"
+}
