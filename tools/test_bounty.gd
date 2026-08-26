@@ -277,9 +277,21 @@ func _test_outcomes_are_ordered() -> void:
 const SAVE_PATH := "user://campaign.json"
 var _backup := ""
 var _had_save := false
+var _kept := false
 
 
+## Take the player's campaign aside, once.
+##
+## Both engine sections call this, and it used to copy the file every time - so
+## section 7's call captured whatever section 6 had just written, and the
+## restore at the end put back a campaign with a bounty's worth of notebook
+## entries in it rather than the one the player left. The second call has to be
+## a no-op, including in the case where there was no save to keep: creating one
+## and then "restoring" it would leave a campaign on a machine that had none.
 func _keep_save() -> void:
+	if _kept:
+		return
+	_kept = true
 	if FileAccess.file_exists(SAVE_PATH):
 		var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
 		_backup = f.get_as_text()
@@ -289,6 +301,9 @@ func _keep_save() -> void:
 
 func _restore() -> void:
 	if not _had_save:
+		# Nothing was here when we started, so nothing should be here now.
+		if _kept and FileAccess.file_exists(SAVE_PATH):
+			DirAccess.remove_absolute(SAVE_PATH)
 		return
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f != null:
@@ -491,11 +506,25 @@ func _test_the_whole_mission() -> void:
 	_check(game.is_resting(int(staged.hunter.id)),
 			"...and booking him again is free, so a second bounty is allowed")
 	# Home, and the operation the bar was written against is over.
+	#
+	# Where the campaign is standing is put back afterwards. advance_mission()
+	# loops the campaign to operation 0 when it is run off the end of the last
+	# one (Game.gd, "Operation over. Next one, or loop the campaign"), and this
+	# harness drives the REAL autoload - so without this, running the suite on
+	# a machine with a save in its final operation moved that campaign back to
+	# the first one. The file is restored at the end either way; what leaks is
+	# the in-memory position, through whatever calls save() next.
+	var was_operation: int = game.current_operation
+	var was_level: int = game.current_level
+	var was_field: bool = game.in_the_field
 	while not game.is_last_of_operation():
 		game.current_level += 1
 	game.advance_mission()
 	_check(not game.is_resting(int(staged.hunter.id)),
 			"one operation later, back at the garrison, they are available again")
+	game.current_operation = was_operation
+	game.current_level = was_level
+	game.in_the_field = was_field
 
 	# The fallback: a campaign too thin to bench anybody must not deploy short.
 	# This is the case that would otherwise turn a side activity into a
