@@ -304,12 +304,16 @@ watch. At every garrison stay the field radio posts **three of them**:
 smuggling runs feeding the operation the squad is about to fly out on, each a
 procedurally generated mission on ground the campaign has never shown you — a
 **column caught strung out on the track** and run down to the last man, or a
-**waystation's staged stock burned** under its guard's nose (the guard does
-not have to die for the route to).
+**waystation cleared** of the men lying up in it a day short of the wire.
+Either way the mission is the people: a ratline carries fighters, and the ones
+who put their hands up have still not arrived.
 
 An interdiction is a detachment job, like a bounty: one chosen leader and two
-anonymous riflemen, and **whoever leads sits out the next mission** — shrinking
-the next operation costs the current squad a body. What you do about the net
+anonymous riflemen. **Whoever leads is off the next operation** — not the next
+mission, the whole of it — so shrinking the coming operation costs the squad
+that fights it a body. He can keep running crossings and bounties in the
+meantime; the price is paid once, and it is paid in the main line. Everything
+his lent riflemen do on the way is credited to him. What you do about the net
 settles the whole operation's muster:
 
 - **Run all three down and the Thirst musters at 80%** — up to a fifth fewer

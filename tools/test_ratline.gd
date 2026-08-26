@@ -87,6 +87,7 @@ func _test_boards_valid() -> void:
 	var crossings := 0
 	var waystations := 0
 	var long_briefing := 0
+	var wrong_objective := 0
 	for seed_ordinal in 12:
 		var campaign_seed := 1000003 + seed_ordinal * 77771
 		for operation in 3:
@@ -105,7 +106,17 @@ func _test_boards_valid() -> void:
 							% [campaign_seed, operation, ordinal, problems])
 				if str(level.get("briefing", "")).length() >= 700:
 					long_briefing += 1
+				for objective: Dictionary in level.get("objectives", []):
+					if str(objective.get("kind", "")) != "eliminate":
+						wrong_objective += 1
 	_check(bad == 0, "108 boards generated and validated clean")
+	# The only thing standing between the fix and a quiet relapse: a crossing
+	# smuggles fighters, so no generated crossing may ever ask for anything but
+	# the men. Levels._validate_objectives never sees a generated board, so if
+	# this does not say it, nothing does.
+	_check(wrong_objective == 0,
+			"every generated crossing is won on the men (%d that were not)"
+			% wrong_objective)
 	_check(crossings > 0 and waystations > 0,
 			"both archetypes drawn (%d crossings, %d waystations)"
 			% [crossings, waystations])
@@ -344,31 +355,39 @@ func _test_crossing_won() -> void:
 	await _drop(battle)
 
 
-# --- 7. a waystation, played and won -----------------------------------------
+# --- 7. a waystation, played and won by breaking them ------------------------
 
 func _test_waystation_won() -> void:
-	print("\n[7] a waystation win does not need the guard dead")
+	print("\n[7] a waystation is won on the men, and surrender is enough")
 	var game: Node = root.get_node("/root/Game")
 	_fresh_garrison(game)
 	var leader_id := int((game.roster[1] as Dictionary).id)
 	var generated: Dictionary = _ratline.generate(_offer("waystation"), game.campaign_seed)
 	_check(not generated.is_empty(), "the waystation generates")
+	# A crossing smuggles fighters, so no crossing asks the squad to burn
+	# crates. The stock is still staged on the board; it is not the mission.
+	for objective: Dictionary in generated.objectives:
+		_check(str(objective.get("kind", "")) == "eliminate",
+				"the objective is the men, not the stock ('%s')"
+						% str(objective.get("kind", "")))
 	game.begin_interdiction(leader_id, 0, generated)
 	var battle: Node = await _battle()
-	_check((battle.caches as Array).size() == 2, "two caches staged")
+	_check((battle.caches as Array).is_empty(),
+			"nothing on the board has to be destroyed (%d)"
+					% (battle.caches as Array).size())
 	var guards: int = battle.living_units(TEAM_GOBLIN).size()
-	_check(guards >= 3, "under a guard (%d)" % guards)
-	# Burned by hand rather than through the demolish animation - the
-	# objective pass and the win check are what this case is about.
-	for cache: Dictionary in battle.caches:
-		cache.destroyed = true
+	_check(guards >= 3, "a guard is lying up here (%d)" % guards)
+	# Broken rather than killed: is_combatant() is what eliminate resolves
+	# through, so a man with his hands up has already not crossed.
+	for guard in battle.living_units(TEAM_GOBLIN):
+		guard.surrender()
 	battle._refresh_objectives()
 	battle.check_game_over()
 	await process_frame
 	_check(battle.state == battle.State.GAME_OVER and battle.last_result_won,
-			"both caches burned is the whole mission")
+			"they surrendered, and that finished it")
 	_check(battle.living_units(TEAM_GOBLIN).size() == guards,
-			"and the guard is still breathing")
+			"and every one of them is still breathing")
 	_check(game.ratline_done == [0], "the crossing is banked")
 	await _drop(battle)
 
