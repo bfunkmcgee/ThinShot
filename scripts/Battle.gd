@@ -422,7 +422,12 @@ var bounty_target: Unit = null
 var roaming := false
 const ROAM_SPEED := 168.0        # matching the camp's walk
 const ROAM_SQUASH := 0.469       # Board.TILE_H / Board.TILE_W
-const ESCORT_STANDOFF := 46.0    # how far back the two riflemen hang
+# How far back the two riflemen hang, in flat ground pixels - a tile is 90.5
+# of them. This was 46: a third of a tile, which is as close as two bodies can
+# stand without sharing one, and it put them permanently underfoot. A tile and
+# a half is out of the way and still inside supporting range, which matters
+# because _end_roaming hands them straight into the first tactical turn.
+const ESCORT_STANDOFF := 136.0
 var parley_dialog: ColorRect = null
 var parley_who_label: Label = null
 var parley_file_label: Label = null
@@ -5150,7 +5155,15 @@ func _roam_step(who: Unit, delta_pos: Vector2) -> void:
 		return
 	var sitting := unit_at(cell)
 	if sitting != null and sitting != who:
-		return
+		# A lent rifleman is not a wall. If the man being walked has one of his
+		# own escorts in the way, they change places rather than the walk
+		# refusing - which keeps one unit to a tile, so _end_roaming can still
+		# put everybody back on the grid they are standing on.
+		if roaming and who == selected and sitting.team == Unit.TEAM_SCOUT:
+			sitting.position = who.position
+			sitting.cell = who.cell
+		else:
+			return
 	who.position = candidate
 	who.cell = cell
 
@@ -5166,7 +5179,14 @@ func _follow_the_leader(delta: float) -> void:
 		if flat.length() <= ESCORT_STANDOFF:
 			scout.stop_walking()
 			continue
-		var step := gap.normalized() * ROAM_SPEED * 0.82 * delta
+		# Steered in flat space and squashed back, the way the leader's own
+		# step is built. Normalising the SCREEN gap instead made 0.82 a lie on
+		# every heading but due east: chasing him north or south, an escort
+		# covered ground more than twice as fast as he did and arrived on top
+		# of him however far back the standoff said to hang.
+		var heading := flat.normalized()
+		var step := Vector2(heading.x, heading.y * ROAM_SQUASH) \
+				* ROAM_SPEED * 0.82 * delta
 		_roam_step(scout, Vector2(step.x, 0.0))
 		_roam_step(scout, Vector2(0.0, step.y))
 		scout.set_facing(gap)
