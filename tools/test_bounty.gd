@@ -451,9 +451,9 @@ func _test_the_whole_mission() -> void:
 	_check(game.adversaries.is_empty(),
 			"and he is no longer somebody who walks back onto a mission")
 	_check(not game.on_bounty(), "the campaign is back at the garrison")
-	# --- and whoever went is off the next main mission ------------------------
+	# --- and whoever went is off the next OPERATION ----------------------------
 	_check(game.is_resting(int(staged.hunter.id)),
-			"the soldier who went is resting")
+			"the soldier who went is off the operation")
 	var deploying: Array = game.deployment(3)
 	var went_again := false
 	for s2: Dictionary in deploying:
@@ -462,9 +462,22 @@ func _test_the_whole_mission() -> void:
 	_check(not went_again, "...and is not in the next mission's deployment")
 	_check(deploying.size() == 3,
 			"...which still fields a full party (%d)" % deploying.size())
+	# A mission is not the unit any more. He sat out the opener; he is still
+	# barred from the rest of the operation it opened.
 	game.commit_mission()
+	_check(game.is_resting(int(staged.hunter.id)),
+			"one mission later he is STILL off it - the bar is the operation")
+	# ...and he can keep taking side work while he is barred. That is the other
+	# half of the rule: the price is paid once, in the main line.
+	game.rest_from_bounty(int(staged.hunter.id))
+	_check(game.is_resting(int(staged.hunter.id)),
+			"...and booking him again is free, so a second bounty is allowed")
+	# Home, and the operation the bar was written against is over.
+	while not game.is_last_of_operation():
+		game.current_level += 1
+	game.advance_mission()
 	_check(not game.is_resting(int(staged.hunter.id)),
-			"one main mission later, they are available again")
+			"one operation later, back at the garrison, they are available again")
 
 	# The fallback: a campaign too thin to bench anybody must not deploy short.
 	# This is the case that would otherwise turn a side activity into a

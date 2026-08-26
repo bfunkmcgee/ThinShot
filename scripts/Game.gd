@@ -110,14 +110,20 @@ var bounties_done: Array = []
 var informants: Array = []
 ## One line per finished bounty, for the notebook and the after-action.
 var bounty_outcomes: Array = []
-## Soldiers who came back from a bounty and are sitting the next campaign
-## mission out. Cleared wholesale by commit_mission(), so a rest is exactly one
-## main mission long however many bounties happen in between.
+## Soldiers who took a bounty or a crossing and are barred from the next
+## OPERATION. Cleared when the squad comes home (advance_mission's home branch),
+## so the bar runs from the moment it is booked until the operation it applies
+## to is over - not one mission, however many missions that operation holds.
+##
+## What it does NOT do is limit side work. A man who has run one crossing can
+## run another, and another: he is at the garrison, that is where the radio and
+## the notice board are, and the campaign has already written him off the
+## coming operation. The price is paid once and it is paid in the main line.
 ##
 ## The point of it is roster rotation. Without it a campaign settles into one
 ## squad of five that fights every mission and a bench that never plays; a
 ## bounty now costs the main line the person who took it, so sending your best
-## negotiator is a decision about the NEXT fight as well as this one.
+## negotiator is a decision about the whole NEXT operation as well as this one.
 var resting_ids: Array = []
 # --- the ratline (v9) ---------------------------------------------------------
 ## The generated interdiction board while one is being fought, {} otherwise.
@@ -823,6 +829,12 @@ func advance_mission() -> bool:
 	# posts three fresh crossings against the operation just now pending.
 	ratline_done.clear()
 	ratline_strength = 0
+	# And the operation those bars were written against is over, so they lift.
+	# Everyone booked at the garrison between now and the next drive-out is
+	# barred from the operation after this one - which is the whole rule.
+	if not resting_ids.is_empty():
+		print("[Sandline] %d soldier(s) come off the bar" % resting_ids.size())
+		resting_ids.clear()
 	return true
 
 
@@ -883,13 +895,15 @@ func soldier_by_id(id: int) -> Dictionary:
 
 
 ## Living soldiers of a kind, in stable slot order.
-## Is this soldier sitting out the next campaign mission?
+## Is this soldier barred from the coming operation?
 func is_resting(id: int) -> bool:
 	return resting_ids.has(id)
 
 
-## Book a rest. Called when a bounty is booked, so a bounty the squad LOST -
-## which is rolled back wholesale like any lost mission - costs nobody a rest.
+## Book the bar. Called when a bounty or a crossing is FINISHED, so one the
+## squad lost - rolled back wholesale like any lost mission - costs nobody
+## anything. Booking twice is free: the man is already off the operation, which
+## is why he can keep taking side work.
 func rest_from_bounty(id: int) -> void:
 	if id <= 0 or resting_ids.has(id):
 		return
@@ -897,7 +911,7 @@ func rest_from_bounty(id: int) -> void:
 	if soldier.is_empty() or not bool(soldier.get("alive", false)):
 		return
 	resting_ids.append(id)
-	print("[Sandline] %s is off the next mission - just back from a bounty"
+	print("[Sandline] %s is off the next operation - just back from a bounty"
 			% soldier_label(soldier))
 
 
@@ -1331,6 +1345,11 @@ func reset_roster() -> void:
 	_snapshot.clear()
 	pending_promotions.clear()
 	mission_xp.clear()
+	# Ids restart at 1, so a bar left standing would land on whoever the new
+	# roster mints into that slot - a soldier barred from an operation he was
+	# never on, by a man who no longer exists.
+	resting_ids.clear()
+	deployed_ids.clear()
 	_next_id = 1
 	# Persist the wipe immediately. This is the one place the campaign throws
 	# the squad away, and a save left holding the old one would resurrect five
@@ -1538,8 +1557,38 @@ func deployment(slots: int) -> Array:
 	return chosen.slice(0, slots)
 
 
+## Everybody who goes out on `level_data`: the lead, the gun, and the rifle
+## slots the player picked.
+##
+## One answer with two readers. This makes the same three calls Battle makes
+## when it fills the board - deployable_of_kind for the lead and the gun,
+## deployment for the rifles, off the same slot counts - so the field camp's
+## crowd between missions cannot be a different squad from the one that walks
+## onto it. The garrison is the other case and reads the whole roster: it is
+## the base of operations, and everybody is home.
+func fielded(level_data: Dictionary) -> Array:
+	var out: Array = []
+	for soldier: Dictionary in deployable_of_kind(
+			Unit.Kind.HERO, (level_data.get("lead_spawns", []) as Array).size()):
+		out.append(soldier)
+	for soldier: Dictionary in deployable_of_kind(
+			Unit.Kind.MACHINEGUNNER,
+			(level_data.get("gunner_spawns", []) as Array).size()):
+		out.append(soldier)
+	for soldier: Dictionary in deployment(
+			(level_data.get("scout_spawns", []) as Array).size()):
+		if not out.has(soldier):
+			out.append(soldier)
+	return out
+
+
 ## Record the player's choice. Ids rather than indices, because the roster
 ## reorders as people die and an index would quietly deploy somebody else.
+##
+## Written at the garrison briefing and nowhere else, which is what makes the
+## choice last an operation: the squad is picked before the drive out and
+## stands until they come home. Read everywhere - do not turn this back into a
+## per-mission field by committing it from the field camp too.
 func set_deployment(ids: Array) -> void:
 	deployed_ids = []
 	for id: Variant in ids:
@@ -1943,12 +1992,10 @@ func notebook_by_settlement() -> Dictionary:
 ## choices those promotions unlocked. The dead were already marked during play
 ## and simply stay marked.
 func commit_mission() -> void:
-	# A rest is one main mission long, and this is the line that makes that
-	# true. Cleared before the promotions below so that a soldier who was
-	# resting is available again the moment this mission is in the books.
-	if not resting_ids.is_empty():
-		print("[Sandline] %d soldier(s) come off rest" % resting_ids.size())
-		resting_ids.clear()
+	# The bar used to lift here, which made it one mission long. It lifts at
+	# the homecoming now (advance_mission), because a man who spent the week
+	# before an operation hunting somebody is off THAT OPERATION - all of it,
+	# not just its opening mission.
 	for soldier: Dictionary in roster:
 		if not bool(soldier.alive):
 			continue

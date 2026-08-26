@@ -395,10 +395,10 @@ static func briefing_for(offer: Dictionary) -> String:
 	if str(offer.get("archetype", "")) == ARCH_WAYSTATION:
 		return ("Sillae's set has been reading the smugglers' band all week, and the traffic agrees: the stock for a season of crossings is staged at %s - %s.\n\n"
 				+ "Water and food, cached and guarded. A column cannot cross without it, which makes the caches the mission: burn both and walk away. The guard does not have to die for the route to.\n\n"
-				+ "A detachment goes. Whoever leads it sits out the next mission.") % [place, where]
+				+ "A detachment goes. Whoever leads it is off the next operation.") % [place, where]
 	return ("A column is moving tonight through %s - %s. Fighters for the next operation, walked in the way they always are: strung out, travelling light, counting on nobody watching.\n\n"
 			+ "Somebody is watching. Run the column down - every man of it. The cargo that scatters back over the border tonight is cargo the squad never meets on a wash.\n\n"
-			+ "A detachment goes. Whoever leads it sits out the next mission.") % [place, where]
+			+ "A detachment goes. Whoever leads it is off the next operation.") % [place, where]
 
 
 # --- shared layout helpers ----------------------------------------------------
