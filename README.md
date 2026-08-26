@@ -90,6 +90,15 @@ Rodar (six tiles out-reaches him, and four damage drops him in one), break
 line of sight and make him choose between shooting and repositioning, or eat a
 scout's worth of damage crossing his lane.
 
+**And east of the cistern, an elf.** The **Cupbearer** is not Thirst and never
+asked to be. The old oath sealed every new well in the Confederacy — digger and
+landholder drinking first, together, from the same cup — and he is what three
+centuries of the Charter breaking that oath produces: an elven militant who
+took the oath's name and crossed the line with a rifle. His long gun reaches
+one tile short of the Marksman's, and he will not stand still to use it — two
+rounds, then the reload, then legs. Unlike the Marksman he can break, because
+unlike the Marksman he has a side of the wire that will still take him back.
+
 **They do not all die, and they do not all forget.** A fighter whose nerve goes
 with nobody covering him runs for the edge of the map, and getting there is an
 escape rather than a kill — which is the decent outcome, and the one the

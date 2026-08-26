@@ -774,7 +774,7 @@ func _spawn_enemy_lists(skip: Dictionary) -> void:
 	for spawn: Vector2i in level.get("brute_spawns", []):
 		if not skip.has(spawn):
 			_spawn_unit(Unit.Kind.GOBLIN_BRUTE, spawn)
-	# The hired elf gun, wherever the water that pays him is moving.
+	# The Cupbearer's rifle, wherever the water that draws him is moving.
 	for spawn: Vector2i in level.get("partisan_spawns", []):
 		if not skip.has(spawn):
 			_spawn_unit(Unit.Kind.ELF_PARTISAN, spawn)

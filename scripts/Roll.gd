@@ -77,8 +77,8 @@ const AGE_BANDS := {
 	17: [55, 78],  # GOBLIN_ELDER  - old enough to remember the wells open
 	18: [30, 55],  # GOBLIN_KEEPER - a stall is a working life's middle years
 	19: [16, 30],  # GOBLIN_CARRIER - hauling water is where working life starts
-	20: [30, 52],  # ELF_PARTISAN  - nobody survives long as an independent gun
-				   # without years in it already
+	20: [30, 52],  # ELF_PARTISAN  - the Cupbearer: young as elves count age,
+				   # which is the point of the crossed-over generation
 }
 const AGE_DEFAULT: Array[int] = [20, 45]
 

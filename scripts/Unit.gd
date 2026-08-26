@@ -63,11 +63,14 @@ enum Kind {
 	GOBLIN_ELDER,
 	GOBLIN_KEEPER,
 	GOBLIN_CARRIER,
-	# The desert elf partisan: not Thirst and never asked to be. His people
-	# were squeezed off a margin the Charter never mapped, and water buys his
-	# rifle the same way it buys the column's silence - part of what THE LONG
-	# HAUL's debrief means by "supplying something". A contractor, so unlike
-	# the Marksman he CAN break: nobody dies for someone else's water rights.
+	# The Cupbearer: a desert elf, not Thirst and never asked to be. The old
+	# oath sealed every new well - digger and landholder drinking first from
+	# the same cup - and he is what three centuries of the Charter breaking
+	# that oath produces: an elven rifle crossed over to fight beside the
+	# people who dug. Watered by sympathisers along the columns, which is
+	# part of what THE LONG HAUL's debrief means by "supplying something".
+	# Unlike the Marksman he CAN break: he has a side of the wire that will
+	# still take him back.
 	ELF_PARTISAN,
 }
 
@@ -1326,12 +1329,12 @@ func setup(p_kind: Kind, p_cell: Vector2i) -> void:
 			aim_idle_frames = idle_frames
 			reload_frames = idle_frames
 		Kind.ELF_PARTISAN:
-			# A hired long gun that will not stand still: one tile short of
+			# A long gun that will not stand still: one tile short of
 			# the Marksman's reach, two rounds before the reload roots him,
 			# and the legs to be somewhere else when the answer comes back.
 			# Morale stays the default MAX - confident - but he is NOT in
-			# never_breaks(): a contractor routs when the contract stops
-			# being worth it.
+			# never_breaks(): a Cupbearer routs because he has somewhere to
+			# rout TO - a home on the far side of the wire will take him in.
 			max_hp = 4
 			move_range = 5
 			attack_range = 4
@@ -2068,7 +2071,10 @@ static func kind_role_name(p_kind: Kind) -> String:
 		Kind.ELF_PARTISAN:
 			# No "Thirst" prefix on purpose, the way "Pressed Conscript"
 			# breaks the pattern: he fights beside them, not as one of them.
-			return "Desert Partisan"
+			# "Cupbearer" is the Codex's name for exactly this figure (ruling
+			# KC2): an elven militant who took the old well-oath's name and
+			# crossed the line with a rifle. See docs/CANON.md.
+			return "Cupbearer"
 		Kind.GOBLIN_REVOLVER:
 			return "Pressed Conscript"
 		Kind.GRENADIER:

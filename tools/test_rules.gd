@@ -68,7 +68,7 @@ const KIND_NAMES: Array[String] = [
 	"GOBLIN_BRUTE",
 	# The three goblin civilians: townfolk and bounty residents.
 	"GOBLIN_ELDER", "GOBLIN_KEEPER", "GOBLIN_CARRIER",
-	# The desert elf, paid in water to fight beside the Thirst.
+	# The desert elf Cupbearer, crossed over to fight beside the Thirst.
 	"ELF_PARTISAN",
 ]
 
