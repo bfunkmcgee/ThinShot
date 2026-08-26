@@ -887,6 +887,30 @@ const BIOMES := {
 const LEGAL_CHARS := ".#Wjpdsc=t"
 
 
+## The briefing body as the player actually reads it: the mission's own prose,
+## then whatever the campaign has to add to it.
+##
+## Lives here rather than in Battle because it is the shape of the text, not
+## the behaviour of the screen - and because tools/check_briefing_fit.gd has to
+## measure the composed string. It used to measure a level's raw "briefing" and
+## report a comfortable fit while the running game overflowed by two blocks the
+## harness had never been told about. A string this file owns is a string the
+## harness can ask for.
+##
+## `notebook` is Dava's warning lines, `muster` the ratline's one sentence.
+## Either may be empty, and on a bounty both always are.
+static func briefing_body(body: String, notebook: Array, muster: String) -> String:
+	var out := body
+	if not notebook.is_empty():
+		var lines: Array[String] = [] as Array[String]
+		for line in notebook:
+			lines.append(str(line))
+		out += "\n\nDAVA'S NOTEBOOK: " + "\n".join(lines)
+	if muster != "":
+		out += "\n\nTHE RATLINE: %s" % muster
+	return out
+
+
 ## Validates every level. push_error-based so it also reports in release
 ## builds (asserts are stripped there); debug builds additionally hard-stop.
 ## The clock a mission can put on the squad. A level's optional "pressure"

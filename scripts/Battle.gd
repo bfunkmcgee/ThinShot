@@ -568,12 +568,17 @@ var _occlusion_watch := Vector2.ZERO
 @onready var roll_label: Label = $UI/GameOver/RollLabel
 @onready var narrative_label: Label = $UI/GameOver/NarrativeLabel
 @onready var briefing_panel: ColorRect = $UI/Briefing
-@onready var briefing_mission_label: Label = $UI/Briefing/Center/Box/MissionLabel
-@onready var briefing_title_label: Label = $UI/Briefing/Center/Box/TitleLabel
-@onready var briefing_fiction_label: Label = $UI/Briefing/Center/Box/FictionLabel
-@onready var briefing_body_label: Label = $UI/Briefing/Center/Box/BodyLabel
-@onready var briefing_orders_label: Label = $UI/Briefing/Center/Box/OrdersLabel
-@onready var briefing_begin_button: Button = $UI/Briefing/Center/Box/BeginButton
+## The briefing column scrolls; the button does not live in it. A late-campaign
+## briefing carries the notebook's warnings and the ratline's muster on top of
+## its own prose, and when that column outgrew the screen the button went off
+## the bottom edge with it - taking the only way out of a modal panel that eats
+## input. It is anchored to the viewport now, and cannot be pushed anywhere.
+@onready var briefing_mission_label: Label = $UI/Briefing/Center/Middle/Box/MissionLabel
+@onready var briefing_title_label: Label = $UI/Briefing/Center/Middle/Box/TitleLabel
+@onready var briefing_fiction_label: Label = $UI/Briefing/Center/Middle/Box/FictionLabel
+@onready var briefing_body_label: Label = $UI/Briefing/Center/Middle/Box/BodyLabel
+@onready var briefing_orders_label: Label = $UI/Briefing/Center/Middle/Box/OrdersLabel
+@onready var briefing_begin_button: Button = $UI/Briefing/BeginButton
 ## The framed HUD. Built in code (scripts/Hud.gd) rather than in Battle.tscn,
 ## and handed the action buttons and the contact panel to reparent - so every
 ## handler, hotkey and enable rule above still drives the same nodes.
@@ -6164,20 +6169,26 @@ func _show_briefing() -> void:
 	# Dava's notebook, read out where it can still change a decision: the
 	# briefing names the men the campaign expects on this ground. Two lines
 	# at most - the histories live in the notebook and on THE ROLL.
+	var expected: Array[String] = [] as Array[String]
 	if not Game.on_bounty():
-		var expected := _notebook_warnings()
-		if not expected.is_empty():
-			body += "\n\nDAVA'S NOTEBOOK: " + "\n".join(expected)
+		expected = _notebook_warnings()
 	# The season's muster, on the one screen where it can still shape a plan.
 	# One sentence, shared with the field radio's projection so the two can
 	# never disagree.
+	var muster := ""
 	if not Game.on_bounty() and not Game.on_interdiction() \
 			and Game.ratline_strength_now() != 100:
-		body += "\n\nTHE RATLINE: %s" % Ratline.strength_line(
-				Game.ratline_strength_now())
-	briefing_body_label.text = body
+		muster = Ratline.strength_line(Game.ratline_strength_now())
+	# Assembled in Levels rather than here so tools/check_briefing_fit.gd can
+	# measure the string that actually renders. It used to measure the level's
+	# own prose and pass while the screen overflowed by two blocks it had never
+	# heard of.
+	briefing_body_label.text = Levels.briefing_body(body, expected, muster)
 	briefing_orders_label.text = "ORDERS:  %s" % level.get("orders", "")
 	briefing_panel.visible = true
+	# A modal that swallows input needs a keyboard way out. The button is the
+	# only exit, so it takes focus the moment the panel is up.
+	briefing_begin_button.grab_focus()
 
 
 ## The men the campaign expects back on this ground, as briefing lines. A
