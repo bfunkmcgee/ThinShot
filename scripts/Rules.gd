@@ -583,7 +583,8 @@ static func is_broken(morale: int) -> bool:
 ## class on every map that asks the squad to clear it. Otherwise a player who
 ## plays well enough could finish a combat mission having killed nobody, and the
 ## game would be telling him restraint is always available - which is the exact
-## lie the Codex's counterweight mission exists to prevent.
+## lie the Codex's counterweight mission exists to prevent. (The Codex is the
+## Veil canon repo this game's fiction answers to - see docs/CANON.md.)
 ##
 ## It is the Marksman, and the reason is already in his stat line rather than
 ## bolted onto it. He is the only one of them who was trained rather than

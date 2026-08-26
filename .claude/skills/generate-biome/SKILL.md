@@ -1,6 +1,6 @@
 ---
 name: generate-biome
-description: Generate or repair a ThinShot floor biome (base sheet + transition sets) through the PixelLab pipeline with validation and review gates
+description: Generate or repair a SANDLINE floor biome (base sheet + transition sets) through the PixelLab pipeline with validation and review gates
 ---
 
 # /generate-biome

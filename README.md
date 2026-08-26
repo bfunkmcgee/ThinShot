@@ -38,7 +38,7 @@ to do it.
 
 A five-soldier squad, each with a job:
 
-- **Rodar Akai, Hero of the Scouts** — designated marksman and the squad's
+- **Rodar Akai, Kestrel Squad** — designated marksman and the squad's
   leader. A battle rifle reaching half again as far as a carbine, dropping a
   healthy goblin in one hit — held by a veteran who starts at the accuracy cap,
   so his whole progression is his perk tree. If he falls, the mission is lost

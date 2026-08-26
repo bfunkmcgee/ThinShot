@@ -1,4 +1,4 @@
-# ThinShot — unit sprite spec (v2)
+# SANDLINE — unit sprite spec (v2)
 
 What a new soldier has to ship so it drops into `Unit.gd` without new code
 paths. Measured off the sixteen units in `assets/sprites/` (everything there

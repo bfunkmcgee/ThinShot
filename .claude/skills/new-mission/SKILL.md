@@ -1,6 +1,6 @@
 ---
 name: new-mission
-description: Author a new ThinShot mission — brief, draft JSON in staging, lint and preview until it reads, install into Levels.gd, verify in engine
+description: Author a new SANDLINE mission — brief, draft JSON in staging, lint and preview until it reads, install into Levels.gd, verify in engine
 ---
 
 # /new-mission
@@ -29,7 +29,7 @@ dimensions), `floor_inset` as `{"floor": "<name>", "rect": [x, y, w, h]}`.
   - `.` open sand · `#` rock (blocks move + LOS) · `W` mud-brick wall (blocks
     move + LOS) · `p` plant (pure decoration, walkable)
   - half cover (unwalkable, shots pass at half damage): `j` rusted junk ·
-    `s` sandbags (somebody dug in) · `c` Choir ordnance (keep OFF any map with a
+    `s` sandbags (somebody dug in) · `c` Thirst ordnance (keep OFF any map with a
     `destroy` objective) · `d` fuel drum (half cover that detonates in a blast
     and chains to the next drum)
   - `=` barbed wire: stops movement and NOTHING else — sight and fire cross it

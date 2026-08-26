@@ -1,4 +1,4 @@
-# ThinShot — asset wishlist
+# SANDLINE — asset wishlist
 
 What to generate next in Pixel Lab, ordered by **gameplay unlocked per hour of
 your time**. Each entry says what it buys, the format to match, and whether it
