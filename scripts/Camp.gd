@@ -311,8 +311,10 @@ var _deploy_candidates: Array = []
 
 var player: Unit = null
 # Seed for the scenery-variant hash streams, mirroring Battle: derived from
-# the biome's floor seed via CampData.map_for, so each biome's camp dresses
-# itself differently and deterministically.
+# this camp's ground (see _ground) via CampData.map_for, so each biome's field
+# camp dresses itself differently and deterministically - and the garrison,
+# which stands on the same desert all campaign, dresses itself the same way
+# every time the squad comes home.
 var _prop_seed := 0
 # Which camp this is, and the layout that goes with it.
 var in_field := false
@@ -354,7 +356,7 @@ func _ready() -> void:
 		spots = CampData.interior_spots(interior)
 	else:
 		interior = ""
-		camp = CampData.map_for(in_field, Game.biome())
+		camp = CampData.map_for(in_field, _ground())
 		spots = CampData.spots_for(in_field)
 	board.set_level(camp)
 	_prop_seed = int(camp.get("prop_seed",
@@ -389,10 +391,22 @@ func _ready() -> void:
 	_apply_cmdline_screenshot()
 
 
+## The ground this camp stands on.
+##
+## A field camp is pitched wherever the operation is being fought, so it takes
+## the operation's biome - that is what OPERATIONS.biome is for, and the field
+## camp is the only thing it was ever meant to dress. The garrison does not
+## move. It is walls and a motor pool in the same stretch of desert it was in
+## last season, and it does not repaint itself because the squad is deploying
+## somewhere paler this month.
+func _ground() -> Dictionary:
+	return Game.biome() if in_field else Levels.BIOMES.desert
+
+
 func _refresh_subtitle() -> void:
 	var op: Dictionary = Game.operation()
 	subtitle_label.text = "%s  -  %s  -  mission %d of %d: %s  -  %s" % [
-			op.name, Game.biome().label, Game.mission_number(),
+			op.name, str(_ground().label), Game.mission_number(),
 			Game.mission_count(), Game.data().name, _squad_summary()]
 
 
@@ -418,8 +432,9 @@ func _dust_material(cell: Vector2i) -> ShaderMaterial:
 	var depth := 1.0 - float(cell.x + cell.y) / float(span)
 	var band := clampi(int(depth * float(Board.HAZE_BANDS)), 0, Board.HAZE_BANDS - 1)
 	if not _dust_materials.has(band):
-		# The camp dresses itself from the operation's biome, so its air has to
-		# follow the same ground its floor does.
+		# Read off the board rather than the operation, so the air follows
+		# whatever ground this camp actually stands on - the operation's biome
+		# in the field, the garrison's own desert at home.
 		var mood := board.floor_mood()
 		var mat := ShaderMaterial.new()
 		mat.shader = PROP_DUST
