@@ -592,7 +592,14 @@ func _test_arrival() -> void:
 	battle.state = battle.State.PLAYER_TURN
 	_check(battle.check_game_over(),
 			"an empty eliminate map ends the mission on the spot")
-	_check(battle.state == battle.State.GAME_OVER, "...and the state says so")
+	# Since the ride home, a winning board with a pickup does not jump straight
+	# to GAME_OVER: check_game_over hands the screen to the departure, and the
+	# after-action card waits at the ramp. Over is over either way - play has
+	# ended, and the only question is which teardown holds the state.
+	var over: bool = battle.state == battle.State.GAME_OVER \
+			or (battle._departure_running
+					and battle.state == battle.State.ANIMATING)
+	_check(over, "...and the state says so (the ride home has the screen)")
 	var count_at_end: int = battle.living_units(1).size()
 	battle.player_turn_ready_msec = 0
 	await battle.end_player_turn(true)
