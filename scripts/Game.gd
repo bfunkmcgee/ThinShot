@@ -640,6 +640,10 @@ func finish_bounty(outcome: String, hunter_id: int, target: Dictionary) -> void:
 	# back - costs nobody anything.
 	rest_from_bounty(hunter_id)
 	clear_bounty()
+	# The hunt earned rank as surely as a story mission does - his own kills
+	# and the ones his lent riflemen made under him. Settle it here, or he
+	# carries it unpaid until some later mission gets around to him.
+	_settle_promotions()
 	_bank_rewards()
 	save()
 
@@ -699,6 +703,7 @@ func finish_interdiction(leader_id: int, ordinal: int) -> void:
 	# same moment and for the same reason, as a bounty hunter's.
 	rest_from_bounty(leader_id)
 	clear_interdiction()
+	_settle_promotions()
 	_bank_rewards()
 	save()
 	print("[Sandline] crossing %d run down - %d of the net shut"
@@ -1991,11 +1996,17 @@ func notebook_by_settlement() -> Dictionary:
 ## Mission won: keep the XP, promote whoever earned it, and queue the perk
 ## choices those promotions unlocked. The dead were already marked during play
 ## and simply stay marked.
-func commit_mission() -> void:
-	# The bar used to lift here, which made it one mission long. It lifts at
-	# the homecoming now (advance_mission), because a man who spent the week
-	# before an operation hunting somebody is off THAT OPERATION - all of it,
-	# not just its opening mission.
+## Turn earned XP into rank, and queue whatever picks that unlocked.
+##
+## Split out of commit_mission because a bounty and a crossing earn XP too, and
+## banking it without ever reading it left a man carrying a rank he had paid
+## for and not been given until some later story mission happened to settle up.
+## The finishers call this directly rather than commit_mission, which would
+## also lift the bar they just booked and heal a roster that never deployed.
+##
+## Deliberately touches nothing but level and pending_promotions, and names no
+## autoload, so a bare Game.gd.new() in a harness can still drive it.
+func _settle_promotions() -> void:
 	for soldier: Dictionary in roster:
 		if not bool(soldier.alive):
 			continue
@@ -2013,6 +2024,14 @@ func commit_mission() -> void:
 			if not perk_choices(int(soldier.kind),
 					Career.perk_gate(gate_level)).is_empty():
 				pending_promotions.append({"id": int(soldier.id), "level": gate_level})
+
+
+func commit_mission() -> void:
+	# The bar used to lift here, which made it one mission long. It lifts at
+	# the homecoming now (advance_mission), because a man who spent the week
+	# before an operation hunting somebody is off THAT OPERATION - all of it,
+	# not just its opening mission.
+	_settle_promotions()
 	# The wound ledger's other half: a soldier who sat this one out has had a
 	# mission's worth of the medic's time, and comes back whole. Deploying
 	# wounded was the player's call; healing is what sitting out is FOR.

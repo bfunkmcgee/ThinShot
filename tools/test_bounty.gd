@@ -360,6 +360,24 @@ func _test_the_whole_mission() -> void:
 		if u.soldier_id != 0:
 			named += 1
 	_check(named == 1, "the other two are nobody from the roster (%d named)" % named)
+	# ...and because they are nobody, their work used to be credited to nobody.
+	# It is his detachment, so it goes in his file.
+	var borrowed: Object = null
+	for u in squad:
+		if u.soldier_id == 0:
+			borrowed = u
+			break
+	_check(borrowed != null, "there is a lent rifleman to earn something")
+	if borrowed != null:
+		_check(battle._credit_id(borrowed) == int(staged.hunter.id),
+				"what a lent rifleman earns is credited to the man leading him")
+		_check(battle._credit_id(battle.bounty_hunter) == int(staged.hunter.id),
+				"...and what the leader earns is still his own")
+		var before := int(game.soldier_by_id(int(staged.hunter.id)).get("xp", 0))
+		battle._award_xp(borrowed, game.XP_KILL, "test: borrowed work")
+		var after := int(game.soldier_by_id(int(staged.hunter.id)).get("xp", 0))
+		_check(after == before + game.XP_KILL,
+				"the leader banks it in full (+%d xp)" % game.XP_KILL)
 	_check(battle.residents.size() >= 3,
 			"the place is lived in (%d residents)" % battle.residents.size())
 	var fighting := 0

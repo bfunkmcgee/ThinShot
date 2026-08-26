@@ -3256,15 +3256,36 @@ func _enemy_team_of(unit: Unit) -> int:
 # already have the attacker in scope.
 
 
+## Who banks what this unit just did.
+##
+## Normally himself. But a detachment is one roster soldier and two riflemen
+## lent to him, and the lent men carry soldier_id 0 because they have no record
+## to carry - which meant two thirds of a bounty's work was credited to nobody
+## at all. Their kills, their demolition, their share of the walk: it is his
+## detachment, and it goes in his file.
+##
+## bounty_hunter is null on every campaign mission, so this is exactly the old
+## behaviour there.
+func _credit_id(unit: Unit) -> int:
+	if unit == null or unit.team != Unit.TEAM_SCOUT:
+		return 0
+	if unit.soldier_id != 0:
+		return unit.soldier_id
+	if bounty_hunter != null and is_instance_valid(bounty_hunter):
+		return bounty_hunter.soldier_id
+	return 0
+
+
 ## Credit a kill, if a named soldier earned it against the Thirst. Guards both
 ## directions: goblins earn nothing, and a frag that catches your own scout is
 ## not an achievement.
 func _credit_kill(killer: Unit, victim: Unit) -> void:
-	if killer == null or killer.soldier_id == 0:
+	var id := _credit_id(killer)
+	if id == 0:
 		return
 	if victim.team != Unit.TEAM_GOBLIN or killer.team != Unit.TEAM_SCOUT:
 		return
-	Game.award(killer.soldier_id, Game.XP_KILL)
+	Game.award(id, Game.XP_KILL)
 	print("[Sandline]   %s credited a kill (+%d xp)" % [
 			killer.display_name(), Game.XP_KILL])
 
@@ -3272,9 +3293,10 @@ func _credit_kill(killer: Unit, victim: Unit) -> void:
 ## Squad ordnance is shared, so a grenade charge is too. (The Grenadier perk
 ## this once anticipated exists now - see the frags_left bump in _ready.)
 func _award_xp(unit: Unit, amount: int, reason: String) -> void:
-	if unit == null or unit.soldier_id == 0:
+	var id := _credit_id(unit)
+	if id == 0:
 		return
-	Game.award(unit.soldier_id, amount)
+	Game.award(id, amount)
 	print("[Sandline]   %s +%d xp (%s)" % [unit.display_name(), amount, reason])
 
 
@@ -5898,6 +5920,11 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 		# Walking off the map is worth something on its own - to the soldiers
 		# who did the walking. The people they carried out are not on the roster.
 		for scout in living_soldiers(Unit.TEAM_SCOUT):
+			# Surviving is the one thing that is nobody else's. A detachment's
+			# lent riflemen pass their WORK up to the man leading them, but not
+			# this, or he would be paid three times for walking home once.
+			if scout.soldier_id == 0:
+				continue
 			_award_xp(scout, Game.XP_SURVIVE, "survived")
 		_sweep_the_still_running()
 		_apply_conduct()
