@@ -26,8 +26,9 @@ extends Node2D
 ##   - The waves are ArenaWaves; the fighters' minds are ArenaFoe.
 ##
 ## Self-contained on purpose. It reads Rodar's base stats through Unit.setup()
-## and nothing else: no roster, no perks, no gear, and the only thing it ever
-## writes is its own best-run file beside the campaign save, never in it.
+## and nothing else - no roster, no perks, no gear - then hands him the range's
+## own issue (RANGE_* below), and the only thing it ever writes is its own
+## best-run file beside the campaign save, never in it.
 
 const UNIT_SCENE := preload("res://scenes/Unit.tscn")
 # Camp's prop tables, read off its script at runtime rather than copied: this
@@ -37,11 +38,24 @@ const UNIT_SCENE := preload("res://scenes/Unit.tscn")
 const CAMP_SCRIPT_PATH := "res://scripts/Camp.gd"
 
 const ARENA_ZOOM := Board.MAX_ZOOM
-# Camp's numbers, so Rodar walks the range at the pace he walks the yard.
-const WALK_SPEED := 168.0
-const ISO_SQUASH := 0.469
-# Semi-automatic: the rifle did not change, the pace of pulling did. 2.5/s.
-const FIRE_INTERVAL := 0.4
+# Camp walks him at 168; the range is not a stroll. Quicker than every fighter
+# but the light runner (202), who is the one thing that should be able to
+# close on him.
+const WALK_SPEED := 190.0
+const ISO_SQUASH := 0.469  # Camp's
+# Semi-automatic: the rifle did not change, the pace of pulling did. ~3.3/s.
+const FIRE_INTERVAL := 0.3
+
+## The range's issue. Campaign Rodar is one rifle in a squad of eight with a
+## medic behind him; here he is the whole line against a dozen, and a dozen
+## rifles at once make Rules' flank arithmetic (cover only faces one way) do
+## the enemy's work for them. So the drill kits him accordingly: a veteran's
+## constitution, an extended magazine, and rounds that put a Breaker down in
+## two. Applied to the arena's own instance in _spawn_player, never to
+## Unit.setup(): the campaign's Rodar is not touched by this file.
+const RANGE_HP := 14       # campaign 10; 7 well-hand rounds, 2 of the brute's
+const RANGE_DAMAGE := 6    # campaign 4; even, so cover still halves it whole
+const RANGE_MAG := 6       # campaign 3; a reload every six, not every three
 # The rifle comes down this long after the last shot, not after each one -
 # Battle's do_volley raises once per volley for the same reason.
 const LOWER_AFTER := 1.5
@@ -220,10 +234,17 @@ func _make_unit(kind: int, cell: Vector2i) -> Unit:
 	return unit
 
 
-## Rodar at base stats. No apply_progression: the drill is the same drill
-## for every campaign, which is what makes a best run mean anything.
+## Rodar at base stats plus the range's issue. No apply_progression: the
+## drill is the same drill for every campaign, which is what makes a best run
+## mean anything.
 func _spawn_player() -> void:
 	player = _make_unit(Unit.Kind.HERO, ArenaData.PLAYER_SPAWN)
+	player.max_hp = RANGE_HP
+	player.hp = RANGE_HP
+	player.damage = RANGE_DAMAGE
+	player.mag_size = RANGE_MAG
+	player.ammo = RANGE_MAG
+	player.queue_redraw()
 	player.died.connect(_on_player_died)
 	player.wounded.connect(_on_player_wounded)
 
@@ -548,10 +569,16 @@ func _on_wave_cleared(_wave: int) -> void:
 	show_banner("LINE HELD")
 
 
-## The breather: a fresh magazine, and a moment to breathe.
+## The breather: a fresh magazine, the wounds seen to, a moment to breathe.
+## Each string of the drill starts whole - the fight is the wave in front of
+## him, not the arithmetic of what the last one left.
 func _on_breather(_seconds: float) -> void:
-	if player != null and player.is_alive() and not _reloading:
+	if player == null or not player.is_alive():
+		return
+	if not _reloading:
 		player.reload()
+	player.hp = player.max_hp
+	player.queue_redraw()
 
 
 # --------------------------------------------------------------------- hud --

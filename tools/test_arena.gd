@@ -147,8 +147,10 @@ func _test_scene(foe_script: GDScript) -> void:
 	await process_frame
 	var player: Node2D = arena.player
 	_check(player != null and player.is_alive(), "Rodar stands on the range")
-	_check(player.kind == KIND_HERO and player.mag_size == 3,
-			"as himself, base stats: kind %d, %d in the magazine" % [player.kind, player.mag_size])
+	_check(player.kind == KIND_HERO and player.mag_size == int(arena.RANGE_MAG)
+			and player.max_hp == int(arena.RANGE_HP) and player.hp == player.max_hp,
+			"as himself, with the range's issue: kind %d, %d HP, %d in the magazine"
+			% [player.kind, player.max_hp, player.mag_size])
 
 	# Wall slide. A rock at (7,6); stand him at (7,7) and push straight into it.
 	var board: Board = arena.board
