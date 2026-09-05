@@ -126,3 +126,10 @@ rather than overwrite it). The list, in rough order of weight:
 8. **Minor texture** — the Gear item names (`ACCORD CUIRASS` and kin), the
    Sillae district readings in `Camp.gd`, parley lines, the tagline on the
    main menu.
+9. **THE RANGE** (real-time live-fire drill, `scenes/Arena.tscn`) — a
+   Grounded Doctrine qualification course run at the garrison range: goblin
+   silhouettes stood up in waves for Rodar to work through alone, off the
+   books and off the mission clock. Self-contained; touches no campaign save,
+   fields no civilians, names no dead (its fighters are targets, not people
+   on THE ROLL). Its banners hold the scoreline rule: `LINE HELD`, never a
+   count; `THE LINE BROKE`, never a grade.

@@ -13,6 +13,9 @@ const MENU_SCENE := "res://scenes/MainMenu.tscn"
 const CAMP_SCENE := "res://scenes/Camp.tscn"
 const BATTLE_SCENE := "res://scenes/Battle.tscn"
 const INTRO_SCENE := "res://scenes/OperationIntro.tscn"
+# THE RANGE: the real-time live-fire drill. Self-contained - it reads nothing
+# from the campaign and writes nothing into its save.
+const ARENA_SCENE := "res://scenes/Arena.tscn"
 
 # Where the campaign is. An operation is a run of missions the squad stays out
 # on; current_level is the flat index of the mission being fought, kept because
@@ -871,6 +874,11 @@ func go_to_camp() -> void:
 func go_to_battle() -> void:
 	Engine.time_scale = 1.0
 	get_tree().change_scene_to_file(BATTLE_SCENE)
+
+
+func go_to_arena() -> void:
+	Engine.time_scale = 1.0
+	get_tree().change_scene_to_file(ARENA_SCENE)
 
 
 ## The drive-out cutscene ahead of an operation's first mission. Camp is the

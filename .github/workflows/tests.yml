@@ -126,6 +126,7 @@ jobs:
           harness test_camp_pickers
           harness test_interiors
           harness test_menu
+          harness test_arena
           harness test_save_load
           harness test_progression
           harness test_hero_gameover
@@ -146,6 +147,7 @@ jobs:
           boot camp-field res://scenes/Camp.tscn -- --field
           boot battle res://scenes/Battle.tscn
           boot battle-l2 res://scenes/Battle.tscn -- --level 2
+          boot arena res://scenes/Arena.tscn
 
           exit $failed
 

@@ -344,9 +344,9 @@ func _test_button_state() -> void:
 	_check(not loaded.continue_button.disabled, "with a roster it is offered")
 	_check(str(loaded.status_label.text).contains("OPERATION"),
 			"and the status line names the operation (%s)" % loaded.status_label.text)
-	# The three scenes the menu can reach must all exist, or a button is a
-	# dead end that only fails when a player presses it.
-	for path: String in [game.MENU_SCENE, game.CAMP_SCENE, game.BATTLE_SCENE]:
+	# The scenes the menu can reach must all exist, or a button is a dead end
+	# that only fails when a player presses it. The range is the fourth.
+	for path: String in [game.MENU_SCENE, game.CAMP_SCENE, game.BATTLE_SCENE, game.ARENA_SCENE]:
 		_check(ResourceLoader.exists(path), "%s exists" % path)
 	loaded.queue_free()
 	await process_frame

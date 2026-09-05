@@ -52,6 +52,15 @@ const EXECUTIONER_BONUS := 1
 const MIN_HIT_CHANCE := 20
 const MAX_HIT_CHANCE := 99
 
+## THE RANGE is real time; everything else in this file assumes a resolved
+## turn. The roll and the damage are UNCHANGED there - hit_chance and
+## damage_for read nothing but cells, facings and arcs, and the arena keeps
+## those live every frame instead of once per activation. The one fact real
+## time adds that a turn never could is a shot fired mid-stride, so that is
+## the only new number. Turn-based bracing is burst_requires_still() on the
+## unit; a step has no tick to gate, so it costs accuracy instead.
+const ARENA_MOVING_ACCURACY := 15
+
 
 # --- Facing, cover, and the lean ---------------------------------------------
 
@@ -169,6 +178,16 @@ static func hit_chance(board: Board, attacker: Unit, target: Unit,
 	if attacker.is_suppressed():
 		chance = chance * (100 - SUPPRESSION_ACCURACY) / 100
 	return chance
+
+
+## The real-time shot. Exactly hit_chance, with the mid-stride penalty folded
+## into accuracy_mod before the clamp - so a walking shooter is worse in the
+## same way a long shot is worse, and the floor still guarantees the rifle is
+## never decorative. Stationary, it IS hit_chance, to the point.
+static func arena_hit_chance(board: Board, attacker: Unit, target: Unit,
+		shooter_moving := false) -> int:
+	return hit_chance(board, attacker, target,
+			-ARENA_MOVING_ACCURACY if shooter_moving else 0)
 
 
 ## The roll. Every shot in the game comes through this one line, and that is the
