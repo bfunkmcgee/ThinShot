@@ -32,3 +32,6 @@ artgen/staging/
 
 # Local Claude Code permissions stay per-machine
 .claude/settings.local.json
+
+# Codex CLI config carries the PixelLab key in plaintext; it stays per-machine
+.codex/
