@@ -311,8 +311,10 @@ var _deploy_candidates: Array = []
 
 var player: Unit = null
 # Seed for the scenery-variant hash streams, mirroring Battle: derived from
-# the biome's floor seed via CampData.map_for, so each biome's camp dresses
-# itself differently and deterministically.
+# this camp's ground (see _ground) via CampData.map_for, so each biome's field
+# camp dresses itself differently and deterministically - and the garrison,
+# which stands on the same desert all campaign, dresses itself the same way
+# every time the squad comes home.
 var _prop_seed := 0
 # Which camp this is, and the layout that goes with it.
 var in_field := false
@@ -354,7 +356,7 @@ func _ready() -> void:
 		spots = CampData.interior_spots(interior)
 	else:
 		interior = ""
-		camp = CampData.map_for(in_field, Game.biome())
+		camp = CampData.map_for(in_field, _ground())
 		spots = CampData.spots_for(in_field)
 	board.set_level(camp)
 	_prop_seed = int(camp.get("prop_seed",
@@ -389,10 +391,22 @@ func _ready() -> void:
 	_apply_cmdline_screenshot()
 
 
+## The ground this camp stands on.
+##
+## A field camp is pitched wherever the operation is being fought, so it takes
+## the operation's biome - that is what OPERATIONS.biome is for, and the field
+## camp is the only thing it was ever meant to dress. The garrison does not
+## move. It is walls and a motor pool in the same stretch of desert it was in
+## last season, and it does not repaint itself because the squad is deploying
+## somewhere paler this month.
+func _ground() -> Dictionary:
+	return Game.biome() if in_field else Levels.BIOMES.desert
+
+
 func _refresh_subtitle() -> void:
 	var op: Dictionary = Game.operation()
 	subtitle_label.text = "%s  -  %s  -  mission %d of %d: %s  -  %s" % [
-			op.name, Game.biome().label, Game.mission_number(),
+			op.name, str(_ground().label), Game.mission_number(),
 			Game.mission_count(), Game.data().name, _squad_summary()]
 
 
@@ -418,8 +432,9 @@ func _dust_material(cell: Vector2i) -> ShaderMaterial:
 	var depth := 1.0 - float(cell.x + cell.y) / float(span)
 	var band := clampi(int(depth * float(Board.HAZE_BANDS)), 0, Board.HAZE_BANDS - 1)
 	if not _dust_materials.has(band):
-		# The camp dresses itself from the operation's biome, so its air has to
-		# follow the same ground its floor does.
+		# Read off the board rather than the operation, so the air follows
+		# whatever ground this camp actually stands on - the operation's biome
+		# in the field, the garrison's own desert at home.
 		var mood := board.floor_mood()
 		var mat := ShaderMaterial.new()
 		mat.shader = PROP_DUST
@@ -897,7 +912,24 @@ const AVATAR_ORDER: Array[int] = [
 ]
 
 
+## Who is standing around this camp. See _spawn_squad.
+func _campmates() -> Array:
+	return Game.fielded(Game.data()) if in_field else Game.roster
+
+
 func _avatar_soldier() -> Dictionary:
+	# In the field the man you walk as has to be one of the men who came, or
+	# the camp would put you in the boots of somebody left at the garrison.
+	if in_field:
+		var going := _campmates()
+		for kind: int in AVATAR_ORDER:
+			for soldier: Dictionary in going:
+				if int(soldier.get("kind", -1)) == kind \
+						and bool(soldier.get("alive", false)):
+					return soldier
+		for soldier: Dictionary in going:
+			if bool(soldier.get("alive", false)):
+				return soldier
 	for kind: int in AVATAR_ORDER:
 		var of_kind := Game.soldiers_of_kind(kind)
 		if of_kind.is_empty():
@@ -943,7 +975,10 @@ func _spawn_squad() -> void:
 	player.set_facing(Vector2(0, 1))  # face the camera at rest
 	var slot := 0
 	var squad: Array = spots.squad
-	for soldier: Dictionary in Game.roster:
+	# The garrison holds the whole roster - it is the base, and the ones not
+	# deploying are still billeted there. A field camp holds the operation's
+	# squad and nobody else: the rest never left home.
+	for soldier: Dictionary in _campmates():
 		if not bool(soldier.alive) or int(soldier.id) == int(avatar.id):
 			continue
 		if slot >= squad.size():
@@ -1207,7 +1242,7 @@ func _prompt_for(fixture: Dictionary) -> String:
 			return "E  -  your record (%s)" % fixture.label if mine \
 					else "E  -  speak to %s" % fixture.label
 		"briefing":
-			return "E  -  orders and deploy"
+			return "E  -  orders, move out" if in_field else "E  -  orders and deploy"
 		"stores":
 			return "E  -  stores: %d frag / %d smoke" % [Game.frags, Game.smokes]
 		"recruit":
@@ -1368,7 +1403,8 @@ func _open_bounty_hunters(offer: Dictionary, at := 0) -> void:
 		"He has got away %d time(s)%s." % [survivals,
 				" and he does not travel alone" if has_band else ""],
 		"",
-		"Two riflemen go with whoever you send.",
+		"Two riflemen go with whoever you send, and whoever leads is off",
+		"the next operation.",
 		"",
 	]
 	for i in candidates.size():
@@ -1376,7 +1412,7 @@ func _open_bounty_hunters(offer: Dictionary, at := 0) -> void:
 		lines.append("%s %s  -  %s%s" % [
 				">" if i == at else " ", Game.soldier_label(s2),
 				Unit.kind_role_name(int(s2.kind)),
-				"  (resting)" if Game.is_resting(int(s2.get("id", 0))) else ""])
+				"  (off-op)" if Game.is_resting(int(s2.get("id", 0))) else ""])
 	# The odds for the one under the cursor. All eight sets at once would be
 	# forty lines of arithmetic to read a name out of.
 	var pick: Dictionary = candidates[at]
@@ -1457,8 +1493,8 @@ func _open_ratline_leaders(offer: Dictionary, at := 0) -> void:
 		"%s at %s - %s." % [str(offer.title).capitalize(), str(offer.place),
 				str(offer.where)],
 		"",
-		"Two riflemen go with whoever you send, and whoever leads sits out",
-		"the next mission.",
+		"Two riflemen go with whoever you send, and whoever leads is off",
+		"the next operation.",
 		"",
 	]
 	for i in candidates.size():
@@ -1467,7 +1503,7 @@ func _open_ratline_leaders(offer: Dictionary, at := 0) -> void:
 				">" if i == at else " ", Game.soldier_label(s2),
 				Unit.kind_role_name(int(s2.kind)),
 				Career.level_label(int(s2.get("level", 1))),
-				"  (resting)" if Game.is_resting(int(s2.get("id", 0))) else ""])
+				"  (off-op)" if Game.is_resting(int(s2.get("id", 0))) else ""])
 	var pick: Dictionary = candidates[at]
 	_choice_action = "ratline_send"
 	_choice_args = [offer, candidates, at]
@@ -1750,12 +1786,19 @@ func _sillae_reads_the_district() -> String:
 			% strain
 
 
-## The briefing, and the decision that goes with it: who is walking into it.
+## The briefing, and - at the garrison - the decision that goes with it: who is
+## walking into it.
 ##
 ## The orders and the roster live on the same panel deliberately. Choosing three
 ## of six is a tactical read of the mission - a rescue wants the medic, a
 ## demolition wants the breacher - and asking for it on a separate screen with
 ## the briefing already dismissed would make it a chore instead of a choice.
+##
+## The choice is made ONCE, at the garrison, and it stands for the whole
+## operation. The garrison is where every operation starts, so that is all the
+## gate this needs. In the field the same panel reads the orders and nothing
+## else: the squad that drove out is the squad that is here, and the rest are a
+## week's drive away at the base.
 func _open_briefing() -> void:
 	var level: Dictionary = Game.data()
 	var op: Dictionary = Game.operation()
@@ -1768,10 +1811,17 @@ func _open_briefing() -> void:
 	var body := "%s\n\n%s\n\nORDERS:  %s" % [
 			op.get("summary", ""), level.get("fiction", ""),
 			level.get("orders", "")]
+	if in_field:
+		# Nothing to choose out here, so say who is going instead of asking.
+		var names: Array[String] = []
+		for soldier: Dictionary in _campmates():
+			names.append(Game.full_name(soldier))
+		body += "\n\nGOING:  %s" % ", ".join(names)
 	_open_modal("%s  -  MISSION %d OF %d\n%s" % [
 			op.name, Game.mission_number(), Game.mission_count(), level.name],
-			body, "DEPLOY", "")
-	_build_deployment_rows()
+			body, "MOVE OUT" if in_field else "DEPLOY", "")
+	if not in_field:
+		_build_deployment_rows()
 
 
 ## Fill the roster rows from the living rifle-slot candidates, pre-ticking
@@ -1805,7 +1855,7 @@ func _deployment_row_text(soldier: Dictionary, going: bool) -> String:
 		# A resting soldier is shown rather than hidden: the player chose to
 		# send them on a bounty, and the cost of that choice should be visible
 		# on the screen where the next one is made.
-		("RESTED" if resting else ("GOING " if going else "      ")),
+		("OFF-OP" if resting else ("GOING " if going else "      ")),
 		"%-14s" % Game.full_name(soldier),
 		"%-20s" % Unit.kind_role_name(int(soldier.kind)),
 		"%-10s" % Career.level_label(int(soldier.get("level", 1))),
@@ -1964,7 +2014,14 @@ func _on_choice(slot: int) -> void:
 		"deploy":
 			# Recorded before the scene changes: Battle reads the choice back
 			# out of Game when it fills the rifle slots.
-			Game.set_deployment(_chosen_ids())
+			#
+			# Guarded on the camp rather than on the rows, and that is the
+			# load-bearing half: in the field there are no rows to read, so
+			# committing here anyway would write an empty choice over the squad
+			# the player picked at the garrison and quietly re-pick it in
+			# roster order.
+			if not in_field:
+				Game.set_deployment(_chosen_ids())
 			print("[Sandline] deploying: %s mission %d/%d" % [
 					Game.operation().name, Game.mission_number(), Game.mission_count()])
 			# The drive-out cutscene is the operation's own cold open - shown

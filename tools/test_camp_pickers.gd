@@ -64,6 +64,7 @@ func _run() -> void:
 
 	await _test_picker(camp, game, alive, "bounty")
 	await _test_picker(camp, game, alive, "ratline")
+	_test_ground(camp, game)
 	# Stated rather than assumed. If a picker cannot be driven at all - a
 	# changed signature, an error inside the walk - the checks above are simply
 	# never reached, and a harness that prints PASS because it did nothing is
@@ -74,6 +75,29 @@ func _run() -> void:
 	camp.queue_free()
 	await process_frame
 	_finish()
+
+
+## The garrison does not move, so it does not repaint.
+##
+## The camp used to take the operation's biome whichever camp it was, and the
+## home base went salt for the second operation and ash for the third - a base
+## in a fixed stretch of desert redecorating itself because the squad was
+## deploying somewhere paler. The field camp is the one that is pitched wherever
+## the fighting is, and it keeps the operation's ground.
+func _test_ground(camp: Node, game: Node) -> void:
+	var was: bool = camp.in_field
+	for op in Levels.OPERATIONS.size():
+		game.current_operation = op
+		camp.in_field = false
+		_check(str(camp._ground().floor) == "desert",
+				"the garrison stands on desert through %s"
+						% str(Levels.OPERATIONS[op].name))
+		camp.in_field = true
+		_check(str(camp._ground().floor) == str(Levels.OPERATIONS[op].biome),
+				"...and the field camp still takes its %s"
+						% str(Levels.OPERATIONS[op].biome))
+	game.current_operation = 0
+	camp.in_field = was
 
 
 ## Page the whole way round and collect who was offered. The cursor is what the

@@ -405,21 +405,27 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.03, 0.025, 0.02, 0.93)
 
-[node name="Center" type="CenterContainer" parent="UI/Briefing"]
+[node name="Center" type="ScrollContainer" parent="UI/Briefing"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 72.0
 offset_top = 72.0
 offset_right = -72.0
-offset_bottom = -72.0
+offset_bottom = -160.0
+horizontal_scroll_mode = 0
+
+[node name="Middle" type="CenterContainer" parent="UI/Briefing/Center"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 mouse_filter = 2
 
-[node name="Box" type="VBoxContainer" parent="UI/Briefing/Center"]
+[node name="Box" type="VBoxContainer" parent="UI/Briefing/Center/Middle"]
 custom_minimum_size = Vector2(1230, 0)
 mouse_filter = 2
 theme_override_constants/separation = 16
 
-[node name="MissionLabel" type="Label" parent="UI/Briefing/Center/Box"]
+[node name="MissionLabel" type="Label" parent="UI/Briefing/Center/Middle/Box"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.66, 0.5, 1)
 theme_override_font_sizes/font_size = 26
@@ -427,7 +433,7 @@ text = "MISSION 1"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="TitleLabel" type="Label" parent="UI/Briefing/Center/Box"]
+[node name="TitleLabel" type="Label" parent="UI/Briefing/Center/Middle/Box"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.5, 1)
 theme_override_font_sizes/font_size = 69
@@ -435,7 +441,7 @@ text = "DRY WASH"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="FictionLabel" type="Label" parent="UI/Briefing/Center/Box"]
+[node name="FictionLabel" type="Label" parent="UI/Briefing/Center/Middle/Box"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.86, 0.95, 1)
 theme_override_font_sizes/font_size = 24
@@ -443,7 +449,7 @@ text = ""
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="BodyLabel" type="Label" parent="UI/Briefing/Center/Box"]
+[node name="BodyLabel" type="Label" parent="UI/Briefing/Center/Middle/Box"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.88, 0.84, 0.72, 1)
 theme_override_font_sizes/font_size = 27
@@ -451,7 +457,7 @@ text = ""
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="OrdersLabel" type="Label" parent="UI/Briefing/Center/Box"]
+[node name="OrdersLabel" type="Label" parent="UI/Briefing/Center/Middle/Box"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.62, 0.24, 1)
 theme_override_font_sizes/font_size = 33
@@ -459,10 +465,14 @@ text = ""
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="BeginButton" type="Button" parent="UI/Briefing/Center/Box"]
-custom_minimum_size = Vector2(330, 72)
-layout_mode = 2
-size_flags_horizontal = 4
-focus_mode = 0
+[node name="BeginButton" type="Button" parent="UI/Briefing"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -165.0
+offset_top = -132.0
+offset_right = 165.0
+offset_bottom = -60.0
 theme_override_font_sizes/font_size = 30
 text = "Move Out"

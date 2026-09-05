@@ -32,16 +32,17 @@ class_name Ratline
 const OFFERS := 3
 
 ## The two shapes a crossing comes in. A column caught in the open, or the
-## waystation that feeds the columns - run down the men, or burn what they
-## cannot cross without.
+## waystation they rest at on the way through. Either way the mission is the
+## men: a ratline smuggles fighters, and the ones who never arrive are the
+## ones the squad does not meet on a wash two months later.
 const ARCH_CROSSING := "crossing"
 const ARCH_WAYSTATION := "waystation"
 
 const BOARD := Vector2i(16, 10)
 const SPAWN_X := 1        # the detachment lands on the west rim, like a bounty party
 const PROP_RATE := 0.14   # barer than a bounty board: this is open border country
-const CACHES := 2         # the waystation's staged supplies
-const CACHE_GAP := 3      # manhattan tiles between them, so one frag never solves the map
+const CACHES := 2         # the waystation's two staging points, which the guard is posted around
+const CACHE_GAP := 3      # manhattan tiles between them, so one push never solves the map
 const CROSSING_MIN := 5   # escort column size (5..7)
 const CROSSING_MAX := 7
 const GUARDS_MIN := 3     # waystation guard (3..4)
@@ -175,7 +176,7 @@ static func offer_for(campaign_seed: int, operation: int, ordinal: int) -> Dicti
 		"place": str(place.name),
 		"where": str(place.where),
 		"title": ("A COLUMN ON THE MOVE" if archetype == ARCH_CROSSING
-				else "A WAYSTATION STOCKED"),
+				else "A WAYSTATION ON THE ROUTE"),
 		"floor": "desert",
 	}
 
@@ -283,9 +284,10 @@ static func _build_crossing(offer: Dictionary, campaign_seed: int,
 	}
 
 
-## THE WAYSTATION: the stock a crossing cannot run without - water and food
-## staged at the midpoint - under a light guard. Burn both caches and walk
-## away; the guard does not have to die for the route to.
+## THE WAYSTATION: the staging post at the midpoint of a route, where a
+## crossing's fighters lie up before the last leg. Water and food are staged
+## here too, but the men are the mission - a ratline smuggles PEOPLE, and the
+## ones who break or surrender have still not arrived.
 static func _build_waystation(offer: Dictionary, campaign_seed: int,
 		attempt: int) -> Dictionary:
 	var salt := _salt(offer, attempt)
@@ -312,9 +314,11 @@ static func _build_waystation(offer: Dictionary, campaign_seed: int,
 				used[anchor + Vector2i(dx, dy)] = true
 		structures.append({"kind": "tent", "anchor": anchor, "size": Vector2i(2, 2)})
 
-	# The two caches, far apart in the eastern half - CACHE_GAP is what stops
-	# one frag or one push from being the whole mission.
-	var cache_cells: Array[Vector2i] = []
+	# The two points the guard is posted around, far apart in the eastern half -
+	# CACHE_GAP is what stops one push from being the whole mission. They were
+	# the caches, back when the objective was to burn them; the stock is still
+	# staged here, it just is not what the detachment came for.
+	var stage_cells: Array[Vector2i] = []
 	var corners := [Vector2i(11, 2), Vector2i(12, 7)]
 	for i in CACHES:
 		var cell := _free_near(campaign_seed, i, salt + ":cache", grid,
@@ -322,12 +326,12 @@ static func _build_waystation(offer: Dictionary, campaign_seed: int,
 		if cell.x < 0:
 			continue
 		var clear := true
-		for other: Vector2i in cache_cells:
+		for other: Vector2i in stage_cells:
 			if absi(cell.x - other.x) + absi(cell.y - other.y) < CACHE_GAP:
 				clear = false
 		if not clear:
 			continue
-		cache_cells.append(cell)
+		stage_cells.append(cell)
 		taken[cell] = true
 
 	# The guard, posted near the stock: well-hands who live here, plus what
@@ -339,8 +343,8 @@ static func _build_waystation(offer: Dictionary, campaign_seed: int,
 	var smg_spawns: Array[Vector2i] = []
 	var novice_spawns: Array[Vector2i] = []
 	for i in guards:
-		var near: Vector2i = cache_cells[i % maxi(cache_cells.size(), 1)] \
-				if not cache_cells.is_empty() else Vector2i(11, grid.y / 2)
+		var near: Vector2i = stage_cells[i % maxi(stage_cells.size(), 1)] \
+				if not stage_cells.is_empty() else Vector2i(11, grid.y / 2)
 		var cell := _free_near(campaign_seed, i, salt + ":guard", grid, near,
 				used, taken)
 		if cell.x < 0:
@@ -359,11 +363,11 @@ static func _build_waystation(offer: Dictionary, campaign_seed: int,
 
 	return {
 		"name": "THE WAYSTATION: %s" % str(offer.get("place", "")).to_upper(),
-		"fiction": "%s, %s. The stock for a season of crossings is staged here." % [
+		"fiction": "%s, %s. A season's fighters lie up here on their way in." % [
 				str(offer.get("place", "")).capitalize(), str(offer.get("where", ""))],
 		"briefing": briefing_for(offer),
-		"orders": "BURN THE CACHES",
-		"debrief": "Both caches burned where they were stacked.\n\nA crossing is not a line on a map, it is water every twelve miles - and now there is none here for a season. The columns will try somewhere else, or they will not try.\n\nThe detachment walks home. One crossing fewer on the net.",
+		"orders": "CLEAR THE WAYSTATION",
+		"debrief": "The waystation is clear.\n\nThey were the next crossing's men, resting up a day short of the wire, and the route counted on them arriving. Word travels the ratline faster than cargo does.\n\nThe detachment walks home. One crossing fewer on the net.",
 		"size": grid,
 		"map": rows,
 		"scout_spawns": scout_spawns,
@@ -371,12 +375,12 @@ static func _build_waystation(offer: Dictionary, campaign_seed: int,
 		"smg_spawns": smg_spawns,
 		"novice_spawns": novice_spawns,
 		"structures": structures,
-		"objectives": [{
-			"kind": "destroy",
-			"label": "BURN THE CACHES",
-			"prop": "crates",
-			"cells": cache_cells,
-		}],
+		# The men, not the stock. A crossing smuggles FIGHTERS in; burning
+		# crates at a place whose whole purpose is the people resting in it was
+		# the wrong mission on the right map. eliminate already resolves
+		# through is_combatant, so breaking them finishes it as surely as
+		# killing them - which is the point.
+		"objectives": [{"kind": "eliminate", "label": "CLEAR THE WAYSTATION"}],
 		"floor": str(offer.get("floor", "desert")),
 		"zone_seed": 700 + int(offer.get("operation", 0)) * 8 + int(offer.get("ordinal", 0)),
 		"shade_seed": 800 + int(offer.get("operation", 0)) * 8 + int(offer.get("ordinal", 0)),
@@ -393,12 +397,12 @@ static func briefing_for(offer: Dictionary) -> String:
 	var place := str(offer.get("place", ""))
 	var where := str(offer.get("where", ""))
 	if str(offer.get("archetype", "")) == ARCH_WAYSTATION:
-		return ("Sillae's set has been reading the smugglers' band all week, and the traffic agrees: the stock for a season of crossings is staged at %s - %s.\n\n"
-				+ "Water and food, cached and guarded. A column cannot cross without it, which makes the caches the mission: burn both and walk away. The guard does not have to die for the route to.\n\n"
-				+ "A detachment goes. Whoever leads it sits out the next mission.") % [place, where]
+		return ("Sillae's set has been reading the smugglers' band all week, and the traffic agrees: the next crossing's men are lying up at %s - %s.\n\n"
+				+ "Fighters for the coming operation, a day short of the wire and resting because nobody has ever come this far out for them. Clear the waystation. The ones who put their hands up have still not crossed.\n\n"
+				+ "A detachment goes. Whoever leads it is off the next operation.") % [place, where]
 	return ("A column is moving tonight through %s - %s. Fighters for the next operation, walked in the way they always are: strung out, travelling light, counting on nobody watching.\n\n"
 			+ "Somebody is watching. Run the column down - every man of it. The cargo that scatters back over the border tonight is cargo the squad never meets on a wash.\n\n"
-			+ "A detachment goes. Whoever leads it sits out the next mission.") % [place, where]
+			+ "A detachment goes. Whoever leads it is off the next operation.") % [place, where]
 
 
 # --- shared layout helpers ----------------------------------------------------

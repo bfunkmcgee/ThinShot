@@ -116,6 +116,28 @@ func _run() -> void:
 	await process_frame
 	_rules = load("res://scripts/Rules.gd") as GDScript
 
+	# Fight a campaign of our own, not the developer's.
+	#
+	# Backing the save up (in _init) protects the player's campaign FROM this
+	# harness. It does not protect the harness from the campaign, and the Game
+	# autoload has already loaded whatever was on disk by the time we get here.
+	# Three things in a real save reach into these battles:
+	#
+	#   * district standing, which decides what breaking MEANS - at or below
+	#     Rules.STANDING_FEARED nobody surrenders to this squad at any number of
+	#     guns, so case [1] asserted a rule the district had switched off;
+	#   * the ratline muster, which trims fighters off the spawn lists, so the
+	#     board is not the board these cases were written against;
+	#   * the adversary files, which walk returners on mid-battle.
+	#
+	# On CI there is no save and none of that happens, so the suite was green
+	# there and red on any machine anyone had actually played on - the worst
+	# shape a test can take. A fresh campaign here IS the CI condition, stated
+	# rather than depended on.
+	var game: Node = root.get_node("/root/Game")
+	game.new_campaign()
+	game.ensure_roster(Levels.LEVELS[0])
+
 	await _test_surrender()
 	await _test_rout_and_escape()
 	await _test_clear_means_still_fighting()
@@ -185,6 +207,14 @@ func _test_surrender() -> void:
 	_check(battle._guns_on(goblin) >= 2,
 			"and the game agrees they have a shot (%d guns)" % battle._guns_on(goblin))
 
+	# Two guns is enough IN A DISTRICT WITH NO OPINION EITHER WAY, and that is
+	# a precondition of this case rather than a fact about the world - so it is
+	# set here instead of assumed. A district that has learnt to fear the squad
+	# raises the price of a surrender past any number of rifles (see below).
+	var game: Node = root.get_node("/root/Game")
+	var home := str(goblin.identity.get("settlement", ""))
+	game.set_standing(home, int(_rules.get_script_constant_map()["STANDING_START"]))
+
 	# The state a fighter is actually in when he breaks: pushed to the
 	# threshold by a round that landed during the player's turn.
 	goblin.morale = brk
@@ -213,6 +243,40 @@ func _test_surrender() -> void:
 	_check(int(shot.conduct)
 			== int(_rules.get_script_constant_map()["Conduct"].SURRENDERED_FIRED_ON),
 			"as firing on the surrendered, which is the entry that costs most")
+
+	# And the other half of that precondition, which is what this harness is
+	# for: the arithmetic of surrender_guns_needed is pinned in test_rules, but
+	# only the controller can be caught failing to ASK. Same fighter class, same
+	# two rifles, same broken morale - a district that has learnt to fear the
+	# squad, and he runs instead. This is the term that was reaching in from a
+	# real save and quietly turning case [1] over.
+	var feared: int = int(_rules.get_script_constant_map()["STANDING_FEARED"])
+	var other: Node2D = null
+	for u in battle.living_units(TEAM_GOBLIN):
+		if u.kind != KIND_GOBLIN_BOLT and not u.has_stopped():
+			other = u
+			break
+	_check(other != null, "there is a second fighter to break")
+	if other != null:
+		game.set_standing(str(other.identity.get("settlement", "")), feared)
+		var moved: Array = []
+		var on_him := 0
+		for scout in battle.living_soldiers(TEAM_SCOUT):
+			var spot: Vector2i = _free_neighbour(battle, other.cell, moved)
+			if spot == Board.NO_CELL:
+				break
+			_place(battle, scout, spot)
+			moved.append(spot)
+			on_him += 1
+			if on_him == 2:
+				break
+		_check(battle._guns_on(other) >= 2,
+				"with the same two rifles on him (%d guns)" % battle._guns_on(other))
+		other.morale = brk
+		other.morale_pressed = true
+		await battle._resolve_morale(other, 2, 9)
+		_check(other.routing and not other.surrendered,
+				"nobody puts his hands up to a squad his district is afraid of")
 	await _dismiss(battle)
 
 

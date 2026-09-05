@@ -277,9 +277,21 @@ func _test_outcomes_are_ordered() -> void:
 const SAVE_PATH := "user://campaign.json"
 var _backup := ""
 var _had_save := false
+var _kept := false
 
 
+## Take the player's campaign aside, once.
+##
+## Both engine sections call this, and it used to copy the file every time - so
+## section 7's call captured whatever section 6 had just written, and the
+## restore at the end put back a campaign with a bounty's worth of notebook
+## entries in it rather than the one the player left. The second call has to be
+## a no-op, including in the case where there was no save to keep: creating one
+## and then "restoring" it would leave a campaign on a machine that had none.
 func _keep_save() -> void:
+	if _kept:
+		return
+	_kept = true
 	if FileAccess.file_exists(SAVE_PATH):
 		var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
 		_backup = f.get_as_text()
@@ -289,6 +301,9 @@ func _keep_save() -> void:
 
 func _restore() -> void:
 	if not _had_save:
+		# Nothing was here when we started, so nothing should be here now.
+		if _kept and FileAccess.file_exists(SAVE_PATH):
+			DirAccess.remove_absolute(SAVE_PATH)
 		return
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f != null:
@@ -360,6 +375,24 @@ func _test_the_whole_mission() -> void:
 		if u.soldier_id != 0:
 			named += 1
 	_check(named == 1, "the other two are nobody from the roster (%d named)" % named)
+	# ...and because they are nobody, their work used to be credited to nobody.
+	# It is his detachment, so it goes in his file.
+	var borrowed: Object = null
+	for u in squad:
+		if u.soldier_id == 0:
+			borrowed = u
+			break
+	_check(borrowed != null, "there is a lent rifleman to earn something")
+	if borrowed != null:
+		_check(battle._credit_id(borrowed) == int(staged.hunter.id),
+				"what a lent rifleman earns is credited to the man leading him")
+		_check(battle._credit_id(battle.bounty_hunter) == int(staged.hunter.id),
+				"...and what the leader earns is still his own")
+		var before := int(game.soldier_by_id(int(staged.hunter.id)).get("xp", 0))
+		battle._award_xp(borrowed, game.XP_KILL, "test: borrowed work")
+		var after := int(game.soldier_by_id(int(staged.hunter.id)).get("xp", 0))
+		_check(after == before + game.XP_KILL,
+				"the leader banks it in full (+%d xp)" % game.XP_KILL)
 	_check(battle.residents.size() >= 3,
 			"the place is lived in (%d residents)" % battle.residents.size())
 	var fighting := 0
@@ -451,9 +484,9 @@ func _test_the_whole_mission() -> void:
 	_check(game.adversaries.is_empty(),
 			"and he is no longer somebody who walks back onto a mission")
 	_check(not game.on_bounty(), "the campaign is back at the garrison")
-	# --- and whoever went is off the next main mission ------------------------
+	# --- and whoever went is off the next OPERATION ----------------------------
 	_check(game.is_resting(int(staged.hunter.id)),
-			"the soldier who went is resting")
+			"the soldier who went is off the operation")
 	var deploying: Array = game.deployment(3)
 	var went_again := false
 	for s2: Dictionary in deploying:
@@ -462,9 +495,36 @@ func _test_the_whole_mission() -> void:
 	_check(not went_again, "...and is not in the next mission's deployment")
 	_check(deploying.size() == 3,
 			"...which still fields a full party (%d)" % deploying.size())
+	# A mission is not the unit any more. He sat out the opener; he is still
+	# barred from the rest of the operation it opened.
 	game.commit_mission()
+	_check(game.is_resting(int(staged.hunter.id)),
+			"one mission later he is STILL off it - the bar is the operation")
+	# ...and he can keep taking side work while he is barred. That is the other
+	# half of the rule: the price is paid once, in the main line.
+	game.rest_from_bounty(int(staged.hunter.id))
+	_check(game.is_resting(int(staged.hunter.id)),
+			"...and booking him again is free, so a second bounty is allowed")
+	# Home, and the operation the bar was written against is over.
+	#
+	# Where the campaign is standing is put back afterwards. advance_mission()
+	# loops the campaign to operation 0 when it is run off the end of the last
+	# one (Game.gd, "Operation over. Next one, or loop the campaign"), and this
+	# harness drives the REAL autoload - so without this, running the suite on
+	# a machine with a save in its final operation moved that campaign back to
+	# the first one. The file is restored at the end either way; what leaks is
+	# the in-memory position, through whatever calls save() next.
+	var was_operation: int = game.current_operation
+	var was_level: int = game.current_level
+	var was_field: bool = game.in_the_field
+	while not game.is_last_of_operation():
+		game.current_level += 1
+	game.advance_mission()
 	_check(not game.is_resting(int(staged.hunter.id)),
-			"one main mission later, they are available again")
+			"one operation later, back at the garrison, they are available again")
+	game.current_operation = was_operation
+	game.current_level = was_level
+	game.in_the_field = was_field
 
 	# The fallback: a campaign too thin to bench anybody must not deploy short.
 	# This is the case that would otherwise turn a side activity into a

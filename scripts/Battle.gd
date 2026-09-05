@@ -422,7 +422,12 @@ var bounty_target: Unit = null
 var roaming := false
 const ROAM_SPEED := 168.0        # matching the camp's walk
 const ROAM_SQUASH := 0.469       # Board.TILE_H / Board.TILE_W
-const ESCORT_STANDOFF := 46.0    # how far back the two riflemen hang
+# How far back the two riflemen hang, in flat ground pixels - a tile is 90.5
+# of them. This was 46: a third of a tile, which is as close as two bodies can
+# stand without sharing one, and it put them permanently underfoot. A tile and
+# a half is out of the way and still inside supporting range, which matters
+# because _end_roaming hands them straight into the first tactical turn.
+const ESCORT_STANDOFF := 136.0
 var parley_dialog: ColorRect = null
 var parley_who_label: Label = null
 var parley_file_label: Label = null
@@ -568,12 +573,17 @@ var _occlusion_watch := Vector2.ZERO
 @onready var roll_label: Label = $UI/GameOver/RollLabel
 @onready var narrative_label: Label = $UI/GameOver/NarrativeLabel
 @onready var briefing_panel: ColorRect = $UI/Briefing
-@onready var briefing_mission_label: Label = $UI/Briefing/Center/Box/MissionLabel
-@onready var briefing_title_label: Label = $UI/Briefing/Center/Box/TitleLabel
-@onready var briefing_fiction_label: Label = $UI/Briefing/Center/Box/FictionLabel
-@onready var briefing_body_label: Label = $UI/Briefing/Center/Box/BodyLabel
-@onready var briefing_orders_label: Label = $UI/Briefing/Center/Box/OrdersLabel
-@onready var briefing_begin_button: Button = $UI/Briefing/Center/Box/BeginButton
+## The briefing column scrolls; the button does not live in it. A late-campaign
+## briefing carries the notebook's warnings and the ratline's muster on top of
+## its own prose, and when that column outgrew the screen the button went off
+## the bottom edge with it - taking the only way out of a modal panel that eats
+## input. It is anchored to the viewport now, and cannot be pushed anywhere.
+@onready var briefing_mission_label: Label = $UI/Briefing/Center/Middle/Box/MissionLabel
+@onready var briefing_title_label: Label = $UI/Briefing/Center/Middle/Box/TitleLabel
+@onready var briefing_fiction_label: Label = $UI/Briefing/Center/Middle/Box/FictionLabel
+@onready var briefing_body_label: Label = $UI/Briefing/Center/Middle/Box/BodyLabel
+@onready var briefing_orders_label: Label = $UI/Briefing/Center/Middle/Box/OrdersLabel
+@onready var briefing_begin_button: Button = $UI/Briefing/BeginButton
 ## The framed HUD. Built in code (scripts/Hud.gd) rather than in Battle.tscn,
 ## and handed the action buttons and the contact panel to reparent - so every
 ## handler, hotkey and enable rule above still drives the same nodes.
@@ -3251,15 +3261,36 @@ func _enemy_team_of(unit: Unit) -> int:
 # already have the attacker in scope.
 
 
+## Who banks what this unit just did.
+##
+## Normally himself. But a detachment is one roster soldier and two riflemen
+## lent to him, and the lent men carry soldier_id 0 because they have no record
+## to carry - which meant two thirds of a bounty's work was credited to nobody
+## at all. Their kills, their demolition, their share of the walk: it is his
+## detachment, and it goes in his file.
+##
+## bounty_hunter is null on every campaign mission, so this is exactly the old
+## behaviour there.
+func _credit_id(unit: Unit) -> int:
+	if unit == null or unit.team != Unit.TEAM_SCOUT:
+		return 0
+	if unit.soldier_id != 0:
+		return unit.soldier_id
+	if bounty_hunter != null and is_instance_valid(bounty_hunter):
+		return bounty_hunter.soldier_id
+	return 0
+
+
 ## Credit a kill, if a named soldier earned it against the Thirst. Guards both
 ## directions: goblins earn nothing, and a frag that catches your own scout is
 ## not an achievement.
 func _credit_kill(killer: Unit, victim: Unit) -> void:
-	if killer == null or killer.soldier_id == 0:
+	var id := _credit_id(killer)
+	if id == 0:
 		return
 	if victim.team != Unit.TEAM_GOBLIN or killer.team != Unit.TEAM_SCOUT:
 		return
-	Game.award(killer.soldier_id, Game.XP_KILL)
+	Game.award(id, Game.XP_KILL)
 	print("[Sandline]   %s credited a kill (+%d xp)" % [
 			killer.display_name(), Game.XP_KILL])
 
@@ -3267,9 +3298,10 @@ func _credit_kill(killer: Unit, victim: Unit) -> void:
 ## Squad ordnance is shared, so a grenade charge is too. (The Grenadier perk
 ## this once anticipated exists now - see the frags_left bump in _ready.)
 func _award_xp(unit: Unit, amount: int, reason: String) -> void:
-	if unit == null or unit.soldier_id == 0:
+	var id := _credit_id(unit)
+	if id == 0:
 		return
-	Game.award(unit.soldier_id, amount)
+	Game.award(id, amount)
 	print("[Sandline]   %s +%d xp (%s)" % [unit.display_name(), amount, reason])
 
 
@@ -5123,7 +5155,15 @@ func _roam_step(who: Unit, delta_pos: Vector2) -> void:
 		return
 	var sitting := unit_at(cell)
 	if sitting != null and sitting != who:
-		return
+		# A lent rifleman is not a wall. If the man being walked has one of his
+		# own escorts in the way, they change places rather than the walk
+		# refusing - which keeps one unit to a tile, so _end_roaming can still
+		# put everybody back on the grid they are standing on.
+		if roaming and who == selected and sitting.team == Unit.TEAM_SCOUT:
+			sitting.position = who.position
+			sitting.cell = who.cell
+		else:
+			return
 	who.position = candidate
 	who.cell = cell
 
@@ -5139,7 +5179,14 @@ func _follow_the_leader(delta: float) -> void:
 		if flat.length() <= ESCORT_STANDOFF:
 			scout.stop_walking()
 			continue
-		var step := gap.normalized() * ROAM_SPEED * 0.82 * delta
+		# Steered in flat space and squashed back, the way the leader's own
+		# step is built. Normalising the SCREEN gap instead made 0.82 a lie on
+		# every heading but due east: chasing him north or south, an escort
+		# covered ground more than twice as fast as he did and arrived on top
+		# of him however far back the standoff said to hang.
+		var heading := flat.normalized()
+		var step := Vector2(heading.x, heading.y * ROAM_SQUASH) \
+				* ROAM_SPEED * 0.82 * delta
 		_roam_step(scout, Vector2(step.x, 0.0))
 		_roam_step(scout, Vector2(0.0, step.y))
 		scout.set_facing(gap)
@@ -5893,6 +5940,11 @@ func _show_game_over(text: String, won: bool, panel_delay := 0.0) -> void:
 		# Walking off the map is worth something on its own - to the soldiers
 		# who did the walking. The people they carried out are not on the roster.
 		for scout in living_soldiers(Unit.TEAM_SCOUT):
+			# Surviving is the one thing that is nobody else's. A detachment's
+			# lent riflemen pass their WORK up to the man leading them, but not
+			# this, or he would be paid three times for walking home once.
+			if scout.soldier_id == 0:
+				continue
 			_award_xp(scout, Game.XP_SURVIVE, "survived")
 		_sweep_the_still_running()
 		_apply_conduct()
@@ -6164,20 +6216,26 @@ func _show_briefing() -> void:
 	# Dava's notebook, read out where it can still change a decision: the
 	# briefing names the men the campaign expects on this ground. Two lines
 	# at most - the histories live in the notebook and on THE ROLL.
+	var expected: Array[String] = [] as Array[String]
 	if not Game.on_bounty():
-		var expected := _notebook_warnings()
-		if not expected.is_empty():
-			body += "\n\nDAVA'S NOTEBOOK: " + "\n".join(expected)
+		expected = _notebook_warnings()
 	# The season's muster, on the one screen where it can still shape a plan.
 	# One sentence, shared with the field radio's projection so the two can
 	# never disagree.
+	var muster := ""
 	if not Game.on_bounty() and not Game.on_interdiction() \
 			and Game.ratline_strength_now() != 100:
-		body += "\n\nTHE RATLINE: %s" % Ratline.strength_line(
-				Game.ratline_strength_now())
-	briefing_body_label.text = body
+		muster = Ratline.strength_line(Game.ratline_strength_now())
+	# Assembled in Levels rather than here so tools/check_briefing_fit.gd can
+	# measure the string that actually renders. It used to measure the level's
+	# own prose and pass while the screen overflowed by two blocks it had never
+	# heard of.
+	briefing_body_label.text = Levels.briefing_body(body, expected, muster)
 	briefing_orders_label.text = "ORDERS:  %s" % level.get("orders", "")
 	briefing_panel.visible = true
+	# A modal that swallows input needs a keyboard way out. The button is the
+	# only exit, so it takes focus the moment the panel is up.
+	briefing_begin_button.grab_focus()
 
 
 ## The men the campaign expects back on this ground, as briefing lines. A

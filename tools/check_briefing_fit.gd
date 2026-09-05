@@ -1,104 +1,144 @@
 extends SceneTree
 
-## Does every briefing still fit on screen?
+## Can every briefing still be dismissed, and does it still read without
+## scrolling?
 ##
-## The briefing panel is a CenterContainer with a fixed 1230px column and
-## autowrapped labels, so it has no scrollbar and no clipping: text that grows
-## past the viewport simply runs off the top and bottom edges where nobody can
-## read it. Prose is data in this project - it lives in Levels.gd and gets
-## rewritten - so the fit is worth asserting rather than eyeballing once.
+## This check used to MODEL the panel: hardcoded font sizes, a hand-rolled wrap,
+## a button height copied off the scene. Every one of those drifted, and the
+## harness passed green while the shipped game softlocked - it measured a
+## level's raw "briefing" string, and Battle appends Dava's notebook and the
+## ratline muster to it at runtime. A late-campaign briefing outgrew the screen,
+## and the button went off the bottom with the text.
+##
+## So it measures the real scene now. The Briefing subtree is lifted out of
+## Battle.tscn and stood up on its own, the composed text is assigned to the
+## actual Labels, and the engine supplies the true font, the true WORD_SMART
+## wrapping, the true separations and the true button height. Nothing here can
+## drift from the scene, because nothing here describes the scene.
+##
+## Two things are asserted, and they are not the same thing:
+##
+##   1. THE BUTTON IS REACHABLE. It must sit inside the viewport and must NOT
+##      live inside the scrolling column. This is the softlock guard, and it
+##      holds for any prose length at all.
+##   2. THE PROSE STILL FITS. A mission's own briefing should not need
+##      scrolling to read. Text the campaign appends may push it over, and that
+##      is reported rather than failed - it scrolls, which is fine now.
 ##
 ##   godot --headless --path . -s res://tools/check_briefing_fit.gd
-
-# Straight off scenes/Battle.tscn: UI/Briefing/Center/Box.
-const BOX_WIDTH := 1230.0
-const SEPARATION := 16.0
-# UI/Briefing/Center insets the full-rect panel by 72px on every side.
-const MARGIN := 72.0
-
-# (level field, font size). BeginButton is a fixed-height control, measured
-# separately below.
-const ROWS: Array = [
-	["_mission", 26],
-	["name", 69],
-	["fiction", 24],
-	["briefing", 27],
-	["_orders", 33],
-]
-const BUTTON_HEIGHT := 60.0
 
 var _failures := 0
 
 
 func _init() -> void:
-	var viewport_height := float(ProjectSettings.get_setting(
-			"display/window/size/viewport_height", 1080))
-	var budget := viewport_height - MARGIN * 2.0
-	print("briefing column %dpx wide, %dpx of vertical room\n"
-			% [int(BOX_WIDTH), int(budget)])
-
-	var font := ThemeDB.fallback_font
-	for i in Levels.LEVELS.size():
-		var level: Dictionary = Levels.LEVELS[i]
-		_measure(font, i, level, budget)
-
+	await _check_briefings()
 	print("")
-	_measure_after_action(font)
+	_measure_after_action(ThemeDB.fallback_font)
 
 	print("")
 	if _failures > 0:
-		print("RESULT: FAIL (%d briefing(s) overflow the panel)" % _failures)
+		print("RESULT: FAIL (%d problem(s))" % _failures)
 		quit(1)
 		return
 	print("RESULT: PASS")
 	quit(0)
 
 
-func _measure(font: Font, index: int, level: Dictionary, budget: float) -> void:
-	var total := BUTTON_HEIGHT + SEPARATION * float(ROWS.size())
-	for row: Array in ROWS:
-		var key: String = row[0]
-		var size: int = row[1]
-		var text := _text_for(key, level)
-		total += _wrapped_height(font, text, size)
+## The worst realistic pair of blocks Battle can append. Two returner warnings
+## is the cap _notebook_warnings enforces (coming.slice(0, 2)), and the muster
+## line is one sentence off Ratline.strength_line.
+func _worst_notebook() -> Array[String]:
+	return [
+		"Orrun Anhal of Vennet Rill - ran at THE SCRAPLINE, then left for dead at OUTPOST 7. Expect him.",
+		"Tammar Berrow of Bhorra Low - ran at THE LONG HAUL, then left for dead at THE CISTERN. Expect him.",
+	] as Array[String]
 
-	var name_text := str(level.get("name", "?"))
-	var slack := budget - total
-	if slack < 0.0:
+
+func _check_briefings() -> void:
+	# One frame before anything is loaded: the autoloads are not up yet when
+	# _init runs, and Battle.gd names Game at class scope - loading the scene
+	# any earlier fails to compile it and hands back a scriptless tree.
+	await process_frame
+	# Lifted out rather than instantiated whole: adding Battle to the tree would
+	# run its _ready against no campaign. The subtree carries its own anchors.
+	var battle: Node = (load("res://scenes/Battle.tscn") as PackedScene).instantiate()
+	var briefing: Control = battle.get_node("UI/Briefing") as Control
+	var scroll: ScrollContainer = briefing.get_node("Center") as ScrollContainer
+	var box: Control = briefing.get_node("Center/Middle/Box") as Control
+	var button: Control = briefing.get_node("BeginButton") as Control
+
+	# The softlock guard, asserted structurally before anything is measured: a
+	# button inside the scrolling column is a button the text can push away.
+	if scroll.is_ancestor_of(button):
 		_failures += 1
-		print("  FAIL  level %d '%s': %dpx, over by %dpx"
-				% [index + 1, name_text, int(total), int(-slack)])
+		print("  FAIL  BeginButton is inside the scroll column - "
+				+ "long prose can push it off the screen")
 	else:
-		print("  ok    level %d '%s': %dpx (%dpx spare)"
-				% [index + 1, name_text, int(total), int(slack)])
+		print("  ok    BeginButton hangs off the panel, not off the text")
+
+	briefing.get_parent().remove_child(briefing)
+	battle.free()
+	briefing.visible = true
+	root.add_child(briefing)
+	await process_frame
+	await process_frame
+
+	var view := Vector2(
+			float(ProjectSettings.get_setting("display/window/size/viewport_width", 1920)),
+			float(ProjectSettings.get_setting("display/window/size/viewport_height", 1080)))
+	var rect := button.get_global_rect()
+	if rect.position.y < 0.0 or rect.end.y > view.y \
+			or rect.position.x < 0.0 or rect.end.x > view.x:
+		_failures += 1
+		print("  FAIL  BeginButton sits at %s, outside the %dx%d viewport"
+				% [rect, int(view.x), int(view.y)])
+	else:
+		print("  ok    BeginButton sits at y=%d..%d, inside the viewport"
+				% [int(rect.position.y), int(rect.end.y)])
+
+	var room := scroll.size.y
+	print("\nbriefing column %dpx wide, %dpx of readable room before it scrolls\n"
+			% [int(box.size.x), int(room)])
+
+	var notebook := _worst_notebook()
+	var muster := Ratline.strength_line(80)
+	for i in Levels.LEVELS.size():
+		var level: Dictionary = Levels.LEVELS[i]
+		var bare: float = await _column_height(briefing, box, level, [], "")
+		var loaded: float = await _column_height(briefing, box, level, notebook, muster)
+		var name_text := str(level.get("name", "?"))
+		if bare > room:
+			_failures += 1
+			print("  FAIL  level %d '%s': its own prose is %dpx, over by %dpx"
+					% [i + 1, name_text, int(bare), int(bare - room)])
+		elif loaded > room:
+			print("  ok    level %d '%s': %dpx (%dpx spare) - scrolls at %dpx once the notebook and the muster land"
+					% [i + 1, name_text, int(bare), int(room - bare), int(loaded)])
+		else:
+			print("  ok    level %d '%s': %dpx (%dpx spare), %dpx fully loaded"
+					% [i + 1, name_text, int(bare), int(room - bare), int(loaded)])
+
+	briefing.queue_free()
+	await process_frame
 
 
-## The two labels whose text Battle.gd composes rather than reads straight off
-## the level. Both are single lines; the longest realistic form is used.
-func _text_for(key: String, level: Dictionary) -> String:
-	match key:
-		"_mission":
-			return "OPERATION LONG SURVEY  -  MISSION 4 OF 4"
-		"_orders":
-			return "ORDERS:  %s" % level.get("orders", "")
-	return str(level.get(key, ""))
-
-
-## Height of `text` autowrapped into BOX_WIDTH at `size`, counting the explicit
-## newlines the prose uses to separate paragraphs.
-func _wrapped_height(font: Font, text: String, size: int) -> float:
-	if text.is_empty():
-		return 0.0
-	var line_height := font.get_height(size)
-	var lines := 0
-	for paragraph in text.split("\n"):
-		if paragraph.is_empty():
-			lines += 1
-			continue
-		var width := font.get_string_size(
-				paragraph, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
-		lines += maxi(1, int(ceil(width / BOX_WIDTH)))
-	return float(lines) * line_height
+## The rendered height of the column, with the text Battle would actually put
+## in it. Composed through Levels.briefing_body so the harness and the game can
+## never assemble it differently.
+func _column_height(briefing: Control, box: Control, level: Dictionary,
+		notebook: Array, muster: String) -> float:
+	var at := "Center/Middle/Box/"
+	(briefing.get_node(at + "MissionLabel") as Label).text = \
+			"OPERATION LONG SURVEY  -  MISSION 4 OF 4"
+	(briefing.get_node(at + "TitleLabel") as Label).text = str(level.get("name", ""))
+	(briefing.get_node(at + "FictionLabel") as Label).text = str(level.get("fiction", ""))
+	(briefing.get_node(at + "BodyLabel") as Label).text = Levels.briefing_body(
+			str(level.get("briefing", "")), notebook, muster)
+	(briefing.get_node(at + "OrdersLabel") as Label).text = \
+			"ORDERS:  %s" % level.get("orders", "")
+	await process_frame
+	await process_frame
+	return box.get_combined_minimum_size().y
 
 
 # --- the after-action ---------------------------------------------------------

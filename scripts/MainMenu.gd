@@ -49,6 +49,9 @@ func _ready() -> void:
 	new_button.pressed.connect(_on_new)
 	notebook_button.pressed.connect(_open_notebook)
 	quit_button.pressed.connect(_on_quit)
+	# Before Settings, so the column reads campaign rows, the range, then the
+	# preferences - each insert lands above Quit and pushes the last one down.
+	_build_range_button()
 	_build_settings()
 	notebook_back.pressed.connect(_close_notebook)
 	confirm_yes.pressed.connect(_start_new_campaign)
@@ -120,6 +123,18 @@ const SETTING_ROWS := [
 	{"key": "high_contrast", "label": "High-contrast friendly arcs"},
 ]
 const VOLUME_STEPS := [0, 25, 50, 75, 100]
+
+
+## THE RANGE - the real-time drill. Built in code the way Settings is: it
+## needs no campaign (Rodar goes out at base stats), so it is never disabled,
+## and it rides the existing button column rather than the scene file.
+func _build_range_button() -> void:
+	var range_button := Button.new()
+	range_button.text = "The Range"
+	range_button.pressed.connect(Game.go_to_arena)
+	var buttons := quit_button.get_parent()
+	buttons.add_child(range_button)
+	buttons.move_child(range_button, quit_button.get_index())
 
 
 func _build_settings() -> void:

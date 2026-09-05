@@ -32,6 +32,9 @@ extends SceneTree
 ##      and not further than the Thirst's longest weapon can answer
 ##  12. most of the defeated are dead, the survivors get harder to finish and
 ##      weaker every time, and a decisive blow settles it outright
+##  13. THE RANGE's real-time shot is hit_chance to the point when the shooter
+##      stands still, costs ARENA_MOVING_ACCURACY when he is mid-stride, and
+##      the floor still holds under him
 ##
 ## Nothing here needs a scene, a save, or a turn. Board's spatial predicates run
 ## on a detached `Board.new()` (tools/check_cover_rules.gd sweeps all seven maps
@@ -302,6 +305,7 @@ func _run() -> void:
 	_test_formation_morale()
 	_test_throw_range()
 	_test_left_for_dead()
+	_test_arena_moving_fire()
 
 	print("\nRESULT: ", "FAIL" if _failed else "PASS")
 	quit(1 if _failed else 0)
@@ -491,6 +495,39 @@ func _test_clamp_bounds() -> void:
 	_check(_chance(board, shooter, target) == base,
 			"a Marksman pays nothing at all - the term is gone, not halved")
 
+	shooter.free()
+	target.free()
+	board.free()
+
+
+# --- 13. the real-time shot --------------------------------------------------
+
+func _test_arena_moving_fire() -> void:
+	print("\n[13] the range's shot is hit_chance, less %d mid-stride, never below the floor"
+			% _k.ARENA_MOVING_ACCURACY)
+	var board := _board([
+		"........",
+		"........",
+		"........",
+	])
+	# Adjacent on open ground, the target facing him: no flank, no cover, no
+	# long shot - the roll is the shooter's accuracy and nothing else.
+	var shooter: Node2D = _mk(KIND_SCOUT, Vector2i(2, 1))
+	var target: Node2D = _mk(KIND_SCOUT, Vector2i(3, 1))
+	_check(_face_covered(target, shooter), "adjacent on open ground, target facing the shooter")
+	var still := _chance(board, shooter, target)
+	_check(still == shooter.accuracy, "a clean shot is bare accuracy (%d)" % still)
+	var arena_still: int = _rules.call("arena_hit_chance", board, shooter, target, false)
+	_check(arena_still == still, "standing still, the range's roll IS hit_chance (%d)" % still)
+	var moving: int = _rules.call("arena_hit_chance", board, shooter, target, true)
+	_check(moving == still - _k.ARENA_MOVING_ACCURACY,
+			"mid-stride it costs %d (%d -> %d)" % [_k.ARENA_MOVING_ACCURACY, still, moving])
+	# The penalty rides inside the clamp: a poor shot walking is floored, not zero.
+	shooter.accuracy = _k.MIN_HIT_CHANCE + 5
+	var floored: int = _rules.call("arena_hit_chance", board, shooter, target, true)
+	_check(floored == _k.MIN_HIT_CHANCE,
+			"a %d%% shooter walking is held at the %d%% floor (got %d)"
+			% [_k.MIN_HIT_CHANCE + 5, _k.MIN_HIT_CHANCE, floored])
 	shooter.free()
 	target.free()
 	board.free()
